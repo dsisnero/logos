@@ -1,0 +1,13 @@
+name: logos
+version: 0.1.0
+
+authors:
+  - your-name-here <your-email-here>
+
+targets:
+  logos:
+    main: src/logos.cr
+
+crystal: '>= 1.19.1'
+
+license: MIT

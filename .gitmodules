@@ -1,0 +1,3 @@
+[submodule "logos_rust"]
+	path = logos_rust
+	url = https://github.com/maciejhirsz/logos.git
