@@ -20,7 +20,7 @@ module Regex::Automata::NFA
   end
 
   # Different types of NFA states
-  alias State = ByteRange | Sparse | Look | Union | BinaryUnion | Capture | Match | Fail
+  alias State = ByteRange | Sparse | Look | Union | BinaryUnion | Capture | Match | Fail | Empty
 
   # Single byte range transition
   struct ByteRange
@@ -85,14 +85,32 @@ module Regex::Automata::NFA
   # Match state (accepting state for a pattern)
   struct Match
     getter pattern_id : PatternID
+    getter next : StateID?
 
-    def initialize(@pattern_id : PatternID)
+    def initialize(@pattern_id : PatternID, @next : StateID? = nil)
     end
   end
 
   # Fail state (no transitions)
   struct Fail
     def initialize
+    end
+  end
+
+  # Empty state (epsilon transition)
+  struct Empty
+    getter next : StateID
+
+    def initialize(@next : StateID)
+    end
+  end
+
+  # Reference to a sub-NFA (start and end states)
+  struct ThompsonRef
+    getter start : StateID
+    getter end : StateID
+
+    def initialize(@start : StateID, @end : StateID)
     end
   end
 
@@ -123,73 +141,115 @@ module Regex::Automata::NFA
     end
 
     # Build a literal pattern (sequence of bytes)
-    def build_literal(bytes : Bytes) : StateID
-      # For empty literal, return a match state?
-       return add_state(Match.new(PatternID.new(0))) if bytes.empty?
+    def build_literal(bytes : Bytes) : ThompsonRef
+      # For empty literal, return a match state
+      if bytes.empty?
+        match_id = add_state(Match.new(PatternID.new(0)))
+        return ThompsonRef.new(match_id, match_id)
+      end
 
-       # Build chain of byte range states
-       start_id = nil
-       prev_id = nil
+      # Build chain of byte range states
+      start_id = nil
+      prev_id = nil
 
-       bytes.each do |byte|
+      bytes.each do |byte|
         trans = Transition.new(byte, byte, StateID.new(0)) # placeholder
-         state = ByteRange.new(trans)
-         state_id = add_state(state)
+        state = ByteRange.new(trans)
+        state_id = add_state(state)
 
-         if prev_id
+        if prev_id
           # Update previous transition to point to this state
           update_transition_target(prev_id, state_id)
         else
           start_id = state_id
         end
         prev_id = state_id
-       end
+      end
 
-       # Last state should be a match
-       match_id = add_state(Match.new(PatternID.new(0)))
-       update_transition_target(prev_id, match_id) if prev_id
+      # Last state should be a match
+      match_id = add_state(Match.new(PatternID.new(0)))
+      update_transition_target(prev_id, match_id) if prev_id
 
-       start_id || match_id
+      ThompsonRef.new(start_id || match_id, match_id)
     end
 
     # Build alternation between two sub-NFAs
-    def build_alternation(left_id : StateID, right_id : StateID) : StateID
+    def build_alternation(left : ThompsonRef, right : ThompsonRef) : ThompsonRef
       # Create union state that epsilon-transitions to both alternatives
-      union_id = add_state(Union.new([left_id, right_id]))
-      union_id
+      union_start = add_state(Union.new([left.start, right.start]))
+      # Create common empty end state
+      empty_end = add_state(Empty.new(StateID.new(0))) # placeholder
+      # Patch both ends to point to common end
+      update_transition_target(left.end, empty_end)
+      update_transition_target(right.end, empty_end)
+      ThompsonRef.new(union_start, empty_end)
     end
 
     # Build concatenation of two sub-NFAs
-    def build_concatenation(first_id : StateID, second_id : StateID) : StateID
-      # For concatenation A B, we need to connect all match states of A
-      # to the start of B. This is complex without full graph manipulation.
-      # For now, a simplified approach
-      first_id
+    def build_concatenation(first : ThompsonRef, second : ThompsonRef) : ThompsonRef
+      # Patch the end of first sub-NFA to point to start of second
+      update_transition_target(first.end, second.start)
+      ThompsonRef.new(first.start, second.end)
     end
 
     # Build repetition (kleene star)
-    def build_repetition(child_id : StateID, min : Int32, max : Int32?) : StateID
-      # TODO: Implement proper repetition construction
-      child_id
+    def build_repetition(child : ThompsonRef, min : Int32, max : Int32?) : ThompsonRef
+      # Handle special cases
+      if min == 0 && max.nil?
+        # Kleene star: 0 or more repetitions
+        # Create new end state (placeholder)
+        new_end = add_state(Empty.new(StateID.new(0)))
+        # Create start union: epsilon to child.start OR to new_end (skip)
+        start_union = add_state(Union.new([child.start, new_end]))
+        # Create loop union at child.end: epsilon to child.start (loop) OR to new_end
+        loop_union = add_state(Union.new([child.start, new_end]))
+        update_transition_target(child.end, loop_union)
+        ThompsonRef.new(start_union, new_end)
+      elsif min == 1 && max.nil?
+        # Plus: 1 or more repetitions
+        # Create new end state (placeholder)
+        new_end = add_state(Empty.new(StateID.new(0)))
+        # Create loop union at child.end: epsilon to child.start (loop) OR to new_end
+        loop_union = add_state(Union.new([child.start, new_end]))
+        update_transition_target(child.end, loop_union)
+        ThompsonRef.new(child.start, new_end)
+      elsif min == 0 && max == 1
+        # Optional: 0 or 1
+        # Create union start: epsilon to child.start OR to child.end (skip)
+        start_union = add_state(Union.new([child.start, child.end]))
+        ThompsonRef.new(start_union, child.end)
+      else
+        # General case {min,max} - implement via concatenation of min copies
+        # followed by optional copies up to max
+        # For now, return child as placeholder
+        child
+      end
     end
 
     # Build character class
-    def build_class(ranges : Array(Range(UInt8, UInt8)), negated : Bool = false) : StateID
+    def build_class(ranges : Array(Range(UInt8, UInt8)), negated : Bool = false) : ThompsonRef
       if negated
         # Negated class - more complex, need multiple transitions
         # For now, return fail state placeholder
-      add_state(Fail.new)
+        fail_id = add_state(Fail.new)
+        match_id = add_state(Match.new(PatternID.new(0)))
+        update_transition_target(fail_id, match_id)
+        ThompsonRef.new(fail_id, match_id)
       else
         # Convert ranges to transitions
         transitions = ranges.map do |range|
           Transition.new(range.begin, range.end, StateID.new(0))
-         end
+        end
 
-         if transitions.size == 1
+        class_state = if transitions.size == 1
           add_state(ByteRange.new(transitions.first))
         else
           add_state(Sparse.new(transitions))
         end
+
+        match_id = add_state(Match.new(PatternID.new(0)))
+        update_transition_target(class_state, match_id)
+        ThompsonRef.new(class_state, match_id)
       end
     end
 
@@ -218,9 +278,18 @@ module Regex::Automata::NFA
         Look.new(state.kind, target_id)
       when Capture
         Capture.new(target_id, state.pattern_id, state.group_index, state.slot)
-      when Union, BinaryUnion, Match, Fail
-        # These states don't have a single next pointer
-        # Union/BinaryUnion have multiple alternates, Match/Fail have none
+       when Empty
+        Empty.new(target_id)
+      when Match
+        Match.new(state.pattern_id, target_id)
+      when Union
+        # Add target to alternates (creates new union with additional epsilon transition)
+        Union.new(state.alternates + [target_id])
+      when BinaryUnion
+        # Convert to Union with 3 alternates
+        Union.new([state.alt1, state.alt2, target_id])
+      when Fail
+        # Fail states have no outgoing transitions
         state
       else
         # Should never happen (exhaustive case)
