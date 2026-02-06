@@ -41,13 +41,13 @@ module Regex::Automata::NFA
   # Look-around assertion (word boundary, ^, $, etc.)
   struct Look
     enum Kind
-      Start                # ^
-      End                  # $
-      WordBoundary         # \b
-      NonWordBoundary      # \B
-      StartText            # \A
-      EndText              # \z
-      EndTextWithNewline   # \Z
+      Start              # ^
+      End                # $
+      WordBoundary       # \b
+      NonWordBoundary    # \B
+      StartText          # \A
+      EndText            # \z
+      EndTextWithNewline # \Z
     end
 
     getter kind : Kind
@@ -159,10 +159,10 @@ module Regex::Automata::NFA
     end
 
     # Build a literal pattern (sequence of bytes)
-    def build_literal(bytes : Bytes) : ThompsonRef
+    def build_literal(bytes : Bytes, pattern_id : PatternID = PatternID.new(0)) : ThompsonRef
       # For empty literal, return a match state
       if bytes.empty?
-        match_id = add_state(Match.new(PatternID.new(0)))
+        match_id = add_state(Match.new(pattern_id))
         return ThompsonRef.new(match_id, match_id)
       end
 
@@ -185,7 +185,7 @@ module Regex::Automata::NFA
       end
 
       # Last state should be a match
-      match_id = add_state(Match.new(PatternID.new(0)))
+      match_id = add_state(Match.new(pattern_id))
       update_transition_target(prev_id, match_id) if prev_id
 
       ThompsonRef.new(start_id || match_id, match_id)
@@ -211,12 +211,12 @@ module Regex::Automata::NFA
     end
 
     # Build repetition (kleene star)
-    def build_repetition(child : ThompsonRef, min : Int32, max : Int32?) : ThompsonRef
+    def build_repetition(child : ThompsonRef, min : Int32, max : Int32?, pattern_id : PatternID = PatternID.new(0)) : ThompsonRef
       # Handle special cases
       if min == 0 && max.nil?
         # Kleene star: 0 or more repetitions
         # Create new end state (match state for empty string acceptance)
-        new_end = add_state(Match.new(PatternID.new(0)))
+        new_end = add_state(Match.new(pattern_id))
         # Create start union: epsilon to child.start OR to new_end (skip)
         start_union = add_state(Union.new([child.start, new_end]))
         # Create loop union at child.end: epsilon to child.start (loop) OR to new_end
@@ -226,7 +226,7 @@ module Regex::Automata::NFA
       elsif min == 1 && max.nil?
         # Plus: 1 or more repetitions
         # Create new end state (match state for acceptance after at least one)
-        new_end = add_state(Match.new(PatternID.new(0)))
+        new_end = add_state(Match.new(pattern_id))
         # Create loop union at child.end: epsilon to child.start (loop) OR to new_end
         loop_union = add_state(Union.new([child.start, new_end]))
         update_transition_target(child.end, loop_union)
@@ -245,12 +245,12 @@ module Regex::Automata::NFA
     end
 
     # Build character class
-    def build_class(ranges : Array(Range(UInt8, UInt8)), negated : Bool = false) : ThompsonRef
+    def build_class(ranges : Array(Range(UInt8, UInt8)), negated : Bool = false, pattern_id : PatternID = PatternID.new(0)) : ThompsonRef
       if negated
         # Negated class - more complex, need multiple transitions
         # For now, return fail state placeholder
         fail_id = add_state(Fail.new)
-        match_id = add_state(Match.new(PatternID.new(0)))
+        match_id = add_state(Match.new(pattern_id))
         update_transition_target(fail_id, match_id)
         ThompsonRef.new(fail_id, match_id)
       else
@@ -265,7 +265,7 @@ module Regex::Automata::NFA
                         add_state(Sparse.new(transitions))
                       end
 
-        match_id = add_state(Match.new(PatternID.new(0)))
+        match_id = add_state(Match.new(pattern_id))
         update_transition_target(class_state, match_id)
         ThompsonRef.new(class_state, match_id)
       end

@@ -5,15 +5,46 @@ module Regex::Automata
   # to Thompson NFA
   class HirCompiler
     @builder : NFA::Builder
+    @pattern_id : PatternID
 
     def initialize(utf8 : Bool = true)
       @builder = NFA::Builder.new(utf8: utf8)
+      @pattern_id = PatternID.new(0)
     end
 
     # Compile a Hir::Hir to NFA
-    def compile(hir : Regex::Syntax::Hir::Hir) : NFA::NFA
+    def compile(hir : Regex::Syntax::Hir::Hir, pattern_id : PatternID = PatternID.new(0)) : NFA::NFA
+      @pattern_id = pattern_id
       ref = compile_node(hir.node)
       @builder.set_start_unanchored(ref.start)
+      @builder.build
+    end
+
+    # Compile multiple patterns into a single NFA
+    def compile_multi(hirs : Array(Regex::Syntax::Hir::Hir)) : NFA::NFA
+      pattern_starts = [] of StateID
+      
+      hirs.each_with_index do |hir, i|
+        @pattern_id = PatternID.new(i)
+        ref = compile_node(hir.node)
+        @builder.add_pattern_start(ref.start)
+        pattern_starts << ref.start
+      end
+      
+      # Create union start state that epsilon-transitions to all pattern starts
+      if pattern_starts.empty?
+        # No patterns - create empty match state
+        empty_match = @builder.add_state(NFA::Match.new(PatternID.new(0)))
+        @builder.set_start_unanchored(empty_match)
+      elsif pattern_starts.size == 1
+        # Single pattern - use its start directly
+        @builder.set_start_unanchored(pattern_starts.first)
+      else
+        # Multiple patterns - create union state
+        union_start = @builder.add_state(NFA::Union.new(pattern_starts))
+        @builder.set_start_unanchored(union_start)
+      end
+      
       @builder.build
     end
 
@@ -42,16 +73,16 @@ module Regex::Automata
 
     private def compile_empty(node : Regex::Syntax::Hir::Empty) : NFA::ThompsonRef
       # Empty pattern matches nothing - create a match state
-      match_id = @builder.add_state(NFA::Match.new(PatternID.new(0)))
+      match_id = @builder.add_state(NFA::Match.new(@pattern_id))
       NFA::ThompsonRef.new(match_id, match_id)
     end
 
     private def compile_literal(node : Regex::Syntax::Hir::Literal) : NFA::ThompsonRef
-      @builder.build_literal(node.bytes)
+      @builder.build_literal(node.bytes, @pattern_id)
     end
 
     private def compile_char_class(node : Regex::Syntax::Hir::CharClass) : NFA::ThompsonRef
-      @builder.build_class(node.intervals, node.negated)
+      @builder.build_class(node.intervals, node.negated, @pattern_id)
     end
 
     private def compile_look(node : Regex::Syntax::Hir::Look) : NFA::ThompsonRef
@@ -78,7 +109,7 @@ module Regex::Automata
       # Create look state with placeholder next
       look_id = @builder.add_state(NFA::Look.new(kind, StateID.new(0)))
       # Create match state
-      match_id = @builder.add_state(NFA::Match.new(PatternID.new(0)))
+      match_id = @builder.add_state(NFA::Match.new(@pattern_id))
       # Update look to point to match
       @builder.update_transition_target(look_id, match_id)
       NFA::ThompsonRef.new(look_id, match_id)
@@ -86,7 +117,7 @@ module Regex::Automata
 
     private def compile_repetition(node : Regex::Syntax::Hir::Repetition) : NFA::ThompsonRef
       child_ref = compile_node(node.sub)
-      @builder.build_repetition(child_ref, node.min, node.max)
+      @builder.build_repetition(child_ref, node.min, node.max, @pattern_id)
     end
 
     private def compile_capture(node : Regex::Syntax::Hir::Capture) : NFA::ThompsonRef
