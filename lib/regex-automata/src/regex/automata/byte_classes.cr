@@ -8,6 +8,12 @@ module Regex::Automata
     def initialize(@classes : Array(Int32), @alphabet_len : Int32)
     end
 
+    # Create identity mapping where each byte is its own class
+    def self.identity : ByteClasses
+      classes = Array.new(256) { |i| i }
+      ByteClasses.new(classes, 256)
+    end
+
     # Create byte classes from a DFA by analyzing transitions
     def self.from_dfa(dfa : DFA::DFA) : ByteClasses
       # Start with each byte in its own class
@@ -63,6 +69,13 @@ module Regex::Automata
       @classes[byte]
     end
 
+    # Get a representative byte for a class
+    def representative(cls : Int32) : UInt8
+      byte = @classes.index(cls)
+      raise "Byte class #{cls} has no bytes" unless byte
+      byte.to_u8
+    end
+
     # Apply byte classes to a DFA, reducing transition table size
     def apply_to_dfa(dfa : DFA::DFA) : DFA::DFA
       new_states = [] of DFA::State
@@ -85,7 +98,7 @@ module Regex::Automata
         new_states << new_state
       end
 
-      DFA::DFA.new(new_states, dfa.start, @alphabet_len)
+      DFA::DFA.new(new_states, dfa.start, self)
     end
   end
 end

@@ -9,11 +9,11 @@ module Regex::Automata::DFA
   # DFA state with transitions for each byte class
   class State
     getter id : StateID
-    getter next : Array(StateID)  # indexed by byte class
-    getter match : Array(PatternID)  # empty if not accepting
+    getter next : Array(StateID)    # indexed by byte class
+    getter match : Array(PatternID) # empty if not accepting
 
     def initialize(@id : StateID, byte_classes : Int32)
-      @next = Array.new(byte_classes, StateID.new(-1))  # -1 = no transition
+      @next = Array.new(byte_classes, StateID.new(-1)) # -1 = no transition
       @match = [] of PatternID
     end
 
@@ -42,9 +42,20 @@ module Regex::Automata::DFA
   class DFA
     getter states : Array(State)
     getter start : StateID
+    getter byte_classifier : ByteClasses
+    # For backward compatibility, returns alphabet length
     getter byte_classes : Int32
 
-    def initialize(@states : Array(State), @start : StateID, @byte_classes : Int32)
+    def initialize(@states : Array(State), @start : StateID, byte_classes : ByteClasses | Int32)
+      @byte_classifier = case byte_classes
+                         when ByteClasses
+                           byte_classes
+                         when Int32
+                           ByteClasses.identity
+                         else
+                           raise "Unreachable"
+                         end
+      @byte_classes = @byte_classifier.alphabet_len
     end
 
     # Get number of states
@@ -64,8 +75,8 @@ module Regex::Automata::DFA
       stack = [@start]
       while !stack.empty?
         state_id = stack.pop
-        state = @states[state_id.to_i]
-        state.next.each do |next_id|
+        current_state = @states[state_id.to_i]
+        current_state.next.each do |next_id|
           if next_id.to_i >= 0 && !forward.includes?(next_id)
             forward.add(next_id)
             stack.push(next_id)
@@ -136,7 +147,7 @@ module Regex::Automata::DFA
       # Update start state
       new_start = old_to_new[@start]? || StateID.new(0)
 
-      DFA.new(new_states, new_start, @byte_classes)
+      DFA.new(new_states, new_start, @byte_classifier)
     end
 
     # Reduce byte classes using equivalence analysis
@@ -144,16 +155,58 @@ module Regex::Automata::DFA
       byte_classes = ByteClasses.from_dfa(self)
       byte_classes.apply_to_dfa(self)
     end
+
+    # Find the longest match in the input string
+    # Returns tuple of (end_position, matched_pattern_ids) or nil if no match
+    def find_longest_match(input : String) : Tuple(Int32, Array(PatternID))?
+      last_match : Tuple(Int32, Array(PatternID))? = nil
+      current_state_id = @start
+
+      input.each_byte.with_index do |byte, idx|
+        byte_class = byte_to_class(byte)
+        next_state_id = @states[current_state_id.to_i].next[byte_class]
+        if next_state_id.to_i < 0
+          # No transition - stop searching
+          break
+        end
+
+        current_state_id = next_state_id
+        state = @states[current_state_id.to_i]
+        if state.accepting?
+          last_match = {idx + 1, state.match.dup}
+        end
+      end
+
+      # Check if start state is accepting (empty string match)
+      if last_match.nil? && @states[@start.to_i].accepting?
+        last_match = {0, @states[@start.to_i].match.dup}
+      end
+
+      last_match
+    end
+
+    # Map byte to its equivalence class
+    private def byte_to_class(byte : UInt8) : Int32
+      @byte_classifier[byte]
+    end
   end
 
   # Subset construction builder
   class Builder
     @nfa : NFA::NFA
     @dfa_states : Array(State)
-    @state_map : Hash(Set(StateID), StateID)  # NFA state set -> DFA state ID
-    @byte_classes : Int32
+    @state_map : Hash(Set(StateID), StateID) # NFA state set -> DFA state ID
+    @byte_classes : ByteClasses
 
-    def initialize(@nfa : NFA::NFA, @byte_classes : Int32 = 256)
+    def initialize(@nfa : NFA::NFA, byte_classes : ByteClasses | Int32 = 256)
+      @byte_classes = case byte_classes
+                      when ByteClasses
+                        byte_classes
+                      when Int32
+                        ByteClasses.identity
+                      else
+                        raise "Unreachable"
+                      end
       @dfa_states = [] of State
       @state_map = {} of Set(StateID) => StateID
     end
@@ -180,11 +233,11 @@ module Regex::Automata::DFA
             break
           end
         end
-        next if nfa_set.nil?  # Should not happen
+        next if nfa_set.nil? # Should not happen
 
-        # For each byte class, compute transition
-        @byte_classes.times do |byte_class|
-          byte = byte_class.to_u8
+                # For each byte class, compute transition
+        @byte_classes.alphabet_len.times do |byte_class|
+          byte = @byte_classes.representative(byte_class)
           next_set = Set(StateID).new
 
           nfa_set.each do |nfa_id|
@@ -215,7 +268,7 @@ module Regex::Automata::DFA
 
     private def add_dfa_state(nfa_set : Set(StateID)) : StateID
       dfa_id = StateID.new(@dfa_states.size)
-      state = State.new(dfa_id, @byte_classes)
+      state = State.new(dfa_id, @byte_classes.alphabet_len)
 
       # Check if any NFA state in set is a match
       nfa_set.each do |nfa_id|

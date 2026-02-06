@@ -288,4 +288,88 @@ module Regex::Automata::DFASpec
       end
     end
   end
+
+  describe DFA do
+    it "finds longest match for literal" do
+      nfa_builder = NFA::Builder.new
+      ref = nfa_builder.build_literal("hello".to_slice)
+      nfa_builder.set_start_unanchored(ref.start)
+      nfa = nfa_builder.build
+
+      dfa_builder = DFA::Builder.new(nfa)
+      dfa = dfa_builder.build
+
+      match = dfa.find_longest_match("hello world")
+      match.should_not be_nil
+      end_pos, pattern_ids = match.not_nil!
+      end_pos.should eq(5)
+      pattern_ids.size.should eq(1)
+      pattern_ids.first.should eq(PatternID.new(0))
+    end
+
+    it "returns nil for no match" do
+      nfa_builder = NFA::Builder.new
+      ref = nfa_builder.build_literal("hello".to_slice)
+      nfa_builder.set_start_unanchored(ref.start)
+      nfa = nfa_builder.build
+
+      dfa_builder = DFA::Builder.new(nfa)
+      dfa = dfa_builder.build
+
+      dfa.find_longest_match("goodbye").should be_nil
+    end
+
+    it "matches empty string for optional pattern" do
+      nfa_builder = NFA::Builder.new
+      a_ref = nfa_builder.build_literal("a".to_slice)
+      opt_ref = nfa_builder.build_repetition(a_ref, 0, 1)
+      nfa_builder.set_start_unanchored(opt_ref.start)
+      nfa = nfa_builder.build
+
+      dfa_builder = DFA::Builder.new(nfa)
+      dfa = dfa_builder.build
+
+      # Empty string should match
+      match = dfa.find_longest_match("")
+      match.should_not be_nil
+      end_pos, pattern_ids = match.not_nil!
+      end_pos.should eq(0)
+    end
+
+    it "finds longest match for kleene star" do
+      nfa_builder = NFA::Builder.new
+      a_ref = nfa_builder.build_literal("a".to_slice)
+      star_ref = nfa_builder.build_repetition(a_ref, 0, nil)
+      nfa_builder.set_start_unanchored(star_ref.start)
+      nfa = nfa_builder.build
+
+      dfa_builder = DFA::Builder.new(nfa)
+      dfa = dfa_builder.build
+
+      match = dfa.find_longest_match("aaa")
+      match.should_not be_nil
+      end_pos, pattern_ids = match.not_nil!
+      end_pos.should eq(3)
+    end
+
+    it "works with reduced byte classes" do
+      # Build DFA where all bytes except 'a' have same behavior
+      # Then reduce byte classes and ensure matching still works
+      nfa_builder = NFA::Builder.new
+      ref = nfa_builder.build_literal("a".to_slice)
+      nfa_builder.set_start_unanchored(ref.start)
+      nfa = nfa_builder.build
+
+      dfa_builder = DFA::Builder.new(nfa)
+      dfa = dfa_builder.build
+
+      reduced = dfa.reduce_byte_classes
+      reduced.byte_classes.should be < 256
+
+      match = reduced.find_longest_match("a")
+      match.should_not be_nil
+      end_pos, pattern_ids = match.not_nil!
+      end_pos.should eq(1)
+    end
+  end
 end
