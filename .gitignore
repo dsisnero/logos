@@ -1,5 +1,8 @@
 /docs/
-/lib/
+/lib/*/
+!/lib/regex-automata/
+!/lib/regex-syntax/
 /bin/
 /.shards/
 *.dwarf
+/temp/

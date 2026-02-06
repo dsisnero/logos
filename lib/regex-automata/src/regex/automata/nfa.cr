@@ -127,10 +127,10 @@ module Regex::Automata::NFA
       @start_anchored = StateID.new(0)
       @start_unanchored = StateID.new(0)
       @start_pattern = [] of StateID
-       @utf8 = utf8
+      @utf8 = utf8
 
-       # Create initial fail state
-        add_state(Fail.new)
+      # Create initial fail state
+      add_state(Fail.new)
     end
 
     # Add a new state and return its ID
@@ -138,6 +138,21 @@ module Regex::Automata::NFA
       id = StateID.new(@states.size)
       @states << state
       id
+    end
+
+    # Set the unanchored start state
+    def set_start_unanchored(id : StateID)
+      @start_unanchored = id
+    end
+
+    # Set the anchored start state
+    def set_start_anchored(id : StateID)
+      @start_anchored = id
+    end
+
+    # Add a pattern start state
+    def add_pattern_start(id : StateID)
+      @start_pattern << id
     end
 
     # Build a literal pattern (sequence of bytes)
@@ -242,10 +257,10 @@ module Regex::Automata::NFA
         end
 
         class_state = if transitions.size == 1
-          add_state(ByteRange.new(transitions.first))
-        else
-          add_state(Sparse.new(transitions))
-        end
+                        add_state(ByteRange.new(transitions.first))
+                      else
+                        add_state(Sparse.new(transitions))
+                      end
 
         match_id = add_state(Match.new(PatternID.new(0)))
         update_transition_target(class_state, match_id)
@@ -278,7 +293,7 @@ module Regex::Automata::NFA
         Look.new(state.kind, target_id)
       when Capture
         Capture.new(target_id, state.pattern_id, state.group_index, state.slot)
-       when Empty
+      when Empty
         Empty.new(target_id)
       when Match
         Match.new(state.pattern_id, target_id)
@@ -314,6 +329,70 @@ module Regex::Automata::NFA
     # Get number of states
     def size : Int32
       @states.size
+    end
+
+    # Compute epsilon closure of a set of NFA states
+    def epsilon_closure(states : Set(StateID)) : Set(StateID)
+      stack = states.to_a
+      closure = Set(StateID).new(states)
+
+      while !stack.empty?
+        state_id = stack.pop
+        state = @states[state_id.to_i]
+
+        case state
+        when Empty
+          next_id = state.next
+          unless closure.includes?(next_id)
+            closure.add(next_id)
+            stack.push(next_id)
+          end
+        when Union
+          state.alternates.each do |alt_id|
+            unless closure.includes?(alt_id)
+              closure.add(alt_id)
+              stack.push(alt_id)
+            end
+          end
+        when BinaryUnion
+          unless closure.includes?(state.alt1)
+            closure.add(state.alt1)
+            stack.push(state.alt1)
+          end
+          unless closure.includes?(state.alt2)
+            closure.add(state.alt2)
+            stack.push(state.alt2)
+          end
+        when Look, Capture
+          # These have a single next pointer (epsilon transition)
+          next_id = state.next
+          unless closure.includes?(next_id)
+            closure.add(next_id)
+            stack.push(next_id)
+          end
+        when Match, Fail, ByteRange, Sparse
+          # No epsilon transitions
+        end
+      end
+
+      closure
+    end
+
+    # Get transitions from a state for a given byte
+    def transitions(state_id : StateID, byte : UInt8) : Set(StateID)
+      state = @states[state_id.to_i]
+      result = Set(StateID).new
+
+      case state
+      when ByteRange
+        result.add(state.trans.next) if state.trans.matches?(byte)
+      when Sparse
+        state.transitions.each do |trans|
+          result.add(trans.next) if trans.matches?(byte)
+        end
+      end
+
+      result
     end
   end
 end

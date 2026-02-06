@@ -1,4 +1,4 @@
-.PHONY: install update format lint test markdown markdown-check
+.PHONY: install update format lint test markdown markdown-check clean
 
 install:
 	BEADS_DIR=$$(pwd)/.beads shards install
@@ -21,3 +21,6 @@ markdown:
 
 markdown-check:
 	rumdl check . --check
+
+clean:
+	rm -rf ./temp
