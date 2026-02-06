@@ -36,25 +36,28 @@ module Logos
 
       it "checks boundaries correctly" do
         str = "hello"
-        str.is_boundary(0).should be_true
-        str.is_boundary(5).should be_true
-        str.is_boundary(2).should be_true
-        str.is_boundary(6).should be_false
-        str.is_boundary(-1).should be_false
+        str.boundary?(0).should be_true
+        str.boundary?(5).should be_true
+        str.boundary?(2).should be_true
+        str.boundary?(6).should be_false
+        str.boundary?(-1).should be_false
 
         # UTF-8 boundary check
-        "é".is_boundary(0).should be_true
-        "é".is_boundary(1).should be_false # Middle of 2-byte char
-        "é".is_boundary(2).should be_true
+        "é".boundary?(0).should be_true
+        "é".boundary?(1).should be_false # Middle of 2-byte char
+        "é".boundary?(2).should be_true
       end
 
       it "finds boundaries" do
         str = "héllo"
-        # 'é' is 2 bytes
+        # 'é' is 2 bytes: bytes 1-2
         str.find_boundary(0).should eq(0)
-        str.find_boundary(1).should eq(2) # Skip to next char boundary
-        str.find_boundary(2).should eq(2)
+        str.find_boundary(1).should eq(1) # start of 'é'
+        str.find_boundary(2).should eq(3) # second byte of 'é' -> skip to 'l'
         str.find_boundary(3).should eq(3)
+        str.find_boundary(4).should eq(4)
+        str.find_boundary(5).should eq(5)
+        str.find_boundary(6).should eq(6) # end of string
       end
     end
 
@@ -90,11 +93,11 @@ module Logos
 
       it "checks boundaries correctly" do
         slice = Slice[1_u8, 2_u8, 3_u8]
-        slice.is_boundary(0).should be_true
-        slice.is_boundary(3).should be_true
-        slice.is_boundary(2).should be_true
-        slice.is_boundary(4).should be_false
-        slice.is_boundary(-1).should be_false
+        slice.boundary?(0).should be_true
+        slice.boundary?(3).should be_true
+        slice.boundary?(2).should be_true
+        slice.boundary?(4).should be_false
+        slice.boundary?(-1).should be_false
       end
     end
   end

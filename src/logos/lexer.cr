@@ -1,36 +1,35 @@
 module Logos
   # `Lexer` is the main struct that allows you to read through a
   # `Source` and produce tokens for enums implementing the `Logos` trait.
-  class Lexer
-    @token_type : Token.class
+  class Lexer(Token, Source, Extras, Error)
     @source : Source
     @token_start : Int32
     @token_end : Int32
-    @extras : Token::Extras
+    @extras : Extras
 
     # Create a new `Lexer`.
     #
     # Due to type inference, it might be more ergonomic to construct
     # it by calling `Token.lexer` on any `Token` with derived `Logos`.
-    def self.new(token_type : Token.class, source : Token::Source) : self
-      Lexer.new(token_type, source, token_type.extras_type.new)
+    def self.new(source : Source) : self
+      Lexer(Token, Source, Extras, Error).new(source, Extras.new)
     end
 
     # Create a new `Lexer` with the provided `Extras`.
     #
     # Due to type inference, it might be more ergonomic to construct
     # it by calling `Token.lexer_with_extras` on any `Token` with derived `Logos`.
-    def initialize(@token_type : Token.class, @source : Token::Source, extras : Token::Extras = @token_type.extras_type.new)
+    def initialize(@source : Source, extras : Extras = Extras.new)
       @token_start = 0
       @token_end = 0
       @extras = extras
     end
 
     # Extras associated with the `Token`.
-    property extras : Token::Extras
+    property extras : Extras
 
     # Source from which this Lexer is reading tokens.
-    def source : Token::Source
+    def source : Source
       @source
     end
 
@@ -40,8 +39,8 @@ module Logos
     # tokens = Token.lexer("42 3.14 -5 f").spanned.to_a
     # # => [{Token::Integer(42), 0..2}, {Token::Float(3.14), 3..7}, ...]
     # ```
-    def spanned : SpannedIter
-      SpannedIter.new(self)
+    def spanned : SpannedIter(Token, Source, Extras, Error)
+      SpannedIter(Token, Source, Extras, Error).new(self)
     end
 
     # Get the range for the current token in `Source`.
@@ -50,7 +49,7 @@ module Logos
     end
 
     # Get a string slice of the current token.
-    def slice : Token::Source
+    def slice : Source
       # In bounds if `@token_start` and `@token_end` are in bounds.
       # * `@token_start` is initially zero and is set to `@token_end` in `next`, so
       #   it remains in bounds as long as `@token_end` remains in bounds.
@@ -62,7 +61,7 @@ module Logos
     end
 
     # Get a slice of remaining source, starting at the end of current token.
-    def remainder : Token::Source
+    def remainder : Source
       @source.slice_unchecked(@token_end..@source.length)
     end
 
@@ -72,7 +71,7 @@ module Logos
     # or in the middle of an UTF-8 code point (does not apply when lexing raw `Slice(UInt8)`).
     def bump(n : Int32) : Nil
       @token_end += n
-      raise "Invalid Lexer bump" unless @source.is_boundary(@token_end)
+      raise "Invalid Lexer bump" unless @source.boundary?(@token_end)
     end
 
     # Read a single byte at current position of the `Lexer` plus `offset`.
@@ -91,17 +90,18 @@ module Logos
     #
     # The new lexer continues to point at the same span as the current lexer,
     # and the current token becomes the error token of the new token type.
-    def morph(new_token_type : Token.class) : Lexer
-      Lexer.new(new_token_type, @source, @extras)
-    end
+    # TODO: Implement morph with generic type parameter
+    # def morph(new_token_type : Token2.class) : Lexer(Token2)
+    #   Lexer(Token2).new(@source, @extras)
+    # end
 
     # Implementation of `Iterator` for `Lexer`.
-    include Iterator(Result(Token, Token::Error))
+    include Iterator(Result(Token, Error))
 
     # Get the next token from the source.
-    def next : Iterator::Stop | Result(Token, Token::Error)
+    def next : Iterator::Stop | Result(Token, Error)
       @token_start = @token_end
-      if result = @token_type.lex(self)
+      if result = Token.lex(self)
         result
       else
         stop
@@ -112,13 +112,13 @@ module Logos
   # Iterator that pairs tokens with their position in the source.
   #
   # Look at `Lexer#spanned` for documentation.
-  class SpannedIter
-    include Iterator({Result(Token, Token::Error), Span})
+  class SpannedIter(Token, Source, Extras, Error)
+    include Iterator({Result(Token, Error), Span})
 
-    def initialize(@lexer : Lexer)
+    def initialize(@lexer : Lexer(Token, Source, Extras, Error))
     end
 
-    def next : Iterator::Stop | {Result(Token, Token::Error), Span}
+    def next : Iterator::Stop | {Result(Token, Error), Span}
       case token = @lexer.next
       when Iterator::Stop
         stop

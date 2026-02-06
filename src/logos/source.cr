@@ -58,7 +58,7 @@ module Logos
     #
     # - It's not larger than the byte length of the `Source`.
     # - (`String` only) It doesn't land in the middle of a UTF-8 code point.
-    abstract def is_boundary(index : Int32) : Bool
+    abstract def boundary?(index : Int32) : Bool
   end
 end
 
@@ -85,7 +85,8 @@ class String
     # We treat both as exclusive to match Rust's Range<usize>
     start = range.begin
     exclusive_end = range.exclusive? ? range.end : range.end + 1
-    byte_slice?(start, exclusive_end - start)
+    return if start < 0 || exclusive_end < start || exclusive_end > bytesize
+    byte_slice(start, exclusive_end - start)
   end
 
   def slice_unchecked(range : Range(Int32, Int32)) : String
@@ -96,7 +97,7 @@ class String
     to_unsafe_byte_slice(start, count).to_s
   end
 
-  def is_boundary(index : Int32) : Bool
+  def boundary?(index : Int32) : Bool
     return false if index < 0 || index > bytesize
     return true if index == 0 || index == bytesize
 
@@ -114,7 +115,7 @@ class String
 
   def find_boundary(index : Int32) : Int32
     index = index.clamp(0, bytesize)
-    while index < bytesize && !is_boundary(index)
+    while index < bytesize && !boundary?(index)
       index += 1
     end
     index
@@ -154,7 +155,7 @@ struct Slice(T)
     self[start, count]
   end
 
-  def is_boundary(index : Int32) : Bool
+  def boundary?(index : Int32) : Bool
     index >= 0 && index <= size
   end
 end

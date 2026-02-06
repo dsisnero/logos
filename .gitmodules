@@ -1,3 +1,6 @@
 [submodule "logos_rust"]
 	path = logos_rust
 	url = https://github.com/maciejhirsz/logos.git
+[submodule "vendor/regex-syntax"]
+	path = vendor/regex-syntax
+	url = https://github.com/rust-lang/regex.git
