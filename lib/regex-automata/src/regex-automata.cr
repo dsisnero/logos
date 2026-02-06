@@ -1,14 +1,11 @@
+require "./regex/automata/nfa"
+
 module Regex::Automata
   VERSION = "0.1.0"
 
   # Deterministic Finite Automaton
   module DFA
     # TODO: Implement DFA types
-  end
-
-  # Non-deterministic Finite Automaton  
-  module NFA
-    # TODO: Implement NFA types
   end
 
   # Hybrid NFA/DFA (lazy DFA)
