@@ -2,7 +2,11 @@ name: logos
 version: 0.1.0
 
 authors:
-  - your-name-here <your-email-here>
+  - Dominic Sisneros <dominic@sisneros.io>
+
+description: |
+  A fast lexer generator for Crystal, ported from Rust's Logos library.
+  Create ridiculously fast lexers by defining tokens as an enum with attributes.
 
 targets:
   logos:
@@ -11,3 +15,10 @@ targets:
 crystal: '>= 1.19.1'
 
 license: MIT
+
+dependencies:
+  # Will depend on regex-syntax and regex-automata once ported
+
+development_dependencies:
+  ameba:
+    github: crystal-ameba/ameba

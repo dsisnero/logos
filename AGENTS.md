@@ -49,7 +49,7 @@ bd close beads-xxx beads-yyy beads-zzz
    * **Crystal-specific quality gates**:
 
       ```bash
-      crystal tool format --check
+      crystal tool format
       ameba --fix
       ameba
       crystal spec
