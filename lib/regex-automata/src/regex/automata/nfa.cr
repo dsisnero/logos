@@ -41,10 +41,13 @@ module Regex::Automata::NFA
   # Look-around assertion (word boundary, ^, $, etc.)
   struct Look
     enum Kind
-      Start           # ^
-      End             # $
-      WordBoundary    # \b
-      NonWordBoundary # \B
+      Start                # ^
+      End                  # $
+      WordBoundary         # \b
+      NonWordBoundary      # \B
+      StartText            # \A
+      EndText              # \z
+      EndTextWithNewline   # \Z
     end
 
     getter kind : Kind
@@ -212,8 +215,8 @@ module Regex::Automata::NFA
       # Handle special cases
       if min == 0 && max.nil?
         # Kleene star: 0 or more repetitions
-        # Create new end state (placeholder)
-        new_end = add_state(Empty.new(StateID.new(0)))
+        # Create new end state (match state for empty string acceptance)
+        new_end = add_state(Match.new(PatternID.new(0)))
         # Create start union: epsilon to child.start OR to new_end (skip)
         start_union = add_state(Union.new([child.start, new_end]))
         # Create loop union at child.end: epsilon to child.start (loop) OR to new_end
@@ -222,8 +225,8 @@ module Regex::Automata::NFA
         ThompsonRef.new(start_union, new_end)
       elsif min == 1 && max.nil?
         # Plus: 1 or more repetitions
-        # Create new end state (placeholder)
-        new_end = add_state(Empty.new(StateID.new(0)))
+        # Create new end state (match state for acceptance after at least one)
+        new_end = add_state(Match.new(PatternID.new(0)))
         # Create loop union at child.end: epsilon to child.start (loop) OR to new_end
         loop_union = add_state(Union.new([child.start, new_end]))
         update_transition_target(child.end, loop_union)
@@ -273,7 +276,9 @@ module Regex::Automata::NFA
       NFA.new(@states, @start_anchored, @start_unanchored, @start_pattern, @utf8)
     end
 
-    private def update_transition_target(state_id : StateID, target_id : StateID)
+    # Update the target of a state's transition
+    # Used internally to patch placeholder transitions
+    def update_transition_target(state_id : StateID, target_id : StateID)
       state = @states[state_id.to_i]
       new_state = update_state_target(state, target_id)
       @states[state_id.to_i] = new_state
@@ -370,7 +375,15 @@ module Regex::Automata::NFA
             closure.add(next_id)
             stack.push(next_id)
           end
-        when Match, Fail, ByteRange, Sparse
+        when Match
+          # Match states have optional epsilon transition via next
+          if next_id = state.next
+            unless closure.includes?(next_id)
+              closure.add(next_id)
+              stack.push(next_id)
+            end
+          end
+        when Fail, ByteRange, Sparse
           # No epsilon transitions
         end
       end

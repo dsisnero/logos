@@ -1,4 +1,6 @@
 require "./regex/automata/nfa"
+require "./regex/automata/dfa"
+require "./regex/automata/hir_compiler"
 
 module Regex::Automata
   VERSION = "0.1.0"

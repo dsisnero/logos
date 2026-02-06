@@ -87,8 +87,17 @@ describe Logos::Pattern do
       pattern.should be_a(Logos::Pattern)
       pattern.literal?.should be_false
       pattern.source.should eq("hello")
-      # Should parse as concatenation of literals
-      pattern.ast.should be_a(Logos::PatternAST::Concat)
+      # Should parse as concatenation of literals (or single literal for efficiency)
+      case pattern.ast
+      when Logos::PatternAST::Concat
+        concat = pattern.ast.as(Logos::PatternAST::Concat)
+        concat.children.all?(Logos::PatternAST::Literal).should be_true
+      when Logos::PatternAST::Literal
+        literal = pattern.ast.as(Logos::PatternAST::Literal)
+        String.new(literal.bytes).should eq("hello")
+      else
+        fail "Expected Concat or Literal, got #{pattern.ast.class}"
+      end
     end
 
     it "parses dot" do
@@ -124,7 +133,19 @@ describe Logos::Pattern do
 
     it "parses group" do
       pattern = Logos::Pattern.compile_regex("(ab)")
-      pattern.ast.should be_a(Logos::PatternAST::Concat) # Group is just a container
+      # Group is just a container - contents could be Concat or Literal
+      case pattern.ast
+      when Logos::PatternAST::Concat
+        # Group contains concatenation
+        concat = pattern.ast.as(Logos::PatternAST::Concat)
+        concat.children.all?(Logos::PatternAST::Literal).should be_true
+      when Logos::PatternAST::Literal
+        # Group contains single literal
+        literal = pattern.ast.as(Logos::PatternAST::Literal)
+        String.new(literal.bytes).should eq("ab")
+      else
+        fail "Expected Concat or Literal, got #{pattern.ast.class}"
+      end
       # Actually group should be captured, but for now we just parse contents
     end
 

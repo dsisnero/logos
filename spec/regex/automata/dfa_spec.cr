@@ -144,9 +144,9 @@ module Regex::Automata::DFASpec
       reduced.byte_classes.should eq(2)
 
       # Verify transitions still work
-      start_state = reduced[reduced.start]
+      # start_state = reduced[reduced.start]
       # 'a' should go to accepting state
-      a_class = reduced.byte_classes == 256 ? 'a'.ord : 0 # If not reduced, use byte directly
+      # a_class = reduced.byte_classes == 256 ? 'a'.ord : 0 # If not reduced, use byte directly
       # Actually need to get class for 'a' from ByteClasses
       # For simplicity, just check that DFA still works
       # We'll trust the algorithm
@@ -222,14 +222,70 @@ module Regex::Automata::DFASpec
       end
     end
 
-    pending "builds DFA for kleene star repetition" do
-      # TODO: Fix kleene star construction - empty string should be accepted
-      # The issue is in NFA construction: new_end is Empty state with invalid target
+    it "builds DFA for kleene star repetition" do
+      # Build NFA for "a*"
+      nfa_builder = NFA::Builder.new
+      a_ref = nfa_builder.build_literal("a".to_slice)
+      star_ref = nfa_builder.build_repetition(a_ref, 0, nil)
+      nfa_builder.set_start_unanchored(star_ref.start)
+      nfa = nfa_builder.build
+
+      dfa_builder = DFA::Builder.new(nfa)
+      dfa = dfa_builder.build
+
+      dfa.should be_a(DFA::DFA)
+      dfa.size.should be > 0
+
+      start_state = dfa[dfa.start]
+      # Empty string should be accepted (start state is accepting)
+      start_state.accepting?.should be_true
+      # 'a' should go to accepting state (which may be same or different)
+      a_byte = 'a'.ord.to_u8
+      a_next = start_state.next[a_byte]
+      a_next.should_not eq(StateID.new(-1))
+      a_state = dfa[a_next]
+      a_state.accepting?.should be_true
+      # 'aa' should be accepted - we can test by following transition again
+      # but for now just verify that 'a' transition exists and leads to accepting state
+      # that also has 'a' transition back to itself (loop)
+      # Actually, for kleene star, after consuming 'a', we should be in a state that can accept more 'a's
+      # Check that a_state also has transition on 'a' to accepting state (could be same state)
+      a_state.next[a_byte].should_not eq(StateID.new(-1))
+      # Other bytes should have no transition
+      ('b'.ord.to_u8..'z'.ord.to_u8).each do |byte|
+        start_state.next[byte].should eq(StateID.new(-1))
+      end
     end
 
-    pending "builds DFA for optional repetition" do
-      # TODO: Fix optional construction - empty string should be accepted
-      # Same issue as kleene star: new_end is Empty state with invalid target
+    it "builds DFA for optional repetition" do
+      # Build NFA for "a?"
+      nfa_builder = NFA::Builder.new
+      a_ref = nfa_builder.build_literal("a".to_slice)
+      opt_ref = nfa_builder.build_repetition(a_ref, 0, 1)
+      nfa_builder.set_start_unanchored(opt_ref.start)
+      nfa = nfa_builder.build
+
+      dfa_builder = DFA::Builder.new(nfa)
+      dfa = dfa_builder.build
+
+      dfa.should be_a(DFA::DFA)
+      dfa.size.should be > 0
+
+      start_state = dfa[dfa.start]
+      # Empty string should be accepted
+      start_state.accepting?.should be_true
+      # 'a' should go to accepting state
+      a_byte = 'a'.ord.to_u8
+      a_next = start_state.next[a_byte]
+      a_next.should_not eq(StateID.new(-1))
+      a_state = dfa[a_next]
+      a_state.accepting?.should be_true
+      # After consuming 'a', no further transitions (since optional)
+      a_state.next[a_byte].should eq(StateID.new(-1))
+      # Other bytes should have no transition
+      ('b'.ord.to_u8..'z'.ord.to_u8).each do |byte|
+        start_state.next[byte].should eq(StateID.new(-1))
+      end
     end
   end
 end

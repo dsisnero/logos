@@ -72,10 +72,13 @@ module Regex::Syntax::Hir
   # Look-around assertion
   class Look < Node
     enum Kind
-      Start           # ^
-      End             # $
-      WordBoundary    # \b
-      NonWordBoundary # \B
+      Start                # ^
+      End                  # $
+      StartText            # \A
+      EndText              # \z
+      EndTextWithNewline   # \Z
+      WordBoundary         # \b
+      NonWordBoundary      # \B
     end
 
     getter kind : Kind
