@@ -94,7 +94,7 @@ class String
     exclusive_end = range.exclusive? ? range.end : range.end + 1
     count = exclusive_end - start
     raise "BUG: slice_unchecked called with out of bounds range" unless start >= 0 && exclusive_end <= bytesize
-    to_unsafe_byte_slice(start, count).to_s
+    String.new(unsafe_byte_slice(start, count))
   end
 
   def boundary?(index : Int32) : Bool

@@ -45,7 +45,7 @@ module Logos
 
     # Get the range for the current token in `Source`.
     def span : Span
-      @token_start..@token_end
+      @token_start...@token_end
     end
 
     # Get a string slice of the current token.
@@ -62,7 +62,7 @@ module Logos
 
     # Get a slice of remaining source, starting at the end of current token.
     def remainder : Source
-      @source.slice_unchecked(@token_end..@source.length)
+      @source.slice_unchecked(@token_end...@source.length)
     end
 
     # Bumps the end of currently lexed token by `n` bytes.
@@ -100,11 +100,20 @@ module Logos
 
     # Get the next token from the source.
     def next : Iterator::Stop | Result(Token, Error)
-      @token_start = @token_end
-      if result = Token.lex(self)
-        result
-      else
-        stop
+      loop do
+        @token_start = @token_end
+        case result = Token.lex(self)
+        when ::Logos::Result(Token, Error)
+          return result
+        when Nil
+          # Skip token (lex returned nil) or end of input?
+          # If we're at end of source, stop
+          return stop if @token_end >= @source.length
+          # Otherwise continue looping (skip token)
+        else
+          # Should not happen
+          return stop
+        end
       end
     end
   end

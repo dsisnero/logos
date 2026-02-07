@@ -5,6 +5,8 @@ require "./logos/result"
 require "./logos/source"
 require "./logos/lexer"
 require "./logos/pattern"
+require "./logos/annotations"
+require "./logos/define_macro"
 
 module Logos
   VERSION = "0.1.0"

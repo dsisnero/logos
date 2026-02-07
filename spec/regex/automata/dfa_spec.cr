@@ -301,7 +301,7 @@ module Regex::Automata::DFASpec
 
       match = dfa.find_longest_match("hello world")
       match.should_not be_nil
-      end_pos, pattern_ids = match.not_nil!
+      end_pos, pattern_ids = match.as(Tuple(Int32, Array(PatternID)))
       end_pos.should eq(5)
       pattern_ids.size.should eq(1)
       pattern_ids.first.should eq(PatternID.new(0))
@@ -332,7 +332,7 @@ module Regex::Automata::DFASpec
       # Empty string should match
       match = dfa.find_longest_match("")
       match.should_not be_nil
-      end_pos, pattern_ids = match.not_nil!
+      end_pos, _ = match.as(Tuple(Int32, Array(PatternID)))
       end_pos.should eq(0)
     end
 
@@ -348,7 +348,7 @@ module Regex::Automata::DFASpec
 
       match = dfa.find_longest_match("aaa")
       match.should_not be_nil
-      end_pos, pattern_ids = match.not_nil!
+      end_pos, _ = match.as(Tuple(Int32, Array(PatternID)))
       end_pos.should eq(3)
     end
 
@@ -368,7 +368,7 @@ module Regex::Automata::DFASpec
 
       match = reduced.find_longest_match("a")
       match.should_not be_nil
-      end_pos, pattern_ids = match.not_nil!
+      end_pos, _ = match.as(Tuple(Int32, Array(PatternID)))
       end_pos.should eq(1)
     end
   end

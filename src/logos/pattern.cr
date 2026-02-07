@@ -1,7 +1,8 @@
 require "./pattern/parser"
+require "regex-syntax"
 
 module Logos
-  # Abstract syntax tree for regex patterns
+  # Abstract syntax tree for regex patterns (deprecated, use Regex::Syntax::Hir instead)
   module PatternAST
     # Base class for all pattern AST nodes
     abstract class Node
@@ -122,90 +123,43 @@ module Logos
   class Pattern
     getter? literal : Bool
     getter source : String
-    getter ast : PatternAST::Node?
-    getter bytes : Bytes? # For literal patterns
+    getter hir : ::Regex::Syntax::Hir::Hir?
+    getter bytes : Bytes? # For literal patterns (optional optimization)
 
-    def initialize(literal : Bool, @source : String, @ast : PatternAST::Node? = nil, @bytes : Bytes? = nil)
+    def initialize(literal : Bool, @source : String, hir : ::Regex::Syntax::Hir::Hir? = nil, @bytes : Bytes? = nil)
       @literal = literal
-      raise "Literal pattern must have bytes" if literal && @bytes.nil?
-      raise "Regex pattern must have ast" if !literal && @ast.nil?
+      @hir = hir
+
+      if literal
+        raise "Literal pattern must have bytes" if @bytes.nil?
+        # Create HIR literal from bytes if not provided
+        @hir ||= ::Regex::Syntax::Hir::Hir.literal(@bytes.as(Bytes))
+      else
+        raise "Regex pattern must have HIR" if @hir.nil?
+      end
     end
 
     # Create pattern from literal string
     def self.compile_literal(source : String) : self
       bytes = source.to_slice
-      Pattern.new(true, source, nil, bytes)
+      hir = ::Regex::Syntax::Hir::Hir.literal(bytes)
+      Pattern.new(true, source, hir, bytes)
     end
 
     # Create pattern from regex string
     def self.compile_regex(source : String, unicode : Bool = true, ignore_case : Bool = false) : self
-      parser = PatternParser::Parser.new(source, unicode, ignore_case)
-      ast = parser.parse
-      Pattern.new(false, source, ast)
+      hir = ::Regex::Syntax.parse(source, unicode: unicode, ignore_case: ignore_case)
+      Pattern.new(false, source, hir)
     end
 
     # Calculate priority/complexity for disambiguation
     def priority : Int32
-      return bytes.try(&.size) || 0 if literal?
-      calculate_complexity(ast.as(PatternAST::Node))
-    end
-
-    private def calculate_complexity(node : PatternAST::Node) : Int32
-      case node
-      when PatternAST::Empty
-        0
-      when PatternAST::Literal
-        # Weight literals by character count (2 per char for unicode, 2 per byte for bytes)
-        node.bytes.size * 2
-      when PatternAST::CharClass
-        2 # Fixed cost for character classes
-      when PatternAST::Look
-        0 # Lookarounds don't consume characters
-      when PatternAST::Repetition
-        node.min * calculate_complexity(node.child)
-      when PatternAST::Capture
-        calculate_complexity(node.child)
-      when PatternAST::Concat
-        node.children.sum { |child| calculate_complexity(child) }
-      when PatternAST::Alternation
-        node.children.min_of? { |child| calculate_complexity(child) } || 0
-      else
-        0
-      end
+      @hir.try(&.complexity) || 0
     end
 
     # Check for problematic patterns like greedy .* or .+
     def check_for_greedy_all : Bool
-      return false if literal?
-      has_greedy_all(ast.as(PatternAST::Node))
-    end
-
-    private def has_greedy_all(node : PatternAST::Node) : Bool
-      case node
-      when PatternAST::Repetition
-        # Check if it's a dot repetition
-        is_dot = node.child.is_a?(PatternAST::CharClass) &&
-                 node.child.as(PatternAST::CharClass).kind.in?([
-                   PatternAST::CharClass::Kind::AnyChar,
-                   PatternAST::CharClass::Kind::AnyByte,
-                   PatternAST::CharClass::Kind::AnyCharExceptLF,
-                   PatternAST::CharClass::Kind::AnyByteExceptLF,
-                   PatternAST::CharClass::Kind::AnyCharExceptCRLF,
-                   PatternAST::CharClass::Kind::AnyByteExceptCRLF,
-                 ])
-        is_unbounded = node.max.nil?
-        is_greedy = node.greedy?
-
-        is_dot && is_unbounded && is_greedy
-      when PatternAST::Capture
-        has_greedy_all(node.child)
-      when PatternAST::Concat
-        node.children.any? { |child| has_greedy_all(child) }
-      when PatternAST::Alternation
-        node.children.any? { |child| has_greedy_all(child) }
-      else
-        false
-      end
+      @hir.try(&.has_greedy_all?) || false
     end
   end
 end
