@@ -236,5 +236,289 @@ module Logos::Spec::OldLogosBugs
     end
   end
 
+  # issue_203: https://github.com/maciejhirsz/logos/issues/203
+  # float regex with underscores
+  module Issue203
+    Logos.define Token do
+      skip_regex " +", :Skip
+
+      regex "[0-9](_[0-9])*\\.[0-9](_[0-9])*([eE][+-]?[0-9](_[0-9])*)?", :Float
+    end
+
+    describe "issue_203: float regex with underscores" do
+      it "matches floats with exponents" do
+        source = "1.1e1 2.3e"
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new(source)
+
+        expected = [
+          {Token::Float, "1.1e1", 0...5},
+          {Token::Float, "2.3", 6...9},
+          # Error for "e"
+        ]
+
+        expected.each do |expected_token, expected_slice, expected_range|
+          result = lexer.next
+          result.should_not be_nil
+          result = result.as(Logos::Result(Token, Nil))
+          result.unwrap.should eq(expected_token)
+          lexer.slice.should eq(expected_slice)
+          lexer.span.should eq(expected_range)
+        end
+
+        # Error for "e"
+        result = lexer.next
+        result.should_not be_nil
+        result = result.as(Logos::Result(Token, Nil))
+        result.error?.should be_true
+        lexer.slice.should eq("e")
+        lexer.span.should eq(9...10)
+
+        lexer.next.should eq(Iterator::Stop::INSTANCE)
+      end
+    end
+  end
+
+  # issue_213: https://github.com/maciejhirsz/logos/issues/213
+  # number formats with underscores
+  module Issue213
+    Logos.define Token do
+      skip_regex "[ \\t\\n\\f]+", :Skip
+
+      token "+", :Plus
+      token "-", :Minus
+      token "*", :Times
+      token "/", :Division
+      regex "[0-9][0-9_]*", :Number
+      regex "0b[01_]*[01][01_]*", :Number
+      regex "0o[0-7_]*[0-7][0-7_]*", :Number
+      regex "0x[0-9a-fA-F_]*[0-9a-fA-F][0-9a-fA-F_]*", :Number
+    end
+
+    describe "issue_213: number formats with underscores" do
+      it "matches numbers with underscores" do
+        source = "12_3 0b0000_1111"
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new(source)
+
+        expected = [
+          {Token::Number, "12_3", 0...4},
+          {Token::Number, "0b0000_1111", 5...16},
+        ]
+
+        expected.each do |expected_token, expected_slice, expected_range|
+          result = lexer.next
+          result.should_not be_nil
+          result = result.as(Logos::Result(Token, Nil))
+          result.unwrap.should eq(expected_token)
+          lexer.slice.should eq(expected_slice)
+          lexer.span.should eq(expected_range)
+        end
+
+        lexer.next.should eq(Iterator::Stop::INSTANCE)
+      end
+    end
+  end
+
+  # issue_227: https://github.com/maciejhirsz/logos/issues/227
+  # regex vs token priority (a+b vs a)
+  module Issue227
+    Logos.define Token do
+      regex "a+b", :APlusB
+      token "a", :A
+    end
+
+    describe "issue_227: regex vs token priority" do
+      it "matches a+b as single token" do
+        source = "aaaaaaaaaaaaaaab"
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new(source)
+
+        result = lexer.next
+        result.should_not be_nil
+        result = result.as(Logos::Result(Token, Nil))
+        result.unwrap.should eq(Token::APlusB)
+        lexer.slice.should eq("aaaaaaaaaaaaaaab")
+        lexer.span.should eq(0...16)
+
+        lexer.next.should eq(Iterator::Stop::INSTANCE)
+      end
+
+      it "matches single a as A" do
+        source = "a"
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new(source)
+
+        result = lexer.next
+        result.should_not be_nil
+        result = result.as(Logos::Result(Token, Nil))
+        result.unwrap.should eq(Token::A)
+        lexer.slice.should eq("a")
+        lexer.span.should eq(0...1)
+
+        lexer.next.should eq(Iterator::Stop::INSTANCE)
+      end
+
+      it "matches aa as two A tokens" do
+        source = "aa"
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new(source)
+
+        # First a
+        result = lexer.next
+        result.should_not be_nil
+        result = result.as(Logos::Result(Token, Nil))
+        result.unwrap.should eq(Token::A)
+        lexer.slice.should eq("a")
+        lexer.span.should eq(0...1)
+
+        # Second a
+        result = lexer.next
+        result.should_not be_nil
+        result = result.as(Logos::Result(Token, Nil))
+        result.unwrap.should eq(Token::A)
+        lexer.slice.should eq("a")
+        lexer.span.should eq(1...2)
+
+        lexer.next.should eq(Iterator::Stop::INSTANCE)
+      end
+    end
+  end
+
+  # issue_246: https://github.com/maciejhirsz/logos/issues/246
+  # triple quotes
+  module Issue246
+    Logos.define Token do
+      regex "\"\"\".*?\"\"\"", :Triple
+    end
+
+    pending "issue_246: triple quotes" do
+      it "matches triple quoted string" do
+        source = "\"\"\"abc\"\"\""
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new(source)
+
+        result = lexer.next
+        result.should_not be_nil
+        result = result.as(Logos::Result(Token, Nil))
+        result.unwrap.should eq(Token::Triple)
+        lexer.slice.should eq("\"\"\"abc\"\"\"")
+        lexer.span.should eq(0...9)
+
+        lexer.next.should eq(Iterator::Stop::INSTANCE)
+      end
+    end
+  end
+
+  # issue_259: https://github.com/maciejhirsz/logos/issues/259
+  # string regex
+  module Issue259
+    Logos.define Token do
+      regex "\"(?:[^\"\\\\]*(?:\\\\\")?)*\"", :String
+    end
+
+    describe "issue_259: string regex" do
+      it "produces error for unmatched quote" do
+        source = "\""
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new(source)
+
+        result = lexer.next
+        result.should_not be_nil
+        result = result.as(Logos::Result(Token, Nil))
+        result.error?.should be_true
+        lexer.slice.should eq("\"")
+        lexer.span.should eq(0...1)
+
+        lexer.next.should eq(Iterator::Stop::INSTANCE)
+      end
+    end
+  end
+
+  # issue_265: https://github.com/maciejhirsz/logos/issues/265
+  # priority with whitespace token
+  module Issue265
+    Logos.define Token do
+      regex "[ \\t]+", :TK_WHITESPACE, priority: 1
+      regex "[a-zA-Z][a-zA-Z0-9]*", :TK_WORD, priority: 1
+      token "not", :TK_NOT, priority: 50
+      token "not in", :TK_NOT_IN, priority: 60
+    end
+
+    describe "issue_265: priority with whitespace token" do
+      it "matches not" do
+        source = "not"
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new(source)
+
+        result = lexer.next
+        result.should_not be_nil
+        result = result.as(Logos::Result(Token, Nil))
+        result.unwrap.should eq(Token::TK_NOT)
+        lexer.slice.should eq("not")
+        lexer.span.should eq(0...3)
+
+        lexer.next.should eq(Iterator::Stop::INSTANCE)
+      end
+
+      it "matches word not" do
+        source = "word not"
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new(source)
+
+        expected = [
+          {Token::TK_WORD, "word", 0...4},
+          {Token::TK_WHITESPACE, " ", 4...5},
+          {Token::TK_NOT, "not", 5...8},
+        ]
+
+        expected.each do |expected_token, expected_slice, expected_range|
+          result = lexer.next
+          result.should_not be_nil
+          result = result.as(Logos::Result(Token, Nil))
+          result.unwrap.should eq(expected_token)
+          lexer.slice.should eq(expected_slice)
+          lexer.span.should eq(expected_range)
+        end
+
+        lexer.next.should eq(Iterator::Stop::INSTANCE)
+      end
+
+      it "matches not word" do
+        source = "not word"
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new(source)
+
+        expected = [
+          {Token::TK_NOT, "not", 0...3},
+          {Token::TK_WHITESPACE, " ", 3...4},
+          {Token::TK_WORD, "word", 4...8},
+        ]
+
+        expected.each do |expected_token, expected_slice, expected_range|
+          result = lexer.next
+          result.should_not be_nil
+          result = result.as(Logos::Result(Token, Nil))
+          result.unwrap.should eq(expected_token)
+          lexer.slice.should eq(expected_slice)
+          lexer.span.should eq(expected_range)
+        end
+
+        lexer.next.should eq(Iterator::Stop::INSTANCE)
+      end
+
+      it "matches not in with space" do
+        source = "not in "
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new(source)
+
+        expected = [
+          {Token::TK_NOT_IN, "not in", 0...6},
+          {Token::TK_WHITESPACE, " ", 6...7},
+        ]
+
+        expected.each do |expected_token, expected_slice, expected_range|
+          result = lexer.next
+          result.should_not be_nil
+          result = result.as(Logos::Result(Token, Nil))
+          result.unwrap.should eq(expected_token)
+          lexer.slice.should eq(expected_slice)
+          lexer.span.should eq(expected_range)
+        end
+
+        lexer.next.should eq(Iterator::Stop::INSTANCE)
+      end
+    end
+  end
+
   # issue_202 pending: Unicode range regex not supported
 end
