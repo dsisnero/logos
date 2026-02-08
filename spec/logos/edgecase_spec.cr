@@ -191,6 +191,61 @@ describe "benches strings" do
   end
 end
 
+describe "trivia" do
+  it "matches numbers skipping a-f" do
+    source = "abc12345def67890 afx"
+    lexer = Logos::Lexer(Logos::Spec::Edgecase::TriviaTest::Token, String, Logos::NoExtras, Nil).new(source)
+
+    expected = [
+      {Logos::Spec::Edgecase::TriviaTest::Token::Number, "12345", 3...8},
+      {Logos::Spec::Edgecase::TriviaTest::Token::Number, "67890", 11...16},
+    ]
+
+    expected.each do |expected_token, expected_slice, expected_range|
+      result = lexer.next
+      result.should_not be_nil
+      result = result.as(Logos::Result(Logos::Spec::Edgecase::TriviaTest::Token, Nil))
+      result.unwrap.should eq(expected_token)
+      lexer.slice.should eq(expected_slice)
+      lexer.span.should eq(expected_range)
+    end
+
+    # The remaining characters should cause errors, but we don't have error variant yet
+    # So lexer will stop (no match). For now, we'll just verify lexer stops
+    # lexer.next.should eq(Iterator::Stop::INSTANCE)
+  end
+end
+
+describe "unicode_whitespace" do
+  pending "matches numbers skipping Unicode whitespace" do
+    # Requires Unicode property support \\p{Whitespace}
+  end
+end
+
+describe "priority_disambiguate_1" do
+  pending "matches abc with higher priority" do
+    # Requires explicit priority attribute
+  end
+end
+
+describe "priority_disambiguate_2" do
+  pending "matches cde with higher priority" do
+    # Requires explicit priority attribute
+  end
+end
+
+describe "loop_in_loop" do
+  pending "matches f(f*oo)* patterns" do
+    # Requires complex regex with nested loops
+  end
+end
+
+describe "maybe_in_loop" do
+  pending "matches f(f?oo)* patterns" do
+    # Requires complex regex with optional groups in loops
+  end
+end
+
 module Logos::Spec::Edgecase::BenchesTest
   Logos.define Token do
     skip_regex "[ \\t\\n\\f]+", :Whitespace
@@ -213,5 +268,49 @@ module Logos::Spec::Edgecase::BenchesTest
     token "==", :OpEquality
     token "===", :OpStrictEquality
     token "=>", :FatArrow
+  end
+end
+
+module Logos::Spec::Edgecase::TriviaTest
+  Logos.define Token do
+    skip_regex "[a-f]+", :SkipLowerHex
+    regex "[0-9]+", :Number
+  end
+end
+
+module Logos::Spec::Edgecase::UnicodeWhitespaceTest
+  Logos.define Token do
+    skip_regex "\\p{Whitespace}+", :SkipWhitespace
+    regex "[0-9]+", :Number
+  end
+end
+
+module Logos::Spec::Edgecase::PriorityDisambiguate1Test
+  Logos.define Token do
+    skip_regex "[ \\n\\t\\f]+", :SkipWhitespace
+    regex "[abc]+", :Abc
+    regex "[cde]+", :Cde
+  end
+end
+
+module Logos::Spec::Edgecase::PriorityDisambiguate2Test
+  Logos.define Token do
+    skip_regex "[ \\n\\t\\f]+", :SkipWhitespace
+    regex "[abc]+", :Abc
+    regex "[cde]+", :Cde
+  end
+end
+
+module Logos::Spec::Edgecase::LoopInLoopTest
+  Logos.define Token do
+    skip_regex "[ \\t\\n\\f]+", :SkipWhitespace
+    regex "f(f*oo)*", :Foo
+  end
+end
+
+module Logos::Spec::Edgecase::MaybeInLoopTest
+  Logos.define Token do
+    skip_regex "[ \\t\\n\\f]+", :SkipWhitespace
+    regex "f(f?oo)*", :Foo
   end
 end
