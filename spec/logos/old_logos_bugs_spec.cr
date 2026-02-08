@@ -520,5 +520,197 @@ module Logos::Spec::OldLogosBugs
     end
   end
 
+  # issue_220 pending: Pascal-style comment regex with (?m) flag not supported
+  module Issue220
+    pending "issue_220: Pascal-style comment regex" do
+      it "matches (* hello world *)" do
+        # Pattern: (?m)\(\*([^*]|\*+[^*)])*\*+\)
+        # regex-syntax doesn't support (?m) flag
+      end
+    end
+  end
+
+  # issue_272 pending: possessive quantifier ?+ not supported
+  module Issue272
+    pending "issue_272: possessive quantifier" do
+      it "matches numbers with possessive quantifier" do
+        # Pattern: -?[0-9][0-9_]?+
+        # possessive quantifier ?+ not supported in regex-syntax
+      end
+    end
+  end
+
+  # issue_384 pending: complex string literal regex with escapes
+  module Issue384
+    pending "issue_384: string literal regex" do
+      it "matches regex literal" do
+        # Complex pattern with many escapes, may need debugging
+      end
+    end
+  end
+
+  # issue_394: nested identifier regex
+  module Issue394
+    module Part1
+      Logos.define Token do
+        regex "([a-b]+\\.)+[a-b]", :NestedIdentifier
+      end
+
+      describe "issue_394 part1: nested identifier" do
+        it "matches a.b" do
+          source = "a.b"
+          lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new(source)
+
+          result = lexer.next
+          result.should_not be_nil
+          result = result.as(Logos::Result(Token, Nil))
+          result.unwrap.should eq(Token::NestedIdentifier)
+          lexer.slice.should eq("a.b")
+          lexer.span.should eq(0...3)
+
+          lexer.next.should eq(Iterator::Stop::INSTANCE)
+        end
+      end
+    end
+
+    module Part2
+      Logos.define Token do
+        regex "([a-b])+b", :ABPlusB
+      end
+
+      describe "issue_394 part2: a+b regex" do
+        it "matches ab" do
+          source = "ab"
+          lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new(source)
+
+          result = lexer.next
+          result.should_not be_nil
+          result = result.as(Logos::Result(Token, Nil))
+          result.unwrap.should eq(Token::ABPlusB)
+          lexer.slice.should eq("ab")
+          lexer.span.should eq(0...2)
+
+          lexer.next.should eq(Iterator::Stop::INSTANCE)
+        end
+      end
+    end
+  end
+
+  # issue_420 pending: skip pattern .|[\r\n] with priority needs debugging
+  module Issue420
+    pending "issue_420: priority with skip" do
+      it "matches words, numbers, and terms with Z" do
+        # skip pattern .|[\r\n] may be matching too greedily
+      end
+    end
+  end
+
+  # issue_424: https://github.com/maciejhirsz/logos/issues/424
+  # regex infinite loop prevention
+  module Issue424
+    Logos.define Token do
+      regex "c(a*b?)*c", :Token
+    end
+
+    describe "issue_424: regex infinite loop prevention" do
+      it "handles c without infinite loop" do
+        source = "c"
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new(source)
+
+        # Should produce error for "c" (doesn't match full pattern c...c)
+        result = lexer.next
+        result.should_not be_nil
+        result = result.as(Logos::Result(Token, Nil))
+        result.error?.should be_true
+        lexer.slice.should eq("c")
+        lexer.span.should eq(0...1)
+
+        lexer.next.should eq(Iterator::Stop::INSTANCE)
+      end
+    end
+  end
+
+  # issue_456: https://github.com/maciejhirsz/logos/issues/456
+  # alternation regex
+  module Issue456
+    Logos.define Token do
+      regex "a|a*b", :T
+    end
+
+    describe "issue_456: alternation regex" do
+      it "matches a then a" do
+        source = "aa"
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new(source)
+
+        # First a
+        result = lexer.next
+        result.should_not be_nil
+        result = result.as(Logos::Result(Token, Nil))
+        result.unwrap.should eq(Token::T)
+        lexer.slice.should eq("a")
+        lexer.span.should eq(0...1)
+
+        # Second a
+        result = lexer.next
+        result.should_not be_nil
+        result = result.as(Logos::Result(Token, Nil))
+        result.unwrap.should eq(Token::T)
+        lexer.slice.should eq("a")
+        lexer.span.should eq(1...2)
+
+        lexer.next.should eq(Iterator::Stop::INSTANCE)
+      end
+    end
+  end
+
+  # issue_242 pending: needs token variants with associated data (callbacks returning values)
+  module Issue242
+    pending "issue_242: odd number callback" do
+      it "parses odd numbers with callback" do
+        # Requires token variants with associated data (logos-gwz)
+        # Pattern: \d*[13579] with callback parsing i32
+      end
+    end
+  end
+
+  # issue_251 pending: needs token variants with associated data
+  module Issue251
+    pending "issue_251: char token with slice" do
+      it "matches any character with slice" do
+        # Requires token variants with associated data (logos-gwz)
+        # Token::Char(&'a str) where callback returns lex.slice()
+      end
+    end
+  end
+
+  # issue_256 pending: needs token variants with associated data
+  module Issue256
+    pending "issue_256: integer literal callback" do
+      it "parses integers with underscores" do
+        # Requires token variants with associated data (logos-gwz)
+        # Callback: lex.slice().replace("_", "").parse().ok()
+      end
+    end
+  end
+
+  # issue_201 pending: needs boolean filter callbacks
+  module Issue201
+    pending "issue_201: Lua brackets with callback" do
+      it "matches Lua long brackets" do
+        # Requires boolean filter callbacks (logos-9me)
+        # Callback returns bool (true if matched, false otherwise)
+      end
+    end
+  end
+
+  # issue_461 pending: needs binary mode (utf8 = false)
+  module Issue461
+    pending "issue_461: binary mode parsing" do
+      it "handles non-UTF8 bytes" do
+        # Requires utf8 = false support (binary mode)
+      end
+    end
+  end
+
   # issue_202 pending: Unicode range regex not supported
 end
