@@ -50,6 +50,9 @@ module Logos
     {% end %}
 
     {% all_defs = token_defs + regex_defs %}
+    {% has_callbacks = all_defs.any? { |item| item[:callback] } %}
+
+
 
     # Generate the enum with all methods
     {% begin %}
@@ -135,6 +138,8 @@ module Logos
       # Lex method
       def self.lex(lexer : ::Logos::Lexer(self, String, {{ extras_type }}, {{ error_type }})) : ::Logos::Result(self, {{ error_type }})?
         dfa = self.dfa
+        pattern_to_variant = self.pattern_to_variant
+        pattern_is_skip = self.pattern_is_skip
 
         # DEBUG
         if ENV["LOGOS_DEBUG"]?
@@ -154,7 +159,7 @@ module Logos
           end
 
           # Determine which variant matched (take smallest pattern ID for priority)
-          pattern_id = pattern_ids.min_by(&.to_i)
+          pattern_id = pattern_ids.size == 1 ? pattern_ids[0] : pattern_ids.min_by(&.to_i)
           variant = pattern_to_variant[pattern_id.to_i]
           is_skip = pattern_is_skip[pattern_id.to_i]
 
@@ -162,54 +167,56 @@ module Logos
           lexer.bump(end_pos)
 
           # Call callback if any
-          case pattern_id.to_i
-          {% for i in 0...all_defs.size %}
-            {% item = all_defs[i] %}
-            {% if item[:callback] %}
-             {% puts "DEBUG: Generating callback for pattern #{i}: #{item[:variant]}" %}
-               {% puts "DEBUG: Callback body: #{item[:callback].body}" %}
-               {% cb = item[:callback] %}
-           when {{ i }}
-            {% if cb.args.size == 1 %}
-              {{ cb.args[0].id }} = lexer
+          {% if has_callbacks %}
+            case pattern_id.to_i
+            {% for i in 0...all_defs.size %}
+              {% item = all_defs[i] %}
+              {% if item[:callback] %}
+               {% puts "DEBUG: Generating callback for pattern #{i}: #{item[:variant]}" %}
+                 {% puts "DEBUG: Callback body: #{item[:callback].body}" %}
+                 {% cb = item[:callback] %}
+             when {{ i }}
+              {% if cb.args.size == 1 %}
+                {{ cb.args[0].id }} = lexer
+              {% end %}
+              __callback_result = begin
+                {{ cb.body }}
+              end
+              if ENV["LOGOS_DEBUG"]?
+                puts "DEBUG: Callback result: #{__callback_result.inspect}, type: #{__callback_result.class}"
+              end
+
+              # Handle FilterResult::Error
+              if __callback_result.is_a?(::Logos::FilterResult::Error)
+                error_value = __callback_result.error
+                if ENV["LOGOS_DEBUG"]?
+                  puts "DEBUG: Callback returned FilterResult::Error, returning error: #{error_value.inspect}"
+                end
+                return ::Logos::Result(self, {{ error_type }}).error(error_value)
+              end
+
+              # Handle Skip types
+              if __callback_result.is_a?(::Logos::Skip) ||
+                 __callback_result.is_a?(::Logos::Filter::Skip) ||
+                 __callback_result.is_a?(::Logos::FilterResult::Skip)
+                if ENV["LOGOS_DEBUG"]?
+                  puts "DEBUG: Callback returned Skip, skipping token"
+                end
+                return nil
+              end
+
+                # Handle Filter::Emit and FilterResult::Emit - ignore value for now
+                if __callback_result.is_a?(::Logos::Filter::Emit) ||
+                   __callback_result.is_a?(::Logos::FilterResult::Emit)
+                  if ENV["LOGOS_DEBUG"]?
+                    puts "DEBUG: Callback returned Emit with value, ignoring value for now"
+                  end
+                  # TODO: Store emitted value somewhere
+                end
+              {% end %}
             {% end %}
-            __callback_result = begin
-              {{ cb.body }}
             end
-            if ENV["LOGOS_DEBUG"]?
-              puts "DEBUG: Callback result: #{__callback_result.inspect}, type: #{__callback_result.class}"
-            end
-
-            # Handle FilterResult::Error
-            if __callback_result.is_a?(::Logos::FilterResult::Error)
-              error_value = __callback_result.error
-              if ENV["LOGOS_DEBUG"]?
-                puts "DEBUG: Callback returned FilterResult::Error, returning error: #{error_value.inspect}"
-              end
-              return ::Logos::Result(self, {{ error_type }}).error(error_value)
-            end
-
-            # Handle Skip types
-            if __callback_result.is_a?(::Logos::Skip) ||
-               __callback_result.is_a?(::Logos::Filter::Skip) ||
-               __callback_result.is_a?(::Logos::FilterResult::Skip)
-              if ENV["LOGOS_DEBUG"]?
-                puts "DEBUG: Callback returned Skip, skipping token"
-              end
-              return nil
-            end
-
-            # Handle Filter::Emit and FilterResult::Emit - ignore value for now
-            if __callback_result.is_a?(::Logos::Filter::Emit) ||
-               __callback_result.is_a?(::Logos::FilterResult::Emit)
-              if ENV["LOGOS_DEBUG"]?
-                puts "DEBUG: Callback returned Emit with value, ignoring value for now"
-              end
-              # TODO: Store emitted value somewhere
-            end
-            {% end %}
           {% end %}
-          end
 
           # Return token unless it's a skip variant
           unless is_skip

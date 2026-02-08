@@ -161,25 +161,34 @@ module Regex::Automata::DFA
     def find_longest_match(input : String) : Tuple(Int32, Array(PatternID))?
       last_match : Tuple(Int32, Array(PatternID))? = nil
       current_state_id = @start
+      slice = input.to_slice
+      states = @states
+      byte_classifier = @byte_classifier
 
-      input.each_byte.with_index do |byte, idx|
-        byte_class = byte_to_class(byte)
-        next_state_id = @states[current_state_id.to_i].next[byte_class]
+      idx = 0
+      size = slice.size
+
+      # Process bytes in a simple loop (uncomment for unrolled version)
+      while idx < size
+        byte = slice[idx]
+        byte_class = byte_classifier[byte]
+        next_state_id = states[current_state_id.to_i].next[byte_class]
         if next_state_id.to_i < 0
           # No transition - stop searching
           break
         end
 
         current_state_id = next_state_id
-        state = @states[current_state_id.to_i]
+        state = states[current_state_id.to_i]
         if state.accepting?
-          last_match = {idx + 1, state.match.dup}
+          last_match = {idx + 1, state.match}
         end
+        idx += 1
       end
 
       # Check if start state is accepting (empty string match)
-      if last_match.nil? && @states[@start.to_i].accepting?
-        last_match = {0, @states[@start.to_i].match.dup}
+      if last_match.nil? && states[@start.to_i].accepting?
+        last_match = {0, states[@start.to_i].match}
       end
 
       last_match
