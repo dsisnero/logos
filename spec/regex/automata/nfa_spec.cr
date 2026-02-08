@@ -24,7 +24,7 @@ module Regex::Automata::NFASpec
       builder = NFA::Builder.new
       left = builder.build_literal("a".to_slice)
       right = builder.build_literal("b".to_slice)
-      union_ref = builder.build_alternation(left, right)
+      union_ref = builder.build_alternation(left, right, PatternID.new(0))
       union_ref.should be_a(NFA::ThompsonRef)
       union_ref.start.should be_a(StateID)
       union_ref.end.should be_a(StateID)

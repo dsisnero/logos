@@ -157,7 +157,7 @@ module Regex::Automata::DFASpec
       nfa_builder = NFA::Builder.new
       a_ref = nfa_builder.build_literal("a".to_slice)
       b_ref = nfa_builder.build_literal("b".to_slice)
-      alt_ref = nfa_builder.build_alternation(a_ref, b_ref)
+      alt_ref = nfa_builder.build_alternation(a_ref, b_ref, PatternID.new(0))
       nfa_builder.set_start_unanchored(alt_ref.start)
       nfa = nfa_builder.build
 

@@ -23,14 +23,14 @@ module Regex::Automata
     # Compile multiple patterns into a single NFA
     def compile_multi(hirs : Array(Regex::Syntax::Hir::Hir)) : NFA::NFA
       pattern_starts = [] of StateID
-      
+
       hirs.each_with_index do |hir, i|
         @pattern_id = PatternID.new(i)
         ref = compile_node(hir.node)
         @builder.add_pattern_start(ref.start)
         pattern_starts << ref.start
       end
-      
+
       # Create union start state that epsilon-transitions to all pattern starts
       if pattern_starts.empty?
         # No patterns - create empty match state
@@ -44,7 +44,7 @@ module Regex::Automata
         union_start = @builder.add_state(NFA::Union.new(pattern_starts))
         @builder.set_start_unanchored(union_start)
       end
-      
+
       @builder.build
     end
 
@@ -154,7 +154,7 @@ module Regex::Automata
         # Build binary tree of alternations
         result = refs.first
         refs[1..].each do |next_ref|
-          result = @builder.build_alternation(result, next_ref)
+           result = @builder.build_alternation(result, next_ref, @pattern_id)
         end
         result
       end

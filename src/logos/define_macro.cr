@@ -12,7 +12,14 @@ module Logos
     {% error_type = Nil %}
 
     # Process each node in the block
-    {% for node in block.body.expressions %}
+    {% nodes = [] of Crystal::Macros::ASTNode %}
+    {% if block.body.is_a?(Expressions) %}
+      {% nodes = block.body.expressions %}
+    {% else %}
+      {% nodes = [block.body] %}
+    {% end %}
+
+    {% for node in nodes %}
       {% if node.is_a?(Call) %}
         # Extract callback from block or named arguments
         {% callback = nil %}
@@ -69,57 +76,77 @@ module Logos
       {% end %}
 
       # Class variables
-      @@dfa = nil.as(Regex::Automata::DFA::DFA?)
+      @@dfa = nil.as(::Regex::Automata::DFA::DFA?)
       @@pattern_to_variant = nil.as(Array(self)?)
       @@pattern_is_skip = nil.as(Array(Bool)?)
+      @@pattern_priority = nil.as(Array(Int32)?)
       @@error_variant = nil.as(self?)
 
       # DFA compilation method
-      private def self.compile_dfa : Regex::Automata::DFA::DFA
+      private def self.compile_dfa : ::Regex::Automata::DFA::DFA
+        if ENV["LOGOS_DEBUG"]?
+          puts "DEBUG: compile_dfa called"
+        end
         hirs = [] of ::Regex::Syntax::Hir::Hir
         pattern_to_variant = [] of self
         pattern_is_skip = [] of Bool
+        pattern_priority = [] of Int32
 
         # Token patterns (literals)
-        {% for item in token_defs %}
-          hirs << ::Regex::Syntax::Hir::Hir.literal({{ item[:pattern] }}.to_slice)
+        {% for item, index in token_defs %}
+          hir = ::Regex::Syntax::Hir::Hir.literal({{ item[:pattern] }}.to_slice)
+          hirs << hir
           pattern_to_variant << {{ item[:variant] }}
           pattern_is_skip << {{ item[:skip] }}
+          # Use Hir complexity for priority (higher complexity = higher priority)
+          pattern_priority << hir.complexity
         {% end %}
 
         # Regex patterns
-        {% for item in regex_defs %}
-          hirs << ::Regex::Syntax.parse({{ item[:pattern] }})
+        {% for item, index in regex_defs %}
+          hir = ::Regex::Syntax.parse({{ item[:pattern] }})
+          hirs << hir
           pattern_to_variant << {{ item[:variant] }}
           pattern_is_skip << {{ item[:skip] }}
+          # Use Hir complexity for priority (higher complexity = higher priority)
+          pattern_priority << hir.complexity
         {% end %}
 
         # Store metadata in class variables
         @@pattern_to_variant = pattern_to_variant
         @@pattern_is_skip = pattern_is_skip
+        @@pattern_priority = pattern_priority
         @@error_variant = {% if error_def %} {{ error_def[:variant] }} {% else %} nil {% end %}
+
+        # DEBUG: Print priorities
+        if ENV["LOGOS_DEBUG_PRIORITY"]?
+          puts "Pattern priorities:"
+          pattern_to_variant.each_with_index do |variant, i|
+            puts "  Pattern #{i}: #{variant} = #{pattern_priority[i]}"
+          end
+        end
 
         # If no patterns, create a DFA that never matches
         if hirs.empty?
           # Create a single dead state with no transitions
-          dead_state = Regex::Automata::DFA::State.new(Regex::Automata::StateID.new(0), 256)
-          256.times { |i| dead_state.set_transition(i, Regex::Automata::StateID.new(-1)) }
-          return Regex::Automata::DFA::DFA.new([dead_state], Regex::Automata::StateID.new(0), 256)
+          dead_state = ::Regex::Automata::DFA::State.new(::Regex::Automata::StateID.new(0), 256)
+          256.times { |i| dead_state.set_transition(i, ::Regex::Automata::StateID.new(-1)) }
+          return ::Regex::Automata::DFA::DFA.new([dead_state], ::Regex::Automata::StateID.new(0), 256)
         end
 
         # Compile NFA from multiple patterns
-        hir_compiler = Regex::Automata::HirCompiler.new
+        hir_compiler = ::Regex::Automata::HirCompiler.new
         nfa = hir_compiler.compile_multi(hirs)
 
         # Build DFA from NFA
-        dfa_builder = Regex::Automata::DFA::Builder.new(nfa)
+        dfa_builder = ::Regex::Automata::DFA::Builder.new(nfa)
         dfa = dfa_builder.build
 
         dfa
       end
 
       # Lazy-loaded DFA getter
-      private def self.dfa : Regex::Automata::DFA::DFA
+      private def self.dfa : ::Regex::Automata::DFA::DFA
         @@dfa ||= compile_dfa
       end
 
@@ -131,6 +158,10 @@ module Logos
         @@pattern_is_skip ||= [] of Bool
       end
 
+      private def self.pattern_priority : Array(Int32)
+        @@pattern_priority ||= [] of Int32
+      end
+
       private def self.error_variant : self?
         @@error_variant
       end
@@ -140,6 +171,7 @@ module Logos
         dfa = self.dfa
         pattern_to_variant = self.pattern_to_variant
         pattern_is_skip = self.pattern_is_skip
+        pattern_priority = self.pattern_priority
 
         # DEBUG
         if ENV["LOGOS_DEBUG"]?
@@ -148,6 +180,9 @@ module Logos
 
         # Find longest match
         match = dfa.find_longest_match(lexer.remainder)
+        if ENV["LOGOS_DEBUG"]?
+          puts "DEBUG: find_longest_match returned: #{match.inspect}"
+        end
 
         if match
           end_pos, pattern_ids = match
@@ -156,10 +191,17 @@ module Logos
           if ENV["LOGOS_DEBUG"]?
             puts "DEBUG: matched at #{end_pos}, pattern_ids: #{pattern_ids.map(&.to_i)}"
             puts "DEBUG: matched substring: '#{lexer.remainder[0, end_pos]}'"
+            if pattern_ids.empty?
+              puts "DEBUG: WARNING: pattern_ids empty but match state accepting"
+            end
           end
 
-          # Determine which variant matched (take smallest pattern ID for priority)
-          pattern_id = pattern_ids.size == 1 ? pattern_ids[0] : pattern_ids.min_by(&.to_i)
+          # Determine which variant matched (take pattern with highest priority)
+          pattern_id = if pattern_ids.size == 1
+                         pattern_ids[0]
+                       else
+                         pattern_ids.max_by { |id| pattern_priority[id.to_i] }
+                       end
           variant = pattern_to_variant[pattern_id.to_i]
           is_skip = pattern_is_skip[pattern_id.to_i]
 
@@ -235,9 +277,12 @@ module Logos
             # End of input
             return nil
           end
-        else
-          # No match and no error variant
-          return nil
+         else
+           # No match and no error variant
+           if ENV["LOGOS_DEBUG"]?
+             puts "DEBUG: no match for remainder: '#{lexer.remainder.inspect}' (bytes: #{lexer.remainder.to_slice.hexdump if lexer.remainder.responds_to?(:to_slice)})"
+           end
+           return nil
         end
       end
     end

@@ -30,7 +30,11 @@ module Regex::Automata::DFA
     end
 
     def add_match(pattern_id : PatternID)
-      @match << pattern_id unless @match.includes?(pattern_id)
+      # Insert in sorted order, maintaining uniqueness
+      idx = @match.bsearch_index { |pid| pid >= pattern_id } || @match.size
+      if idx == @match.size || @match[idx] != pattern_id
+        @match.insert(idx, pattern_id)
+      end
     end
 
     def accepting? : Bool
@@ -194,6 +198,54 @@ module Regex::Automata::DFA
       last_match
     end
 
+    # Get next state ID for given byte
+    def next_state(current : StateID, input : UInt8) : StateID
+      byte_class = @byte_classifier[input]
+      next_id = @states[current.to_i].next[byte_class]
+      next_id.to_i >= 0 ? next_id : StateID.new(0)
+    end
+
+    # Get next state ID for end-of-input (EOI) transition
+    def next_eoi_state(current : StateID) : StateID
+      # For now, return dead state (ID 0)
+      # TODO: Implement proper EOI transitions
+      StateID.new(0)
+    end
+
+    # Check if state is a match state
+    def match_state?(id : StateID) : Bool
+      !@states[id.to_i].match.empty?
+    end
+
+    # Alias for compatibility with Rust Automaton trait
+    def is_match_state(id : StateID) : Bool
+      match_state?(id)
+    end
+
+    # Number of patterns that match in this state
+    def match_len(id : StateID) : Int32
+      @states[id.to_i].match.size
+    end
+
+    # Get pattern ID at given index in match list
+    def match_pattern(id : StateID, index : Int32) : PatternID
+      @states[id.to_i].match[index]
+    end
+
+    # Get universal start state for given anchored mode
+    def universal_start_state(mode : Int32) : StateID?
+      # For now, assume anchored mode 1 (Anchored::Yes) maps to start state
+      # Return nil if no universal start state
+      # TODO: Implement proper anchored modes
+      @start
+    end
+
+    # Whether DFA can match empty string
+    def has_empty : Bool
+      # Check if start state is a match state
+      is_match_state(@start)
+    end
+
     # Map byte to its equivalence class
     private def byte_to_class(byte : UInt8) : Int32
       @byte_classifier[byte]
@@ -230,19 +282,27 @@ module Regex::Automata::DFA
       queue = [start_id]
       processed = Set{start_id}
 
+      if ENV["LOGOS_DEBUG_DFA_BUILD"]?
+        puts "DFA build: start_set size #{start_set.size}, start_id #{start_id}"
+      end
+
       while !queue.empty?
         dfa_id = queue.pop
-        dfa_state = @dfa_states[dfa_id.to_i]
+         dfa_state = @dfa_states[dfa_id.to_i]
 
-        # Find NFA set for this DFA state
-        nfa_set = nil
-        @state_map.each do |set, id|
-          if id == dfa_id
-            nfa_set = set
-            break
-          end
-        end
-        next if nfa_set.nil? # Should not happen
+         if ENV["LOGOS_DEBUG_DFA_BUILD"]? && @dfa_states.size % 10 == 0
+           puts "DFA build: processing state #{dfa_id.to_i}, total states #{@dfa_states.size}, queue size #{queue.size}"
+         end
+
+         # Find NFA set for this DFA state
+         nfa_set = nil
+         @state_map.each do |set, id|
+           if id == dfa_id
+             nfa_set = set
+             break
+           end
+         end
+         next if nfa_set.nil? # Should not happen
 
                 # For each byte class, compute transition
         @byte_classes.alphabet_len.times do |byte_class|
@@ -280,10 +340,27 @@ module Regex::Automata::DFA
       state = State.new(dfa_id, @byte_classes.alphabet_len)
 
       # Check if any NFA state in set is a match
+      if ENV["LOGOS_DEBUG_DFA"]?
+        puts "DFA state #{dfa_id.to_i}: NFA set size #{nfa_set.size}"
+        nfa_set.each do |nfa_id|
+          nfa_state = @nfa.states[nfa_id.to_i]
+          puts "  NFA state #{nfa_id.to_i}: #{nfa_state.class} #{nfa_state.is_a?(NFA::Match) ? "(match pattern #{nfa_state.pattern_id.to_i}, next=#{nfa_state.next.inspect})" : ""}"
+        end
+      end
       nfa_set.each do |nfa_id|
         nfa_state = @nfa.states[nfa_id.to_i]
         if nfa_state.is_a?(NFA::Match)
-          state.add_match(nfa_state.pattern_id)
+          # Only consider match states with no outgoing epsilon transitions as accepting
+          if nfa_state.next.nil?
+            if ENV["LOGOS_DEBUG_DFA"]?
+              puts "DFA state #{dfa_id.to_i}: adding match for pattern #{nfa_state.pattern_id.to_i}"
+            end
+            state.add_match(nfa_state.pattern_id)
+          else
+            if ENV["LOGOS_DEBUG_DFA"]?
+              puts "DFA state #{dfa_id.to_i}: skipping match for pattern #{nfa_state.pattern_id.to_i} (has epsilon transition)"
+            end
+          end
         end
       end
 

@@ -192,19 +192,21 @@ module Regex::Automata::NFA
     end
 
     # Build alternation between two sub-NFAs
-    def build_alternation(left : ThompsonRef, right : ThompsonRef) : ThompsonRef
+    def build_alternation(left : ThompsonRef, right : ThompsonRef, pattern_id : PatternID = PatternID.new(0)) : ThompsonRef
       # Create union state that epsilon-transitions to both alternatives
       union_start = add_state(Union.new([left.start, right.start]))
-      # Create common empty end state
-      empty_end = add_state(Empty.new(StateID.new(0))) # placeholder
-      # Patch both ends to point to common end
-      update_transition_target(left.end, empty_end)
-      update_transition_target(right.end, empty_end)
-      ThompsonRef.new(union_start, empty_end)
+      # Create common match end state
+      match_end = add_state(Match.new(pattern_id))
+      # Patch both ends to point to common match state
+      update_transition_target(left.end, match_end)
+      update_transition_target(right.end, match_end)
+      ThompsonRef.new(union_start, match_end)
     end
 
     # Build concatenation of two sub-NFAs
     def build_concatenation(first : ThompsonRef, second : ThompsonRef) : ThompsonRef
+      # If first.end is a Match state, replace it with Empty to avoid intermediate matches
+      replace_match_with_empty(first.end)
       # Patch the end of first sub-NFA to point to start of second
       update_transition_target(first.end, second.start)
       ThompsonRef.new(first.start, second.end)
@@ -282,6 +284,21 @@ module Regex::Automata::NFA
       state = @states[state_id.to_i]
       new_state = update_state_target(state, target_id)
       @states[state_id.to_i] = new_state
+    end
+
+    # Replace a Match state with an Empty state (for concatenation)
+    # Returns the new Empty state's ID (same as input)
+    def replace_match_with_empty(state_id : StateID) : StateID
+      state = @states[state_id.to_i]
+      case state
+      when Match
+        # Create Empty state with same next target (if any)
+        next_id = state.next || StateID.new(0)
+        @states[state_id.to_i] = Empty.new(next_id)
+      else
+        # Not a Match, leave unchanged
+      end
+      state_id
     end
 
     private def update_state_target(state : State, target_id : StateID) : State
