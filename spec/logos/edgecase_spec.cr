@@ -223,26 +223,113 @@ describe "unicode_whitespace" do
 end
 
 describe "priority_disambiguate_1" do
-  pending "matches abc with higher priority" do
-    # Requires explicit priority attribute
+  it "matches abc with higher priority" do
+    source = "abc ccc cde"
+    lexer = Logos::Lexer(Logos::Spec::Edgecase::PriorityDisambiguate1Test::Token, String, Logos::NoExtras, Nil).new(source)
+
+    expected = [
+      {Logos::Spec::Edgecase::PriorityDisambiguate1Test::Token::Abc, "abc", 0...3},
+      {Logos::Spec::Edgecase::PriorityDisambiguate1Test::Token::Abc, "ccc", 4...7},
+      {Logos::Spec::Edgecase::PriorityDisambiguate1Test::Token::Cde, "cde", 8...11},
+    ]
+
+    expected.each do |expected_token, expected_slice, expected_range|
+      result = lexer.next
+      result.should_not be_nil
+      result = result.as(Logos::Result(Logos::Spec::Edgecase::PriorityDisambiguate1Test::Token, Nil))
+      result.unwrap.should eq(expected_token)
+      lexer.slice.should eq(expected_slice)
+      lexer.span.should eq(expected_range)
+    end
+
+    lexer.next.should eq(Iterator::Stop::INSTANCE)
   end
 end
 
 describe "priority_disambiguate_2" do
-  pending "matches cde with higher priority" do
-    # Requires explicit priority attribute
+  it "matches cde with higher priority" do
+    source = "abc ccc cde"
+    lexer = Logos::Lexer(Logos::Spec::Edgecase::PriorityDisambiguate2Test::Token, String, Logos::NoExtras, Nil).new(source)
+
+    expected = [
+      {Logos::Spec::Edgecase::PriorityDisambiguate2Test::Token::Abc, "abc", 0...3},
+      {Logos::Spec::Edgecase::PriorityDisambiguate2Test::Token::Cde, "ccc", 4...7},
+      {Logos::Spec::Edgecase::PriorityDisambiguate2Test::Token::Cde, "cde", 8...11},
+    ]
+
+    expected.each do |expected_token, expected_slice, expected_range|
+      result = lexer.next
+      result.should_not be_nil
+      result = result.as(Logos::Result(Logos::Spec::Edgecase::PriorityDisambiguate2Test::Token, Nil))
+      result.unwrap.should eq(expected_token)
+      lexer.slice.should eq(expected_slice)
+      lexer.span.should eq(expected_range)
+    end
+
+    lexer.next.should eq(Iterator::Stop::INSTANCE)
   end
 end
 
 describe "loop_in_loop" do
-  pending "matches f(f*oo)* patterns" do
-    # Requires complex regex with nested loops
+  it "matches f(f*oo)* patterns" do
+    source = "foo ffoo ffffooffoooo foooo foofffffoo f ff ffo ffoofo"
+    lexer = Logos::Lexer(Logos::Spec::Edgecase::LoopInLoopTest::Token, String, Logos::NoExtras, Nil).new(source)
+
+    expected = [
+      {Logos::Spec::Edgecase::LoopInLoopTest::Token::Foo, "foo", 0...3},
+      {Logos::Spec::Edgecase::LoopInLoopTest::Token::Foo, "ffoo", 4...8},
+      {Logos::Spec::Edgecase::LoopInLoopTest::Token::Foo, "ffffooffoooo", 9...21},
+      {Logos::Spec::Edgecase::LoopInLoopTest::Token::Foo, "foooo", 22...27},
+      {Logos::Spec::Edgecase::LoopInLoopTest::Token::Foo, "foofffffoo", 28...38},
+      {Logos::Spec::Edgecase::LoopInLoopTest::Token::Foo, "f", 39...40},
+      {Logos::Spec::Edgecase::LoopInLoopTest::Token::Foo, "f", 41...42},
+      {Logos::Spec::Edgecase::LoopInLoopTest::Token::Foo, "f", 42...43},
+      {Logos::Spec::Edgecase::LoopInLoopTest::Token::Foo, "f", 44...45},
+      {Logos::Spec::Edgecase::LoopInLoopTest::Token::Foo, "f", 45...46},
+      {Logos::Spec::Edgecase::LoopInLoopTest::Token::Error, "o", 46...47},
+      {Logos::Spec::Edgecase::LoopInLoopTest::Token::Foo, "ffoo", 48...52},
+      {Logos::Spec::Edgecase::LoopInLoopTest::Token::Foo, "f", 52...53},
+      {Logos::Spec::Edgecase::LoopInLoopTest::Token::Error, "o", 53...54},
+    ]
+
+    expected.each do |expected_token, expected_slice, expected_range|
+      result = lexer.next
+      result.should_not be_nil
+      result = result.as(Logos::Result(Logos::Spec::Edgecase::LoopInLoopTest::Token, Nil))
+      result.unwrap.should eq(expected_token)
+      lexer.slice.should eq(expected_slice)
+      lexer.span.should eq(expected_range)
+    end
+
+    lexer.next.should eq(Iterator::Stop::INSTANCE)
   end
 end
 
 describe "maybe_in_loop" do
-  pending "matches f(f?oo)* patterns" do
-    # Requires complex regex with optional groups in loops
+  it "matches f(f?oo)* patterns" do
+    source = "foo ff ffoo foofoo foooofoo foooo"
+    lexer = Logos::Lexer(Logos::Spec::Edgecase::MaybeInLoopTest::Token, String, Logos::NoExtras, Nil).new(source)
+
+    expected = [
+      {Logos::Spec::Edgecase::MaybeInLoopTest::Token::Foo, "foo", 0...3},
+      {Logos::Spec::Edgecase::MaybeInLoopTest::Token::Foo, "f", 4...5},
+      {Logos::Spec::Edgecase::MaybeInLoopTest::Token::Foo, "f", 5...6},
+      {Logos::Spec::Edgecase::MaybeInLoopTest::Token::Foo, "ffoo", 7...11},
+      {Logos::Spec::Edgecase::MaybeInLoopTest::Token::Foo, "foofoo", 12...18},
+      {Logos::Spec::Edgecase::MaybeInLoopTest::Token::Foo, "foooofoo", 19...27},
+      {Logos::Spec::Edgecase::MaybeInLoopTest::Token::Foo, "foooo", 28...33},
+    ]
+
+    expected.each do |expected_token, expected_slice, expected_range|
+      result = lexer.next
+      result.should_not be_nil
+      result = result.as(Logos::Result(Logos::Spec::Edgecase::MaybeInLoopTest::Token, Nil))
+      result.unwrap.should eq(expected_token)
+      lexer.slice.should eq(expected_slice)
+      lexer.span.should eq(expected_range)
+    end
+
+    lexer.next.should eq(Iterator::Stop::INSTANCE)
   end
 end
 
@@ -288,7 +375,7 @@ end
 module Logos::Spec::Edgecase::PriorityDisambiguate1Test
   Logos.define Token do
     skip_regex "[ \\n\\t\\f]+", :SkipWhitespace
-    regex "[abc]+", :Abc
+    regex "[abc]+", :Abc, priority: 3
     regex "[cde]+", :Cde
   end
 end
@@ -297,7 +384,7 @@ module Logos::Spec::Edgecase::PriorityDisambiguate2Test
   Logos.define Token do
     skip_regex "[ \\n\\t\\f]+", :SkipWhitespace
     regex "[abc]+", :Abc
-    regex "[cde]+", :Cde
+    regex "[cde]+", :Cde, priority: 3
   end
 end
 
@@ -305,6 +392,7 @@ module Logos::Spec::Edgecase::LoopInLoopTest
   Logos.define Token do
     skip_regex "[ \\t\\n\\f]+", :SkipWhitespace
     regex "f(f*oo)*", :Foo
+    error :Error
   end
 end
 
@@ -312,5 +400,6 @@ module Logos::Spec::Edgecase::MaybeInLoopTest
   Logos.define Token do
     skip_regex "[ \\t\\n\\f]+", :SkipWhitespace
     regex "f(f?oo)*", :Foo
+    error :Error
   end
 end

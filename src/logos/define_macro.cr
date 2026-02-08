@@ -23,29 +23,33 @@ module Logos
       {% if node.is_a?(Call) %}
         # Extract callback from block or named arguments
         {% callback = nil %}
+        {% priority = nil %}
         {% if node.block %}
           {% callback = node.block %}
         {% elsif node.named_args %}
-          {% found = false %}
+          {% found_callback = false %}
+          {% found_priority = false %}
           {% for named_arg in node.named_args %}
             {% if named_arg.name == "callback" %}
               {% callback = named_arg.value %}
-              {% found = true %}
-              {% break %}
+              {% found_callback = true %}
+            {% elsif named_arg.name == "priority" %}
+              {% priority = named_arg.value %}
+              {% found_priority = true %}
             {% end %}
           {% end %}
         {% end %}
 
         {% if node.name == "token" && node.args.size == 2 %}
-          {% token_defs << {variant: node.args[1].id, pattern: node.args[0], skip: false, callback: callback} %}
+          {% token_defs << {variant: node.args[1].id, pattern: node.args[0], skip: false, callback: callback, priority: priority} %}
         {% elsif node.name == "regex" && node.args.size == 2 %}
-          {% regex_defs << {variant: node.args[1].id, pattern: node.args[0], skip: false, callback: callback} %}
+          {% regex_defs << {variant: node.args[1].id, pattern: node.args[0], skip: false, callback: callback, priority: priority} %}
         {% elsif node.name == "skip_token" && node.args.size == 2 %}
-          {% token_defs << {variant: node.args[1].id, pattern: node.args[0], skip: true, callback: callback} %}
+          {% token_defs << {variant: node.args[1].id, pattern: node.args[0], skip: true, callback: callback, priority: priority} %}
         {% elsif node.name == "skip_regex" && node.args.size == 2 %}
-          {% regex_defs << {variant: node.args[1].id, pattern: node.args[0], skip: true, callback: callback} %}
+          {% regex_defs << {variant: node.args[1].id, pattern: node.args[0], skip: true, callback: callback, priority: priority} %}
         {% elsif node.name == "error" && node.args.size == 1 %}
-          {% error_def = {variant: node.args[0].id, callback: callback} %}
+          {% error_def = {variant: node.args[0].id, callback: callback, priority: priority} %}
         {% elsif node.name == "extras" && node.args.size == 1 %}
           {% extras_type = node.args[0] %}
         {% elsif node.name == "error_type" && node.args.size == 1 %}
@@ -98,8 +102,12 @@ module Logos
           hirs << hir
           pattern_to_variant << {{ item[:variant] }}
           pattern_is_skip << {{ item[:skip] }}
-          # Use Hir complexity for priority (higher complexity = higher priority)
-          pattern_priority << hir.complexity
+          # Use explicit priority if set, otherwise Hir complexity
+          {% if item[:priority] %}
+            pattern_priority << {{ item[:priority] }}
+          {% else %}
+            pattern_priority << hir.complexity
+          {% end %}
         {% end %}
 
         # Regex patterns
@@ -108,8 +116,12 @@ module Logos
           hirs << hir
           pattern_to_variant << {{ item[:variant] }}
           pattern_is_skip << {{ item[:skip] }}
-          # Use Hir complexity for priority (higher complexity = higher priority)
-          pattern_priority << hir.complexity
+          # Use explicit priority if set, otherwise Hir complexity
+          {% if item[:priority] %}
+            pattern_priority << {{ item[:priority] }}
+          {% else %}
+            pattern_priority << hir.complexity
+          {% end %}
         {% end %}
 
         # Store metadata in class variables
