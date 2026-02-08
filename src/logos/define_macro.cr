@@ -167,7 +167,7 @@ module Logos
       end
 
       # Lex method
-      def self.lex(lexer : ::Logos::Lexer(self, String, {{ extras_type }}, {{ error_type }})) : ::Logos::Result(self, {{ error_type }})?
+      def self.lex(lexer : ::Logos::Lexer(self, ::String, {{ extras_type }}, {{ error_type }})) : ::Logos::Result(self, {{ error_type }})?
         dfa = self.dfa
         pattern_to_variant = self.pattern_to_variant
         pattern_is_skip = self.pattern_is_skip
