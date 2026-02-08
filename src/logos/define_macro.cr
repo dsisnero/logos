@@ -63,20 +63,38 @@ module Logos
     {% all_defs = token_defs + regex_defs %}
     {% has_callbacks = all_defs.any? { |item| item[:callback] } %}
 
-
+    # Collect unique variants (outside begin block to avoid nested macro issues)
+    {% unique_variant_ids = [] of String %}
+    {% unique_variants = [] of Crystal::ASTNode %}
+    {% for item in token_defs %}
+      {% variant_id = item[:variant].id.stringify %}
+      {% unless unique_variant_ids.includes?(variant_id) %}
+        {% unique_variant_ids << variant_id %}
+        {% unique_variants << item[:variant] %}
+      {% end %}
+    {% end %}
+    {% for item in regex_defs %}
+      {% variant_id = item[:variant].id.stringify %}
+      {% unless unique_variant_ids.includes?(variant_id) %}
+        {% unique_variant_ids << variant_id %}
+        {% unique_variants << item[:variant] %}
+      {% end %}
+    {% end %}
+    {% if error_def %}
+      {% variant_id = error_def[:variant].id.stringify %}
+      {% unless unique_variant_ids.includes?(variant_id) %}
+        {% unique_variant_ids << variant_id %}
+        {% unique_variants << error_def[:variant] %}
+      {% end %}
+    {% end %}
 
     # Generate the enum with all methods
     {% begin %}
+
     enum {{ name }}
-      # Variants
-      {% for item in token_defs %}
-        {{ item[:variant] }}
-      {% end %}
-      {% for item in regex_defs %}
-        {{ item[:variant] }}
-      {% end %}
-      {% if error_def %}
-        {{ error_def[:variant] }}
+      # Variants (deduplicated)
+      {% for variant in unique_variants %}
+        {{ variant }}
       {% end %}
 
       # Class variables
@@ -279,7 +297,7 @@ module Logos
             # Skip variant - return nil to continue lexing
             return nil
           end
-        elsif error_variant = self.error_variant
+         elsif error_variant = self.error_variant
           # No pattern matched, but we have an error variant
           # Match a single UTF-8 code point
           if char = lexer.remainder[0]?
@@ -290,11 +308,23 @@ module Logos
             return nil
           end
          else
-           # No match and no error variant
-           if ENV["LOGOS_DEBUG"]?
-             puts "DEBUG: no match for remainder: '#{lexer.remainder.inspect}' (bytes: #{lexer.remainder.to_slice.hexdump if lexer.remainder.responds_to?(:to_slice)})"
+           # No match and no error variant - produce lexing error
+           # Consume one UTF-8 code point and return error
+           if char = lexer.remainder[0]?
+             lexer.bump(char.bytesize)
+             # Create error value based on error_type
+             # For Nil, use nil; for other types, try .new or default
+             {% if error_type.id == Nil.id %}
+               error_value = nil
+             {% else %}
+               # Try to construct error value - default to .new without arguments
+               error_value = {{ error_type }}.new
+             {% end %}
+             return ::Logos::Result(self, {{ error_type }}).error(error_value)
+           else
+             # End of input
+             return nil
            end
-           return nil
         end
       end
     end

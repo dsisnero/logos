@@ -108,8 +108,13 @@ module Logos
         when Nil
           # Skip token (lex returned nil) or end of input?
           # If we're at end of source, stop
-          return stop if @token_end >= @source.length
+          if @token_end >= @source.length
+            @token_start = @token_end
+            return stop
+          end
           # Otherwise continue looping (skip token)
+          # Update token start for next iteration
+          @token_start = @token_end
         else
           # Should not happen
           return stop
