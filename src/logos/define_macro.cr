@@ -344,14 +344,15 @@ module Logos
                  end
                end
 
-                 # Handle Filter::Emit and FilterResult::Emit - ignore value for now
-                 if __callback_result.is_a?(::Logos::Filter::Emit) ||
-                    __callback_result.is_a?(::Logos::FilterResult::Emit)
-                   if ENV["LOGOS_DEBUG"]?
-                     puts "DEBUG: Callback returned Emit with value, ignoring value for now"
-                   end
-                   # TODO: Store emitted value somewhere
-                 end
+                  # Handle Filter::Emit and FilterResult::Emit - store value in lexer
+                  if __callback_result.is_a?(::Logos::Filter::Emit) ||
+                     __callback_result.is_a?(::Logos::FilterResult::Emit)
+                    if ENV["LOGOS_DEBUG"]?
+                      puts "DEBUG: Callback returned Emit with value: #{__callback_result.value.inspect}"
+                    end
+                    # Store emitted value in lexer for later access
+                    lexer.callback_value = __callback_result.value
+                  end
               {% end %}
             {% end %}
             end

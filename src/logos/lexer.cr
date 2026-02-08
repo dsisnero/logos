@@ -6,6 +6,7 @@ module Logos
     @token_start : Int32
     @token_end : Int32
     @extras : Extras
+    @callback_value : (Int64 | Float64 | String | Nil) = nil
 
     # Create a new `Lexer`.
     #
@@ -27,6 +28,9 @@ module Logos
 
     # Extras associated with the `Token`.
     property extras : Extras
+
+    # Last callback return value (for tokens with associated data)
+    property callback_value : (Int64 | Float64 | String | Nil)
 
     # Source from which this Lexer is reading tokens.
     def source : Source
