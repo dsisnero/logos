@@ -19,6 +19,22 @@ module Logos
       {% nodes = [block.body] %}
     {% end %}
 
+    # Helper to parse variant definition
+    {% def parse_variant(variant_node)
+         # variant_node could be SymbolLiteral (:Else) or Call (Integer(Int64))
+         if variant_node.is_a?(SymbolLiteral)
+           {name: variant_node.id, type: nil, ast: variant_node.id}
+         elsif variant_node.is_a?(Call)
+           # Call like Integer(Int64)
+           # Extract type argument (first argument)
+           type = variant_node.args[0] if variant_node.args.size > 0
+           {name: variant_node.name.id, type: type, ast: variant_node}
+         else
+           # Assume it's already an identifier
+           {name: variant_node.id, type: nil, ast: variant_node}
+         end
+       end %}
+
     {% for node in nodes %}
       {% if node.is_a?(Call) %}
         # Extract callback from block or named arguments
@@ -41,15 +57,35 @@ module Logos
         {% end %}
 
         {% if node.name == "token" && node.args.size == 2 %}
-          {% token_defs << {variant: node.args[1].id, pattern: node.args[0], skip: false, callback: callback, priority: priority} %}
+          {% variant = node.args[1] %}
+          {% if variant.is_a?(SymbolLiteral) %}
+            {% variant = variant.id %}
+          {% end %}
+          {% token_defs << {variant: variant, pattern: node.args[0], skip: false, callback: callback, priority: priority} %}
         {% elsif node.name == "regex" && node.args.size == 2 %}
-          {% regex_defs << {variant: node.args[1].id, pattern: node.args[0], skip: false, callback: callback, priority: priority} %}
+          {% variant = node.args[1] %}
+          {% if variant.is_a?(SymbolLiteral) %}
+            {% variant = variant.id %}
+          {% end %}
+          {% regex_defs << {variant: variant, pattern: node.args[0], skip: false, callback: callback, priority: priority} %}
         {% elsif node.name == "skip_token" && node.args.size == 2 %}
-          {% token_defs << {variant: node.args[1].id, pattern: node.args[0], skip: true, callback: callback, priority: priority} %}
+          {% variant = node.args[1] %}
+          {% if variant.is_a?(SymbolLiteral) %}
+            {% variant = variant.id %}
+          {% end %}
+          {% token_defs << {variant: variant, pattern: node.args[0], skip: true, callback: callback, priority: priority} %}
         {% elsif node.name == "skip_regex" && node.args.size == 2 %}
-          {% regex_defs << {variant: node.args[1].id, pattern: node.args[0], skip: true, callback: callback, priority: priority} %}
+          {% variant = node.args[1] %}
+          {% if variant.is_a?(SymbolLiteral) %}
+            {% variant = variant.id %}
+          {% end %}
+          {% regex_defs << {variant: variant, pattern: node.args[0], skip: true, callback: callback, priority: priority} %}
         {% elsif node.name == "error" && node.args.size == 1 %}
-          {% error_def = {variant: node.args[0].id, callback: callback, priority: priority} %}
+          {% variant = node.args[0] %}
+          {% if variant.is_a?(SymbolLiteral) %}
+            {% variant = variant.id %}
+          {% end %}
+          {% error_def = {variant: variant, callback: callback, priority: priority} %}
         {% elsif node.name == "extras" && node.args.size == 1 %}
           {% extras_type = node.args[0] %}
         {% elsif node.name == "error_type" && node.args.size == 1 %}
@@ -67,24 +103,39 @@ module Logos
     {% unique_variant_ids = [] of String %}
     {% unique_variants = [] of Crystal::ASTNode %}
     {% for item in token_defs %}
-      {% variant_id = item[:variant].id.stringify %}
+      {% variant = item[:variant] %}
+      {% if variant.is_a?(Call) %}
+        {% variant_id = variant.name.id.stringify %}
+      {% else %}
+        {% variant_id = variant.id.stringify %}
+      {% end %}
       {% unless unique_variant_ids.includes?(variant_id) %}
         {% unique_variant_ids << variant_id %}
-        {% unique_variants << item[:variant] %}
+        {% unique_variants << variant %}
       {% end %}
     {% end %}
     {% for item in regex_defs %}
-      {% variant_id = item[:variant].id.stringify %}
+      {% variant = item[:variant] %}
+      {% if variant.is_a?(Call) %}
+        {% variant_id = variant.name.id.stringify %}
+      {% else %}
+        {% variant_id = variant.id.stringify %}
+      {% end %}
       {% unless unique_variant_ids.includes?(variant_id) %}
         {% unique_variant_ids << variant_id %}
-        {% unique_variants << item[:variant] %}
+        {% unique_variants << variant %}
       {% end %}
     {% end %}
     {% if error_def %}
-      {% variant_id = error_def[:variant].id.stringify %}
+      {% variant = error_def[:variant] %}
+      {% if variant.is_a?(Call) %}
+        {% variant_id = variant.name.id.stringify %}
+      {% else %}
+        {% variant_id = variant.id.stringify %}
+      {% end %}
       {% unless unique_variant_ids.includes?(variant_id) %}
         {% unique_variant_ids << variant_id %}
-        {% unique_variants << error_def[:variant] %}
+        {% unique_variants << variant %}
       {% end %}
     {% end %}
 
@@ -267,24 +318,40 @@ module Logos
                 return ::Logos::Result(self, {{ error_type }}).error(error_value)
               end
 
-              # Handle Skip types
-              if __callback_result.is_a?(::Logos::Skip) ||
-                 __callback_result.is_a?(::Logos::Filter::Skip) ||
-                 __callback_result.is_a?(::Logos::FilterResult::Skip)
-                if ENV["LOGOS_DEBUG"]?
-                  puts "DEBUG: Callback returned Skip, skipping token"
-                end
-                return nil
-              end
+               # Handle Skip types
+               if __callback_result.is_a?(::Logos::Skip) ||
+                  __callback_result.is_a?(::Logos::Filter::Skip) ||
+                  __callback_result.is_a?(::Logos::FilterResult::Skip)
+                 if ENV["LOGOS_DEBUG"]?
+                   puts "DEBUG: Callback returned Skip, skipping token"
+                 end
+                 return nil
+               end
 
-                # Handle Filter::Emit and FilterResult::Emit - ignore value for now
-                if __callback_result.is_a?(::Logos::Filter::Emit) ||
-                   __callback_result.is_a?(::Logos::FilterResult::Emit)
-                  if ENV["LOGOS_DEBUG"]?
-                    puts "DEBUG: Callback returned Emit with value, ignoring value for now"
-                  end
-                  # TODO: Store emitted value somewhere
-                end
+               # Handle boolean filter callbacks (true = accept, false = skip)
+               if __callback_result.is_a?(Bool)
+                 if __callback_result
+                   # Accept token - continue to emit variant
+                   if ENV["LOGOS_DEBUG"]?
+                     puts "DEBUG: Callback returned true, accepting token"
+                   end
+                 else
+                   # Skip token
+                   if ENV["LOGOS_DEBUG"]?
+                     puts "DEBUG: Callback returned false, skipping token"
+                   end
+                   return nil
+                 end
+               end
+
+                 # Handle Filter::Emit and FilterResult::Emit - ignore value for now
+                 if __callback_result.is_a?(::Logos::Filter::Emit) ||
+                    __callback_result.is_a?(::Logos::FilterResult::Emit)
+                   if ENV["LOGOS_DEBUG"]?
+                     puts "DEBUG: Callback returned Emit with value, ignoring value for now"
+                   end
+                   # TODO: Store emitted value somewhere
+                 end
               {% end %}
             {% end %}
             end
@@ -326,8 +393,8 @@ module Logos
              return nil
            end
         end
-      end
-    end
-    {% end %}
+       end
+     end
+     {% end %}
   end
 end
