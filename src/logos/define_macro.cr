@@ -248,7 +248,7 @@ module Logos
       end
 
       # Lex method
-      def self.lex(lexer : ::Logos::Lexer(self, ::String, {{ extras_type }}, {{ error_type }})) : ::Logos::Result(self, {{ error_type }})?
+      def self.lex(__lexer : ::Logos::Lexer(self, ::String, {{ extras_type }}, {{ error_type }})) : ::Logos::Result(self, {{ error_type }})?
         dfa = self.dfa
         pattern_to_variant = self.pattern_to_variant
         pattern_is_skip = self.pattern_is_skip
@@ -256,11 +256,11 @@ module Logos
 
         # DEBUG
         if ENV["LOGOS_DEBUG"]?
-          puts "DEBUG: lexer remainder = '#{lexer.remainder.inspect}' (#{lexer.remainder.class})"
+          puts "DEBUG: lexer remainder = '#{__lexer.remainder.inspect}' (#{__lexer.remainder.class})"
         end
 
         # Find longest match
-        match = dfa.find_longest_match(lexer.remainder)
+        match = dfa.find_longest_match(__lexer.remainder)
         if ENV["LOGOS_DEBUG"]?
           puts "DEBUG: find_longest_match returned: #{match.inspect}"
         end
@@ -271,7 +271,7 @@ module Logos
           # DEBUG
           if ENV["LOGOS_DEBUG"]?
             puts "DEBUG: matched at #{end_pos}, pattern_ids: #{pattern_ids.map(&.to_i)}"
-            puts "DEBUG: matched substring: '#{lexer.remainder[0, end_pos]}'"
+            puts "DEBUG: matched substring: '#{__lexer.remainder[0, end_pos]}'"
             if pattern_ids.empty?
               puts "DEBUG: WARNING: pattern_ids empty but match state accepting"
             end
@@ -287,7 +287,7 @@ module Logos
           is_skip = pattern_is_skip[pattern_id.to_i]
 
           # Advance lexer by matched length
-          lexer.bump(end_pos)
+          __lexer.bump(end_pos)
 
           # Call callback if any
           {% if has_callbacks %}
@@ -299,9 +299,9 @@ module Logos
                  {% puts "DEBUG: Callback body: #{item[:callback].body}" %}
                  {% cb = item[:callback] %}
              when {{ i }}
-              {% if cb.args.size == 1 %}
-                {{ cb.args[0].id }} = lexer
-              {% end %}
+               {% if cb.args.size == 1 %}
+                 {{ cb.args[0].id }} = __lexer
+               {% end %}
               __callback_result = begin
                 {{ cb.body }}
               end
@@ -351,7 +351,7 @@ module Logos
                       puts "DEBUG: Callback returned Emit with value: #{__callback_result.value.inspect}"
                     end
                     # Store emitted value in lexer for later access
-                    lexer.callback_value = __callback_result.value
+                    __lexer.callback_value = __callback_result.value
                   end
               {% end %}
             {% end %}
@@ -368,8 +368,8 @@ module Logos
          elsif error_variant = self.error_variant
           # No pattern matched, but we have an error variant
           # Match a single UTF-8 code point
-          if char = lexer.remainder[0]?
-            lexer.bump(char.bytesize)
+          if char = __lexer.remainder[0]?
+            __lexer.bump(char.bytesize)
             return ::Logos::Result(self, {{ error_type }}).ok(error_variant)
           else
             # End of input
@@ -378,8 +378,8 @@ module Logos
          else
            # No match and no error variant - produce lexing error
            # Consume one UTF-8 code point and return error
-           if char = lexer.remainder[0]?
-             lexer.bump(char.bytesize)
+           if char = __lexer.remainder[0]?
+             __lexer.bump(char.bytesize)
              # Create error value based on error_type
              # For Nil, use nil; for other types, try .new or default
              {% if error_type.id == Nil.id %}

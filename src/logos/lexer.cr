@@ -32,6 +32,26 @@ module Logos
     # Last callback return value (for tokens with associated data)
     property callback_value : (Int64 | Float64 | String | Nil)
 
+    # Get callback value as Int64
+    def int_value : Int64?
+      @callback_value.as?(Int64)
+    end
+
+    # Get callback value as Float64
+    def float_value : Float64?
+      @callback_value.as?(Float64)
+    end
+
+    # Get callback value as String
+    def string_value : String?
+      @callback_value.as?(String)
+    end
+
+    # Clear callback value
+    def clear_callback_value : Nil
+      @callback_value = nil
+    end
+
     # Source from which this Lexer is reading tokens.
     def source : Source
       @source
