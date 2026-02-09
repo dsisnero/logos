@@ -414,6 +414,9 @@ module Regex::Syntax
       when 'd', 'D', 'w', 'W', 's', 'S'
         # Perl character classes
         parse_perl_character_class
+      when 'p', 'P'
+        # Unicode property classes
+        parse_unicode_property_class
       when 'b', 'B', 'A', 'z', 'Z'
         # Assertions
         parse_assertion
@@ -465,6 +468,32 @@ module Regex::Syntax
       else
         Hir::CharClass.new
       end
+    end
+
+    private def parse_unicode_property_class : Hir::Node
+      # Parse \p{...} or \P{...}
+      negated = current_char == 'P'
+      advance  # skip 'p' or 'P'
+
+      # Expect '{'
+      raise ParseError.new("invalid Unicode property class: expected '{'") unless current_char == '{'
+      advance  # skip '{'
+
+      # Parse property name
+      property = ""
+      while !eof? && current_char != '}'
+        property += current_char
+        advance
+      end
+
+      # Expect '}'
+      raise ParseError.new("invalid Unicode property class: expected '}'") unless current_char == '}'
+      advance  # skip '}'
+
+      # TODO: Actually look up Unicode property and convert to character ranges
+      # For now, return placeholder (empty character class)
+      # Note: \P{...} means negated, so we set negated flag accordingly
+      Hir::CharClass.new(negated, [] of Range(UInt8, UInt8))
     end
 
     private def parse_assertion : Hir::Node
