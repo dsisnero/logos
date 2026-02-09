@@ -9,7 +9,7 @@ module Logos::Spec
   end
 
   # Define class method lex
-  def DummyToken.lex(lexer : Logos::Lexer(self, String, NoExtras, Nil)) : Logos::Result(self, Nil)?
+  def DummyToken.lex(lexer : Logos::Lexer(self, ::String, NoExtras, Nil)) : Logos::Result(self, Nil)?
     nil
   end
 end

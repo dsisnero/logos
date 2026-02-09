@@ -1,7 +1,7 @@
 require "../spec_helper"
 require "regex-automata"
 
-module Logos::Spec::String
+module Logos::Spec::StringTests
   pending "token variants with associated data (logos-gwz)" do
     it "parses string literals with escape sequences" do
       # Requires token variants with associated data (callbacks returning values)
