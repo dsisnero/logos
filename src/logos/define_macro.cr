@@ -251,7 +251,8 @@ module Logos
       end
 
       # Lex method
-      def self.lex(__lexer : ::Logos::Lexer(self, ::String, {{ extras_type }}, {{ error_type }})) : ::Logos::Result(self, {{ error_type }})?
+      {% source_type = utf8_flag ? "::String".id : "::Slice(::UInt8)".id %}
+      def self.lex(__lexer : ::Logos::Lexer(self, {{ source_type }}, {{ extras_type }}, {{ error_type }})) : ::Logos::Result(self, {{ error_type }})?
         dfa = self.dfa
         pattern_to_variant = self.pattern_to_variant
         pattern_is_skip = self.pattern_is_skip
@@ -370,33 +371,61 @@ module Logos
           end
          elsif error_variant = self.error_variant
           # No pattern matched, but we have an error variant
-          # Match a single UTF-8 code point
-          if char = __lexer.remainder[0]?
-            __lexer.bump(char.bytesize)
-            return ::Logos::Result(self, {{ error_type }}).ok(error_variant)
-          else
-            # End of input
-            return nil
-          end
+          # Match a single byte (or UTF-8 code point for String source)
+          {% if utf8_flag %}
+            if char = __lexer.remainder[0]?
+              __lexer.bump(char.bytesize)
+              return ::Logos::Result(self, {{ error_type }}).ok(error_variant)
+            else
+              # End of input
+              return nil
+            end
+          {% else %}
+            # Byte mode - consume single byte
+            if __lexer.remainder.length > 0
+              __lexer.bump(1)
+              return ::Logos::Result(self, {{ error_type }}).ok(error_variant)
+            else
+              # End of input
+              return nil
+            end
+          {% end %}
          else
-           # No match and no error variant - produce lexing error
-           # Consume one UTF-8 code point and return error
-           if char = __lexer.remainder[0]?
-             __lexer.bump(char.bytesize)
-             # Create error value based on error_type
-             # For Nil, use nil; for other types, try .new or default
-             {% if error_type.id == Nil.id %}
-               error_value = nil
-             {% else %}
-               # Try to construct error value - default to .new without arguments
-               error_value = {{ error_type }}.new
-             {% end %}
-             return ::Logos::Result(self, {{ error_type }}).error(error_value)
-           else
-             # End of input
-             return nil
-           end
-        end
+            # No match and no error variant - produce lexing error
+            {% if utf8_flag %}
+              # String mode - consume one UTF-8 code point
+              if char = __lexer.remainder[0]?
+                __lexer.bump(char.bytesize)
+                # Create error value based on error_type
+                {% if error_type.id == Nil.id %}
+                  error_value = nil
+                {% else %}
+                  # Try to construct error value - default to .new without arguments
+                  error_value = {{ error_type }}.new
+                {% end %}
+                return ::Logos::Result(self, {{ error_type }}).error(error_value)
+              else
+                # End of input
+                return nil
+              end
+            {% else %}
+              # Byte mode - consume single byte
+              if __lexer.remainder.length > 0
+                __lexer.bump(1)
+                # Create error value based on error_type
+                {% if error_type.id == Nil.id %}
+                  error_value = nil
+                {% else %}
+                  # Try to construct error value - default to .new without arguments
+                  error_value = {{ error_type }}.new
+                {% end %}
+                return ::Logos::Result(self, {{ error_type }}).error(error_value)
+              else
+                # End of input
+                return nil
+              end
+            {% end %}
+         end
        end
      end
      {% end %}

@@ -163,9 +163,13 @@ module Regex::Automata::DFA
     # Find the longest match in the input string
     # Returns tuple of (end_position, matched_pattern_ids) or nil if no match
     def find_longest_match(input : String) : Tuple(Int32, Array(PatternID))?
+      find_longest_match(input.to_slice)
+    end
+
+    # Find the longest match in a byte slice
+    def find_longest_match(slice : Bytes) : Tuple(Int32, Array(PatternID))?
       last_match : Tuple(Int32, Array(PatternID))? = nil
       current_state_id = @start
-      slice = input.to_slice
       states = @states
       byte_classifier = @byte_classifier
 

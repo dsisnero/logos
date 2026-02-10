@@ -214,23 +214,21 @@ module Regex::Syntax
 
       while !eof? && current_char != ']'
         start_byte = parse_character_class_char
-        start_byte_u8 = start_byte.ord.to_u8
 
         if current_char == '-' && peek_next_char != ']'
           # Range
           advance # skip '-'
           end_byte = parse_character_class_char
-          end_byte_u8 = end_byte.ord.to_u8
 
           # Validate range
-          if start_byte_u8 > end_byte_u8
+          if start_byte > end_byte
             raise ParseError.new("invalid character class range")
           end
 
-          ranges << (start_byte_u8..end_byte_u8)
+          ranges << (start_byte..end_byte)
         else
           # Single character
-          ranges << (start_byte_u8..start_byte_u8)
+          ranges << (start_byte..start_byte)
         end
       end
 
@@ -242,14 +240,14 @@ module Regex::Syntax
       Hir::CharClass.new(negated, ranges)
     end
 
-    private def parse_character_class_char : Char
+    private def parse_character_class_char : UInt8
       if current_char == '\\'
         advance
-        parse_escape_char
+        parse_escape_byte
       else
-        char = current_char
+        byte = current_char.ord.to_u8
         advance
-        char
+        byte
       end
     end
 
@@ -607,6 +605,83 @@ module Regex::Syntax
         char = current_char
         advance
         char
+      end
+    end
+
+    private def parse_escape_byte : UInt8
+      case current_char
+      when 'n'
+        advance
+        '\n'.ord.to_u8
+      when 't'
+        advance
+        '\t'.ord.to_u8
+      when 'r'
+        advance
+        '\r'.ord.to_u8
+      when 'f'
+        advance
+        '\f'.ord.to_u8
+      when 'v'
+        advance
+        '\v'.ord.to_u8
+      when 'a'
+        advance
+        '\a'.ord.to_u8
+      when 'e'
+        advance
+        '\e'.ord.to_u8
+      when '0'..'7'
+        # Parse octal escape (1-3 octal digits)
+        value = 0
+        digits = 0
+        while digits < 3 && current_char.in?('0'..'7')
+          value = value * 8 + (current_char - '0')
+          advance
+          digits += 1
+        end
+        # Validate byte range
+        if value > 255
+          raise ParseError.new("octal escape value out of byte range: #{value}")
+        end
+        value.to_u8
+      when 'x'
+        advance  # skip 'x'
+        if current_char == '{'
+          # \x{...} variable-length hex (1-6 digits)
+          advance  # skip '{'
+          value = 0
+          digits = 0
+          while digits < 6 && (hex = current_char.to_i?(16))
+            value = value * 16 + hex
+            advance
+            digits += 1
+          end
+          raise ParseError.new("invalid hex escape: expected '}'") if current_char != '}'
+          advance  # skip '}'
+          # Validate value range (0..255 for byte mode)
+          if value > 255
+            raise ParseError.new("hex escape value out of byte range: #{value}")
+          end
+          value.to_u8
+        else
+          # \xHH exactly two hex digits
+          raise ParseError.new("invalid hex escape: expected hex digit") unless current_char.to_i?(16)
+          value = current_char.to_i(16)
+          advance
+          raise ParseError.new("invalid hex escape: expected second hex digit") unless current_char.to_i?(16)
+          value = value * 16 + current_char.to_i(16)
+          advance
+          if value > 255
+            raise ParseError.new("hex escape value out of byte range: #{value}")
+          end
+          value.to_u8
+        end
+      else
+        # Escaped character like \\, \., \*, etc.
+        char = current_char
+        advance
+        char.ord.to_u8
       end
     end
 
