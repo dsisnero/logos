@@ -1,5 +1,6 @@
 require "./nfa"
 require "./byte_classes"
+require "./look"
 require "set"
 
 module Regex::Automata::DFA
@@ -9,19 +10,26 @@ module Regex::Automata::DFA
   # DFA state with transitions for each byte class
   class State
     getter id : StateID
-    getter next : Array(StateID)    # indexed by byte class
-    getter match : Array(PatternID) # empty if not accepting
+    getter next : Array(StateID)       # indexed by byte class
+    getter match : Array(PatternID)    # empty if not accepting
+    getter look_mask : UInt8           # bits indicating which look-around kinds are present
+    getter satisfied_look_mask : UInt8 # bits indicating which look-around conditions are satisfied
+    getter? is_from_word : Bool        # whether previous byte was a word byte (for word boundaries)
+    getter? is_half_crlf : Bool        # whether we're in a half-CRLF state (for CRLF anchors)
+    property eoi_next : StateID        # transition on end-of-input (-1 = none)
 
-    def initialize(@id : StateID, byte_classes : Int32)
+    def initialize(@id : StateID, byte_classes : Int32, @look_mask : UInt8 = 0, @satisfied_look_mask : UInt8 = 0, @is_from_word : Bool = false, @is_half_crlf : Bool = false)
       @next = Array.new(byte_classes, StateID.new(-1)) # -1 = no transition
       @match = [] of PatternID
+      @eoi_next = StateID.new(-1)
     end
 
     # Create a copy of this state with new ID
     def dup(new_id : StateID) : State
-      state = State.new(new_id, @next.size)
+      state = State.new(new_id, @next.size, @look_mask, @satisfied_look_mask, @is_from_word, @is_half_crlf)
       state.next.replace(@next.dup)
       state.match.replace(@match.dup)
+      state.eoi_next = @eoi_next
       state
     end
 
@@ -260,8 +268,10 @@ module Regex::Automata::DFA
   class Builder
     @nfa : NFA::NFA
     @dfa_states : Array(State)
-    @state_map : Hash(Set(StateID), StateID) # NFA state set -> DFA state ID
+    @state_map : Hash(Tuple(Set(StateID), UInt8, Bool, Bool), StateID) # (NFA state set, satisfied_look_mask, is_from_word, is_half_crlf) -> DFA state ID
     @byte_classes : ByteClasses
+    @nfa_has_word : Bool
+    @nfa_has_crlf : Bool
 
     def initialize(@nfa : NFA::NFA, byte_classes : ByteClasses | Int32 = 256)
       @byte_classes = case byte_classes
@@ -273,14 +283,31 @@ module Regex::Automata::DFA
                         raise "Unreachable"
                       end
       @dfa_states = [] of State
-      @state_map = {} of Set(StateID) => StateID
+      @state_map = {} of Tuple(Set(StateID), UInt8, Bool, Bool) => StateID
+
+      # Precompute whether NFA contains word boundary or CRLF assertions
+      @nfa_has_word = false
+      @nfa_has_crlf = false
+      @nfa.states.each do |state|
+        if state.is_a?(NFA::Look)
+          case state.kind
+          when NFA::Look::Kind::WordBoundary, NFA::Look::Kind::NonWordBoundary
+            @nfa_has_word = true
+          when NFA::Look::Kind::StartText, NFA::Look::Kind::EndText, NFA::Look::Kind::EndTextWithNewline
+            # These are start/end text anchors, not CRLF line anchors
+            # CRLF anchors are not represented in NFA::Look::Kind (only Start/End)
+            # We'll treat them as CRLF? Actually Start and End are line anchors (^, $) which can be CRLF-aware
+            # but our NFA doesn't distinguish. We'll need to handle later.
+          end
+        end
+      end
     end
 
     # Build DFA from NFA using subset construction
     def build : DFA
       # Start with epsilon closure of NFA start state
       start_set = @nfa.epsilon_closure(Set{@nfa.start_unanchored})
-      start_id = add_dfa_state(start_set)
+      start_id = add_dfa_state(start_set, 0_u8, false, false)
 
       # Process queue of unprocessed DFA states
       queue = [start_id]
@@ -292,21 +319,27 @@ module Regex::Automata::DFA
 
       while !queue.empty?
         dfa_id = queue.pop
-         dfa_state = @dfa_states[dfa_id.to_i]
+        dfa_state = @dfa_states[dfa_id.to_i]
 
-         if ENV["LOGOS_DEBUG_DFA_BUILD"]? && @dfa_states.size % 10 == 0
-           puts "DFA build: processing state #{dfa_id.to_i}, total states #{@dfa_states.size}, queue size #{queue.size}"
-         end
+        if ENV["LOGOS_DEBUG_DFA_BUILD"]? && @dfa_states.size % 10 == 0
+          puts "DFA build: processing state #{dfa_id.to_i}, total states #{@dfa_states.size}, queue size #{queue.size}"
+        end
 
-         # Find NFA set for this DFA state
-         nfa_set = nil
-         @state_map.each do |set, id|
-           if id == dfa_id
-             nfa_set = set
-             break
-           end
-         end
-         next if nfa_set.nil? # Should not happen
+        # Find NFA set for this DFA state
+        nfa_set = nil
+        satisfied_look_mask = 0_u8
+        is_from_word = false
+        is_half_crlf = false
+        @state_map.each do |key, id|
+          if id == dfa_id
+            nfa_set = key[0]
+            satisfied_look_mask = key[1]
+            is_from_word = key[2]
+            is_half_crlf = key[3]
+            break
+          end
+        end
+        next if nfa_set.nil? # Should not happen
 
                 # For each byte class, compute transition
         @byte_classes.alphabet_len.times do |byte_class|
@@ -321,11 +354,34 @@ module Regex::Automata::DFA
             end
           end
 
-          next_set = @nfa.epsilon_closure(next_set)
-          if !next_set.empty?
-            next_id = @state_map[next_set]?
+          # Update satisfied look mask for the next position
+          # Start assertions (^, \A) are only true at position 0
+          # After consuming a byte, we're no longer at start
+          next_satisfied_look_mask = satisfied_look_mask & ~0b00010001_u8 # Clear Start (bit 0) and StartText (bit 4)
+
+          # Update word boundary assertions if present
+          if (satisfied_look_mask & 0b00001100_u8) != 0 # WordBoundary (bit 2) or NonWordBoundary (bit 3) present
+            word_boundary_satisfied = (is_from_word != Regex::Automata.is_word_byte(byte))
+            if word_boundary_satisfied
+              next_satisfied_look_mask |= 0b00000100_u8  # Set WordBoundary bit
+              next_satisfied_look_mask &= ~0b00001000_u8 # Clear NonWordBoundary bit
+            else
+              next_satisfied_look_mask &= ~0b00000100_u8 # Clear WordBoundary bit
+              next_satisfied_look_mask |= 0b00001000_u8  # Set NonWordBoundary bit
+            end
+          end
+
+          # Determine next is_from_word flag (for word boundary detection)
+          next_is_from_word = @nfa_has_word && Regex::Automata.is_word_byte(byte)
+          # TODO: Handle CRLF anchors
+          next_is_half_crlf = false
+
+          next_set_closure = @nfa.epsilon_closure_with_look(next_set, next_satisfied_look_mask)
+          if !next_set_closure.empty?
+            key = {next_set_closure, next_satisfied_look_mask, next_is_from_word, next_is_half_crlf}
+            next_id = @state_map[key]?
             if next_id.nil?
-              next_id = add_dfa_state(next_set)
+              next_id = add_dfa_state(next_set, next_satisfied_look_mask, next_is_from_word, next_is_half_crlf)
               unless processed.includes?(next_id)
                 queue << next_id
                 processed.add(next_id)
@@ -339,19 +395,60 @@ module Regex::Automata::DFA
       DFA.new(@dfa_states, start_id, @byte_classes)
     end
 
-    private def add_dfa_state(nfa_set : Set(StateID)) : StateID
+    private def add_dfa_state(nfa_set : Set(StateID), satisfied_look_mask : UInt8 = 0, is_from_word : Bool = false, is_half_crlf : Bool = false) : StateID
+      # First compute epsilon closure with the given satisfied look conditions
+      closure = @nfa.epsilon_closure_with_look(nfa_set, satisfied_look_mask)
+
+      # Check if we already have a DFA state for this (closure, satisfied_look_mask)
+      key = {closure, satisfied_look_mask, is_from_word, is_half_crlf}
+      if existing = @state_map[key]?
+        return existing
+      end
+
       dfa_id = StateID.new(@dfa_states.size)
-      state = State.new(dfa_id, @byte_classes.alphabet_len)
+
+      # Compute look mask from NFA states that are look-around assertions
+      look_mask = 0_u8
+      closure.each do |nfa_id|
+        nfa_state = @nfa.states[nfa_id.to_i]
+        if nfa_state.is_a?(NFA::Look)
+          # Map look kind to bit position (0-6)
+          bit = case nfa_state.kind
+                when NFA::Look::Kind::Start
+                  0
+                when NFA::Look::Kind::End
+                  1
+                when NFA::Look::Kind::WordBoundary
+                  2
+                when NFA::Look::Kind::NonWordBoundary
+                  3
+                when NFA::Look::Kind::StartText
+                  4
+                when NFA::Look::Kind::EndText
+                  5
+                when NFA::Look::Kind::EndTextWithNewline
+                  6
+                else
+                  # Should never happen
+                  -1
+                end
+          if bit >= 0
+            look_mask |= (1 << bit).to_u8
+          end
+        end
+      end
+
+      state = State.new(dfa_id, @byte_classes.alphabet_len, look_mask, satisfied_look_mask, is_from_word, is_half_crlf)
 
       # Check if any NFA state in set is a match
       if ENV["LOGOS_DEBUG_DFA"]?
-        puts "DFA state #{dfa_id.to_i}: NFA set size #{nfa_set.size}"
+        puts "DFA state #{dfa_id.to_i}: NFA set size #{nfa_set.size}, look_mask #{look_mask}"
         nfa_set.each do |nfa_id|
           nfa_state = @nfa.states[nfa_id.to_i]
           puts "  NFA state #{nfa_id.to_i}: #{nfa_state.class} #{nfa_state.is_a?(NFA::Match) ? "(match pattern #{nfa_state.pattern_id.to_i}, next=#{nfa_state.next.inspect})" : ""}"
         end
       end
-      nfa_set.each do |nfa_id|
+      closure.each do |nfa_id|
         nfa_state = @nfa.states[nfa_id.to_i]
         if nfa_state.is_a?(NFA::Match)
           # Only consider match states with no outgoing epsilon transitions as accepting
@@ -369,7 +466,7 @@ module Regex::Automata::DFA
       end
 
       @dfa_states << state
-      @state_map[nfa_set] = dfa_id
+      @state_map[key] = dfa_id
       dfa_id
     end
   end
