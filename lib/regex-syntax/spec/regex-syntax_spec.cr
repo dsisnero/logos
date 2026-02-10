@@ -51,7 +51,9 @@ describe Regex::Syntax do
 
     it "parses dot" do
       hir = Regex::Syntax.parse(".")
-      hir.node.should be_a(Regex::Syntax::Hir::CharClass)
+      hir.node.should be_a(Regex::Syntax::Hir::DotNode)
+      dot_node = hir.node.as(Regex::Syntax::Hir::DotNode)
+      dot_node.kind.should eq(Regex::Syntax::Hir::Dot::AnyChar)
     end
 
     it "parses character class" do

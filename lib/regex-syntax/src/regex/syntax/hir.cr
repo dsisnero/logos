@@ -15,6 +15,11 @@ module Regex::Syntax::Hir
     AnyByteExceptCRLF
   end
 
+  # Module-level helper for creating dot expressions
+  def self.dot(dot : Dot) : Hir
+    Hir.new(DotNode.new(dot))
+  end
+
   # Base class for all HIR nodes
   abstract class Node
     # Calculate complexity/priority for disambiguation
@@ -22,6 +27,22 @@ module Regex::Syntax::Hir
 
     # Check if contains greedy .* or .+
     abstract def has_greedy_all? : Bool
+  end
+
+  # Dot metacharacter (.)
+  class DotNode < Node
+    getter kind : Dot
+
+    def initialize(@kind : Dot)
+    end
+
+    def complexity : Int32
+      1
+    end
+
+    def has_greedy_all? : Bool
+      false
+    end
   end
 
   # Empty pattern (matches nothing)
@@ -173,8 +194,7 @@ module Regex::Syntax::Hir
 
     # Create a dot expression
     def self.dot(dot : Dot) : Hir
-      # TODO: Implement proper dot to class conversion
-      Hir.new(CharClass.new)
+      Hir.new(DotNode.new(dot))
     end
 
     # Create a literal expression

@@ -191,15 +191,13 @@ module Regex::Syntax
     end
 
     private def parse_dot : Hir::Node
-      # Create appropriate dot class based on Unicode mode
-      if @unicode
-        # TODO: Handle different dot variants based on flags
-        # For now, create a character class that matches any character
-        # This is a placeholder - should create proper Hir::Dot
-        Hir::CharClass.new
-      else
-        Hir::CharClass.new
-      end
+      # Create appropriate dot based on Unicode mode
+      dot_kind = if @unicode
+                   Hir::Dot::AnyChar
+                 else
+                   Hir::Dot::AnyByte
+                 end
+      Hir.dot(dot_kind).node
     end
 
     private def parse_character_class : Hir::Node

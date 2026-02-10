@@ -53,7 +53,7 @@ describe Logos::Pattern do
     it "calculates complexity for char class" do
       hir = Regex::Syntax::Hir::Hir.dot(Regex::Syntax::Hir::Dot::AnyChar)
       pattern = Logos::Pattern.new(false, "test", hir)
-      pattern.priority.should eq(2)
+      pattern.priority.should eq(1)
     end
 
     it "calculates complexity for concat" do
@@ -61,7 +61,7 @@ describe Logos::Pattern do
       child2 = Regex::Syntax::Hir::Hir.dot(Regex::Syntax::Hir::Dot::AnyChar).node
       hir = Regex::Syntax::Hir::Hir.new(Regex::Syntax::Hir::Concat.new([child1, child2]))
       pattern = Logos::Pattern.new(false, "test", hir)
-      pattern.priority.should eq(4) # 2 + 2
+      pattern.priority.should eq(3) # 2 + 1
     end
 
     it "calculates complexity for alternation" do
@@ -102,9 +102,9 @@ describe Logos::Pattern do
 
     it "parses dot" do
       pattern = Logos::Pattern.compile_regex(".")
-      pattern.hir.as(Regex::Syntax::Hir::Hir).node.should be_a(Regex::Syntax::Hir::CharClass)
-      # Note: In HIR, dot is represented as CharClass with empty intervals
-      # (implementation detail). We'll just verify it's a CharClass.
+      pattern.hir.as(Regex::Syntax::Hir::Hir).node.should be_a(Regex::Syntax::Hir::DotNode)
+      dot_node = pattern.hir.as(Regex::Syntax::Hir::Hir).node.as(Regex::Syntax::Hir::DotNode)
+      dot_node.kind.should eq(Regex::Syntax::Hir::Dot::AnyChar)
     end
 
     it "parses character class" do

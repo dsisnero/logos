@@ -273,6 +273,125 @@ module Regex::Automata::NFA
       end
     end
 
+    # Build dot metacharacter
+    def build_dot(kind : Regex::Syntax::Hir::Dot, pattern_id : PatternID = PatternID.new(0)) : ThompsonRef
+      case kind
+      when Regex::Syntax::Hir::Dot::AnyByte
+        # Match any single byte (0-255)
+        build_class([0_u8..255_u8], false, pattern_id)
+      when Regex::Syntax::Hir::Dot::AnyByteExceptLF
+        # Match any byte except line feed (10)
+        ranges = [] of Range(UInt8, UInt8)
+        ranges << (0_u8..9_u8) if 0_u8 <= 9_u8
+        ranges << (11_u8..255_u8) if 11_u8 <= 255_u8
+        build_class(ranges, false, pattern_id)
+      when Regex::Syntax::Hir::Dot::AnyByteExceptCRLF
+        # Match any byte except carriage return (13) and line feed (10)
+        ranges = [] of Range(UInt8, UInt8)
+        # 0-9, 11-12, 14-255
+        ranges << (0_u8..9_u8) if 0_u8 <= 9_u8
+        ranges << (11_u8..12_u8) if 11_u8 <= 12_u8
+        ranges << (14_u8..255_u8) if 14_u8 <= 255_u8
+        build_class(ranges, false, pattern_id)
+      when Regex::Syntax::Hir::Dot::AnyChar
+        build_utf8_any_char(pattern_id)
+      when Regex::Syntax::Hir::Dot::AnyCharExceptLF
+        build_utf8_any_char_except_lf(pattern_id)
+      when Regex::Syntax::Hir::Dot::AnyCharExceptCRLF
+        build_utf8_any_char_except_crlf(pattern_id)
+      else
+        raise "Unsupported dot kind: #{kind}"
+      end
+    end
+
+    # Build UTF-8 any character (Unicode scalar value)
+    private def build_utf8_any_char(pattern_id : PatternID) : ThompsonRef
+      # Four alternatives: 1-byte, 2-byte, 3-byte, 4-byte sequences
+      # 1-byte: 0x00-0x7F
+      single = build_class([0x00_u8..0x7F_u8], false, pattern_id)
+      # 2-byte: first 0xC0-0xDF, second 0x80-0xBF
+      second_first = build_class([0xC0_u8..0xDF_u8], false, pattern_id)
+      second_second = build_class([0x80_u8..0xBF_u8], false, pattern_id)
+      double = build_concatenation(second_first, second_second)
+      # 3-byte: first 0xE0-0xEF, second 0x80-0xBF, third 0x80-0xBF
+      third_first = build_class([0xE0_u8..0xEF_u8], false, pattern_id)
+      third_second = build_class([0x80_u8..0xBF_u8], false, pattern_id)
+      third_third = build_class([0x80_u8..0xBF_u8], false, pattern_id)
+      triple = build_concatenation(third_first, third_second)
+      triple = build_concatenation(triple, third_third)
+      # 4-byte: first 0xF0-0xF7, second 0x80-0xBF, third 0x80-0xBF, fourth 0x80-0xBF
+      fourth_first = build_class([0xF0_u8..0xF7_u8], false, pattern_id)
+      fourth_second = build_class([0x80_u8..0xBF_u8], false, pattern_id)
+      fourth_third = build_class([0x80_u8..0xBF_u8], false, pattern_id)
+      fourth_fourth = build_class([0x80_u8..0xBF_u8], false, pattern_id)
+      quadruple = build_concatenation(fourth_first, fourth_second)
+      quadruple = build_concatenation(quadruple, fourth_third)
+      quadruple = build_concatenation(quadruple, fourth_fourth)
+      # Union all four alternatives
+      alt1 = build_alternation(single, double, pattern_id)
+      alt2 = build_alternation(alt1, triple, pattern_id)
+      build_alternation(alt2, quadruple, pattern_id)
+    end
+
+    # Build UTF-8 any character except line feed
+    private def build_utf8_any_char_except_lf(pattern_id : PatternID) : ThompsonRef
+      # Single-byte range excluding LF (0x0A)
+      single_ranges = [] of Range(UInt8, UInt8)
+      single_ranges << (0x00_u8..0x09_u8) if 0x00_u8 <= 0x09_u8
+      single_ranges << (0x0B_u8..0x7F_u8) if 0x0B_u8 <= 0x7F_u8
+      single = build_class(single_ranges, false, pattern_id)
+      # 2-byte, 3-byte, 4-byte sequences unchanged (they don't contain LF)
+      second_first = build_class([0xC0_u8..0xDF_u8], false, pattern_id)
+      second_second = build_class([0x80_u8..0xBF_u8], false, pattern_id)
+      double = build_concatenation(second_first, second_second)
+      third_first = build_class([0xE0_u8..0xEF_u8], false, pattern_id)
+      third_second = build_class([0x80_u8..0xBF_u8], false, pattern_id)
+      third_third = build_class([0x80_u8..0xBF_u8], false, pattern_id)
+      triple = build_concatenation(third_first, third_second)
+      triple = build_concatenation(triple, third_third)
+      fourth_first = build_class([0xF0_u8..0xF7_u8], false, pattern_id)
+      fourth_second = build_class([0x80_u8..0xBF_u8], false, pattern_id)
+      fourth_third = build_class([0x80_u8..0xBF_u8], false, pattern_id)
+      fourth_fourth = build_class([0x80_u8..0xBF_u8], false, pattern_id)
+      quadruple = build_concatenation(fourth_first, fourth_second)
+      quadruple = build_concatenation(quadruple, fourth_third)
+      quadruple = build_concatenation(quadruple, fourth_fourth)
+      # Union all four alternatives
+      alt1 = build_alternation(single, double, pattern_id)
+      alt2 = build_alternation(alt1, triple, pattern_id)
+      build_alternation(alt2, quadruple, pattern_id)
+    end
+
+    # Build UTF-8 any character except carriage return and line feed
+    private def build_utf8_any_char_except_crlf(pattern_id : PatternID) : ThompsonRef
+      # Single-byte range excluding LF (0x0A) and CR (0x0D)
+      single_ranges = [] of Range(UInt8, UInt8)
+      single_ranges << (0x00_u8..0x09_u8) if 0x00_u8 <= 0x09_u8
+      single_ranges << (0x0B_u8..0x0C_u8) if 0x0B_u8 <= 0x0C_u8
+      single_ranges << (0x0E_u8..0x7F_u8) if 0x0E_u8 <= 0x7F_u8
+      single = build_class(single_ranges, false, pattern_id)
+      # 2-byte, 3-byte, 4-byte sequences unchanged (they don't contain LF or CR)
+      second_first = build_class([0xC0_u8..0xDF_u8], false, pattern_id)
+      second_second = build_class([0x80_u8..0xBF_u8], false, pattern_id)
+      double = build_concatenation(second_first, second_second)
+      third_first = build_class([0xE0_u8..0xEF_u8], false, pattern_id)
+      third_second = build_class([0x80_u8..0xBF_u8], false, pattern_id)
+      third_third = build_class([0x80_u8..0xBF_u8], false, pattern_id)
+      triple = build_concatenation(third_first, third_second)
+      triple = build_concatenation(triple, third_third)
+      fourth_first = build_class([0xF0_u8..0xF7_u8], false, pattern_id)
+      fourth_second = build_class([0x80_u8..0xBF_u8], false, pattern_id)
+      fourth_third = build_class([0x80_u8..0xBF_u8], false, pattern_id)
+      fourth_fourth = build_class([0x80_u8..0xBF_u8], false, pattern_id)
+      quadruple = build_concatenation(fourth_first, fourth_second)
+      quadruple = build_concatenation(quadruple, fourth_third)
+      quadruple = build_concatenation(quadruple, fourth_fourth)
+      # Union all four alternatives
+      alt1 = build_alternation(single, double, pattern_id)
+      alt2 = build_alternation(alt1, triple, pattern_id)
+      build_alternation(alt2, quadruple, pattern_id)
+    end
+
     # Build the final NFA
     def build : NFA
       NFA.new(@states, @start_anchored, @start_unanchored, @start_pattern, @utf8)

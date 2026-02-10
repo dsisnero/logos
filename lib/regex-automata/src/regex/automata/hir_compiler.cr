@@ -66,6 +66,8 @@ module Regex::Automata
         compile_concat(node)
       when Regex::Syntax::Hir::Alternation
         compile_alternation(node)
+      when Regex::Syntax::Hir::DotNode
+        compile_dot(node)
       else
         raise "Unsupported HIR node type: #{node.class}"
       end
@@ -83,6 +85,10 @@ module Regex::Automata
 
     private def compile_char_class(node : Regex::Syntax::Hir::CharClass) : NFA::ThompsonRef
       @builder.build_class(node.intervals, node.negated, @pattern_id)
+    end
+
+    private def compile_dot(node : Regex::Syntax::Hir::DotNode) : NFA::ThompsonRef
+      @builder.build_dot(node.kind, @pattern_id)
     end
 
     private def compile_look(node : Regex::Syntax::Hir::Look) : NFA::ThompsonRef

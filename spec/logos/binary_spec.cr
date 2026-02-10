@@ -19,7 +19,7 @@ module Logos::Spec::Binary
     # Token literals
     token "\x00", :Zero
     token "\xCA\xFE\xBE\xEF", :CafeBeef
-    token "foo", :Foo  # ASCII still works
+    token "foo", :Foo # ASCII still works
 
     # Byte regex patterns
     regex "\\x42+", :Life
@@ -55,7 +55,7 @@ module Logos::Spec::Binary
         'f'.ord.to_u8, 'o'.ord.to_u8, 'o'.ord.to_u8,
         0x42_u8, 0x42_u8, 0x42_u8,
         0xAA_u8, 0xAA_u8, 0xA2_u8, 0xAE_u8,
-        0x10_u8, 0x20_u8, 0x00_u8
+        0x10_u8, 0x20_u8, 0x00_u8,
       ]
 
       lexer = Logos::Lexer(AdvancedByteToken, Slice(UInt8), Logos::NoExtras, Nil).new(slice)
