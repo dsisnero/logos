@@ -141,28 +141,57 @@ module Regex::Automata
 
     def next : Utf8Sequence?
       while r = @range_stack.pop?
-        # Simple implementation: process one codepoint at a time
-        # This is inefficient but correct for small ranges used in tests
-        if r.start > r.end
-          next
-        end
+        # Process with inner loop
+        loop do
+          # Split surrogates
+          if split = r.split
+            r1, r2 = split
+            @range_stack << ScalarRange.new(r2.start, r2.end)
+            r = ScalarRange.new(r1.start, r1.end)
+            next
+          end
 
-        if r.start == r.end
-          # Single codepoint
+          break unless r.valid?
+
+          # Split at UTF-8 length boundaries
+          split_at_boundary = false
+          (1...MAX_UTF8_BYTES).each do |i|
+            max = max_scalar_value(i)
+            if r.start <= max && max < r.end
+              @range_stack << ScalarRange.new(max + 1, r.end)
+              r = ScalarRange.new(r.start, max)
+              split_at_boundary = true
+              break
+            end
+          end
+          next if split_at_boundary
+
+          # ASCII range
+          if ascii_range = r.as_ascii_range
+            return Utf8Sequence.one(ascii_range)
+          end
+
+          # Split based on alignment
+          (1...MAX_UTF8_BYTES).each do |i|
+            m = (1_u32 << (6 * i)) - 1
+            if (r.start & ~m) != (r.end & ~m)
+              if (r.start & m) != 0
+                @range_stack << ScalarRange.new((r.start | m) + 1, r.end)
+                r = ScalarRange.new(r.start, r.start | m)
+                next
+              end
+              if (r.end & m) != m
+                @range_stack << ScalarRange.new(r.end & ~m, r.end)
+                r = ScalarRange.new(r.start, (r.end & ~m) - 1)
+                next
+              end
+            end
+          end
+
+          # Encode the range
           start_buf = uninitialized UInt8[MAX_UTF8_BYTES]
           end_buf = uninitialized UInt8[MAX_UTF8_BYTES]
           n = r.encode(start_buf.to_slice, end_buf.to_slice)
-          return Utf8Sequence.from_encoded_range(
-            start_buf.to_slice[0, n],
-            end_buf.to_slice[0, n]
-          )
-        else
-          # Process first codepoint, push remainder back
-          @range_stack << ScalarRange.new(r.start + 1, r.end)
-          single = ScalarRange.new(r.start, r.start)
-          start_buf = uninitialized UInt8[MAX_UTF8_BYTES]
-          end_buf = uninitialized UInt8[MAX_UTF8_BYTES]
-          n = single.encode(start_buf.to_slice, end_buf.to_slice)
           return Utf8Sequence.from_encoded_range(
             start_buf.to_slice[0, n],
             end_buf.to_slice[0, n]
@@ -176,6 +205,16 @@ module Regex::Automata
       Iterator.of do
         next_value = self.next
         next_value ? next_value : stop
+      end
+    end
+
+    private def max_scalar_value(nbytes : Int32) : UInt32
+      case nbytes
+      when 1 then 0x007F_u32
+      when 2 then 0x07FF_u32
+      when 3 then 0xFFFF_u32
+      when 4 then 0x0010_FFFF_u32
+      else raise "invalid UTF-8 byte sequence size"
       end
     end
   end

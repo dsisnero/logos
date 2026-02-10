@@ -159,6 +159,70 @@ module Regex::Automata::NFA
       @start_pattern << id
     end
 
+    # Returns the universal set of valid Unicode scalar value ranges
+    private def universal_unicode_ranges : Array(Range(UInt32, UInt32))
+      # Valid Unicode scalar values: 0x0..0xD7FF and 0xE000..0x10FFFF
+      [
+        0x000000_u32..0x00D7FF_u32,
+        0x00E000_u32..0x10FFFF_u32,
+      ]
+    end
+
+    # Subtract ranges_to_subtract from ranges (both sorted, non-overlapping)
+    # Returns sorted, non-overlapping complement ranges
+    private def subtract_ranges(ranges : Array(Range(UInt32, UInt32)), ranges_to_subtract : Array(Range(UInt32, UInt32))) : Array(Range(UInt32, UInt32))
+      result = [] of Range(UInt32, UInt32)
+      i = 0
+      ranges.each do |base|
+        current_start = base.begin
+        current_end = base.end
+        # Skip subtract ranges that end before current start
+        while i < ranges_to_subtract.size && ranges_to_subtract[i].end < current_start
+          i += 1
+        end
+        # Process overlapping subtract ranges
+        j = i
+        while j < ranges_to_subtract.size && ranges_to_subtract[j].begin <= current_end
+          sub = ranges_to_subtract[j]
+          if sub.begin > current_start
+            # Add portion before subtract range
+            result << (current_start..sub.begin - 1)
+          end
+          # Move current_start past subtract range
+          current_start = sub.end + 1
+          break if current_start > current_end
+          j += 1
+        end
+        # Add remaining portion after last subtract range
+        if current_start <= current_end
+          result << (current_start..current_end)
+        end
+      end
+      result
+    end
+
+    # Returns the universal set of byte values
+    private def universal_byte_ranges : Array(Range(UInt8, UInt8))
+      [0x00_u8..0xFF_u8]
+    end
+
+    # Compute complement of byte ranges within 0x00..0xFF
+    private def complement_byte_ranges(ranges : Array(Range(UInt8, UInt8))) : Array(Range(UInt8, UInt8))
+      result = [] of Range(UInt8, UInt8)
+      prev = 0_i32
+      ranges.each do |range|
+        if range.begin.to_i32 > prev
+          result << (prev.to_u8..(range.begin.to_i32 - 1).to_u8)
+        end
+        prev = range.end.to_i32 + 1
+        break if prev > 0xFF
+      end
+      if prev <= 0xFF
+        result << (prev.to_u8..0xFF_u8)
+      end
+      result
+    end
+
     # Build a literal pattern (sequence of bytes)
     def build_literal(bytes : Bytes, pattern_id : PatternID = PatternID.new(0)) : ThompsonRef
       # For empty literal, return a match state
@@ -257,38 +321,35 @@ module Regex::Automata::NFA
     # Build character class
     def build_class(ranges : Array(Range(UInt8, UInt8)), negated : Bool = false, pattern_id : PatternID = PatternID.new(0)) : ThompsonRef
       if negated
-        # Negated class - more complex, need multiple transitions
-        # For now, return fail state placeholder
-        fail_id = add_state(Fail.new)
-        match_id = add_state(Match.new(pattern_id))
-        update_transition_target(fail_id, match_id)
-        ThompsonRef.new(fail_id, match_id)
-      else
-        # Convert ranges to transitions
-        transitions = ranges.map do |range|
-          Transition.new(range.begin, range.end, StateID.new(0))
-        end
-
-        class_state = if transitions.size == 1
-                        add_state(ByteRange.new(transitions.first))
-                      else
-                        add_state(Sparse.new(transitions))
-                      end
-
-        match_id = add_state(Match.new(pattern_id))
-        update_transition_target(class_state, match_id)
-        ThompsonRef.new(class_state, match_id)
+        # Compute complement byte ranges (0x00..0xFF minus given ranges)
+        complement = complement_byte_ranges(ranges)
+        return build_class(complement, false, pattern_id)
       end
+
+      # Convert ranges to transitions
+      transitions = ranges.map do |range|
+        Transition.new(range.begin, range.end, StateID.new(0))
+      end
+
+      class_state = if transitions.size == 1
+                      add_state(ByteRange.new(transitions.first))
+                    else
+                      add_state(Sparse.new(transitions))
+                    end
+
+      match_id = add_state(Match.new(pattern_id))
+      update_transition_target(class_state, match_id)
+      ThompsonRef.new(class_state, match_id)
     end
 
     # Build Unicode character class (codepoint ranges)
     def build_unicode_class(ranges : Array(Range(UInt32, UInt32)), negated : Bool = false, pattern_id : PatternID = PatternID.new(0)) : ThompsonRef
       if negated
-        # TODO: implement negated Unicode class
-        fail_id = add_state(Fail.new)
-        match_id = add_state(Match.new(pattern_id))
-        update_transition_target(fail_id, match_id)
-        return ThompsonRef.new(fail_id, match_id)
+        # Compute complement of property ranges within valid Unicode scalar values
+        universal = universal_unicode_ranges()
+        complement = subtract_ranges(universal, ranges)
+        # Build NFA for complement ranges (positive)
+        return build_unicode_class(complement, false, pattern_id)
       end
 
       # Convert each Unicode range to UTF-8 sequences

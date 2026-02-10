@@ -1,4 +1,5 @@
 require "./hir"
+require "./unicode_tables"
 
 module Regex::Syntax::Unicode
   # Look up Unicode property class by name
@@ -6,27 +7,25 @@ module Regex::Syntax::Unicode
     # Normalize property name: case-insensitive, underscore/hyphen equivalence
     normalized = name.downcase.gsub(/[_-]/, "")
 
+    # Try to look up in generated Unicode tables
+    if ranges = UnicodeTables.lookup_property_ranges(normalized)
+      return Hir::UnicodeClass.new(negated, ranges)
+    end
+
+    # Fall back to hardcoded properties for backward compatibility
+    # (these should eventually be moved to the generated tables)
     case normalized
     when "whitespace"
-      # White_Space property
-      whitespace_ranges = [] of Range(UInt32, UInt32)
-      # ASCII whitespace
-      whitespace_ranges << (0x0009_u32..0x000D_u32)  # \t, \n, \v, \f, \r
-      whitespace_ranges << (0x0020_u32..0x0020_u32)  # space
-      whitespace_ranges << (0x0085_u32..0x0085_u32)  # NEL
-      whitespace_ranges << (0x00A0_u32..0x00A0_u32)  # NBSP
-      whitespace_ranges << (0x1680_u32..0x1680_u32)  # Ogham space mark
-      whitespace_ranges << (0x2000_u32..0x200A_u32)  # en quad..hair space
-      whitespace_ranges << (0x2028_u32..0x2029_u32)  # line/paragraph separator
-      whitespace_ranges << (0x202F_u32..0x202F_u32)  # narrow NBSP
-      whitespace_ranges << (0x205F_u32..0x205F_u32)  # medium mathematical space
-      whitespace_ranges << (0x3000_u32..0x3000_u32)  # ideographic space
+      # White_Space property (fallback implementation)
       intervals = whitespace_ranges
     when "greek"
-      # Greek script ranges from Rust's script.rs
       intervals = greek_ranges
     when "cyrillic"
       intervals = cyrillic_ranges
+    when "latin"
+      intervals = latin_ranges
+    when "han"
+      intervals = han_ranges
     else
       # Unknown property - return empty class (matches nothing)
       intervals = [] of Range(UInt32, UInt32)
@@ -88,6 +87,92 @@ module Regex::Syntax::Unicode
       0xFE2E_u32..0xFE2F_u32,
       0x1E030_u32..0x1E06D_u32,
       0x1E08F_u32..0x1E08F_u32,
+    ]
+  end
+
+  private def self.latin_ranges : Array(Range(UInt32, UInt32))
+    [
+      0x0041_u32..0x005A_u32,
+      0x0061_u32..0x007A_u32,
+      0x00AA_u32..0x00AA_u32,
+      0x00BA_u32..0x00BA_u32,
+      0x00C0_u32..0x00D6_u32,
+      0x00D8_u32..0x00F6_u32,
+      0x00F8_u32..0x02B8_u32,
+      0x02E0_u32..0x02E4_u32,
+      0x1D00_u32..0x1D25_u32,
+      0x1D2C_u32..0x1D5C_u32,
+      0x1D62_u32..0x1D65_u32,
+      0x1D6B_u32..0x1D77_u32,
+      0x1D79_u32..0x1DBE_u32,
+      0x1E00_u32..0x1EFF_u32,
+      0x2071_u32..0x2071_u32,
+      0x207F_u32..0x207F_u32,
+      0x2090_u32..0x209C_u32,
+      0x212A_u32..0x212B_u32,
+      0x2132_u32..0x2132_u32,
+      0x214E_u32..0x214E_u32,
+      0x2160_u32..0x2188_u32,
+      0x2C60_u32..0x2C7F_u32,
+      0xA722_u32..0xA787_u32,
+      0xA78B_u32..0xA7CD_u32,
+      0xA7D0_u32..0xA7D1_u32,
+      0xA7D3_u32..0xA7D3_u32,
+      0xA7D5_u32..0xA7DC_u32,
+      0xA7F2_u32..0xA7FF_u32,
+      0xAB30_u32..0xAB5A_u32,
+      0xAB5C_u32..0xAB64_u32,
+      0xAB66_u32..0xAB69_u32,
+      0xFB00_u32..0xFB06_u32,
+      0xFF21_u32..0xFF3A_u32,
+      0xFF41_u32..0xFF5A_u32,
+      0x10780_u32..0x10785_u32,
+      0x10787_u32..0x107B0_u32,
+      0x107B2_u32..0x107BA_u32,
+      0x1DF00_u32..0x1DF1E_u32,
+      0x1DF25_u32..0x1DF2A_u32,
+    ]
+   end
+
+  private def self.han_ranges : Array(Range(UInt32, UInt32))
+    [
+      0x2E80_u32..0x2E99_u32,
+      0x2E9B_u32..0x2EF3_u32,
+      0x2F00_u32..0x2FD5_u32,
+      0x3005_u32..0x3005_u32,
+      0x3007_u32..0x3007_u32,
+      0x3021_u32..0x3029_u32,
+      0x3038_u32..0x303B_u32,
+      0x3400_u32..0x4DBF_u32,
+      0x4E00_u32..0x9FFF_u32,
+      0xF900_u32..0xFA6D_u32,
+      0xFA70_u32..0xFAD9_u32,
+      0x16FE2_u32..0x16FE3_u32,
+      0x16FF0_u32..0x16FF1_u32,
+      0x20000_u32..0x2A6DF_u32,
+      0x2A700_u32..0x2B739_u32,
+      0x2B740_u32..0x2B81D_u32,
+      0x2B820_u32..0x2CEA1_u32,
+      0x2CEB0_u32..0x2EBE0_u32,
+      0x2EBF0_u32..0x2EE5D_u32,
+      0x2F800_u32..0x2FA1D_u32,
+      0x30000_u32..0x3134A_u32,
+      0x31350_u32..0x323AF_u32,
+    ]
+  end
+
+  private def self.whitespace_ranges : Array(Range(UInt32, UInt32))
+    [
+      0x0009_u32..0x000D_u32,  # \t, \n, \v, \f, \r
+      0x0020_u32..0x0020_u32,  # space
+      0x0085_u32..0x0085_u32,  # NEL
+      0x00A0_u32..0x00A0_u32,  # NBSP
+      0x1680_u32..0x1680_u32,  # Ogham space mark
+      0x2000_u32..0x200A_u32,  # en quad..hair space
+      0x2028_u32..0x2029_u32,  # line/paragraph separator
+      0x202F_u32..0x202F_u32,  # narrow NBSP
+      0x205F_u32..0x205F_u32,  # medium mathematical space
+      0x3000_u32..0x3000_u32,  # ideographic space
     ]
   end
 end
