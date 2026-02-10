@@ -387,7 +387,7 @@ module Logos::Spec::OldLogosBugs
       regex "\"\"\".*?\"\"\"", :Triple
     end
 
-    pending "issue_246: triple quotes" do
+    describe "issue_246: triple quotes" do
       it "matches triple quoted string" do
         source = "\"\"\"abc\"\"\""
         lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new(source)
@@ -703,11 +703,31 @@ module Logos::Spec::OldLogosBugs
     end
   end
 
-  # issue_461 pending: needs binary mode (utf8 = false)
+  # issue_461: binary mode (utf8 = false) - now implemented
   module Issue461
-    pending "issue_461: binary mode parsing" do
+    Logos.define Token do
+      utf8 false
+      error_type Nil
+
+      token "\x00", :Zero
+      token "\xFF", :FF
+      regex "[\\x00-\\xFF]", :AnyByte
+    end
+
+    describe "issue_461: binary mode parsing" do
       it "handles non-UTF8 bytes" do
-        # Requires utf8 = false support (binary mode)
+        slice = Slice[0x00_u8, 0xFF_u8, 0x10_u8]
+        lexer = Logos::Lexer(Token, Slice(UInt8), Logos::NoExtras, Nil).new(slice)
+        tokens = [] of Token
+        while token = lexer.next
+          break if token.is_a?(Iterator::Stop)
+          result = token.as(Logos::Result(Token, Nil))
+          if result.ok?
+            tokens << result.unwrap
+          end
+        end
+
+        tokens.should eq([Token::Zero, Token::FF, Token::AnyByte])
       end
     end
   end

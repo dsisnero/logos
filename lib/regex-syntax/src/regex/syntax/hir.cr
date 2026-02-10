@@ -90,6 +90,23 @@ module Regex::Syntax::Hir
     end
   end
 
+  # Unicode character class (codepoint ranges)
+  class UnicodeClass < Node
+    getter negated : Bool
+    getter intervals : Array(Range(UInt32, UInt32))
+
+    def initialize(@negated : Bool = false, @intervals : Array(Range(UInt32, UInt32)) = [] of Range(UInt32, UInt32))
+    end
+
+    def complexity : Int32
+      2
+    end
+
+    def has_greedy_all? : Bool
+      false
+    end
+  end
+
   # Look-around assertion
   class Look < Node
     enum Kind

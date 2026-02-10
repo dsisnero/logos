@@ -1,7 +1,8 @@
+require "./utf8_sequences"
+
 module Regex::Automata::NFA
   alias StateID = Regex::Automata::StateID
   alias PatternID = Regex::Automata::PatternID
-
   # A transition between NFA states
   struct Transition
     # Range of bytes that trigger this transition
@@ -213,30 +214,37 @@ module Regex::Automata::NFA
     end
 
     # Build repetition (kleene star)
-    def build_repetition(child : ThompsonRef, min : Int32, max : Int32?, pattern_id : PatternID = PatternID.new(0)) : ThompsonRef
+    def build_repetition(child : ThompsonRef, min : Int32, max : Int32?, greedy : Bool = true, pattern_id : PatternID = PatternID.new(0)) : ThompsonRef
       # Handle special cases
       if min == 0 && max.nil?
         # Kleene star: 0 or more repetitions
         # Create new end state (match state for empty string acceptance)
         new_end = add_state(Match.new(pattern_id))
+        # Determine order based on greediness
+        start_alternates = greedy ? [child.start, new_end] : [new_end, child.start]
+        loop_alternates = greedy ? [child.start, new_end] : [new_end, child.start]
         # Create start union: epsilon to child.start OR to new_end (skip)
-        start_union = add_state(Union.new([child.start, new_end]))
+        start_union = add_state(Union.new(start_alternates))
         # Create loop union at child.end: epsilon to child.start (loop) OR to new_end
-        loop_union = add_state(Union.new([child.start, new_end]))
+        loop_union = add_state(Union.new(loop_alternates))
         update_transition_target(child.end, loop_union)
         ThompsonRef.new(start_union, new_end)
       elsif min == 1 && max.nil?
         # Plus: 1 or more repetitions
         # Create new end state (match state for acceptance after at least one)
         new_end = add_state(Match.new(pattern_id))
+        # Determine order based on greediness
+        loop_alternates = greedy ? [child.start, new_end] : [new_end, child.start]
         # Create loop union at child.end: epsilon to child.start (loop) OR to new_end
-        loop_union = add_state(Union.new([child.start, new_end]))
+        loop_union = add_state(Union.new(loop_alternates))
         update_transition_target(child.end, loop_union)
         ThompsonRef.new(child.start, new_end)
       elsif min == 0 && max == 1
         # Optional: 0 or 1
+        # Determine order based on greediness
+        alternates = greedy ? [child.start, child.end] : [child.end, child.start]
         # Create union start: epsilon to child.start OR to child.end (skip)
-        start_union = add_state(Union.new([child.start, child.end]))
+        start_union = add_state(Union.new(alternates))
         ThompsonRef.new(start_union, child.end)
       else
         # General case {min,max} - implement via concatenation of min copies
@@ -270,6 +278,69 @@ module Regex::Automata::NFA
         match_id = add_state(Match.new(pattern_id))
         update_transition_target(class_state, match_id)
         ThompsonRef.new(class_state, match_id)
+      end
+    end
+
+    # Build Unicode character class (codepoint ranges)
+    def build_unicode_class(ranges : Array(Range(UInt32, UInt32)), negated : Bool = false, pattern_id : PatternID = PatternID.new(0)) : ThompsonRef
+      if negated
+        # TODO: implement negated Unicode class
+        fail_id = add_state(Fail.new)
+        match_id = add_state(Match.new(pattern_id))
+        update_transition_target(fail_id, match_id)
+        return ThompsonRef.new(fail_id, match_id)
+      end
+
+      # Convert each Unicode range to UTF-8 sequences
+      sequences = [] of ::Regex::Automata::Utf8Sequence
+      ranges.each do |range|
+        start_char = range.begin.chr
+        end_char = range.end.chr
+        utf8_seq = ::Regex::Automata::Utf8Sequences.new(start_char, end_char)
+        while seq = utf8_seq.next
+          sequences << seq
+        end
+      end
+
+      # Build alternation of all sequences
+      if sequences.empty?
+        # No sequences - empty match
+        match_id = add_state(Match.new(pattern_id))
+        ThompsonRef.new(match_id, match_id)
+      elsif sequences.size == 1
+        # Single sequence - build concatenation
+        build_utf8_sequence(sequences.first, pattern_id)
+      else
+        # Multiple sequences - build alternation
+        refs = sequences.map { |seq| build_utf8_sequence(seq, pattern_id) }
+        # Build binary alternation tree
+        result = refs.first
+        refs[1..].each do |next_ref|
+          result = build_alternation(result, next_ref, pattern_id)
+        end
+        result
+      end
+    end
+
+    # Build a single UTF-8 sequence (concatenation of byte ranges)
+    private def build_utf8_sequence(seq : ::Regex::Automata::Utf8Sequence, pattern_id : PatternID) : ThompsonRef
+      # Build concatenation of byte ranges in sequence
+      refs = seq.ranges.map do |range|
+        build_class([range.start..range.end], false, pattern_id)
+      end
+
+      if refs.empty?
+        match_id = add_state(Match.new(pattern_id))
+        ThompsonRef.new(match_id, match_id)
+      elsif refs.size == 1
+        refs.first
+      else
+        # Build concatenation chain
+        result = refs.first
+        refs[1..].each do |next_ref|
+          result = build_concatenation(result, next_ref)
+        end
+        result
       end
     end
 

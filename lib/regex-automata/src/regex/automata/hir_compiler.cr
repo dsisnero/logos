@@ -56,6 +56,8 @@ module Regex::Automata
         compile_literal(node)
       when Regex::Syntax::Hir::CharClass
         compile_char_class(node)
+      when Regex::Syntax::Hir::UnicodeClass
+        compile_unicode_class(node)
       when Regex::Syntax::Hir::Look
         compile_look(node)
       when Regex::Syntax::Hir::Repetition
@@ -85,6 +87,10 @@ module Regex::Automata
 
     private def compile_char_class(node : Regex::Syntax::Hir::CharClass) : NFA::ThompsonRef
       @builder.build_class(node.intervals, node.negated, @pattern_id)
+    end
+
+    private def compile_unicode_class(node : Regex::Syntax::Hir::UnicodeClass) : NFA::ThompsonRef
+      @builder.build_unicode_class(node.intervals, node.negated, @pattern_id)
     end
 
     private def compile_dot(node : Regex::Syntax::Hir::DotNode) : NFA::ThompsonRef
@@ -123,7 +129,7 @@ module Regex::Automata
 
     private def compile_repetition(node : Regex::Syntax::Hir::Repetition) : NFA::ThompsonRef
       child_ref = compile_node(node.sub)
-      @builder.build_repetition(child_ref, node.min, node.max, @pattern_id)
+      @builder.build_repetition(child_ref, node.min, node.max, node.greedy, @pattern_id)
     end
 
     private def compile_capture(node : Regex::Syntax::Hir::Capture) : NFA::ThompsonRef

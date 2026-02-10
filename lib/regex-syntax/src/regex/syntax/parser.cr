@@ -1,5 +1,8 @@
+require "./unicode"
+
 module Regex::Syntax
   # Parser for converting regex strings to HIR
+
   class Parser
     @input : String
     @pos : Int32
@@ -486,10 +489,8 @@ module Regex::Syntax
       raise ParseError.new("invalid Unicode property class: expected '}'") unless current_char == '}'
       advance  # skip '}'
 
-      # TODO: Actually look up Unicode property and convert to character ranges
-      # For now, return placeholder (empty character class)
-      # Note: \P{...} means negated, so we set negated flag accordingly
-      Hir::CharClass.new(negated, [] of Range(UInt8, UInt8))
+      # Look up Unicode property and convert to character ranges
+      Unicode.property_class(property, negated)
     end
 
     private def parse_assertion : Hir::Node

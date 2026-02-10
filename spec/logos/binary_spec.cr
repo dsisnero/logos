@@ -26,6 +26,16 @@ module Logos::Spec::Binary
     regex "[\\xA0-\\xAF]+", :Aaaaaaa
   end
 
+  Logos.define ComplexBinaryToken do
+    utf8 false
+    error_type Nil
+
+    regex "\\x00|\\x01", :ZeroOrOne
+    regex "[\\x02-\\x05]+", :TwoToFive
+    regex "\\x06\\x07", :SixSeven
+    regex ".", :AnyByte
+  end
+
   describe "utf8 attribute" do
     it "lexes bytes with utf8 = false" do
       slice = Slice[0x00_u8, 0x42_u8, 0xFF_u8, 0x10_u8]
@@ -84,6 +94,29 @@ module Logos::Spec::Binary
           AdvancedByteToken::Aaaaaaa,
         ])
       end
+    end
+  end
+
+  describe "complex binary regex patterns" do
+    it "handles alternation, repetition, concatenation, and dot" do
+      slice = Slice[0x00_u8, 0x01_u8, 0x02_u8, 0x03_u8, 0x04_u8, 0x06_u8, 0x07_u8, 0xFF_u8]
+      lexer = Logos::Lexer(ComplexBinaryToken, Slice(UInt8), Logos::NoExtras, Nil).new(slice)
+      tokens = [] of ComplexBinaryToken
+      while token = lexer.next
+        break if token.is_a?(Iterator::Stop)
+        result = token.as(Logos::Result(ComplexBinaryToken, Nil))
+        if result.ok?
+          tokens << result.unwrap
+        end
+      end
+
+      tokens.should eq([
+        ComplexBinaryToken::ZeroOrOne,
+        ComplexBinaryToken::ZeroOrOne,
+        ComplexBinaryToken::TwoToFive,
+        ComplexBinaryToken::SixSeven,
+        ComplexBinaryToken::AnyByte,
+      ])
     end
   end
 end
