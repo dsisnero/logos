@@ -4,7 +4,7 @@ A fast lexer generator for Crystal, ported from Rust's [Logos](https://github.co
 
 ## Overview
 
-Logos allows you to create ridiculously fast lexers by defining tokens as an enum with attributes. The library generates an optimized lexer at compile time with zero runtime overhead.
+Logos allows you to create fast lexers by defining tokens in a `Logos.define` block. The library generates an optimized lexer at compile time with zero runtime overhead.
 
 This is a Crystal port of the Rust Logos library, aiming to provide similar functionality and performance characteristics while following Crystal idioms.
 
@@ -38,40 +38,45 @@ shards install
 ```crystal
 require "logos"
 
-enum Token
-  # Literal tokens
-  #[token("fn")]
-  KeywordFn
-  #[token("let")]
-  KeywordLet
+Logos.define Token do
+  error_type Nil
 
-  # Regex patterns
-  #[regex("[a-zA-Z_][a-zA-Z0-9_]*")]
-  Identifier
+  token "fn", :KeywordFn
+  token "let", :KeywordLet
 
-  #[regex("[0-9]+")]
-  Number
+  regex "[a-zA-Z_][a-zA-Z0-9_]*", :Identifier
+  regex "[0-9]+", :Number
 
-  # Operators
-  #[token("+")]
-  Plus
-  #[token("-")]
-  Minus
+  token "+", :Plus
+  token "-", :Minus
 
-  # Skip whitespace
-  #[regex("\\s+", ignore: true)]
-  Ignored
+  skip_regex "\\s+", :Whitespace
 end
 
-lexer = Logos::Lexer(Token).new("fn hello = 42")
-lexer.each do |token, slice|
-  puts "#{token}: #{slice}"
+lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new("fn hello = 42")
+
+loop do
+  result = lexer.next
+  break if result.is_a?(Iterator::Stop)
+  result = result.as(Logos::Result(Token, Nil))
+  puts "#{result.unwrap}: #{lexer.slice}"
+end
+```
+
+### Subpatterns
+
+```crystal
+Logos.define Token do
+  error_type Nil
+
+  subpattern :xdigit, "[0-9a-fA-F]"
+  regex "0[xX](?&xdigit)+", :Hex
 end
 ```
 
 ## Status
 
-⚠️ **Work in Progress**: This is an active port from Rust. Core functionality is being implemented.
+✅ **Port Complete**: The Crystal port is feature-complete and the full spec suite passes.
 
 ### Current Progress
 
@@ -79,14 +84,14 @@ end
 - [x] Basic lexer structure and state machine
 - [x] Pattern AST and parsing
 - [x] Result types and error handling
-- [ ] Regex pattern compilation
-- [ ] NFA/DFA construction (in progress)
-- [ ] Code generation
-- [ ] Full test suite
+- [x] Regex pattern compilation
+- [x] NFA/DFA construction
+- [x] Code generation
+- [x] Full test suite
 
 ### Dependencies
 
-The project includes two companion shards being ported from Rust:
+The project includes two companion shards ported from Rust:
 - `regex-syntax` - Regular expression parser
 - `regex-automata` - Automata construction library
 
