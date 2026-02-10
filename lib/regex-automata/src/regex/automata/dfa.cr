@@ -11,17 +11,21 @@ module Regex::Automata::DFA
     getter id : StateID
     getter next : Array(StateID)    # indexed by byte class
     getter match : Array(PatternID) # empty if not accepting
+    getter look_mask : UInt8        # bits indicating which look-around kinds are present
+    property eoi_next : StateID     # transition on end-of-input (-1 = none)
 
-    def initialize(@id : StateID, byte_classes : Int32)
+    def initialize(@id : StateID, byte_classes : Int32, @look_mask : UInt8 = 0)
       @next = Array.new(byte_classes, StateID.new(-1)) # -1 = no transition
       @match = [] of PatternID
+      @eoi_next = StateID.new(-1)
     end
 
     # Create a copy of this state with new ID
     def dup(new_id : StateID) : State
-      state = State.new(new_id, @next.size)
+      state = State.new(new_id, @next.size, @look_mask)
       state.next.replace(@next.dup)
       state.match.replace(@match.dup)
+      state.eoi_next = @eoi_next
       state
     end
 
@@ -292,21 +296,21 @@ module Regex::Automata::DFA
 
       while !queue.empty?
         dfa_id = queue.pop
-         dfa_state = @dfa_states[dfa_id.to_i]
+        dfa_state = @dfa_states[dfa_id.to_i]
 
-         if ENV["LOGOS_DEBUG_DFA_BUILD"]? && @dfa_states.size % 10 == 0
-           puts "DFA build: processing state #{dfa_id.to_i}, total states #{@dfa_states.size}, queue size #{queue.size}"
-         end
+        if ENV["LOGOS_DEBUG_DFA_BUILD"]? && @dfa_states.size % 10 == 0
+          puts "DFA build: processing state #{dfa_id.to_i}, total states #{@dfa_states.size}, queue size #{queue.size}"
+        end
 
-         # Find NFA set for this DFA state
-         nfa_set = nil
-         @state_map.each do |set, id|
-           if id == dfa_id
-             nfa_set = set
-             break
-           end
-         end
-         next if nfa_set.nil? # Should not happen
+        # Find NFA set for this DFA state
+        nfa_set = nil
+        @state_map.each do |set, id|
+          if id == dfa_id
+            nfa_set = set
+            break
+          end
+        end
+        next if nfa_set.nil? # Should not happen
 
                 # For each byte class, compute transition
         @byte_classes.alphabet_len.times do |byte_class|
@@ -341,11 +345,43 @@ module Regex::Automata::DFA
 
     private def add_dfa_state(nfa_set : Set(StateID)) : StateID
       dfa_id = StateID.new(@dfa_states.size)
-      state = State.new(dfa_id, @byte_classes.alphabet_len)
+
+      # Compute look mask from NFA states that are look-around assertions
+      look_mask = 0_u8
+      nfa_set.each do |nfa_id|
+        nfa_state = @nfa.states[nfa_id.to_i]
+        if nfa_state.is_a?(NFA::Look)
+          # Map look kind to bit position (0-6)
+          bit = case nfa_state.kind
+                when NFA::Look::Kind::Start
+                  0
+                when NFA::Look::Kind::End
+                  1
+                when NFA::Look::Kind::WordBoundary
+                  2
+                when NFA::Look::Kind::NonWordBoundary
+                  3
+                when NFA::Look::Kind::StartText
+                  4
+                when NFA::Look::Kind::EndText
+                  5
+                when NFA::Look::Kind::EndTextWithNewline
+                  6
+                else
+                  # Should never happen
+                  -1
+                end
+          if bit >= 0
+            look_mask |= (1 << bit).to_u8
+          end
+        end
+      end
+
+      state = State.new(dfa_id, @byte_classes.alphabet_len, look_mask)
 
       # Check if any NFA state in set is a match
       if ENV["LOGOS_DEBUG_DFA"]?
-        puts "DFA state #{dfa_id.to_i}: NFA set size #{nfa_set.size}"
+        puts "DFA state #{dfa_id.to_i}: NFA set size #{nfa_set.size}, look_mask #{look_mask}"
         nfa_set.each do |nfa_id|
           nfa_state = @nfa.states[nfa_id.to_i]
           puts "  NFA state #{nfa_id.to_i}: #{nfa_state.class} #{nfa_state.is_a?(NFA::Match) ? "(match pattern #{nfa_state.pattern_id.to_i}, next=#{nfa_state.next.inspect})" : ""}"

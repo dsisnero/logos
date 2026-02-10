@@ -3,6 +3,7 @@ require "./utf8_sequences"
 module Regex::Automata::NFA
   alias StateID = Regex::Automata::StateID
   alias PatternID = Regex::Automata::PatternID
+
   # A transition between NFA states
   struct Transition
     # Range of bytes that trigger this transition
@@ -362,23 +363,22 @@ module Regex::Automata::NFA
 
     private def build_min_copies(child : ThompsonRef, count : Int32, pattern_id : PatternID) : ThompsonRef
       # Build chain of 'count' copies of child
-      # TODO: This implementation is broken - concatenating the same child reference
-      # creates loops because build_concatenation modifies child.end.
-      # Need to create fresh copies of child NFA for each repetition.
-      result = child
+      # Create fresh copy for each repetition to avoid modifying shared states
+      result = copy_subgraph(child.start, child.end)
       (count - 1).times do
-        # Need fresh copy of child for each repetition
-        # For now, reuse same child (creates incorrect NFA)
-        result = build_concatenation(result, child)
+        next_copy = copy_subgraph(child.start, child.end)
+        result = build_concatenation(result, next_copy)
       end
       result
     end
 
     private def build_optional_copies(child : ThompsonRef, count : Int32, greedy : Bool, pattern_id : PatternID) : ThompsonRef
       # Build chain of 'count' optional copies of child
-      result = build_repetition(child, 0, 1, greedy, pattern_id)
+      # Each optional copy needs its own child subgraph
+      result = build_repetition(copy_subgraph(child.start, child.end), 0, 1, greedy, pattern_id)
       (count - 1).times do
-        next_optional = build_repetition(child, 0, 1, greedy, pattern_id)
+        next_copy = copy_subgraph(child.start, child.end)
+        next_optional = build_repetition(next_copy, 0, 1, greedy, pattern_id)
         result = build_concatenation(result, next_optional)
       end
       result
@@ -650,6 +650,96 @@ module Regex::Automata::NFA
         state
       end
     end
+
+    # Get all target state IDs from a state (for graph traversal)
+    private def get_targets(state : State) : Array(StateID)
+      case state
+      when ByteRange
+        [state.trans.next]
+      when Sparse
+        state.transitions.map(&.next)
+      when Look, Capture, Empty
+        [state.next]
+      when Match
+        state.next.try { |n| [n] } || [] of StateID
+      when Union
+        state.alternates
+      when BinaryUnion
+        [state.alt1, state.alt2]
+      when Fail
+        [] of StateID
+      else
+        [] of StateID
+      end
+    end
+
+    # Create a deep copy of a Thompson subgraph
+    private def copy_subgraph(start_id : StateID, end_id : StateID) : ThompsonRef
+      # Map from original state ID to new state ID
+      id_map = {} of StateID => StateID
+      # Stack for DFS traversal
+      stack = [start_id]
+
+      # First pass: duplicate all reachable states
+      while !stack.empty?
+        orig_id = stack.pop
+        next if id_map.has_key?(orig_id)
+
+        # Duplicate state
+        orig_state = @states[orig_id.to_i]
+        new_id = add_state(orig_state)
+        id_map[orig_id] = new_id
+
+        # Push targets for traversal
+        get_targets(orig_state).each do |target_id|
+          # Only traverse targets that are within the same subgraph?
+          # We'll traverse all reachable states; but we must avoid infinite loops.
+          # Use visited check via id_map.
+          unless id_map.has_key?(target_id)
+            stack.push(target_id)
+          end
+        end
+      end
+
+      # Second pass: update transitions in copied states to point to copied targets
+      id_map.each do |_orig_id, copied_id|
+        state = @states[copied_id.to_i]
+        new_targets = get_targets(state).map do |target_id|
+          id_map[target_id]? || target_id
+        end
+
+        # Update state with new targets
+        case state
+        when ByteRange
+          trans = state.trans
+          @states[copied_id.to_i] = ByteRange.new(Transition.new(trans.start, trans.end, new_targets.first))
+        when Sparse
+          new_transitions = state.transitions.map_with_index do |t, i|
+            Transition.new(t.start, t.end, new_targets[i])
+          end
+          @states[copied_id.to_i] = Sparse.new(new_transitions)
+        when Look
+          @states[copied_id.to_i] = Look.new(state.kind, new_targets.first)
+        when Capture
+          @states[copied_id.to_i] = Capture.new(new_targets.first, state.pattern_id, state.group_index, state.slot)
+        when Empty
+          @states[copied_id.to_i] = Empty.new(new_targets.first)
+        when Match
+          # Match state's next is optional
+          next_target = new_targets.first? || nil
+          @states[copied_id.to_i] = Match.new(state.pattern_id, next_target)
+        when Union
+          @states[copied_id.to_i] = Union.new(new_targets)
+        when BinaryUnion
+          @states[copied_id.to_i] = BinaryUnion.new(new_targets[0], new_targets[1])
+        when Fail
+          # No changes
+        end
+      end
+
+      # Return reference to copied subgraph
+      ThompsonRef.new(id_map[start_id], id_map[end_id])
+    end
   end
 
   # Thompson NFA
@@ -718,6 +808,92 @@ module Regex::Automata::NFA
             end
           end
         when Fail, ByteRange, Sparse
+          # No epsilon transitions
+        end
+      end
+
+      closure
+    end
+
+    # Compute epsilon closure of a set of NFA states, considering look-around assertions
+    # satisfied_look_mask: bitmask where bit 0=Start, 1=End, 2=WordBoundary, 3=NonWordBoundary,
+    #                      4=StartText, 5=EndText, 6=EndTextWithNewline
+    def epsilon_closure_with_look(states : Set(StateID), satisfied_look_mask : UInt8) : Set(StateID)
+      stack = states.to_a
+      closure = Set(StateID).new(states)
+
+      while !stack.empty?
+        state_id = stack.pop
+        state = @states[state_id.to_i]
+
+        case state
+        when Empty
+          next_id = state.next
+          unless closure.includes?(next_id)
+            closure.add(next_id)
+            stack.push(next_id)
+          end
+        when Union
+          state.alternates.each do |alt_id|
+            unless closure.includes?(alt_id)
+              closure.add(alt_id)
+              stack.push(alt_id)
+            end
+          end
+        when BinaryUnion
+          unless closure.includes?(state.alt1)
+            closure.add(state.alt1)
+            stack.push(state.alt1)
+          end
+          unless closure.includes?(state.alt2)
+            closure.add(state.alt2)
+            stack.push(state.alt2)
+          end
+        when NFA::Look
+          # Look states are conditional epsilon transitions
+          # Check if this look kind is satisfied
+          look_kind_satisfied = case state.kind
+                                when NFA::Look::Kind::Start
+                                  (satisfied_look_mask & (1 << 0)) != 0
+                                when NFA::Look::Kind::End
+                                  (satisfied_look_mask & (1 << 1)) != 0
+                                when NFA::Look::Kind::WordBoundary
+                                  (satisfied_look_mask & (1 << 2)) != 0
+                                when NFA::Look::Kind::NonWordBoundary
+                                  (satisfied_look_mask & (1 << 3)) != 0
+                                when NFA::Look::Kind::StartText
+                                  (satisfied_look_mask & (1 << 4)) != 0
+                                when NFA::Look::Kind::EndText
+                                  (satisfied_look_mask & (1 << 5)) != 0
+                                when NFA::Look::Kind::EndTextWithNewline
+                                  (satisfied_look_mask & (1 << 6)) != 0
+                                else
+                                  false
+                                end
+
+          if look_kind_satisfied
+            next_id = state.next
+            unless closure.includes?(next_id)
+              closure.add(next_id)
+              stack.push(next_id)
+            end
+          end
+        when NFA::Capture
+          # Capture states are unconditional epsilon transitions
+          next_id = state.next
+          unless closure.includes?(next_id)
+            closure.add(next_id)
+            stack.push(next_id)
+          end
+        when NFA::Match
+          # Match states have optional epsilon transition via next
+          if next_id = state.next
+            unless closure.includes?(next_id)
+              closure.add(next_id)
+              stack.push(next_id)
+            end
+          end
+        when NFA::Fail, NFA::ByteRange, NFA::Sparse
           # No epsilon transitions
         end
       end

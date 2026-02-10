@@ -25,6 +25,22 @@ module Logos::Spec::Callbacks
     end
   end
 
+  module RepetitionPatterns
+    Logos.define Token do
+      error_type Nil
+
+      # Whitespace skip
+      regex "[ \\t\\n\\r]+", :Whitespace do
+        Logos::Skip.new
+      end
+
+      regex "a{2,5}", :TwoToFiveA
+      regex "a{2}", :TwoA
+      regex "a{2,}", :TwoOrMoreA
+      regex "a{0,3}", :UpToThreeA
+    end
+  end
+
   describe "callback returning values (token variants with associated data)" do
     it "parses numbers with callbacks returning values" do
       lexer = Logos::Lexer(CallbackValues::Token, String, Logos::NoExtras, Nil).new("42 3.14 +")
@@ -83,6 +99,38 @@ module Logos::Spec::Callbacks
       # Requires proper lifetime handling in callbacks
       # Token::Integer((&'a str, u64)) with nested tuple
       # Token::Text(Cow<'a, str>) with Cow type
+    end
+  end
+
+  describe "regex repetition ranges" do
+    it "matches a{2,5} with exactly 5 a's" do
+      lexer = Logos::Lexer(RepetitionPatterns::Token, String, Logos::NoExtras, Nil).new("aaaaa")
+      result = lexer.next
+      result.should_not be_nil
+      result = result.as(Logos::Result(RepetitionPatterns::Token, Nil))
+      result.ok?.should be_true
+      result.unwrap.should eq(RepetitionPatterns::Token::TwoToFiveA)
+      lexer.slice.should eq("aaaaa")
+    end
+
+    it "matches a{2,} with 6 a's" do
+      lexer = Logos::Lexer(RepetitionPatterns::Token, String, Logos::NoExtras, Nil).new("aaaaaa")
+      result = lexer.next
+      result.should_not be_nil
+      result = result.as(Logos::Result(RepetitionPatterns::Token, Nil))
+      result.ok?.should be_true
+      result.unwrap.should eq(RepetitionPatterns::Token::TwoOrMoreA)
+      lexer.slice.should eq("aaaaaa")
+    end
+
+    it "matches a{0,3} with 1 a" do
+      lexer = Logos::Lexer(RepetitionPatterns::Token, String, Logos::NoExtras, Nil).new("a")
+      result = lexer.next
+      result.should_not be_nil
+      result = result.as(Logos::Result(RepetitionPatterns::Token, Nil))
+      result.ok?.should be_true
+      result.unwrap.should eq(RepetitionPatterns::Token::UpToThreeA)
+      lexer.slice.should eq("a")
     end
   end
 end

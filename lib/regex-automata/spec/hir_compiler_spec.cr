@@ -35,6 +35,63 @@ describe Regex::Automata::HirCompiler do
     nfa.size.should be > 0
   end
 
+  it "compiles general repetition ranges" do
+    # Test various repetition ranges
+    patterns = {
+      "a{2}"    => {min: 2, max: 2},
+      "a{2,5}"  => {min: 2, max: 5},
+      "a{2,}"   => {min: 2, max: nil},
+      "a{0,3}"  => {min: 0, max: 3},
+    }
+
+    patterns.each do |pattern, expected|
+      hir = Regex::Syntax.parse(pattern)
+      compiler = Regex::Automata::HirCompiler.new
+      nfa = compiler.compile(hir)
+      nfa.should be_a(Regex::Automata::NFA::NFA)
+      nfa.size.should be > 0
+
+      # Basic smoke test: compile DFA and match
+      dfa_builder = Regex::Automata::DFA::Builder.new(nfa)
+      dfa = dfa_builder.build
+
+      min = expected[:min]
+      max = expected[:max]
+
+      # Test matching exact min copies
+      match = dfa.find_longest_match("a" * min)
+      match.should_not be_nil
+      end_pos, pattern_ids = match.not_nil!
+      end_pos.should eq(min)
+      pattern_ids.should eq([Regex::Automata::PatternID.new(0)])
+
+      # Test matching within range
+      if max
+        test_count = (min + 1).clamp(min, max)
+        match = dfa.find_longest_match("a" * test_count)
+        match.should_not be_nil
+        end_pos, pattern_ids = match.not_nil!
+        end_pos.should eq(test_count)
+      end
+
+      # Test matching beyond max (should stop at max)
+      if max
+        beyond = max + 2
+        match = dfa.find_longest_match("a" * beyond)
+        match.should_not be_nil
+        end_pos, pattern_ids = match.not_nil!
+        end_pos.should eq(max)
+      end
+
+      # Test matching less than min (should not match)
+      if min > 0
+        less = min - 1
+        match = dfa.find_longest_match("a" * less)
+        match.should be_nil
+      end
+    end
+  end
+
   it "compiles concatenation" do
     hir = Regex::Syntax.parse("ab")
     compiler = Regex::Automata::HirCompiler.new
@@ -72,28 +129,46 @@ describe Regex::Automata::HirCompiler do
     hirs = ["a", "b", "c"].map { |pat| Regex::Syntax.parse(pat) }
     compiler = Regex::Automata::HirCompiler.new
     nfa = compiler.compile_multi(hirs)
-    
+
     dfa_builder = Regex::Automata::DFA::Builder.new(nfa)
     dfa = dfa_builder.build
-    
+
     # Test each pattern
     match = dfa.find_longest_match("a")
     match.should_not be_nil
     end_pos, pattern_ids = match.not_nil!
     end_pos.should eq(1)
     pattern_ids.should eq([Regex::Automata::PatternID.new(0)])
-    
+
     match = dfa.find_longest_match("b")
     match.should_not be_nil
     end_pos, pattern_ids = match.not_nil!
     pattern_ids.should eq([Regex::Automata::PatternID.new(1)])
-    
+
     match = dfa.find_longest_match("c")
     match.should_not be_nil
     end_pos, pattern_ids = match.not_nil!
     pattern_ids.should eq([Regex::Automata::PatternID.new(2)])
-    
+
     match = dfa.find_longest_match("d")
     match.should be_nil
+  end
+
+  it "compiles look-around assertions" do
+    # Test that look-around assertions compile to NFA
+    patterns = ["^a", "a$", "\\ba", "a\\b", "\\Aa", "a\\z", "a\\Z"]
+
+    patterns.each do |pattern|
+      hir = Regex::Syntax.parse(pattern)
+      compiler = Regex::Automata::HirCompiler.new
+      nfa = compiler.compile(hir)
+      nfa.should be_a(Regex::Automata::NFA::NFA)
+      nfa.size.should be > 0
+
+      # Basic smoke test: compile DFA (even if matching won't work correctly yet)
+      dfa_builder = Regex::Automata::DFA::Builder.new(nfa)
+      dfa = dfa_builder.build
+      dfa.should be_a(Regex::Automata::DFA::DFA)
+    end
   end
 end
