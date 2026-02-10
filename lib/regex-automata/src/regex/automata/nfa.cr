@@ -1,4 +1,5 @@
 require "./utf8_sequences"
+require "./look"
 
 module Regex::Automata::NFA
   alias StateID = Regex::Automata::StateID
@@ -816,9 +817,8 @@ module Regex::Automata::NFA
     end
 
     # Compute epsilon closure of a set of NFA states, considering look-around assertions
-    # satisfied_look_mask: bitmask where bit 0=Start, 1=End, 2=WordBoundary, 3=NonWordBoundary,
-    #                      4=StartText, 5=EndText, 6=EndTextWithNewline
-    def epsilon_closure_with_look(states : Set(StateID), satisfied_look_mask : UInt8) : Set(StateID)
+    # look_have: set of look-around assertions satisfied at the current position
+    def epsilon_closure_with_look(states : Set(StateID), look_have : Regex::Automata::LookSet) : Set(StateID)
       stack = states.to_a
       closure = Set(StateID).new(states)
 
@@ -853,20 +853,18 @@ module Regex::Automata::NFA
           # Look states are conditional epsilon transitions
           # Check if this look kind is satisfied
           look_kind_satisfied = case state.kind
-                                 when Look::Kind::Start
-                                   (satisfied_look_mask & (1 << 0)) != 0
-                                 when Look::Kind::End
-                                   (satisfied_look_mask & (1 << 1)) != 0
-                                 when Look::Kind::WordBoundary
-                                   (satisfied_look_mask & (1 << 2)) != 0
-                                 when Look::Kind::NonWordBoundary
-                                   (satisfied_look_mask & (1 << 3)) != 0
-                                 when Look::Kind::StartText
-                                   (satisfied_look_mask & (1 << 4)) != 0
-                                 when Look::Kind::EndText
-                                   (satisfied_look_mask & (1 << 5)) != 0
-                                 when Look::Kind::EndTextWithNewline
-                                   (satisfied_look_mask & (1 << 6)) != 0
+                                when Look::Kind::Start
+                                  look_have.includes?(Regex::Automata::Look::StartLF) || look_have.includes?(Regex::Automata::Look::StartCRLF)
+                                when Look::Kind::End
+                                  look_have.includes?(Regex::Automata::Look::EndLF) || look_have.includes?(Regex::Automata::Look::EndCRLF)
+                                when Look::Kind::WordBoundary
+                                  look_have.includes?(Regex::Automata::Look::WordAscii)
+                                when Look::Kind::NonWordBoundary
+                                  look_have.includes?(Regex::Automata::Look::WordAsciiNegate)
+                                when Look::Kind::StartText
+                                  look_have.includes?(Regex::Automata::Look::Start)
+                                when Look::Kind::EndText, Look::Kind::EndTextWithNewline
+                                  look_have.includes?(Regex::Automata::Look::End)
                                 else
                                   false
                                 end

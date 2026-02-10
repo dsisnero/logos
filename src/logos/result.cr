@@ -88,6 +88,17 @@ module Logos
     end
   end
 
+  # Boxed callback value for tokens with associated data.
+  abstract class CallbackValueBase
+  end
+
+  class CallbackValue(T) < CallbackValueBase
+    getter value : T
+
+    def initialize(@value : T)
+    end
+  end
+
   # Default extras type when no extras are needed.
   struct NoExtras
   end

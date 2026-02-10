@@ -41,7 +41,10 @@ module Logos
     ]
 
     # Generate DFA compilation method
-    private def self.compile_dfa : Regex::Automata::DFA::DFA
+    private def self.compile_dfa : NamedTuple(
+      dfa: Regex::Automata::DFA::DFA,
+      pattern_to_variant: Array(self)
+    )
       # Collect HIRs for all patterns
       hirs = [] of Regex::Syntax::Hir::Hir
       pattern_to_variant = [] of self
@@ -63,8 +66,8 @@ module Logos
         # Create a single dead state with no transitions
         dead_state = Regex::Automata::DFA::State.new(Regex::Automata::StateID.new(0), 256)
         256.times { |i| dead_state.set_transition(i, Regex::Automata::StateID.new(-1)) }
-        @@pattern_to_variant = pattern_to_variant
-        return Regex::Automata::DFA::DFA.new([dead_state], Regex::Automata::StateID.new(0), 256)
+        dfa = Regex::Automata::DFA::DFA.new([dead_state], Regex::Automata::StateID.new(0), 256)
+        return {dfa: dfa, pattern_to_variant: pattern_to_variant}
       end
 
       # Compile NFA from multiple patterns
@@ -75,28 +78,25 @@ module Logos
       dfa_builder = Regex::Automata::DFA::Builder.new(nfa)
       dfa = dfa_builder.build
 
-      # Store pattern mapping in DFA metadata (TODO: need to attach mapping)
-      # For now, we'll store in a class variable
-      @@pattern_to_variant = pattern_to_variant
-
-      dfa
+      {dfa: dfa, pattern_to_variant: pattern_to_variant}
     end
 
-    # Lazy-loaded DFA
-    @@dfa : Regex::Automata::DFA::DFA?
-    @@pattern_to_variant : Array(self)?
+    @@compiled = nil.as(NamedTuple(
+      dfa: Regex::Automata::DFA::DFA,
+      pattern_to_variant: Array(self)
+    )?)
 
-    private def self.dfa : Regex::Automata::DFA::DFA
-      @@dfa ||= compile_dfa
-    end
-
-    private def self.pattern_to_variant : Array(self)
-      @@pattern_to_variant ||= [] of self
+    private def self.compiled : NamedTuple(
+      dfa: Regex::Automata::DFA::DFA,
+      pattern_to_variant: Array(self)
+    )
+      @@compiled ||= compile_dfa
     end
 
     # Generate lex method
     def self.lex(lexer : Lexer(self, String, NoExtras, Nil)) : Result(self, Nil)?
-      dfa = self.dfa
+      compiled = self.compiled
+      dfa = compiled[:dfa]
 
       # Find longest match
       match = dfa.find_longest_match(lexer.remainder)
@@ -106,7 +106,7 @@ module Logos
 
       # Determine which variant matched (take smallest pattern ID for priority)
       pattern_id = pattern_ids.min_by(&.to_i)
-      variant = pattern_to_variant[pattern_id.to_i]
+      variant = compiled[:pattern_to_variant][pattern_id.to_i]
 
       # Advance lexer by matched length
       lexer.bump(end_pos)

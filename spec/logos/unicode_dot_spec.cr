@@ -92,7 +92,7 @@ module Logos::Spec::UnicodeDot
         tokens.should eq([BinaryDotToken::Dot])
       end
 
-      pending "matches each byte of Unicode character" do
+      it "matches each byte of Unicode character" do
         lexer = Logos::Lexer(BinaryDotToken, Slice(UInt8), Logos::NoExtras, Nil).new("🎉".to_slice)
         tokens = [] of BinaryDotToken
         while token = lexer.next

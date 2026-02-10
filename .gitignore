@@ -6,3 +6,5 @@
 /.shards/
 *.dwarf
 /temp/
+.crystal-cache/
+.beads/bd.sock.startlock

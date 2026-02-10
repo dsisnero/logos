@@ -25,7 +25,7 @@ module Regex::Syntax
     def parse(pattern : String) : Hir::Hir
       @input = pattern
       @pos = 0
-      @len = pattern.bytesize
+      @len = pattern.size
       @nest_depth = 0
 
       # Check nest limit
@@ -87,6 +87,9 @@ module Regex::Syntax
         if current_char == '?'
           greedy = false
           advance
+        elsif current_char == '+'
+          # Possessive quantifier (no backtracking) - treat as greedy in DFA
+          advance
         end
         node = Hir::Repetition.new(node, 0, nil, greedy: greedy)
       when '+'
@@ -95,16 +98,29 @@ module Regex::Syntax
         if current_char == '?'
           greedy = false
           advance
+        elsif current_char == '+'
+          # Possessive quantifier (no backtracking) - treat as greedy in DFA
+          advance
         end
         node = Hir::Repetition.new(node, 1, nil, greedy: greedy)
       when '?'
         advance
         greedy = true
+        possessive = false
         if current_char == '?'
           greedy = false
           advance
+        elsif current_char == '+'
+          # Possessive quantifier (no backtracking) - treat as greedy in DFA
+          possessive = true
+          advance
         end
-        node = Hir::Repetition.new(node, 0, 1, greedy: greedy)
+        if possessive
+          # Treat ?+ as equivalent to * for compatibility
+          node = Hir::Repetition.new(node, 0, nil, greedy: true)
+        else
+          node = Hir::Repetition.new(node, 0, 1, greedy: greedy)
+        end
       when '{'
         advance
         node = parse_repetition_range(node)
@@ -160,6 +176,9 @@ module Regex::Syntax
       if current_char == '?'
         greedy = false
         advance
+      elsif current_char == '+'
+        # Possessive quantifier (no backtracking) - treat as greedy in DFA
+        advance
       end
 
       Hir::Repetition.new(sub, min, max, greedy: greedy)
@@ -211,34 +230,65 @@ module Regex::Syntax
         advance
       end
 
-      ranges = [] of Range(UInt8, UInt8)
+      if @unicode
+        ranges = [] of Range(UInt32, UInt32)
 
-      while !eof? && current_char != ']'
-        start_byte = parse_character_class_char
+        while !eof? && current_char != ']'
+          start_codepoint = parse_character_class_codepoint
 
-        if current_char == '-' && peek_next_char != ']'
-          # Range
-          advance # skip '-'
-          end_byte = parse_character_class_char
+          if current_char == '-' && peek_next_char != ']'
+            # Range
+            advance # skip '-'
+            end_codepoint = parse_character_class_codepoint
 
-          # Validate range
-          if start_byte > end_byte
-            raise ParseError.new("invalid character class range")
+            # Validate range
+            if start_codepoint > end_codepoint
+              raise ParseError.new("invalid character class range")
+            end
+
+            ranges << (start_codepoint..end_codepoint)
+          else
+            # Single character
+            ranges << (start_codepoint..start_codepoint)
           end
-
-          ranges << (start_byte..end_byte)
-        else
-          # Single character
-          ranges << (start_byte..start_byte)
         end
-      end
 
-      if current_char != ']'
-        raise ParseError.new("unclosed character class")
-      end
-      advance # skip ']'
+        if current_char != ']'
+          raise ParseError.new("unclosed character class")
+        end
+        advance # skip ']'
 
-      Hir::CharClass.new(negated, ranges)
+        Hir::UnicodeClass.new(negated, ranges)
+      else
+        ranges = [] of Range(UInt8, UInt8)
+
+        while !eof? && current_char != ']'
+          start_byte = parse_character_class_char
+
+          if current_char == '-' && peek_next_char != ']'
+            # Range
+            advance # skip '-'
+            end_byte = parse_character_class_char
+
+            # Validate range
+            if start_byte > end_byte
+              raise ParseError.new("invalid character class range")
+            end
+
+            ranges << (start_byte..end_byte)
+          else
+            # Single character
+            ranges << (start_byte..start_byte)
+          end
+        end
+
+        if current_char != ']'
+          raise ParseError.new("unclosed character class")
+        end
+        advance # skip ']'
+
+        Hir::CharClass.new(negated, ranges)
+      end
     end
 
     private def parse_character_class_char : UInt8
@@ -249,6 +299,17 @@ module Regex::Syntax
         byte = current_char.ord.to_u8
         advance
         byte
+      end
+    end
+
+    private def parse_character_class_codepoint : UInt32
+      if current_char == '\\'
+        advance
+        parse_escape_char.ord.to_u32
+      else
+        codepoint = current_char.ord.to_u32
+        advance
+        codepoint
       end
     end
 
@@ -579,26 +640,39 @@ module Regex::Syntax
         end
       when 'u'
         advance  # skip 'u'
-        raise ParseError.new("invalid Unicode escape: expected '{'") unless current_char == '{'
-        advance  # skip '{'
-        value = 0
-        digits = 0
-        while digits < 6 && (hex = current_char.to_i?(16))
-          value = value * 16 + hex
-          advance
-          digits += 1
+        if current_char == '{'
+          advance  # skip '{'
+          value = 0
+          digits = 0
+          while digits < 6 && (hex = current_char.to_i?(16))
+            value = value * 16 + hex
+            advance
+            digits += 1
+          end
+          raise ParseError.new("invalid Unicode escape: expected '}'") if current_char != '}'
+          advance  # skip '}'
+          # Validate value range (0..0x10FFFF) and not surrogate
+          if value > 0x10FFFF
+            raise ParseError.new("Unicode escape value out of range")
+          end
+          # Reject surrogate code points (0xD800..0xDFFF)
+          if (0xD800 <= value <= 0xDFFF)
+            raise ParseError.new("Unicode escape cannot be surrogate")
+          end
+          value.chr
+        elsif current_char.to_i?(16)
+          value = 0
+          digits = 0
+          while digits < 4 && (hex = current_char.to_i?(16))
+            value = value * 16 + hex
+            advance
+            digits += 1
+          end
+          raise ParseError.new("invalid Unicode escape: expected 4 hex digits") if digits < 4
+          value.chr
+        else
+          'u'
         end
-        raise ParseError.new("invalid Unicode escape: expected '}'") if current_char != '}'
-        advance  # skip '}'
-        # Validate value range (0..0x10FFFF) and not surrogate
-        if value > 0x10FFFF
-          raise ParseError.new("Unicode escape value out of range")
-        end
-        # Reject surrogate code points (0xD800..0xDFFF)
-        if (0xD800 <= value <= 0xDFFF)
-          raise ParseError.new("Unicode escape cannot be surrogate")
-        end
-        value.chr
       else
         # Escaped character like \\, \., \*, etc.
         char = current_char
@@ -694,7 +768,7 @@ module Regex::Syntax
       bytes = [] of UInt8
 
       while !eof? && !"|().*+?{[\\".includes?(current_char)
-        bytes << current_char.ord.to_u8
+        current_char.to_s.each_byte { |byte| bytes << byte }
         advance
       end
 

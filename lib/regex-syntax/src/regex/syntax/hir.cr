@@ -1,4 +1,174 @@
 module Regex::Syntax::Hir
+  # Apply ASCII-only case folding to a HIR, for ignore_ascii_case support.
+  def self.case_fold_ascii(hir : Hir) : Hir
+    Hir.new(case_fold_ascii_node(hir.node))
+  end
+
+  # Apply Unicode-aware case folding to a HIR, for ignore_case support.
+  def self.case_fold_unicode(hir : Hir) : Hir
+    Hir.new(case_fold_unicode_node(hir.node))
+  end
+
+  private def self.case_fold_ascii_node(node : Node) : Node
+    case node
+    when Literal
+      bytes = node.bytes
+      nodes = [] of Node
+      bytes.each do |byte|
+        if ascii_letter?(byte)
+          lower, upper = ascii_fold_pair(byte)
+          ranges = [lower..lower, upper..upper]
+          nodes << CharClass.new(false, ranges)
+        else
+          nodes << Literal.new(Bytes.new(1) { byte })
+        end
+      end
+      return nodes.first if nodes.size == 1
+      Concat.new(nodes)
+    when CharClass
+      ranges = case_fold_ascii_ranges(node.intervals)
+      CharClass.new(node.negated, ranges)
+    when UnicodeClass
+      node
+    when Concat
+      Concat.new(node.children.map { |child| case_fold_ascii_node(child) })
+    when Alternation
+      Alternation.new(node.children.map { |child| case_fold_ascii_node(child) })
+    when Repetition
+      Repetition.new(case_fold_ascii_node(node.sub), node.min, node.max, greedy: node.greedy)
+    when Capture
+      Capture.new(case_fold_ascii_node(node.sub), node.index)
+    when Look, DotNode, Empty
+      node
+    else
+      node
+    end
+  end
+
+  private def self.case_fold_unicode_node(node : Node) : Node
+    case node
+    when Literal
+      fold_unicode_literal(node.bytes)
+    when CharClass
+      if node.negated
+        node
+      else
+        UnicodeClass.new(false, case_fold_unicode_from_byte_ranges(node.intervals))
+      end
+    when UnicodeClass
+      if node.negated
+        node
+      else
+        UnicodeClass.new(false, case_fold_unicode_from_codepoint_ranges(node.intervals))
+      end
+    when Concat
+      Concat.new(node.children.map { |child| case_fold_unicode_node(child) })
+    when Alternation
+      Alternation.new(node.children.map { |child| case_fold_unicode_node(child) })
+    when Repetition
+      Repetition.new(case_fold_unicode_node(node.sub), node.min, node.max, greedy: node.greedy)
+    when Capture
+      Capture.new(case_fold_unicode_node(node.sub), node.index)
+    when Look, DotNode, Empty
+      node
+    else
+      node
+    end
+  end
+
+  private def self.fold_unicode_literal(bytes : Bytes) : Node
+    string = String.new(bytes)
+    nodes = [] of Node
+    string.each_char do |char|
+      if char.ascii?
+        lower, upper = ascii_fold_pair(char.ord.to_u8)
+        ranges = [lower..lower, upper..upper]
+        nodes << CharClass.new(false, ranges)
+      else
+        variants = unicode_case_variants(char)
+        nodes << UnicodeClass.new(false, variants.map { |cp| cp..cp })
+      end
+    end
+    return nodes.first if nodes.size == 1
+    Concat.new(nodes)
+  end
+
+  private def self.unicode_case_variants(char : Char) : Array(UInt32)
+    variants = [] of UInt32
+    variants << char.ord.to_u32
+    variants << char.downcase.ord.to_u32
+    variants << char.upcase.ord.to_u32
+    variants.uniq!
+    variants
+  end
+
+  private def self.case_fold_unicode_from_byte_ranges(ranges : Array(Range(UInt8, UInt8))) : Array(Range(UInt32, UInt32))
+    folded = [] of Range(UInt32, UInt32)
+    ranges.each do |range|
+      folded << (range.begin.to_u32..range.end.to_u32)
+      upper_start = range.begin > 'A'.ord.to_u8 ? range.begin : 'A'.ord.to_u8
+      upper_end = range.end < 'Z'.ord.to_u8 ? range.end : 'Z'.ord.to_u8
+      if upper_start <= upper_end
+        folded << ((upper_start + 32).to_u32..(upper_end + 32).to_u32)
+      end
+
+      lower_start = range.begin > 'a'.ord.to_u8 ? range.begin : 'a'.ord.to_u8
+      lower_end = range.end < 'z'.ord.to_u8 ? range.end : 'z'.ord.to_u8
+      if lower_start <= lower_end
+        folded << ((lower_start - 32).to_u32..(lower_end - 32).to_u32)
+      end
+    end
+    folded
+  end
+
+  private def self.case_fold_unicode_from_codepoint_ranges(ranges : Array(Range(UInt32, UInt32))) : Array(Range(UInt32, UInt32))
+    folded = [] of Range(UInt32, UInt32)
+    ranges.each do |range|
+      folded << range
+      if range.end - range.begin <= 512
+        range.each do |cp|
+          char = cp.chr
+          unicode_case_variants(char).each do |variant|
+            folded << (variant..variant)
+          end
+        end
+      end
+    end
+    folded
+  end
+
+  private def self.case_fold_ascii_ranges(ranges : Array(Range(UInt8, UInt8))) : Array(Range(UInt8, UInt8))
+    folded = [] of Range(UInt8, UInt8)
+    ranges.each do |range|
+      folded << range
+      upper_start = range.begin > 'A'.ord.to_u8 ? range.begin : 'A'.ord.to_u8
+      upper_end = range.end < 'Z'.ord.to_u8 ? range.end : 'Z'.ord.to_u8
+      if upper_start <= upper_end
+        folded << ((upper_start + 32).to_u8..(upper_end + 32).to_u8)
+      end
+
+      lower_start = range.begin > 'a'.ord.to_u8 ? range.begin : 'a'.ord.to_u8
+      lower_end = range.end < 'z'.ord.to_u8 ? range.end : 'z'.ord.to_u8
+      if lower_start <= lower_end
+        folded << ((lower_start - 32).to_u8..(lower_end - 32).to_u8)
+      end
+    end
+    folded
+  end
+
+  private def self.ascii_letter?(byte : UInt8) : Bool
+    (byte >= 'A'.ord.to_u8 && byte <= 'Z'.ord.to_u8) ||
+      (byte >= 'a'.ord.to_u8 && byte <= 'z'.ord.to_u8)
+  end
+
+  private def self.ascii_fold_pair(byte : UInt8) : Tuple(UInt8, UInt8)
+    if byte >= 'A'.ord.to_u8 && byte <= 'Z'.ord.to_u8
+      { (byte + 32).to_u8, byte }
+    else
+      { byte, (byte - 32).to_u8 }
+    end
+  end
+
   # A type describing the different flavors of `.`
   enum Dot
     # Matches the UTF-8 encoding of any Unicode scalar value

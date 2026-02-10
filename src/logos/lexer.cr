@@ -6,7 +6,7 @@ module Logos
     @token_start : Int32
     @token_end : Int32
     @extras : Extras
-    @callback_value : (Int64 | Float64 | String | Nil) = nil
+    @callback_value : CallbackValueBase? = nil
 
     # Create a new `Lexer`.
     #
@@ -30,21 +30,26 @@ module Logos
     property extras : Extras
 
     # Last callback return value (for tokens with associated data)
-    property callback_value : (Int64 | Float64 | String | Nil)
+    property callback_value : CallbackValueBase?
+
+    # Get callback value as a specific type.
+    def callback_value_as(type : T.class) : T? forall T
+      @callback_value.as?(CallbackValue(T)).try(&.value)
+    end
 
     # Get callback value as Int64
     def int_value : Int64?
-      @callback_value.as?(Int64)
+      callback_value_as(Int64)
     end
 
     # Get callback value as Float64
     def float_value : Float64?
-      @callback_value.as?(Float64)
+      callback_value_as(Float64)
     end
 
     # Get callback value as String
     def string_value : String?
-      @callback_value.as?(String)
+      callback_value_as(String)
     end
 
     # Clear callback value
@@ -114,10 +119,18 @@ module Logos
     #
     # The new lexer continues to point at the same span as the current lexer,
     # and the current token becomes the error token of the new token type.
-    # TODO: Implement morph with generic type parameter
-    # def morph(new_token_type : Token2.class) : Lexer(Token2)
-    #   Lexer(Token2).new(@source, @extras)
-    # end
+    def morph(token_type : Token2.class) : Lexer(Token2, Source, Extras, Error) forall Token2
+      lexer = Lexer(Token2, Source, Extras, Error).new(@source, @extras)
+      lexer.set_span(@token_start, @token_end)
+      lexer
+    end
+
+    def morph(token_type : Token2.class, & : Extras -> Extras2) : Lexer(Token2, Source, Extras2, Error) forall Token2, Extras2
+      converted_extras = yield @extras
+      lexer = Lexer(Token2, Source, Extras2, Error).new(@source, converted_extras)
+      lexer.set_span(@token_start, @token_end)
+      lexer
+    end
 
     # Implementation of `Iterator` for `Lexer`.
     include Iterator(Result(Token, Error))
@@ -145,6 +158,18 @@ module Logos
           return stop
         end
       end
+    end
+
+    protected def set_span(start_pos : Int32, end_pos : Int32) : Nil
+      @token_start = start_pos
+      @token_end = end_pos
+    end
+
+    def clone : self
+      lexer = Lexer(Token, Source, Extras, Error).new(@source, @extras)
+      lexer.set_span(@token_start, @token_end)
+      lexer.callback_value = @callback_value
+      lexer
     end
   end
 

@@ -522,29 +522,68 @@ module Logos::Spec::OldLogosBugs
 
   # issue_220 pending: Pascal-style comment regex with (?m) flag not supported
   module Issue220
-    pending "issue_220: Pascal-style comment regex" do
+    Logos.define Token do
+      error_type Nil
+
+      regex "(?m)\\(\\*([^*]|\\*+[^*)])*\\*+\\)", :Comment
+    end
+
+    describe "issue_220: Pascal-style comment regex" do
       it "matches (* hello world *)" do
-        # Pattern: (?m)\(\*([^*]|\*+[^*)])*\*+\)
-        # regex-syntax doesn't support (?m) flag
+        source = "(* hello world *)"
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new(source)
+
+        result = lexer.next
+        result = result.as(Logos::Result(Token, Nil))
+        result.unwrap.should eq(Token::Comment)
+        lexer.slice.should eq("(* hello world *)")
+        lexer.span.should eq(0...17)
       end
     end
   end
 
   # issue_272 pending: possessive quantifier ?+ not supported
   module Issue272
-    pending "issue_272: possessive quantifier" do
+    Logos.define Token do
+      error_type Nil
+
+      token "other", :Other
+      regex "-?[0-9][0-9_]?+", :Integer
+    end
+
+    describe "issue_272: possessive quantifier" do
       it "matches numbers with possessive quantifier" do
-        # Pattern: -?[0-9][0-9_]?+
-        # possessive quantifier ?+ not supported in regex-syntax
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new("32_212")
+        result = lexer.next
+        result = result.as(Logos::Result(Token, Nil))
+        result.unwrap.should eq(Token::Integer)
+        lexer.slice.should eq("32_212")
+        lexer.span.should eq(0...6)
+        lexer.next.should eq(Iterator::Stop::INSTANCE)
       end
     end
   end
 
   # issue_384 pending: complex string literal regex with escapes
   module Issue384
-    pending "issue_384: string literal regex" do
+    Logos.define Token do
+      error_type Nil
+
+      regex %q((?:/(?:\\.|[^\\/])+/[a-zA-Z]*)), :StringLiteral
+      regex %q((?:"(?:(?:[^"\\])|(?:\\.))*")), :StringLiteral
+      regex %q((?:'(?:(?:[^'\\])|(?:\\.))*')), :StringLiteral
+    end
+
+    describe "issue_384: string literal regex" do
       it "matches regex literal" do
-        # Complex pattern with many escapes, may need debugging
+        source = "\"" + ("a" * 1_000_000) + "\""
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new(source)
+
+        result = lexer.next
+        result = result.as(Logos::Result(Token, Nil))
+        result.unwrap.should eq(Token::StringLiteral)
+        lexer.slice.should eq(source)
+        lexer.next.should eq(Iterator::Stop::INSTANCE)
       end
     end
   end
@@ -598,9 +637,36 @@ module Logos::Spec::OldLogosBugs
 
   # issue_420 pending: skip pattern .|[\r\n] with priority needs debugging
   module Issue420
-    pending "issue_420: priority with skip" do
+    Logos.define Token do
+      error_type Nil
+
+      skip_regex ".|[\\r\\n]", :Skip
+      regex "[a-zA-Y]+", :WordExceptZ, priority: 3
+      regex "[0-9]+", :Number, priority: 3
+      regex "[a-zA-Z0-9]*[Z][a-zA-Z0-9]*", :TermWithZ, priority: 3
+    end
+
+    describe "issue_420: priority with skip" do
       it "matches words, numbers, and terms with Z" do
-        # skip pattern .|[\r\n] may be matching too greedily
+        source = "hello 42world fooZfoo"
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new(source)
+
+        expected = [
+          {Logos::Result(Token, Nil).ok(Token::WordExceptZ), "hello", 0...5},
+          {Logos::Result(Token, Nil).ok(Token::Number), "42", 6...8},
+          {Logos::Result(Token, Nil).ok(Token::WordExceptZ), "world", 8...13},
+          {Logos::Result(Token, Nil).ok(Token::TermWithZ), "fooZfoo", 14...21},
+        ]
+
+        expected.each do |expected_result, expected_slice, expected_range|
+          result = lexer.next
+          result.should_not be_nil
+          result.should eq(expected_result)
+          lexer.slice.should eq(expected_slice)
+          lexer.span.should eq(expected_range)
+        end
+
+        lexer.next.should eq(Iterator::Stop::INSTANCE)
       end
     end
   end
@@ -665,40 +731,107 @@ module Logos::Spec::OldLogosBugs
 
   # issue_242 pending: needs token variants with associated data (callbacks returning values)
   module Issue242
-    pending "issue_242: odd number callback" do
+    Logos.define Token do
+      error_type Nil
+
+      regex "[ \\t\\n\\r]+", :Whitespace do
+        Logos::Skip.new
+      end
+
+      regex "\\d*[13579]", :Odd do |lex|
+        Logos::Filter::Emit.new(lex.slice.to_i)
+      end
+    end
+
+    describe "issue_242: odd number callback" do
       it "parses odd numbers with callback" do
-        # Requires token variants with associated data (logos-gwz)
-        # Pattern: \d*[13579] with callback parsing i32
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new("13579 101")
+
+        result = lexer.next
+        result = result.as(Logos::Result(Token, Nil))
+        result.unwrap.should eq(Token::Odd)
+        lexer.callback_value_as(Int32).should eq(13579)
+
+        result = lexer.next
+        result = result.as(Logos::Result(Token, Nil))
+        result.unwrap.should eq(Token::Odd)
+        lexer.callback_value_as(Int32).should eq(101)
       end
     end
   end
 
   # issue_251 pending: needs token variants with associated data
   module Issue251
-    pending "issue_251: char token with slice" do
+    Logos.define Token do
+      error_type Nil
+
+      regex ".", :Char do |lex|
+        Logos::Filter::Emit.new(lex.slice)
+      end
+    end
+
+    describe "issue_251: char token with slice" do
       it "matches any character with slice" do
-        # Requires token variants with associated data (logos-gwz)
-        # Token::Char(&'a str) where callback returns lex.slice()
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new("a")
+        result = lexer.next
+        result = result.as(Logos::Result(Token, Nil))
+        result.unwrap.should eq(Token::Char)
+        lexer.callback_value_as(String).should eq("a")
       end
     end
   end
 
   # issue_256 pending: needs token variants with associated data
   module Issue256
-    pending "issue_256: integer literal callback" do
+    Logos.define Token do
+      error_type Nil
+
+      regex "[ \\t\\n\\r]+", :Whitespace do
+        Logos::Skip.new
+      end
+
+      regex "[0-9][0-9_]*", :Integer do |lex|
+        Logos::Filter::Emit.new(lex.slice.gsub("_", "").to_i)
+      end
+    end
+
+    describe "issue_256: integer literal callback" do
       it "parses integers with underscores" do
-        # Requires token variants with associated data (logos-gwz)
-        # Callback: lex.slice().replace("_", "").parse().ok()
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new("1_000 42")
+
+        result = lexer.next
+        result = result.as(Logos::Result(Token, Nil))
+        result.unwrap.should eq(Token::Integer)
+        lexer.callback_value_as(Int32).should eq(1000)
+
+        result = lexer.next
+        result = result.as(Logos::Result(Token, Nil))
+        result.unwrap.should eq(Token::Integer)
+        lexer.callback_value_as(Int32).should eq(42)
       end
     end
   end
 
   # issue_201 pending: needs boolean filter callbacks
   module Issue201
-    pending "issue_201: Lua brackets with callback" do
+    Logos.define Token do
+      error_type Nil
+
+      regex "\\[=*\\[", :Open do |lex|
+        lex.remainder.includes?("]")
+      end
+    end
+
+    describe "issue_201: Lua brackets with callback" do
       it "matches Lua long brackets" do
-        # Requires boolean filter callbacks (logos-9me)
-        # Callback returns bool (true if matched, false otherwise)
+        source = "[=[hello]=]"
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new(source)
+
+        result = lexer.next
+        result.should_not be_nil
+        result = result.as(Logos::Result(Token, Nil))
+        result.unwrap.should eq(Token::Open)
+        lexer.slice.should eq("[=[")
       end
     end
   end

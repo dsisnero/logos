@@ -2,18 +2,73 @@ require "../spec_helper"
 require "regex-automata"
 
 module Logos::Spec::Clone
-  pending "clone behavior with callbacks (logos-gwz)" do
+  class Evil
+    getter id : Int32
+
+    def initialize(@id : Int32)
+    end
+  end
+
+  Logos.define Token do
+    error_type Nil
+
+    regex "[ \\t\\n\\r]+", :Whitespace do
+      Logos::Skip.new
+    end
+
+    regex "evil", :Evil do |_|
+      Logos::Filter::Emit.new(::Logos::Spec::Clone::Evil.new(1))
+    end
+  end
+
+  describe "clone behavior with callbacks" do
     it "handles cloning without use-after-free" do
-      # Requires proper clone semantics with callbacks
-      # Test from logos 0.14.1 bug with Evil type that counts clones
-      # Token::Evil(Evil) where Evil counts clones in its Clone impl
-      # Lexer cloning should not cause use-after-free of callback values
+      lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new("evil evil")
+
+      result = lexer.next
+      result = result.as(Logos::Result(Token, Nil))
+      result.unwrap.should eq(Token::Evil)
+      value = lexer.callback_value_as(::Logos::Spec::Clone::Evil)
+      value.should_not be_nil
+      value = value.as(::Logos::Spec::Clone::Evil)
+      value.id.should eq(1)
+
+      cloned = lexer.clone
+      result = cloned.next
+      result = result.as(Logos::Result(Token, Nil))
+      result.unwrap.should eq(Token::Evil)
+      value = cloned.callback_value_as(::Logos::Spec::Clone::Evil)
+      value.should_not be_nil
+      value = value.as(::Logos::Spec::Clone::Evil)
+      value.id.should eq(1)
+
+      result = lexer.next
+      result = result.as(Logos::Result(Token, Nil))
+      result.unwrap.should eq(Token::Evil)
+      value = lexer.callback_value_as(::Logos::Spec::Clone::Evil)
+      value.should_not be_nil
+      value = value.as(::Logos::Spec::Clone::Evil)
+      value.id.should eq(1)
     end
 
     it "handles cloning without memory leaks" do
-      # Requires proper memory management when cloning lexer
-      # with callback-generated values
-      # Evil clone count should remain 0 after lexer clone
+      lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new("evil")
+      result = lexer.next
+      result = result.as(Logos::Result(Token, Nil))
+      result.unwrap.should eq(Token::Evil)
+      value = lexer.callback_value_as(::Logos::Spec::Clone::Evil)
+      value.should_not be_nil
+      value = value.as(::Logos::Spec::Clone::Evil)
+      value.id.should eq(1)
+
+      cloned = lexer.clone
+      value = cloned.callback_value_as(::Logos::Spec::Clone::Evil)
+      value.should_not be_nil
+      value = value.as(::Logos::Spec::Clone::Evil)
+      value.id.should eq(1)
+
+      lexer.next.should eq(Iterator::Stop::INSTANCE)
+      cloned.next.should eq(Iterator::Stop::INSTANCE)
     end
   end
 end

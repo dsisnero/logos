@@ -159,8 +159,18 @@ describe "benches keywords and punctuators" do
 end
 
 describe "benches strings" do
-  pending "matches strings with escapes" do
-    # TODO: Fix regex pattern escaping for \\t, \\u, \\n, \\" sequences
+  it "matches strings with escapes" do
+    source = "\"hello\\\\tworld\\\\n\""
+    lexer = Logos::Lexer(Logos::Spec::Edgecase::BenchesTest::Token, String, Logos::NoExtras, Nil).new(source)
+
+    result = lexer.next
+    result.should_not be_nil
+    result = result.as(Logos::Result(Logos::Spec::Edgecase::BenchesTest::Token, Nil))
+    result.unwrap.should eq(Logos::Spec::Edgecase::BenchesTest::Token::String)
+    lexer.slice.should eq(source)
+    lexer.span.should eq(0...source.bytesize)
+
+    lexer.next.should eq(Iterator::Stop::INSTANCE)
   end
 end
 
@@ -190,8 +200,26 @@ describe "trivia" do
 end
 
 describe "unicode_whitespace" do
-  pending "matches numbers skipping Unicode whitespace" do
-    # Requires Unicode property support \\p{Whitespace}
+  it "matches numbers skipping Unicode whitespace" do
+    source = "1\u00A02\u20033"
+    lexer = Logos::Lexer(Logos::Spec::Edgecase::UnicodeWhitespaceTest::Token, String, Logos::NoExtras, Nil).new(source)
+
+    expected = [
+      {Logos::Spec::Edgecase::UnicodeWhitespaceTest::Token::Number, "1", 0...1},
+      {Logos::Spec::Edgecase::UnicodeWhitespaceTest::Token::Number, "2", 3...4},
+      {Logos::Spec::Edgecase::UnicodeWhitespaceTest::Token::Number, "3", 7...8},
+    ]
+
+    expected.each do |expected_token, expected_slice, expected_range|
+      result = lexer.next
+      result.should_not be_nil
+      result = result.as(Logos::Result(Logos::Spec::Edgecase::UnicodeWhitespaceTest::Token, Nil))
+      result.unwrap.should eq(expected_token)
+      lexer.slice.should eq(expected_slice)
+      lexer.span.should eq(expected_range)
+    end
+
+    lexer.next.should eq(Iterator::Stop::INSTANCE)
   end
 end
 

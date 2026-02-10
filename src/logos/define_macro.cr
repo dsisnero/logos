@@ -7,6 +7,7 @@ module Logos
     # Parse the block to extract token definitions
     {% token_defs = [] of NamedTuple %}
     {% regex_defs = [] of NamedTuple %}
+    {% subpatterns = [] of NamedTuple %}
     {% error_def = nil %}
     {% extras_type = ::Logos::NoExtras %}
     {% error_type = Nil %}
@@ -41,6 +42,7 @@ module Logos
         # Extract callback from block or named arguments
         {% callback = nil %}
         {% priority = nil %}
+        {% ignore_case = false %}
         {% if node.block %}
           {% callback = node.block %}
         {% elsif node.named_args %}
@@ -53,34 +55,53 @@ module Logos
             {% elsif named_arg.name == "priority" %}
               {% priority = named_arg.value %}
               {% found_priority = true %}
+            {% elsif named_arg.name == "ignore_case" || named_arg.name == "ignore_ascii_case" %}
+              {% ignore_case = named_arg.value %}
             {% end %}
           {% end %}
         {% end %}
 
-        {% if node.name == "token" && node.args.size == 2 %}
+        {% if node.name == "subpattern" && node.args.size == 2 %}
+          {% name_node = node.args[0] %}
+          {% pattern_node = node.args[1] %}
+          {% subpattern_name = name_node.stringify %}
+          {% if subpattern_name.starts_with?(":") %}
+            {% subpattern_name = subpattern_name[1..-1] %}
+          {% end %}
+          {% if subpattern_name.starts_with?("\"") && subpattern_name.ends_with?("\"") %}
+            {% subpattern_name = subpattern_name[1..-2] %}
+          {% end %}
+          {% subpattern_name = subpattern_name.split("\"").join("") %}
+          {% subpattern_name = subpattern_name.split("\\\\").join("") %}
+          {% unless pattern_node.is_a?(StringLiteral) %}
+            {% node.raise "subpattern pattern must be a string literal" %}
+          {% end %}
+          {% pattern_value = pattern_node.stringify[1..-2] %}
+          {% subpatterns << {name: subpattern_name, pattern: pattern_value} %}
+        {% elsif node.name == "token" && node.args.size == 2 %}
           {% variant = node.args[1] %}
           {% if variant.is_a?(SymbolLiteral) %}
             {% variant = variant.id %}
           {% end %}
-          {% token_defs << {variant: variant, pattern: node.args[0], skip: false, callback: callback, priority: priority} %}
+          {% token_defs << {variant: variant, pattern: node.args[0], skip: false, callback: callback, priority: priority, ignore_case: ignore_case} %}
         {% elsif node.name == "regex" && node.args.size == 2 %}
           {% variant = node.args[1] %}
           {% if variant.is_a?(SymbolLiteral) %}
             {% variant = variant.id %}
           {% end %}
-          {% regex_defs << {variant: variant, pattern: node.args[0], skip: false, callback: callback, priority: priority} %}
+          {% regex_defs << {variant: variant, pattern: node.args[0], skip: false, callback: callback, priority: priority, ignore_case: ignore_case} %}
         {% elsif node.name == "skip_token" && node.args.size == 2 %}
           {% variant = node.args[1] %}
           {% if variant.is_a?(SymbolLiteral) %}
             {% variant = variant.id %}
           {% end %}
-          {% token_defs << {variant: variant, pattern: node.args[0], skip: true, callback: callback, priority: priority} %}
+          {% token_defs << {variant: variant, pattern: node.args[0], skip: true, callback: callback, priority: priority, ignore_case: ignore_case} %}
         {% elsif node.name == "skip_regex" && node.args.size == 2 %}
           {% variant = node.args[1] %}
           {% if variant.is_a?(SymbolLiteral) %}
             {% variant = variant.id %}
           {% end %}
-          {% regex_defs << {variant: variant, pattern: node.args[0], skip: true, callback: callback, priority: priority} %}
+          {% regex_defs << {variant: variant, pattern: node.args[0], skip: true, callback: callback, priority: priority, ignore_case: ignore_case} %}
         {% elsif node.name == "error" && node.args.size == 1 %}
           {% variant = node.args[0] %}
           {% if variant.is_a?(SymbolLiteral) %}
@@ -151,15 +172,56 @@ module Logos
         {{ variant }}
       {% end %}
 
-      # Class variables
-      @@dfa = nil.as(::Regex::Automata::DFA::DFA?)
-      @@pattern_to_variant = nil.as(Array(self)?)
-      @@pattern_is_skip = nil.as(Array(Bool)?)
-      @@pattern_priority = nil.as(Array(Int32)?)
-      @@error_variant = nil.as(self?)
+      {% if subpatterns.size > 0 %}
+        private def self.subpatterns : Array(Tuple(String, String))
+          [
+            {% for sub in subpatterns %}
+              { {{ sub[:name] }}, {{ sub[:pattern] }} },
+            {% end %}
+          ]
+        end
+
+        private def self.substitute_subpatterns(pattern : String) : String
+          expanded = [] of Tuple(String, String)
+          subpatterns.each do |entry|
+            name = entry[0]
+            pat = entry[1]
+            expanded_pat = pat
+            expanded.each do |prev|
+              expanded_pat = expanded_pat.gsub("(?&#{prev[0]})", "(?:#{prev[1]})")
+            end
+            expanded << {name, expanded_pat}
+          end
+
+          result = pattern
+          expanded.each do |entry|
+            result = result.gsub("(?&#{entry[0]})", "(?:#{entry[1]})")
+          end
+
+          if result.includes?("(?&")
+            raise "unknown subpattern reference in pattern: #{result}"
+          end
+
+          result
+        end
+      {% end %}
+
+      @@compiled = nil.as(NamedTuple(
+        dfa: ::Regex::Automata::DFA::DFA,
+        pattern_to_variant: Array(self),
+        pattern_is_skip: Array(Bool),
+        pattern_priority: Array(Int32),
+        error_variant: self?
+      )?)
 
       # DFA compilation method
-      private def self.compile_dfa : ::Regex::Automata::DFA::DFA
+      private def self.compile_dfa : NamedTuple(
+        dfa: ::Regex::Automata::DFA::DFA,
+        pattern_to_variant: Array(self),
+        pattern_is_skip: Array(Bool),
+        pattern_priority: Array(Int32),
+        error_variant: self?
+      )
         if ENV["LOGOS_DEBUG"]?
           puts "DEBUG: compile_dfa called"
         end
@@ -170,7 +232,20 @@ module Logos
 
         # Token patterns (literals)
         {% for item, index in token_defs %}
-          hir = ::Regex::Syntax::Hir::Hir.literal({{ item[:pattern] }}.to_slice)
+          {% pattern_node = item[:pattern] %}
+          {% if subpatterns.size > 0 %}
+            pattern_source = self.substitute_subpatterns({{ pattern_node }})
+            hir = ::Regex::Syntax::Hir::Hir.literal(pattern_source.to_slice)
+          {% else %}
+            hir = ::Regex::Syntax::Hir::Hir.literal({{ pattern_node }}.to_slice)
+          {% end %}
+        {% if item[:ignore_case] %}
+            {% if utf8_flag %}
+              hir = ::Regex::Syntax::Hir.case_fold_unicode(hir)
+            {% else %}
+              hir = ::Regex::Syntax::Hir.case_fold_ascii(hir)
+            {% end %}
+        {% end %}
           hirs << hir
           pattern_to_variant << {{ item[:variant] }}
           pattern_is_skip << {{ item[:skip] }}
@@ -184,7 +259,20 @@ module Logos
 
         # Regex patterns
         {% for item, index in regex_defs %}
-          hir = ::Regex::Syntax.parse({{ item[:pattern] }}, unicode: {{ utf8_flag }})
+          {% pattern_node = item[:pattern] %}
+          {% if subpatterns.size > 0 %}
+            pattern_source = self.substitute_subpatterns({{ pattern_node }})
+            hir = ::Regex::Syntax.parse(pattern_source, unicode: {{ utf8_flag }})
+          {% else %}
+            hir = ::Regex::Syntax.parse({{ pattern_node }}, unicode: {{ utf8_flag }})
+          {% end %}
+          {% if item[:ignore_case] %}
+            {% if utf8_flag %}
+              hir = ::Regex::Syntax::Hir.case_fold_unicode(hir)
+            {% else %}
+              hir = ::Regex::Syntax::Hir.case_fold_ascii(hir)
+            {% end %}
+          {% end %}
           hirs << hir
           pattern_to_variant << {{ item[:variant] }}
           pattern_is_skip << {{ item[:skip] }}
@@ -196,11 +284,7 @@ module Logos
           {% end %}
         {% end %}
 
-        # Store metadata in class variables
-        @@pattern_to_variant = pattern_to_variant
-        @@pattern_is_skip = pattern_is_skip
-        @@pattern_priority = pattern_priority
-        @@error_variant = {% if error_def %} {{ error_def[:variant] }} {% else %} nil {% end %}
+        error_variant = {% if error_def %} {{ error_def[:variant] }} {% else %} nil {% end %}
 
         # DEBUG: Print priorities
         if ENV["LOGOS_DEBUG_PRIORITY"]?
@@ -215,7 +299,8 @@ module Logos
           # Create a single dead state with no transitions
           dead_state = ::Regex::Automata::DFA::State.new(::Regex::Automata::StateID.new(0), 256)
           256.times { |i| dead_state.set_transition(i, ::Regex::Automata::StateID.new(-1)) }
-          return ::Regex::Automata::DFA::DFA.new([dead_state], ::Regex::Automata::StateID.new(0), 256)
+          dfa = ::Regex::Automata::DFA::DFA.new([dead_state], ::Regex::Automata::StateID.new(0), 256)
+          return {dfa: dfa, pattern_to_variant: pattern_to_variant, pattern_is_skip: pattern_is_skip, pattern_priority: pattern_priority, error_variant: error_variant}
         end
 
         # Compile NFA from multiple patterns
@@ -226,37 +311,28 @@ module Logos
         dfa_builder = ::Regex::Automata::DFA::Builder.new(nfa)
         dfa = dfa_builder.build
 
-        dfa
+        {dfa: dfa, pattern_to_variant: pattern_to_variant, pattern_is_skip: pattern_is_skip, pattern_priority: pattern_priority, error_variant: error_variant}
       end
 
       # Lazy-loaded DFA getter
-      private def self.dfa : ::Regex::Automata::DFA::DFA
-        @@dfa ||= compile_dfa
-      end
-
-      private def self.pattern_to_variant : Array(self)
-        @@pattern_to_variant ||= [] of self
-      end
-
-      private def self.pattern_is_skip : Array(Bool)
-        @@pattern_is_skip ||= [] of Bool
-      end
-
-      private def self.pattern_priority : Array(Int32)
-        @@pattern_priority ||= [] of Int32
-      end
-
-      private def self.error_variant : self?
-        @@error_variant
+      private def self.compiled : NamedTuple(
+        dfa: ::Regex::Automata::DFA::DFA,
+        pattern_to_variant: Array(self),
+        pattern_is_skip: Array(Bool),
+        pattern_priority: Array(Int32),
+        error_variant: self?
+      )
+        @@compiled ||= compile_dfa
       end
 
       # Lex method
       {% source_type = utf8_flag ? "::String".id : "::Slice(::UInt8)".id %}
       def self.lex(__lexer : ::Logos::Lexer(self, {{ source_type }}, {{ extras_type }}, {{ error_type }})) : ::Logos::Result(self, {{ error_type }})?
-        dfa = self.dfa
-        pattern_to_variant = self.pattern_to_variant
-        pattern_is_skip = self.pattern_is_skip
-        pattern_priority = self.pattern_priority
+        compiled = self.compiled
+        dfa = compiled[:dfa]
+        pattern_to_variant = compiled[:pattern_to_variant]
+        pattern_is_skip = compiled[:pattern_is_skip]
+        pattern_priority = compiled[:pattern_priority]
 
         # DEBUG
         if ENV["LOGOS_DEBUG"]?
@@ -299,8 +375,6 @@ module Logos
             {% for i in 0...all_defs.size %}
               {% item = all_defs[i] %}
               {% if item[:callback] %}
-               {% puts "DEBUG: Generating callback for pattern #{i}: #{item[:variant]}" %}
-                 {% puts "DEBUG: Callback body: #{item[:callback].body}" %}
                  {% cb = item[:callback] %}
              when {{ i }}
                {% if cb.args.size == 1 %}
@@ -355,7 +429,7 @@ module Logos
                       puts "DEBUG: Callback returned Emit with value: #{__callback_result.value.inspect}"
                     end
                     # Store emitted value in lexer for later access
-                    __lexer.callback_value = __callback_result.value
+                    __lexer.callback_value = ::Logos::CallbackValue.new(__callback_result.value)
                   end
               {% end %}
             {% end %}
@@ -369,7 +443,7 @@ module Logos
             # Skip variant - return nil to continue lexing
             return nil
           end
-         elsif error_variant = self.error_variant
+         elsif error_variant = compiled[:error_variant]
           # No pattern matched, but we have an error variant
           # Match a single byte (or UTF-8 code point for String source)
           {% if utf8_flag %}

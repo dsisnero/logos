@@ -79,26 +79,117 @@ module Logos::Spec::Callbacks
     end
   end
 
-  pending "callback returning bool (filter callbacks)" do
+  module BoolCallbacks
+    Logos.define Token do
+      error_type Nil
+
+      regex "[ \\t\\n\\r]+", :Whitespace do
+        Logos::Skip.new
+      end
+
+      regex "[a-z]+", :Word do |lex|
+        lex.slice != "skip"
+      end
+    end
+  end
+
+  module FilterResultCallbacks
+    struct CustomError
+      getter message : String
+
+      def initialize(@message : String = "")
+      end
+
+      def ==(other : self) : Bool
+        @message == other.message
+      end
+    end
+
+    Logos.define Token do
+      error_type CustomError
+
+      regex "[ \\t\\n\\r]+", :Whitespace do
+        Logos::Skip.new
+      end
+
+      regex "[0-9]+", :Number do |lex|
+        value = lex.slice.to_i
+        if value == 0
+          Logos::FilterResult::Skip.new
+        elsif value > 10
+          Logos::FilterResult::Error.new(CustomError.new("too big"))
+        else
+          true
+        end
+      end
+    end
+  end
+
+  describe "callback returning bool (filter callbacks)" do
     it "uses boolean callbacks for custom matching logic" do
-      # Requires boolean filter callbacks (logos-9me)
-      # Callback returns true/false to indicate match success
-      # Used for raw string parsing, Lua brackets, etc.
+      lexer = Logos::Lexer(BoolCallbacks::Token, String, Logos::NoExtras, Nil).new("keep skip keep")
+
+      result = lexer.next
+      result = result.as(Logos::Result(BoolCallbacks::Token, Nil))
+      result.unwrap.should eq(BoolCallbacks::Token::Word)
+      lexer.slice.should eq("keep")
+
+      result = lexer.next
+      result = result.as(Logos::Result(BoolCallbacks::Token, Nil))
+      result.unwrap.should eq(BoolCallbacks::Token::Word)
+      lexer.slice.should eq("keep")
+
+      lexer.next.should eq(Iterator::Stop::INSTANCE)
     end
   end
 
-  pending "callback returning Result<(), E> or Skip" do
+  describe "callback returning Result<(), E> or Skip" do
     it "handles callbacks returning Result or Skip" do
-      # Requires support for FilterResult::Error and FilterResult::Skip
-      # Callback can return error or skip token
+      lexer = Logos::Lexer(FilterResultCallbacks::Token, String, Logos::NoExtras, FilterResultCallbacks::CustomError).new("1 0 20")
+
+      result = lexer.next
+      result = result.as(Logos::Result(FilterResultCallbacks::Token, FilterResultCallbacks::CustomError))
+      result.unwrap.should eq(FilterResultCallbacks::Token::Number)
+      lexer.slice.should eq("1")
+
+      result = lexer.next
+      result = result.as(Logos::Result(FilterResultCallbacks::Token, FilterResultCallbacks::CustomError))
+      result.error?.should be_true
+      result.unwrap_error.should eq(FilterResultCallbacks::CustomError.new("too big"))
     end
   end
 
-  pending "callback with lifetime annotations" do
-    it "supports callbacks with nested lifetimes" do
-      # Requires proper lifetime handling in callbacks
-      # Token::Integer((&'a str, u64)) with nested tuple
-      # Token::Text(Cow<'a, str>) with Cow type
+  module LifetimeCallbacks
+    Logos.define Token do
+      error_type Nil
+
+      regex "[ \\t\\n\\r]+", :Whitespace do
+        Logos::Skip.new
+      end
+
+      regex "[0-9]+", :Integer do |lex|
+        Logos::Filter::Emit.new({lex.slice, lex.slice.to_u64})
+      end
+
+      regex "[a-z]+", :Text do |lex|
+        Logos::Filter::Emit.new(lex.slice)
+      end
+    end
+  end
+
+  describe "callback with lifetime annotations" do
+    it "supports callbacks with nested tuple and string values" do
+      lexer = Logos::Lexer(LifetimeCallbacks::Token, String, Logos::NoExtras, Nil).new("123 abc")
+
+      result = lexer.next
+      result = result.as(Logos::Result(LifetimeCallbacks::Token, Nil))
+      result.unwrap.should eq(LifetimeCallbacks::Token::Integer)
+      lexer.callback_value_as(Tuple(String, UInt64)).should eq({"123", 123_u64})
+
+      result = lexer.next
+      result = result.as(Logos::Result(LifetimeCallbacks::Token, Nil))
+      result.unwrap.should eq(LifetimeCallbacks::Token::Text)
+      lexer.callback_value_as(String).should eq("abc")
     end
   end
 

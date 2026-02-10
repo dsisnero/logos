@@ -32,8 +32,18 @@ describe Logos::Pattern do
       pattern.hir.should be_a(Regex::Syntax::Hir::Hir)
     end
 
-    pending "parses actual regex patterns" do
-      # TODO: Implement regex parsing
+    it "parses actual regex patterns" do
+      pattern = Logos::Pattern.compile_regex("a+b|cd")
+      node = pattern.hir.as(Regex::Syntax::Hir::Hir).node
+      node.should be_a(Regex::Syntax::Hir::Alternation)
+
+      pattern = Logos::Pattern.compile_regex("(ab)+")
+      node = pattern.hir.as(Regex::Syntax::Hir::Hir).node
+      node.should be_a(Regex::Syntax::Hir::Repetition)
+
+      pattern = Logos::Pattern.compile_regex("[a-z]+")
+      node = pattern.hir.as(Regex::Syntax::Hir::Hir).node
+      node.should be_a(Regex::Syntax::Hir::Repetition)
     end
   end
 
@@ -110,9 +120,17 @@ describe Logos::Pattern do
     it "parses character class" do
       pattern = Logos::Pattern.compile_regex("[abc]")
       node = pattern.hir.as(Regex::Syntax::Hir::Hir).node
-      node.should be_a(Regex::Syntax::Hir::CharClass)
-      char_class = node.as(Regex::Syntax::Hir::CharClass)
-      char_class.intervals.should_not be_empty
+      node.should be_a(Regex::Syntax::Hir::CharClass | Regex::Syntax::Hir::UnicodeClass)
+      case node
+      when Regex::Syntax::Hir::CharClass
+        char_class = node.as(Regex::Syntax::Hir::CharClass)
+        char_class.intervals.should_not be_empty
+      when Regex::Syntax::Hir::UnicodeClass
+        unicode_class = node.as(Regex::Syntax::Hir::UnicodeClass)
+        unicode_class.intervals.should_not be_empty
+      else
+        fail "Expected CharClass or UnicodeClass, got #{node.class}"
+      end
     end
 
     it "parses repetition" do
