@@ -126,6 +126,7 @@ module Logos
     def next : Iterator::Stop | Result(Token, Error)
       loop do
         @token_start = @token_end
+        clear_callback_value
         case result = Token.lex(self)
         when ::Logos::Result(Token, Error)
           return result
