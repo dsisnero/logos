@@ -2,6 +2,35 @@ require "../spec_helper"
 require "regex-automata"
 
 module Logos::Spec::Binary
+  Logos.define ByteToken do
+    utf8 false
+    error_type Nil
+
+    token "\x00", :Zero
+    token "\x42", :Byte42
+    token "\xFF", :ByteFF
+    # regex "[\x00-\xFF]", :AnyByte
+  end
+
+  describe "utf8 attribute" do
+    it "lexes bytes with utf8 = false" do
+      slice = Slice[0x00_u8, 0x42_u8, 0xFF_u8]
+      input = String.new(slice)
+      lexer = Logos::Lexer(ByteToken, String, Logos::NoExtras, Nil).new(input)
+      tokens = [] of ByteToken
+      while token = lexer.next
+        break if token.is_a?(Iterator::Stop)
+        result = token.as(Logos::Result(ByteToken, Nil))
+        if result.ok?
+          tokens << result.unwrap
+        end
+        # ignore errors (should not happen)
+      end
+
+      tokens.should eq([ByteToken::Zero, ByteToken::Byte42, ByteToken::ByteFF])
+    end
+  end
+
   pending "utf8 attribute (logos-utf8)" do
     it "supports utf8 = false for byte-level lexing" do
       # Requires utf8 attribute support: #[logos(utf8 = false)]

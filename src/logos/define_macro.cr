@@ -10,6 +10,7 @@ module Logos
     {% error_def = nil %}
     {% extras_type = ::Logos::NoExtras %}
     {% error_type = Nil %}
+    {% utf8_flag = true %}
 
     # Process each node in the block
     {% nodes = [] of Crystal::Macros::ASTNode %}
@@ -90,6 +91,8 @@ module Logos
           {% extras_type = node.args[0] %}
         {% elsif node.name == "error_type" && node.args.size == 1 %}
           {% error_type = node.args[0] %}
+        {% elsif node.name == "utf8" && node.args.size == 1 %}
+          {% utf8_flag = node.args[0] %}
         {% else %}
           {% node.raise "Unknown directive or wrong number of arguments: #{node}" %}
         {% end %}
@@ -181,7 +184,7 @@ module Logos
 
         # Regex patterns
         {% for item, index in regex_defs %}
-          hir = ::Regex::Syntax.parse({{ item[:pattern] }})
+          hir = ::Regex::Syntax.parse({{ item[:pattern] }}, unicode: {{ utf8_flag }})
           hirs << hir
           pattern_to_variant << {{ item[:variant] }}
           pattern_is_skip << {{ item[:skip] }}
@@ -216,7 +219,7 @@ module Logos
         end
 
         # Compile NFA from multiple patterns
-        hir_compiler = ::Regex::Automata::HirCompiler.new
+        hir_compiler = ::Regex::Automata::HirCompiler.new(utf8: {{ utf8_flag }})
         nfa = hir_compiler.compile_multi(hirs)
 
         # Build DFA from NFA
