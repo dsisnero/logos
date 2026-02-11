@@ -159,6 +159,74 @@ module Logos::Spec::Callbacks
     end
   end
 
+  module ResultCallbacks
+    Logos.define Token do
+      error_type String
+
+      regex "[ \\t\\n\\r]+", :Whitespace do
+        Logos::Skip.new
+      end
+
+      regex "[0-9]+", :Number do |lex|
+        value = lex.slice.to_i
+        if value > 10
+          Logos::Result(Int32, String).error("too big")
+        else
+          Logos::Result(Int32, String).ok(value)
+        end
+      end
+    end
+  end
+
+  describe "callback returning Logos::Result" do
+    it "emits values or errors" do
+      lexer = Logos::Lexer(ResultCallbacks::Token, String, Logos::NoExtras, String).new("5 20")
+
+      result = lexer.next
+      result = result.as(Logos::Result(ResultCallbacks::Token, String))
+      result.ok?.should be_true
+      result.unwrap.should eq(ResultCallbacks::Token::Number)
+      lexer.callback_value_as(Int32).should eq(5)
+
+      result = lexer.next
+      result = result.as(Logos::Result(ResultCallbacks::Token, String))
+      result.error?.should be_true
+      result.unwrap_error.should eq("too big")
+    end
+  end
+
+  module OptionCallbacks
+    Logos.define Token do
+      error_type String
+
+      regex "[ \\t\\n\\r]+", :Whitespace do
+        Logos::Skip.new
+      end
+
+      regex "[0-9]+", :Number do |lex|
+        value = lex.slice.to_i
+        Logos::Option(Int32).new(value > 0 ? value : nil)
+      end
+    end
+  end
+
+  describe "callback returning Logos::Option" do
+    it "treats nil as error and some as value" do
+      lexer = Logos::Lexer(OptionCallbacks::Token, String, Logos::NoExtras, String).new("1 0")
+
+      result = lexer.next
+      result = result.as(Logos::Result(OptionCallbacks::Token, String))
+      result.ok?.should be_true
+      result.unwrap.should eq(OptionCallbacks::Token::Number)
+      lexer.callback_value_as(Int32).should eq(1)
+
+      result = lexer.next
+      result = result.as(Logos::Result(OptionCallbacks::Token, String))
+      result.error?.should be_true
+      result.unwrap_error.should eq("")
+    end
+  end
+
   module LifetimeCallbacks
     Logos.define Token do
       error_type Nil

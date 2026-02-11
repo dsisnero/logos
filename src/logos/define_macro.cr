@@ -9,6 +9,7 @@ module Logos
     {% regex_defs = [] of NamedTuple %}
     {% subpatterns = [] of NamedTuple %}
     {% error_def = nil %}
+    {% error_callback = nil %}
     {% extras_type = ::Logos::NoExtras %}
     {% error_type = Nil %}
     {% utf8_flag = true %}
@@ -43,6 +44,7 @@ module Logos
         {% callback = nil %}
         {% priority = nil %}
         {% ignore_case = false %}
+        {% allow_greedy = false %}
         {% if node.block %}
           {% callback = node.block %}
         {% elsif node.named_args %}
@@ -57,6 +59,8 @@ module Logos
               {% found_priority = true %}
             {% elsif named_arg.name == "ignore_case" || named_arg.name == "ignore_ascii_case" %}
               {% ignore_case = named_arg.value %}
+            {% elsif named_arg.name == "allow_greedy" %}
+              {% allow_greedy = named_arg.value %}
             {% end %}
           {% end %}
         {% end %}
@@ -83,25 +87,25 @@ module Logos
           {% if variant.is_a?(SymbolLiteral) %}
             {% variant = variant.id %}
           {% end %}
-          {% token_defs << {variant: variant, pattern: node.args[0], skip: false, callback: callback, priority: priority, ignore_case: ignore_case} %}
+          {% token_defs << {variant: variant, pattern: node.args[0], skip: false, callback: callback, priority: priority, ignore_case: ignore_case, allow_greedy: allow_greedy} %}
         {% elsif node.name == "regex" && node.args.size == 2 %}
           {% variant = node.args[1] %}
           {% if variant.is_a?(SymbolLiteral) %}
             {% variant = variant.id %}
           {% end %}
-          {% regex_defs << {variant: variant, pattern: node.args[0], skip: false, callback: callback, priority: priority, ignore_case: ignore_case} %}
+          {% regex_defs << {variant: variant, pattern: node.args[0], skip: false, callback: callback, priority: priority, ignore_case: ignore_case, allow_greedy: allow_greedy} %}
         {% elsif node.name == "skip_token" && node.args.size == 2 %}
           {% variant = node.args[1] %}
           {% if variant.is_a?(SymbolLiteral) %}
             {% variant = variant.id %}
           {% end %}
-          {% token_defs << {variant: variant, pattern: node.args[0], skip: true, callback: callback, priority: priority, ignore_case: ignore_case} %}
+          {% token_defs << {variant: variant, pattern: node.args[0], skip: true, callback: callback, priority: priority, ignore_case: ignore_case, allow_greedy: allow_greedy} %}
         {% elsif node.name == "skip_regex" && node.args.size == 2 %}
           {% variant = node.args[1] %}
           {% if variant.is_a?(SymbolLiteral) %}
             {% variant = variant.id %}
           {% end %}
-          {% regex_defs << {variant: variant, pattern: node.args[0], skip: true, callback: callback, priority: priority, ignore_case: ignore_case} %}
+          {% regex_defs << {variant: variant, pattern: node.args[0], skip: true, callback: callback, priority: priority, ignore_case: ignore_case, allow_greedy: allow_greedy} %}
         {% elsif node.name == "error" && node.args.size == 1 %}
           {% variant = node.args[0] %}
           {% if variant.is_a?(SymbolLiteral) %}
@@ -112,6 +116,9 @@ module Logos
           {% extras_type = node.args[0] %}
         {% elsif node.name == "error_type" && node.args.size == 1 %}
           {% error_type = node.args[0] %}
+          {% if callback %}
+            {% error_callback = callback %}
+          {% end %}
         {% elsif node.name == "utf8" && node.args.size == 1 %}
           {% utf8_flag = node.args[0] %}
         {% else %}
@@ -246,6 +253,11 @@ module Logos
               hir = ::Regex::Syntax::Hir.case_fold_ascii(hir)
             {% end %}
         {% end %}
+          {% unless item[:allow_greedy] %}
+            if hir.has_greedy_all?
+              raise "pattern contains unbounded greedy dot repetition; set allow_greedy: true"
+            end
+          {% end %}
           hirs << hir
           pattern_to_variant << {{ item[:variant] }}
           pattern_is_skip << {{ item[:skip] }}
@@ -272,6 +284,11 @@ module Logos
             {% else %}
               hir = ::Regex::Syntax::Hir.case_fold_ascii(hir)
             {% end %}
+        {% end %}
+          {% unless item[:allow_greedy] %}
+            if hir.has_greedy_all?
+              raise "pattern contains unbounded greedy dot repetition; set allow_greedy: true"
+            end
           {% end %}
           hirs << hir
           pattern_to_variant << {{ item[:variant] }}
@@ -327,6 +344,24 @@ module Logos
 
       # Lex method
       {% source_type = utf8_flag ? "::String".id : "::Slice(::UInt8)".id %}
+      def self.lexer(source : {{ source_type }}) : ::Logos::Lexer(self, {{ source_type }}, {{ extras_type }}, {{ error_type }})
+        ::Logos::Lexer(self, {{ source_type }}, {{ extras_type }}, {{ error_type }}).new(source)
+      end
+
+      def self.lexer_with_extras(source : {{ source_type }}, extras : {{ extras_type }}) : ::Logos::Lexer(self, {{ source_type }}, {{ extras_type }}, {{ error_type }})
+        ::Logos::Lexer(self, {{ source_type }}, {{ extras_type }}, {{ error_type }}).new(source, extras)
+      end
+
+      def self.lex_all(source : {{ source_type }}, extras : {{ extras_type }} = {{ extras_type }}.new) : Array(::Logos::Result(self, {{ error_type }}))
+        lexer = ::Logos::Lexer(self, {{ source_type }}, {{ extras_type }}, {{ error_type }}).new(source, extras)
+        results = [] of ::Logos::Result(self, {{ error_type }})
+        while token = lexer.next
+          break if token.is_a?(::Iterator::Stop)
+          results << token.as(::Logos::Result(self, {{ error_type }}))
+        end
+        results
+      end
+
       def self.lex(__lexer : ::Logos::Lexer(self, {{ source_type }}, {{ extras_type }}, {{ error_type }})) : ::Logos::Result(self, {{ error_type }})?
         compiled = self.compiled
         dfa = compiled[:dfa]
@@ -422,6 +457,41 @@ module Logos
                  end
                end
 
+               # Handle Logos::Result from callbacks
+               if __callback_result.is_a?(::Logos::Result)
+                 if __callback_result.ok?
+                   ok_value = __callback_result.unwrap
+                   if ok_value.is_a?(::Logos::Skip) ||
+                      ok_value.is_a?(::Logos::Filter::Skip) ||
+                      ok_value.is_a?(::Logos::FilterResult::Skip)
+                     return nil
+                   end
+                   if ok_value.is_a?(::Logos::Filter::Emit) ||
+                      ok_value.is_a?(::Logos::FilterResult::Emit)
+                     __lexer.callback_value = ::Logos::CallbackValue.new(ok_value.value)
+                   elsif !ok_value.nil?
+                     __lexer.callback_value = ::Logos::CallbackValue.new(ok_value)
+                   end
+                 else
+                   return ::Logos::Result(self, {{ error_type }}).error(__callback_result.unwrap_error)
+                 end
+               end
+
+               # Handle Logos::Option from callbacks
+               if __callback_result.is_a?(::Logos::Option)
+                 option_value = __callback_result.value
+                 if option_value.nil?
+                   {% if error_type.id == Nil.id %}
+                     error_value = nil
+                   {% else %}
+                     error_value = {{ error_type }}.new
+                   {% end %}
+                   return ::Logos::Result(self, {{ error_type }}).error(error_value)
+                 else
+                   __lexer.callback_value = ::Logos::CallbackValue.new(option_value)
+                 end
+               end
+
                   # Handle Filter::Emit and FilterResult::Emit - store value in lexer
                   if __callback_result.is_a?(::Logos::Filter::Emit) ||
                      __callback_result.is_a?(::Logos::FilterResult::Emit)
@@ -471,7 +541,14 @@ module Logos
               if char = __lexer.remainder[0]?
                 __lexer.bump(char.bytesize)
                 # Create error value based on error_type
-                {% if error_type.id == Nil.id %}
+                {% if error_callback %}
+                  {% if error_callback.args.size == 1 %}
+                    {{ error_callback.args[0].id }} = __lexer
+                  {% end %}
+                  error_value = begin
+                    {{ error_callback.body }}
+                  end
+                {% elsif error_type.id == Nil.id %}
                   error_value = nil
                 {% else %}
                   # Try to construct error value - default to .new without arguments
@@ -487,7 +564,14 @@ module Logos
               if __lexer.remainder.length > 0
                 __lexer.bump(1)
                 # Create error value based on error_type
-                {% if error_type.id == Nil.id %}
+                {% if error_callback %}
+                  {% if error_callback.args.size == 1 %}
+                    {{ error_callback.args[0].id }} = __lexer
+                  {% end %}
+                  error_value = begin
+                    {{ error_callback.body }}
+                  end
+                {% elsif error_type.id == Nil.id %}
                   error_value = nil
                 {% else %}
                   # Try to construct error value - default to .new without arguments

@@ -25,7 +25,7 @@ Logos.define Token do
 end
 
 source = "123 + 45.67 \"hello\""
-lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new(source)
+lexer = Token.lexer(source)
 
 puts "Tokenizing: #{source}"
 puts ""
@@ -53,7 +53,7 @@ end
 
 puts ""
 puts "Alternative pattern using callback_value directly:"
-lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new(source)
+lexer = Token.lexer(source)
 lexer.each do |res|
   if res.ok?
     token = res.unwrap

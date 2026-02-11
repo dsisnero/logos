@@ -318,8 +318,14 @@ module Regex::Syntax::Hir
     end
 
     def has_greedy_all? : Bool
-      # TODO: Implement proper dot detection
-      false
+      return false unless greedy && max.nil?
+
+      case sub
+      when DotNode
+        true
+      else
+        false
+      end
     end
   end
 

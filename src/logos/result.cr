@@ -53,6 +53,14 @@ module Logos
   struct Skip
   end
 
+  # Optional callback return value for Result/Option-style APIs.
+  struct Option(T)
+    getter value : T?
+
+    def initialize(@value : T?)
+    end
+  end
+
   # Type that can be returned from a callback, either producing a field
   # for a token, or skipping it.
   module Filter

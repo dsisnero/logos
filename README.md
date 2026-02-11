@@ -53,7 +53,7 @@ Logos.define Token do
   skip_regex "\\s+", :Whitespace
 end
 
-lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new("fn hello = 42")
+lexer = Token.lexer("fn hello = 42")
 
 loop do
   result = lexer.next
@@ -61,6 +61,29 @@ loop do
   result = result.as(Logos::Result(Token, Nil))
   puts "#{result.unwrap}: #{lexer.slice}"
 end
+```
+
+## Annotation-based API
+
+For a Rust-style attribute-driven setup, use type-level annotations and `logos_derive`:
+
+```crystal
+require "logos"
+
+@[Logos::Options(skip: "\\s+", error: Nil)]
+@[Logos::Subpattern("xdigit", "[0-9a-fA-F]")]
+@[Logos::Token("let", variant: :KeywordLet)]
+@[Logos::Regex("0x(?&xdigit)+", variant: :Hex)]
+@[Logos::Regex("[0-9]+", variant: :Number)]
+enum Token
+  KeywordLet
+  Hex
+  Number
+end
+
+logos_derive(Token)
+
+lexer = Token.lexer("let 0x10 42")
 ```
 
 ### Subpatterns
@@ -73,6 +96,19 @@ Logos.define Token do
   regex "0[xX](?&xdigit)+", :Hex
 end
 ```
+
+## Examples
+
+Crystal ports of the Rust Logos examples are available in `examples/`:
+
+* `examples/brainfuck.cr`
+* `examples/calculator.cr`
+* `examples/custom_error.cr`
+* `examples/extras.cr`
+* `examples/json.cr`
+* `examples/json_borrowed.cr`
+* `examples/string_interpolation.cr`
+* `examples/token_values.cr`
 
 ## Status
 

@@ -1,4 +1,12 @@
 module Logos
+  # Annotation for class-level Logos options (skip, extras, error_type, utf8)
+  annotation Options
+  end
+
+  # Annotation for defining a reusable subpattern
+  annotation Subpattern
+  end
+
   # Annotation for literal token patterns
   annotation Token
   end
