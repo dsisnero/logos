@@ -138,9 +138,15 @@ module Regex::Syntax::AST
   class ClassBracketed < Node
     getter span : Span
     getter negated : Bool
-    # TODO: Add actual class contents
+    # Elements inside this class set. Kept generic to support mixed items
+    # (literal chars, perl classes, unicode classes, nested unions, etc.).
+    getter items : Array(Node)
 
-    def initialize(@span : Span, @negated : Bool)
+    def initialize(@span : Span, @negated : Bool, @items : Array(Node) = [] of Node)
+    end
+
+    def empty? : Bool
+      @items.empty?
     end
   end
 

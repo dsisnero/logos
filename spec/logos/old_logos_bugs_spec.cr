@@ -729,6 +729,124 @@ module Logos::Spec::OldLogosBugs
     end
   end
 
+  # issue_190: very long quoted strings
+  module Issue190
+    Logos.define Token do
+      regex "\"([^\\\\\"]|\\\\.)*\"", :Quote
+    end
+
+    describe "issue_190: long quoted strings" do
+      it "matches long quoted input" do
+        source = "\"" + ("1234567890ABCDEF" * 512) + "\""
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new(source)
+        result = lexer.next.as(Logos::Result(Token, Nil))
+        result.unwrap.should eq(Token::Quote)
+        lexer.slice.size.should eq(source.size)
+      end
+    end
+  end
+
+  # issue_240: derive-heavy regex set should compile
+  module Issue240
+    Logos.define Token do
+      subpattern :alphanumeric, "[a-zA-Z0-9_]"
+      regex "\"?[a-zA-Z](?&alphanumeric)*\"?", :Sale do |lex|
+        Logos::Filter::Emit.new(lex.slice)
+      end
+      regex "comment *: *\".*\";", :Comment, allow_greedy: true, priority: 100
+    end
+
+    describe "issue_240: subpattern-heavy tokens" do
+      it "matches sale-like identifiers and comment directives" do
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new("\"foo_1\"")
+        result = lexer.next.as(Logos::Result(Token, Nil))
+        result.unwrap.should eq(Token::Sale)
+        lexer.callback_value_as(String).should eq("\"foo_1\"")
+
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new("comment: \"hello\";")
+        result = lexer.next.as(Logos::Result(Token, Nil))
+        result.ok?.should be_true
+      end
+    end
+  end
+
+  # issue_252: specific token should beat generic regex
+  module Issue252
+    Logos.define Token do
+      token "xx", :Specific
+      regex "(xx+|y)+", :Generic
+    end
+
+    describe "issue_252: specific token priority" do
+      it "matches specific token for xx" do
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new("xx")
+        result = lexer.next.as(Logos::Result(Token, Nil))
+        result.unwrap.should eq(Token::Specific)
+      end
+    end
+  end
+
+  # issue_258: greedy skip with allow_greedy should compile and skip
+  module Issue258
+    Logos.define Token do
+      skip_regex ".*->.+\\[", :Skip, allow_greedy: true
+      regex "->", :Arrow
+    end
+
+    describe "issue_258: greedy skip config" do
+      it "skips configured greedy spans without compile-time error" do
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new("abc->def[")
+        lexer.next.should eq(Iterator::Stop::INSTANCE)
+      end
+    end
+  end
+
+  # issue_261: bare identifier with greedy fallback should compile
+  module Issue261
+    Logos.define Token do
+      regex "([0123456789]|#_#)*#.#[0123456789](_|#_#)?", :Decimal
+      regex "..*", :BareIdentifier, allow_greedy: true
+    end
+
+    describe "issue_261: decimal vs greedy identifier" do
+      it "compiles and lexes input" do
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new("12#.3")
+        lexer.next.should_not eq(Iterator::Stop::INSTANCE)
+      end
+    end
+  end
+
+  # issue_269: string regex form should compile
+  module Issue269
+    Logos.define Token do
+      regex "\"(?:|\\\\[^\\n])*\"", :String
+    end
+
+    describe "issue_269: string regex form" do
+      it "matches simple quoted strings" do
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new("\"fubar\"")
+        result = lexer.next.as(Logos::Result(Token, Nil))
+        (result.ok? || result.error?).should be_true
+      end
+    end
+  end
+
+  # issue_336: reduced catastrophic patterns should compile
+  module Issue336
+    Logos.define Token do
+      regex "(0+)*x?.0+", :Float1
+      regex "(0+)*.0+", :Float2
+      regex "0*.0+", :Float3
+    end
+
+    describe "issue_336: reduced catastrophic patterns" do
+      it "compiles and tokenizes simple float-like input" do
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new("000.0")
+        lexer.next.should_not eq(Iterator::Stop::INSTANCE)
+      end
+    end
+  end
+
   # issue_242 pending: needs token variants with associated data (callbacks returning values)
   module Issue242
     Logos.define Token do

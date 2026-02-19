@@ -63,6 +63,78 @@ loop do
 end
 ```
 
+## Context-Dependent Lexing
+
+Use `Lexer#morph` to switch token modes while preserving cursor position.
+
+```crystal
+require "logos"
+
+Logos.define OuterToken do
+  token "{", :Open
+  regex "[^\\{]+", :Text
+end
+
+Logos.define InnerToken do
+  token "}", :Close
+  regex "[^\\}]+", :Body
+end
+
+outer = OuterToken.lexer("prefix{inside}suffix")
+
+token = outer.next.as(Logos::Result(OuterToken, Nil))
+token.unwrap # => :Text
+
+token = outer.next.as(Logos::Result(OuterToken, Nil))
+if token.unwrap == OuterToken::Open
+  inner = outer.morph(InnerToken)
+  inner_token = inner.next.as(Logos::Result(InnerToken, Nil))
+  puts inner_token.unwrap # => InnerToken::Body
+end
+```
+
+Use `#spanned` when you need `(token, span)` tuples:
+
+```crystal
+lexer = OuterToken.lexer("ab{cd}")
+lexer.spanned.each do |result, span|
+  puts "#{result.unwrap} @ #{span}"
+end
+```
+
+## Token Disambiguation and Priority
+
+When multiple patterns can match at the same position:
+
+- Logos prefers the longest match.
+- If multiple matches have the same length, higher `priority` wins.
+- If same-length and same-priority patterns overlap, Logos raises a compile-time diagnostic.
+
+Example:
+
+```crystal
+Logos.define Token do
+  token "===", :StrictEq
+  token "==", :Eq
+  token "=", :Assign
+  regex "[a-zA-Z_][a-zA-Z0-9_]*", :Ident
+end
+```
+
+Explicit priorities:
+
+```crystal
+Logos.define Token do
+  regex "[a-z]+", :Word, priority: 10
+  token "if", :If, priority: 50
+end
+```
+
+If you hit ambiguity diagnostics, either:
+
+- Raise priority for the intended winner, or
+- Refine regex patterns so they no longer overlap at equal priority.
+
 ## Annotation-based API
 
 For a Rust-style attribute-driven setup, use type-level annotations and `logos_derive`:
@@ -113,6 +185,20 @@ Crystal ports of the Rust Logos examples are available in `examples/`:
 * `examples/json_borrowed.cr`
 * `examples/string_interpolation.cr`
 * `examples/token_values.cr`
+
+## Rust Handbook Parity Index
+
+Reference mapping from Rust handbook topics to Crystal docs/spec coverage:
+
+- Getting started: this README (Quick Start) and `spec/logos/simple_spec.cr`
+- Attributes / derive: this README (Annotation-based API) and `spec/logos/derive_spec.cr`
+- Callbacks: `spec/logos/callbacks_spec.cr`
+- Extras: `examples/extras.cr` and `spec/logos/custom_error_spec.cr`
+- Common regex patterns: `spec/logos/advanced_spec.cr`, `spec/logos/properties_spec.cr`
+- Context-dependent lexing: this README (Context-Dependent Lexing) and `spec/logos/lexer_modes_spec.cr`
+- Token disambiguation: this README (Token Disambiguation and Priority) and `spec/logos/old_logos_bugs_spec.cr`
+- Unicode support: `spec/logos/unicode_dot_spec.cr`, `spec/logos/ignore_case_spec.cr`
+- Source and spans: `spec/logos/source_spec.cr`, `spec/logos/lexer_spec.cr`
 
 ## Status
 

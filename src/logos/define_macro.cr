@@ -249,6 +249,38 @@ module Logos
         false
       end
 
+      private def self.hir_matches_invalid_utf8?(hir : ::Regex::Syntax::Hir::Hir) : Bool
+        node_matches_invalid_utf8?(hir.node)
+      end
+
+      private def self.node_matches_invalid_utf8?(node : ::Regex::Syntax::Hir::Node) : Bool
+        case node
+        when ::Regex::Syntax::Hir::Literal
+          !::String.new(node.bytes).valid_encoding?
+        when ::Regex::Syntax::Hir::CharClass
+          node.intervals.any? { |range| range.end >= 0x80_u8 }
+        when ::Regex::Syntax::Hir::DotNode
+          case node.kind
+          when ::Regex::Syntax::Hir::Dot::AnyByte,
+               ::Regex::Syntax::Hir::Dot::AnyByteExceptLF,
+               ::Regex::Syntax::Hir::Dot::AnyByteExceptCRLF
+            true
+          else
+            false
+          end
+        when ::Regex::Syntax::Hir::Concat
+          node.children.any? { |child| node_matches_invalid_utf8?(child) }
+        when ::Regex::Syntax::Hir::Alternation
+          node.children.any? { |child| node_matches_invalid_utf8?(child) }
+        when ::Regex::Syntax::Hir::Repetition
+          node_matches_invalid_utf8?(node.sub)
+        when ::Regex::Syntax::Hir::Capture
+          node_matches_invalid_utf8?(node.sub)
+        else
+          false
+        end
+      end
+
       @@compiled = nil.as(NamedTuple(
         dfa: ::Regex::Automata::DFA::DFA,
         pattern_to_variant: Array(self),
@@ -284,8 +316,9 @@ module Logos
             pattern_uses_subpattern = {{ pattern_node }}.includes?("(?&")
             hir = ::Regex::Syntax::Hir::Hir.literal(pattern_source.to_slice)
           {% else %}
+            pattern_source = {{ pattern_node }}
             pattern_uses_subpattern = false
-            hir = ::Regex::Syntax::Hir::Hir.literal({{ pattern_node }}.to_slice)
+            hir = ::Regex::Syntax::Hir::Hir.literal(pattern_source.to_slice)
           {% end %}
         {% if item[:ignore_case] %}
             {% if utf8_flag %}
@@ -297,6 +330,14 @@ module Logos
           {% unless item[:allow_greedy] %}
             if hir.has_greedy_all?
               raise self.greedy_pattern_message
+            end
+          {% end %}
+          {% if utf8_flag %}
+            unless pattern_source.valid_encoding?
+              raise "UTF-8 mode is enabled, but pattern #{pattern_source.inspect} for variant #{ {{ item[:variant] }} } is not valid UTF-8. Set utf8 false to allow byte-oriented matching."
+            end
+            if self.hir_matches_invalid_utf8?(hir)
+              raise "UTF-8 mode is enabled, but pattern #{ {{ pattern_node }}.inspect } for variant #{ {{ item[:variant] }} } can match invalid UTF-8. Set utf8 false to allow byte-oriented matching."
             end
           {% end %}
           if pattern_uses_subpattern && hir.can_match_empty?
@@ -325,8 +366,9 @@ module Logos
             pattern_uses_subpattern = {{ pattern_node }}.includes?("(?&")
             hir = ::Regex::Syntax.parse(pattern_source, unicode: {{ utf8_flag }})
           {% else %}
+            pattern_source = {{ pattern_node }}
             pattern_uses_subpattern = false
-            hir = ::Regex::Syntax.parse({{ pattern_node }}, unicode: {{ utf8_flag }})
+            hir = ::Regex::Syntax.parse(pattern_source, unicode: {{ utf8_flag }})
           {% end %}
           {% if item[:ignore_case] %}
             {% if utf8_flag %}
@@ -338,6 +380,14 @@ module Logos
           {% unless item[:allow_greedy] %}
             if hir.has_greedy_all?
               raise self.greedy_pattern_message
+            end
+          {% end %}
+          {% if utf8_flag %}
+            unless pattern_source.valid_encoding?
+              raise "UTF-8 mode is enabled, but pattern #{pattern_source.inspect} for variant #{ {{ item[:variant] }} } is not valid UTF-8. Set utf8 false to allow byte-oriented matching."
+            end
+            if self.hir_matches_invalid_utf8?(hir)
+              raise "UTF-8 mode is enabled, but pattern #{ {{ pattern_node }}.inspect } for variant #{ {{ item[:variant] }} } can match invalid UTF-8. Set utf8 false to allow byte-oriented matching."
             end
           {% end %}
           if pattern_uses_subpattern && hir.can_match_empty?

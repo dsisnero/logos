@@ -259,7 +259,6 @@ module Regex::Syntax::Hir
 
   # Character class
   class CharClass < Node
-    # TODO: Implement character classes
     getter negated : Bool
     getter intervals : Array(Range(UInt8, UInt8))
 

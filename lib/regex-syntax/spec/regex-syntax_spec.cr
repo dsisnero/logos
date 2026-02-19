@@ -53,7 +53,7 @@ describe Regex::Syntax do
       hir = Regex::Syntax.parse(".")
       hir.node.should be_a(Regex::Syntax::Hir::DotNode)
       dot_node = hir.node.as(Regex::Syntax::Hir::DotNode)
-      dot_node.kind.should eq(Regex::Syntax::Hir::Dot::AnyChar)
+      dot_node.kind.should eq(Regex::Syntax::Hir::Dot::AnyCharExceptLF)
     end
 
     it "parses character class" do
@@ -113,14 +113,14 @@ describe Regex::Syntax do
       hir = Regex::Syntax.parse("^")
       hir.node.should be_a(Regex::Syntax::Hir::Look)
       look = hir.node.as(Regex::Syntax::Hir::Look)
-      look.kind.should eq(Regex::Syntax::Hir::Look::Kind::Start)
+      look.kind.should eq(Regex::Syntax::Hir::Look::Kind::StartText)
     end
 
     it "parses end anchor $" do
       hir = Regex::Syntax.parse("$")
       hir.node.should be_a(Regex::Syntax::Hir::Look)
       look = hir.node.as(Regex::Syntax::Hir::Look)
-      look.kind.should eq(Regex::Syntax::Hir::Look::Kind::End)
+      look.kind.should eq(Regex::Syntax::Hir::Look::Kind::EndTextWithNewline)
     end
 
     it "parses non-capturing group (?:...)" do
@@ -165,10 +165,56 @@ describe Regex::Syntax do
       end
     end
 
+    it "supports verbose mode flag (?x)" do
+      hir = Regex::Syntax.parse("(?x)a b # comment\n c")
+      hir.node.should be_a(Regex::Syntax::Hir::Concat)
+      concat = hir.node.as(Regex::Syntax::Hir::Concat)
+      concat.children.size.should eq(3)
+    end
+
+    it "supports ungreedy mode flag (?U)" do
+      hir = Regex::Syntax.parse("(?U)a+")
+      hir.node.should be_a(Regex::Syntax::Hir::Repetition)
+      rep = hir.node.as(Regex::Syntax::Hir::Repetition)
+      rep.greedy.should be_false
+    end
+
+    it "supports dotall toggles via inline flags" do
+      without_s = Regex::Syntax.parse("(?-s).")
+      without_s.node.should be_a(Regex::Syntax::Hir::DotNode)
+      without_s.node.as(Regex::Syntax::Hir::DotNode).kind.should eq(Regex::Syntax::Hir::Dot::AnyCharExceptLF)
+
+      with_s = Regex::Syntax.parse("(?s).")
+      with_s.node.should be_a(Regex::Syntax::Hir::DotNode)
+      with_s.node.as(Regex::Syntax::Hir::DotNode).kind.should eq(Regex::Syntax::Hir::Dot::AnyChar)
+    end
+
+    it "supports multiline toggles via inline flags" do
+      no_multiline = Regex::Syntax.parse("(?-m)^")
+      no_multiline.node.should be_a(Regex::Syntax::Hir::Look)
+      no_multiline.node.as(Regex::Syntax::Hir::Look).kind.should eq(Regex::Syntax::Hir::Look::Kind::StartText)
+
+      multiline = Regex::Syntax.parse("(?m)^")
+      multiline.node.should be_a(Regex::Syntax::Hir::Look)
+      multiline.node.as(Regex::Syntax::Hir::Look).kind.should eq(Regex::Syntax::Hir::Look::Kind::Start)
+    end
+
     it "computes whether a pattern can match the empty string" do
       Regex::Syntax.parse("a+").can_match_empty?.should be_false
       Regex::Syntax.parse("a*").can_match_empty?.should be_true
       Regex::Syntax.parse("(?:a|)").can_match_empty?.should be_true
+    end
+  end
+
+  describe "ast" do
+    it "represents bracketed class items" do
+      span = Regex::Syntax::AST::Span.new(0, 3)
+      literal = Regex::Syntax::AST::Literal.new(span, Regex::Syntax::AST::Literal::Kind::Verbatim, 'a')
+      class_set = Regex::Syntax::AST::ClassBracketed.new(span, false, [literal.as(Regex::Syntax::AST::Node)])
+      class_set.negated.should be_false
+      class_set.empty?.should be_false
+      class_set.items.size.should eq(1)
+      class_set.items.first.should be_a(Regex::Syntax::AST::Literal)
     end
   end
 end

@@ -9,13 +9,23 @@ module Regex::Syntax
     @len : Int32
     @unicode : Bool
     @ignore_case : Bool
+    @multi_line : Bool
+    @dot_matches_new_line : Bool
+    @swap_greed : Bool
+    @ignore_whitespace : Bool
+    @crlf : Bool
     @nest_limit : Int32?
     @nest_depth : Int32
     @capture_index : Int32
 
-    def initialize(*, unicode : Bool = true, ignore_case : Bool = false, nest_limit : Int32? = nil)
+    def initialize(*, unicode : Bool = true, ignore_case : Bool = false, multi_line : Bool = false, dot_matches_new_line : Bool = false, swap_greed : Bool = false, ignore_whitespace : Bool = false, crlf : Bool = false, nest_limit : Int32? = nil)
       @unicode = unicode
       @ignore_case = ignore_case
+      @multi_line = multi_line
+      @dot_matches_new_line = dot_matches_new_line
+      @swap_greed = swap_greed
+      @ignore_whitespace = ignore_whitespace
+      @crlf = crlf
       @nest_limit = nest_limit
       @input = ""
       @pos = 0
@@ -60,13 +70,17 @@ module Regex::Syntax
     private def parse_concatenation : Hir::Node
       # Parse sequence of atoms
       atoms = [] of Hir::Node
+      skip_ignored_whitespace_and_comments
 
       while !eof? && current_char != '|' && current_char != ')'
+        skip_ignored_whitespace_and_comments
+        break if eof? || current_char == '|' || current_char == ')'
         atom = parse_atom
         # Skip empty nodes
         unless atom.is_a?(Hir::Empty)
           atoms << atom
         end
+        skip_ignored_whitespace_and_comments
       end
 
       case atoms.size
@@ -87,9 +101,9 @@ module Regex::Syntax
       case current_char
       when '*'
         advance
-        greedy = true
+        greedy = default_greedy
         if current_char == '?'
-          greedy = false
+          greedy = !default_greedy
           advance
         elsif current_char == '+'
           # Possessive quantifier (no backtracking) - treat as greedy in DFA
@@ -98,9 +112,9 @@ module Regex::Syntax
         node = Hir::Repetition.new(node, 0, nil, greedy: greedy)
       when '+'
         advance
-        greedy = true
+        greedy = default_greedy
         if current_char == '?'
-          greedy = false
+          greedy = !default_greedy
           advance
         elsif current_char == '+'
           # Possessive quantifier (no backtracking) - treat as greedy in DFA
@@ -109,10 +123,10 @@ module Regex::Syntax
         node = Hir::Repetition.new(node, 1, nil, greedy: greedy)
       when '?'
         advance
-        greedy = true
+        greedy = default_greedy
         possessive = false
         if current_char == '?'
-          greedy = false
+          greedy = !default_greedy
           advance
         elsif current_char == '+'
           # Possessive quantifier (no backtracking) - treat as greedy in DFA
@@ -176,9 +190,9 @@ module Regex::Syntax
       end
 
       # Check for non-greedy modifier '?'
-      greedy = true
+      greedy = default_greedy
       if current_char == '?'
-        greedy = false
+        greedy = !default_greedy
         advance
       elsif current_char == '+'
         # Possessive quantifier (no backtracking) - treat as greedy in DFA
@@ -192,10 +206,10 @@ module Regex::Syntax
       case current_char
       when '^'
         advance
-        return Hir::Look.new(Hir::Look::Kind::Start)
+        return Hir::Look.new(@multi_line ? Hir::Look::Kind::Start : Hir::Look::Kind::StartText)
       when '$'
         advance
-        return Hir::Look.new(Hir::Look::Kind::End)
+        return Hir::Look.new(@multi_line ? Hir::Look::Kind::End : Hir::Look::Kind::EndTextWithNewline)
       when '.'
         advance
         parse_dot
@@ -217,11 +231,12 @@ module Regex::Syntax
     end
 
     private def parse_dot : Hir::Node
-      # Create appropriate dot based on Unicode mode
-      dot_kind = if @unicode
-                   Hir::Dot::AnyChar
+      dot_kind = if @dot_matches_new_line
+                   @unicode ? Hir::Dot::AnyChar : Hir::Dot::AnyByte
+                 elsif @crlf
+                   @unicode ? Hir::Dot::AnyCharExceptCRLF : Hir::Dot::AnyByteExceptCRLF
                  else
-                   Hir::Dot::AnyByte
+                   @unicode ? Hir::Dot::AnyCharExceptLF : Hir::Dot::AnyByteExceptLF
                  end
       Hir.dot(dot_kind).node
     end
@@ -734,6 +749,7 @@ module Regex::Syntax
       bytes = [] of UInt8
 
       while !eof? && !"|().*+?{[\\".includes?(current_char)
+        break if @ignore_whitespace && (current_char.ascii_whitespace? || current_char == '#')
         current_char.to_s.each_byte { |byte| bytes << byte }
         advance
       end
@@ -752,23 +768,54 @@ module Regex::Syntax
     end
 
     private def apply_parser_flags(flags : Hash(String, Bool)) : Nil
-      if enabled = flags["i"]?
-        @ignore_case = enabled
-      end
-      if enabled = flags["u"]?
-        @unicode = enabled
-      end
+      @ignore_case = flags["i"] if flags.has_key?("i")
+      @unicode = flags["u"] if flags.has_key?("u")
+      @multi_line = flags["m"] if flags.has_key?("m")
+      @dot_matches_new_line = flags["s"] if flags.has_key?("s")
+      @swap_greed = flags["U"] if flags.has_key?("U")
+      @ignore_whitespace = flags["x"] if flags.has_key?("x")
+      @crlf = flags["R"] if flags.has_key?("R")
     end
 
     private def with_inline_flags(flags : Hash(String, Bool), & : -> Hir::Node) : Hir::Node
       old_ignore_case = @ignore_case
       old_unicode = @unicode
+      old_multi_line = @multi_line
+      old_dot_matches_new_line = @dot_matches_new_line
+      old_swap_greed = @swap_greed
+      old_ignore_whitespace = @ignore_whitespace
+      old_crlf = @crlf
       apply_parser_flags(flags)
       begin
         yield
       ensure
         @ignore_case = old_ignore_case
         @unicode = old_unicode
+        @multi_line = old_multi_line
+        @dot_matches_new_line = old_dot_matches_new_line
+        @swap_greed = old_swap_greed
+        @ignore_whitespace = old_ignore_whitespace
+        @crlf = old_crlf
+      end
+    end
+
+    private def default_greedy : Bool
+      !@swap_greed
+    end
+
+    private def skip_ignored_whitespace_and_comments : Nil
+      return unless @ignore_whitespace
+      while !eof?
+        if current_char.ascii_whitespace?
+          advance
+        elsif current_char == '#'
+          advance
+          while !eof? && current_char != '\n'
+            advance
+          end
+        else
+          break
+        end
       end
     end
 

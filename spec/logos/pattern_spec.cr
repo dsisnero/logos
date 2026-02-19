@@ -114,7 +114,7 @@ describe Logos::Pattern do
       pattern = Logos::Pattern.compile_regex(".")
       pattern.hir.as(Regex::Syntax::Hir::Hir).node.should be_a(Regex::Syntax::Hir::DotNode)
       dot_node = pattern.hir.as(Regex::Syntax::Hir::Hir).node.as(Regex::Syntax::Hir::DotNode)
-      dot_node.kind.should eq(Regex::Syntax::Hir::Dot::AnyChar)
+      dot_node.kind.should eq(Regex::Syntax::Hir::Dot::AnyCharExceptLF)
     end
 
     it "parses character class" do
