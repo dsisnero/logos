@@ -37,17 +37,14 @@ while result = lexer.next
     token = result.unwrap
     case token
     when Token::Integer
-      puts "Integer: #{lexer.int_value}"
+      puts "Integer: #{lexer.payload_for!(result, Token::Integer, Int64)}"
     when Token::Float
-      puts "Float: #{lexer.float_value}"
+      puts "Float: #{lexer.payload_for!(result, Token::Float, Float64)}"
     when Token::String
-      puts "String: #{lexer.string_value}"
+      puts "String: #{lexer.payload_for!(result, Token::String, String)}"
     when Token::Plus
       puts "Plus"
     end
-
-    # Clear callback value for next token
-    lexer.clear_callback_value
   end
 end
 

@@ -3,7 +3,7 @@
 # Usage:
 #   crystal run examples/calculator.cr -- "1 + 7 * (3 - 4) / 2"
 
-require "logos"
+require "../src/logos"
 
 Logos.define Token do
   error_type Nil
@@ -203,8 +203,9 @@ while token = lexer.next
   break if token.is_a?(Iterator::Stop)
   result = token.as(Logos::Result(Token, Nil))
   if result.ok?
-    value = lexer.callback_value_as(Int64)
-    entries << TokenEntry.new(result.unwrap, value)
+    parsed_token = result.unwrap
+    value = lexer.payload_for(result, Token::Integer, Int64)
+    entries << TokenEntry.new(parsed_token, value)
   else
     raise "lexer error at #{lexer.span}"
   end

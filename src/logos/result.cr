@@ -23,6 +23,14 @@ module Logos
       !@is_ok
     end
 
+    def value? : T?
+      @is_ok ? @value.as(T) : nil
+    end
+
+    def matches?(expected : T) : Bool
+      @is_ok && @value.as(T) == expected
+    end
+
     def unwrap : T
       if @is_ok
         @value.as(T)

@@ -52,6 +52,21 @@ module Logos
       callback_value_as(String)
     end
 
+    # Return a typed callback payload when the result is the expected token variant.
+    def payload_for(result : Result(Token, Error), expected_token : Token, type : T.class) : T? forall T
+      result.matches?(expected_token) ? callback_value_as(T) : nil
+    end
+
+    # Same as `payload_for`, but raises if the token doesn't match or payload type is missing.
+    def payload_for!(result : Result(Token, Error), expected_token : Token, type : T.class) : T forall T
+      unless result.matches?(expected_token)
+        raise "Expected token #{expected_token}, got #{result.value?.inspect}"
+      end
+      payload = callback_value_as(T)
+      raise "Expected payload #{T} for token #{expected_token}, got nil" if payload.nil?
+      payload
+    end
+
     # Clear callback value
     def clear_callback_value : Nil
       @callback_value = nil

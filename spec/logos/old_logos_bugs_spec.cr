@@ -117,7 +117,44 @@ module Logos::Spec::OldLogosBugs
     end
   end
 
-  # issue_180 pending due to regex complexity
+  # issue_180: https://github.com/maciejhirsz/logos/issues/180
+  module Issue180
+    Logos.define Token do
+      skip_regex "[ \\n\\t\\f]+", :Skip
+
+      token "fast", :Fast
+      token ".", :Period
+      regex "[a-zA-Z]+", :Text
+      regex "/\\*(?:[^*]|\\*+[^*/])+\\*+/", :Comment
+    end
+
+    describe "issue_180: comment token with skip" do
+      it "matches text/comment/fast/period sequence" do
+        source = "Create ridiculously /* comment */ fast Lexers."
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new(source)
+
+        expected = [
+          {Token::Text, "Create", 0...6},
+          {Token::Text, "ridiculously", 7...19},
+          {Token::Comment, "/* comment */", 20...33},
+          {Token::Fast, "fast", 34...38},
+          {Token::Text, "Lexers", 39...45},
+          {Token::Period, ".", 45...46},
+        ]
+
+        expected.each do |expected_token, expected_slice, expected_range|
+          result = lexer.next
+          result.should_not be_nil
+          result = result.as(Logos::Result(Token, Nil))
+          result.unwrap.should eq(expected_token)
+          lexer.slice.should eq(expected_slice)
+          lexer.span.should eq(expected_range)
+        end
+
+        lexer.next.should eq(Iterator::Stop::INSTANCE)
+      end
+    end
+  end
 
   # issue_181: https://github.com/maciejhirsz/logos/issues/181
   # priority between regex and token
@@ -983,5 +1020,26 @@ module Logos::Spec::OldLogosBugs
     end
   end
 
-  # issue_202 pending: Unicode range regex not supported
+  # issue_202: https://github.com/maciejhirsz/logos/issues/202
+  module Issue202
+    Logos.define Token do
+      regex "[\\u{0}-\\u{10FFFF}]", :AnyChar
+    end
+
+    describe "issue_202: Unicode full-range class" do
+      it "matches non-ascii codepoints" do
+        source = "Ω"
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new(source)
+
+        result = lexer.next
+        result.should_not be_nil
+        result = result.as(Logos::Result(Token, Nil))
+        result.unwrap.should eq(Token::AnyChar)
+        lexer.slice.should eq("Ω")
+        lexer.span.should eq(0...2)
+
+        lexer.next.should eq(Iterator::Stop::INSTANCE)
+      end
+    end
+  end
 end

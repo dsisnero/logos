@@ -200,6 +200,26 @@ Reference mapping from Rust handbook topics to Crystal docs/spec coverage:
 - Unicode support: `spec/logos/unicode_dot_spec.cr`, `spec/logos/ignore_case_spec.cr`
 - Source and spans: `spec/logos/source_spec.cr`, `spec/logos/lexer_spec.cr`
 
+### Enum Payload Parity Plan (`logos-04d`)
+
+Rust uses enum variants with associated payloads. Crystal enums do not, so the port currently uses `Lexer#callback_value_as(T)` as a side-channel.
+
+Planned parity path:
+- `logos-nxw` (done): Design union-backed typed payload API.
+- `logos-15n`: Implement typed payload extraction helpers on `Lexer`/`Result`.
+- `logos-pk9`: Port Rust payload-oriented examples to concise Crystal equivalents.
+
+### Rust UI Error Parity (`tests/ui/err`)
+
+| Rust case | Crystal status | Crystal coverage |
+| --- | --- | --- |
+| `greedy-without-config.rs` | Supported | `spec/logos/greedy_spec.cr`, `spec/logos/diagnostics_spec.cr` |
+| `priority-conflict.rs` | Supported | `spec/logos/diagnostics_spec.cr` |
+| `subpattern-match-empty.rs` | Supported | `spec/logos/diagnostics_spec.cr` |
+| `regex-non-utf8.rs` | Supported | `spec/logos/diagnostics_spec.cr` (use `bytes: true` to mark byte-oriented patterns) |
+| `token-non-utf8.rs` | Supported | `spec/logos/diagnostics_spec.cr` |
+| `multiple-export-dirs.rs` | Not applicable | Rust-only `export_dir` derive option is not implemented in Crystal annotations |
+
 ## Status
 
 ✅ **Port Complete**: The Crystal port is feature-complete and the full spec suite passes.

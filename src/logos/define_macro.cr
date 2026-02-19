@@ -46,6 +46,7 @@ module Logos
         {% priority = nil %}
         {% ignore_case = false %}
         {% allow_greedy = false %}
+        {% bytes = false %}
         {% if node.block %}
           {% callback = node.block %}
         {% elsif node.named_args %}
@@ -62,6 +63,8 @@ module Logos
               {% ignore_case = named_arg.value %}
             {% elsif named_arg.name == "allow_greedy" %}
               {% allow_greedy = named_arg.value %}
+            {% elsif named_arg.name == "bytes" %}
+              {% bytes = named_arg.value %}
             {% end %}
           {% end %}
         {% end %}
@@ -88,25 +91,25 @@ module Logos
           {% if variant.is_a?(SymbolLiteral) %}
             {% variant = variant.id %}
           {% end %}
-          {% token_defs << {variant: variant, pattern: node.args[0], skip: false, callback: callback, priority: priority, ignore_case: ignore_case, allow_greedy: allow_greedy} %}
+          {% token_defs << {variant: variant, pattern: node.args[0], skip: false, callback: callback, priority: priority, ignore_case: ignore_case, allow_greedy: allow_greedy, bytes: bytes} %}
         {% elsif node.name == "regex" && node.args.size == 2 %}
           {% variant = node.args[1] %}
           {% if variant.is_a?(SymbolLiteral) %}
             {% variant = variant.id %}
           {% end %}
-          {% regex_defs << {variant: variant, pattern: node.args[0], skip: false, callback: callback, priority: priority, ignore_case: ignore_case, allow_greedy: allow_greedy} %}
+          {% regex_defs << {variant: variant, pattern: node.args[0], skip: false, callback: callback, priority: priority, ignore_case: ignore_case, allow_greedy: allow_greedy, bytes: bytes} %}
         {% elsif node.name == "skip_token" && node.args.size == 2 %}
           {% variant = node.args[1] %}
           {% if variant.is_a?(SymbolLiteral) %}
             {% variant = variant.id %}
           {% end %}
-          {% token_defs << {variant: variant, pattern: node.args[0], skip: true, callback: callback, priority: priority, ignore_case: ignore_case, allow_greedy: allow_greedy} %}
+          {% token_defs << {variant: variant, pattern: node.args[0], skip: true, callback: callback, priority: priority, ignore_case: ignore_case, allow_greedy: allow_greedy, bytes: bytes} %}
         {% elsif node.name == "skip_regex" && node.args.size == 2 %}
           {% variant = node.args[1] %}
           {% if variant.is_a?(SymbolLiteral) %}
             {% variant = variant.id %}
           {% end %}
-          {% regex_defs << {variant: variant, pattern: node.args[0], skip: true, callback: callback, priority: priority, ignore_case: ignore_case, allow_greedy: allow_greedy} %}
+          {% regex_defs << {variant: variant, pattern: node.args[0], skip: true, callback: callback, priority: priority, ignore_case: ignore_case, allow_greedy: allow_greedy, bytes: bytes} %}
         {% elsif node.name == "error" && node.args.size == 1 %}
           {% variant = node.args[0] %}
           {% if variant.is_a?(SymbolLiteral) %}
@@ -327,17 +330,20 @@ module Logos
               hir = ::Regex::Syntax::Hir.case_fold_ascii(hir)
             {% end %}
         {% end %}
-          {% unless item[:allow_greedy] %}
-            if hir.has_greedy_all?
-              raise self.greedy_pattern_message
-            end
-          {% end %}
           {% if utf8_flag %}
+            {% if item[:bytes] %}
+              raise "UTF-8 mode is enabled, but pattern #{ {{ pattern_node }}.inspect } for variant #{ {{ item[:variant] }} } is byte-oriented. Set utf8 false to allow byte-oriented matching."
+            {% end %}
             unless pattern_source.valid_encoding?
               raise "UTF-8 mode is enabled, but pattern #{pattern_source.inspect} for variant #{ {{ item[:variant] }} } is not valid UTF-8. Set utf8 false to allow byte-oriented matching."
             end
             if self.hir_matches_invalid_utf8?(hir)
               raise "UTF-8 mode is enabled, but pattern #{ {{ pattern_node }}.inspect } for variant #{ {{ item[:variant] }} } can match invalid UTF-8. Set utf8 false to allow byte-oriented matching."
+            end
+          {% end %}
+          {% unless item[:allow_greedy] %}
+            if hir.has_greedy_all?
+              raise self.greedy_pattern_message
             end
           {% end %}
           if pattern_uses_subpattern && hir.can_match_empty?
@@ -377,17 +383,20 @@ module Logos
               hir = ::Regex::Syntax::Hir.case_fold_ascii(hir)
             {% end %}
         {% end %}
-          {% unless item[:allow_greedy] %}
-            if hir.has_greedy_all?
-              raise self.greedy_pattern_message
-            end
-          {% end %}
           {% if utf8_flag %}
+            {% if item[:bytes] %}
+              raise "UTF-8 mode is enabled, but pattern #{ {{ pattern_node }}.inspect } for variant #{ {{ item[:variant] }} } is byte-oriented. Set utf8 false to allow byte-oriented matching."
+            {% end %}
             unless pattern_source.valid_encoding?
               raise "UTF-8 mode is enabled, but pattern #{pattern_source.inspect} for variant #{ {{ item[:variant] }} } is not valid UTF-8. Set utf8 false to allow byte-oriented matching."
             end
             if self.hir_matches_invalid_utf8?(hir)
               raise "UTF-8 mode is enabled, but pattern #{ {{ pattern_node }}.inspect } for variant #{ {{ item[:variant] }} } can match invalid UTF-8. Set utf8 false to allow byte-oriented matching."
+            end
+          {% end %}
+          {% unless item[:allow_greedy] %}
+            if hir.has_greedy_all?
+              raise self.greedy_pattern_message
             end
           {% end %}
           if pattern_uses_subpattern && hir.can_match_empty?
