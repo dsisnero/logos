@@ -137,9 +137,9 @@ The project includes two companion shards ported from Rust:
 
 ### Hybrid Automaton Status
 
-- `Regex::Automata::Hybrid::LazyDFA` is available as a compatibility API and currently delegates to DFA construction.
-- This keeps the Logos-facing API complete while preserving current behavior.
-- A true lazy hybrid engine remains a future optimization task.
+- `Regex::Automata::Hybrid::LazyDFA` now performs lazy determinization and caches transitions on demand.
+- It supports anchored/unanchored start states and reuses the same look-around semantics as the DFA builder.
+- This hybrid path is suitable for large regex sets where eager DFA construction has higher startup cost.
 
 ## Development
 
