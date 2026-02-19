@@ -197,4 +197,16 @@ describe Regex::Automata::HirCompiler do
       dfa.should be_a(Regex::Automata::DFA::DFA)
     end
   end
+
+  it "compiles capture groups into capture states" do
+    hir = Regex::Syntax.parse("(ab)")
+    nfa = Regex::Automata::HirCompiler.new.compile(hir)
+
+    capture_states = nfa.states.select(&.is_a?(Regex::Automata::NFA::Capture)).map(&.as(Regex::Automata::NFA::Capture))
+    capture_states.size.should eq(2)
+
+    # Parser capture indices are 1-based.
+    capture_states.all? { |state| state.group_index == 1 }.should be_true
+    capture_states.map(&.slot).sort.should eq([2, 3])
+  end
 end

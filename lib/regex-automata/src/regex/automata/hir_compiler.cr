@@ -137,9 +137,24 @@ module Regex::Automata
     end
 
     private def compile_capture(node : Regex::Syntax::Hir::Capture) : NFA::ThompsonRef
-      # For now, treat capture same as its child
-      # TODO: Implement proper capture states
-      compile_node(node.sub)
+      child_ref = compile_node(node.sub)
+
+      # Wrap child with capture start/end epsilon states.
+      # Slot layout follows regex-automata convention:
+      # start slot = 2 * group_index, end slot = 2 * group_index + 1.
+      start_slot = node.index * 2
+      end_slot = start_slot + 1
+
+      capture_start = @builder.add_state(
+        NFA::Capture.new(child_ref.start, @pattern_id, node.index, start_slot)
+      )
+      capture_match_end = @builder.add_state(NFA::Match.new(@pattern_id))
+      capture_end = @builder.add_state(
+        NFA::Capture.new(capture_match_end, @pattern_id, node.index, end_slot)
+      )
+      @builder.update_transition_target(child_ref.end, capture_end)
+
+      NFA::ThompsonRef.new(capture_start, capture_match_end)
     end
 
     private def compile_concat(node : Regex::Syntax::Hir::Concat) : NFA::ThompsonRef
