@@ -1,15 +1,12 @@
 require "./regex/automata/nfa"
 require "./regex/automata/dfa"
+require "./regex/automata/hybrid"
 require "./regex/automata/hir_compiler"
 
 module Regex::Automata
   VERSION = "0.1.0"
 
-  # Deterministic Finite Automaton (implemented in regex/automata/dfa.cr)
-  # Hybrid NFA/DFA (lazy DFA)
-  module Hybrid
-    # TODO: Implement hybrid automaton
-  end
+  # Deterministic Finite Automaton and hybrid compatibility API
 
   # Pattern identifiers
   struct PatternID

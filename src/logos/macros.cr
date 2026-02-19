@@ -1,5 +1,6 @@
 require "regex-syntax"
 require "regex-automata"
+require "set"
 
 macro logos_derive(type)
   {% type_node = type.resolve %}
@@ -91,16 +92,20 @@ macro logos_derive(type)
   {% for ann in type_node.annotations(Logos::Token) %}
     {% variant = ann.named_args["variant"] %}
     {% pattern = ann.named_args["pattern"] %}
-    {% pattern = ann.args[0] if pattern.nil? && ann.args.size > 0 %}
-    {% callback = ann.args.size > 1 ? ann.args[1] : nil %}
+    {% callback = ann.named_args["callback"] %}
+    {% if variant.nil? && pattern.nil? && ann.args.size >= 2 && ann.args[0].is_a?(SymbolLiteral) %}
+      {% variant = ann.args[0] %}
+      {% pattern = ann.args[1] %}
+      {% callback = ann.args[2] if callback.nil? && ann.args.size > 2 %}
+    {% else %}
+      {% pattern = ann.args[0] if pattern.nil? && ann.args.size > 0 %}
+      {% callback = ann.args[1] if callback.nil? && ann.args.size > 1 %}
+    {% end %}
     {% priority = nil %}
     {% ignore_case = false %}
     {% ignore_ascii_case = false %}
     {% skip = false %}
     {% allow_greedy = false %}
-    {% if value = ann.named_args["callback"] %}
-      {% callback = value %}
-    {% end %}
     {% if value = ann.named_args["priority"] %}
       {% priority = value %}
     {% end %}
@@ -133,16 +138,20 @@ macro logos_derive(type)
   {% for ann in type_node.annotations(Logos::Regex) %}
     {% variant = ann.named_args["variant"] %}
     {% pattern = ann.named_args["pattern"] %}
-    {% pattern = ann.args[0] if pattern.nil? && ann.args.size > 0 %}
-    {% callback = ann.args.size > 1 ? ann.args[1] : nil %}
+    {% callback = ann.named_args["callback"] %}
+    {% if variant.nil? && pattern.nil? && ann.args.size >= 2 && ann.args[0].is_a?(SymbolLiteral) %}
+      {% variant = ann.args[0] %}
+      {% pattern = ann.args[1] %}
+      {% callback = ann.args[2] if callback.nil? && ann.args.size > 2 %}
+    {% else %}
+      {% pattern = ann.args[0] if pattern.nil? && ann.args.size > 0 %}
+      {% callback = ann.args[1] if callback.nil? && ann.args.size > 1 %}
+    {% end %}
     {% priority = nil %}
     {% ignore_case = false %}
     {% ignore_ascii_case = false %}
     {% skip = false %}
     {% allow_greedy = false %}
-    {% if value = ann.named_args["callback"] %}
-      {% callback = value %}
-    {% end %}
     {% if value = ann.named_args["priority"] %}
       {% priority = value %}
     {% end %}
@@ -210,6 +219,41 @@ macro logos_derive(type)
       end
     {% end %}
 
+    private def self.greedy_pattern_message : ::String
+      "This pattern contains an unbounded greedy dot repetition, i.e. `.*` or `.+` (or an equivalent class). This can consume the entire input for each token. Prefer a non-greedy repetition or a more specific class. If intentional, set allow_greedy: true."
+    end
+
+    private def self.patterns_overlap?(left_hir : ::Regex::Syntax::Hir::Hir, right_hir : ::Regex::Syntax::Hir::Hir) : Bool
+      left_nfa = ::Regex::Automata::HirCompiler.new(utf8: {{ utf8_flag }}).compile(left_hir)
+      right_nfa = ::Regex::Automata::HirCompiler.new(utf8: {{ utf8_flag }}).compile(right_hir)
+      left_dfa = ::Regex::Automata::DFA::Builder.new(left_nfa).build
+      right_dfa = ::Regex::Automata::DFA::Builder.new(right_nfa).build
+
+      queue = [{left_dfa.start, right_dfa.start}]
+      visited = Set(Tuple(::Regex::Automata::StateID, ::Regex::Automata::StateID)).new
+
+      until queue.empty?
+        left_id, right_id = queue.shift
+        pair = {left_id, right_id}
+        next if visited.includes?(pair)
+        visited.add(pair)
+
+        left_state = left_dfa[left_id]
+        right_state = right_dfa[right_id]
+        return true if left_state.accepting? && right_state.accepting?
+
+        256.times do |byte|
+          byte_u8 = byte.to_u8
+          left_next = left_state.next[left_dfa.byte_classifier[byte_u8]]
+          right_next = right_state.next[right_dfa.byte_classifier[byte_u8]]
+          next if left_next.to_i < 0 || right_next.to_i < 0
+          queue << {left_next, right_next}
+        end
+      end
+
+      false
+    end
+
     @@compiled = nil.as(NamedTuple(
       dfa: ::Regex::Automata::DFA::DFA,
       pattern_to_variant: Array(self),
@@ -229,6 +273,9 @@ macro logos_derive(type)
       pattern_to_variant = [] of self
       pattern_is_skip = [] of Bool
       pattern_priority = [] of Int32
+      pattern_priority_explicit = [] of Bool
+      pattern_text = [] of ::String
+      pattern_variant_name = [] of ::String
 
       skip_value = {% if skip_variant %}
                      self::{{ skip_variant }}
@@ -240,8 +287,10 @@ macro logos_derive(type)
         {% pattern_node = item[:pattern] %}
         {% if subpatterns.size > 0 %}
           pattern_source = self.substitute_subpatterns({{ pattern_node }})
+          pattern_uses_subpattern = {{ pattern_node }}.includes?("(?&")
           hir = ::Regex::Syntax::Hir::Hir.literal(pattern_source.to_slice)
         {% else %}
+          pattern_uses_subpattern = false
           hir = ::Regex::Syntax::Hir::Hir.literal({{ pattern_node }}.to_slice)
         {% end %}
         {% if item[:ignore_case] %}
@@ -253,16 +302,23 @@ macro logos_derive(type)
         {% end %}
         {% unless item[:allow_greedy] %}
           if hir.has_greedy_all?
-            raise "pattern contains unbounded greedy dot repetition; set allow_greedy: true"
+            raise self.greedy_pattern_message
           end
         {% end %}
+        if pattern_uses_subpattern && hir.can_match_empty?
+          raise "The pattern #{ {{ pattern_node }}.inspect } for variant #{ {{ item[:variant] }} } can match the empty string, which is unsupported by logos."
+        end
         hirs << hir
         pattern_to_variant << {{ item[:variant] }}
         pattern_is_skip << {{ item[:skip] }}
+        pattern_text << {{ pattern_node }}.inspect
+        pattern_variant_name << {{ item[:variant] }}.to_s
         {% if item[:priority] %}
           pattern_priority << {{ item[:priority] }}
+          pattern_priority_explicit << true
         {% else %}
           pattern_priority << hir.complexity
+          pattern_priority_explicit << false
         {% end %}
       {% end %}
 
@@ -270,8 +326,10 @@ macro logos_derive(type)
         {% pattern_node = item[:pattern] %}
         {% if subpatterns.size > 0 %}
           pattern_source = self.substitute_subpatterns({{ pattern_node }})
+          pattern_uses_subpattern = {{ pattern_node }}.includes?("(?&")
           hir = ::Regex::Syntax.parse(pattern_source, unicode: {{ utf8_flag }})
         {% else %}
+          pattern_uses_subpattern = false
           hir = ::Regex::Syntax.parse({{ pattern_node }}, unicode: {{ utf8_flag }})
         {% end %}
         {% if item[:ignore_case] %}
@@ -283,16 +341,23 @@ macro logos_derive(type)
         {% end %}
         {% unless item[:allow_greedy] %}
           if hir.has_greedy_all?
-            raise "pattern contains unbounded greedy dot repetition; set allow_greedy: true"
+            raise self.greedy_pattern_message
           end
         {% end %}
+        if pattern_uses_subpattern && hir.can_match_empty?
+          raise "The pattern #{ {{ pattern_node }}.inspect } for variant #{ {% if item[:variant] %} {{ item[:variant] }} {% else %} skip_value {% end %} } can match the empty string, which is unsupported by logos."
+        end
         hirs << hir
         pattern_to_variant << {% if item[:variant] %} {{ item[:variant] }} {% else %} skip_value {% end %}
         pattern_is_skip << {{ item[:skip] }}
+        pattern_text << {{ pattern_node }}.inspect
+        pattern_variant_name << {% if item[:variant] %} {{ item[:variant] }}.to_s {% else %} "<skip>" {% end %}
         {% if item[:priority] %}
           pattern_priority << {{ item[:priority] }}
+          pattern_priority_explicit << true
         {% else %}
           pattern_priority << hir.complexity
+          pattern_priority_explicit << false
         {% end %}
       {% end %}
 
@@ -303,6 +368,16 @@ macro logos_derive(type)
         256.times { |i| dead_state.set_transition(i, ::Regex::Automata::StateID.new(-1)) }
         dfa = ::Regex::Automata::DFA::DFA.new([dead_state], ::Regex::Automata::StateID.new(0), 256)
         return {dfa: dfa, pattern_to_variant: pattern_to_variant, pattern_is_skip: pattern_is_skip, pattern_priority: pattern_priority, error_variant: error_variant}
+      end
+
+      hirs.size.times do |i|
+        (i + 1...hirs.size).each do |j|
+          next unless pattern_priority_explicit[i] && pattern_priority_explicit[j]
+          next unless pattern_priority[i] == pattern_priority[j]
+          if self.patterns_overlap?(hirs[i], hirs[j])
+            raise "The pattern #{pattern_text[i]} (#{pattern_variant_name[i]}) can match simultaneously with #{pattern_text[j]} (#{pattern_variant_name[j]}) at priority #{pattern_priority[i]}."
+          end
+        end
       end
 
       hir_compiler = ::Regex::Automata::HirCompiler.new(utf8: {{ utf8_flag }})

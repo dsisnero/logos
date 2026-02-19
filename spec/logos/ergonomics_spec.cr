@@ -27,8 +27,8 @@ module Logos::Spec::Ergonomics
   end
 
   @[Logos::Options(skip: "\\s+")]
-  @[Logos::Token("let", variant: :Let)]
-  @[Logos::Regex("[0-9]+", variant: :Number)]
+  @[Logos::Token(:Let, "let")]
+  @[Logos::Regex(:Number, "[0-9]+")]
   enum AnnotatedToken
     Let
     Number

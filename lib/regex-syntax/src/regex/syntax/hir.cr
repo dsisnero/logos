@@ -197,6 +197,9 @@ module Regex::Syntax::Hir
 
     # Check if contains greedy .* or .+
     abstract def has_greedy_all? : Bool
+
+    # Check if the expression can match the empty string.
+    abstract def can_match_empty? : Bool
   end
 
   # Dot metacharacter (.)
@@ -213,6 +216,10 @@ module Regex::Syntax::Hir
     def has_greedy_all? : Bool
       false
     end
+
+    def can_match_empty? : Bool
+      false
+    end
   end
 
   # Empty pattern (matches nothing)
@@ -223,6 +230,10 @@ module Regex::Syntax::Hir
 
     def has_greedy_all? : Bool
       false
+    end
+
+    def can_match_empty? : Bool
+      true
     end
   end
 
@@ -239,6 +250,10 @@ module Regex::Syntax::Hir
 
     def has_greedy_all? : Bool
       false
+    end
+
+    def can_match_empty? : Bool
+      bytes.empty?
     end
   end
 
@@ -258,6 +273,10 @@ module Regex::Syntax::Hir
     def has_greedy_all? : Bool
       false
     end
+
+    def can_match_empty? : Bool
+      false
+    end
   end
 
   # Unicode character class (codepoint ranges)
@@ -273,6 +292,10 @@ module Regex::Syntax::Hir
     end
 
     def has_greedy_all? : Bool
+      false
+    end
+
+    def can_match_empty? : Bool
       false
     end
   end
@@ -301,6 +324,10 @@ module Regex::Syntax::Hir
     def has_greedy_all? : Bool
       false
     end
+
+    def can_match_empty? : Bool
+      true
+    end
   end
 
   # Repetition
@@ -327,6 +354,10 @@ module Regex::Syntax::Hir
         false
       end
     end
+
+    def can_match_empty? : Bool
+      min == 0 || sub.can_match_empty?
+    end
   end
 
   # Capture group
@@ -344,6 +375,10 @@ module Regex::Syntax::Hir
     def has_greedy_all? : Bool
       sub.has_greedy_all?
     end
+
+    def can_match_empty? : Bool
+      sub.can_match_empty?
+    end
   end
 
   # Concatenation
@@ -360,6 +395,10 @@ module Regex::Syntax::Hir
     def has_greedy_all? : Bool
       children.any? { |child| child.has_greedy_all? }
     end
+
+    def can_match_empty? : Bool
+      children.all? { |child| child.can_match_empty? }
+    end
   end
 
   # Alternation
@@ -375,6 +414,10 @@ module Regex::Syntax::Hir
 
     def has_greedy_all? : Bool
       children.any? { |child| child.has_greedy_all? }
+    end
+
+    def can_match_empty? : Bool
+      children.any? { |child| child.can_match_empty? }
     end
   end
 
@@ -401,6 +444,10 @@ module Regex::Syntax::Hir
 
     def has_greedy_all? : Bool
       node.has_greedy_all?
+    end
+
+    def can_match_empty? : Bool
+      node.can_match_empty?
     end
   end
 end

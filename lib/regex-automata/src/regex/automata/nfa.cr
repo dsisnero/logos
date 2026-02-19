@@ -319,10 +319,6 @@ module Regex::Automata::NFA
     end
 
     private def build_general_repetition(child : ThompsonRef, min : Int32, max : Int32?, greedy : Bool, pattern_id : PatternID) : ThompsonRef
-      # TODO: This implementation has known issues with min copies
-      # due to build_min_copies bug. General repetition ranges {min,max}
-      # don't work correctly yet.
-
       # First build at least min copies
       result = if min > 0
                  # Build chain of min copies
@@ -363,6 +359,11 @@ module Regex::Automata::NFA
     end
 
     private def build_min_copies(child : ThompsonRef, count : Int32, pattern_id : PatternID) : ThompsonRef
+      if count <= 0
+        empty_match = add_state(Match.new(pattern_id))
+        return ThompsonRef.new(empty_match, empty_match)
+      end
+
       # Build chain of 'count' copies of child
       # Create fresh copy for each repetition to avoid modifying shared states
       result = copy_subgraph(child.start, child.end)
@@ -374,6 +375,11 @@ module Regex::Automata::NFA
     end
 
     private def build_optional_copies(child : ThompsonRef, count : Int32, greedy : Bool, pattern_id : PatternID) : ThompsonRef
+      if count <= 0
+        empty_match = add_state(Match.new(pattern_id))
+        return ThompsonRef.new(empty_match, empty_match)
+      end
+
       # Build chain of 'count' optional copies of child
       # Each optional copy needs its own child subgraph
       result = build_repetition(copy_subgraph(child.start, child.end), 0, 1, greedy, pattern_id)

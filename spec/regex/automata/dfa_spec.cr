@@ -290,6 +290,30 @@ module Regex::Automata::DFASpec
   end
 
   describe DFA do
+    it "returns anchored and unanchored universal start states" do
+      nfa_builder = NFA::Builder.new
+      anchored_ref = nfa_builder.build_literal("a".to_slice)
+      unanchored_ref = nfa_builder.build_literal("b".to_slice)
+      nfa_builder.set_start_anchored(anchored_ref.start)
+      nfa_builder.set_start_unanchored(unanchored_ref.start)
+      nfa = nfa_builder.build
+
+      dfa = DFA::Builder.new(nfa).build
+      unanchored_start = dfa.universal_start_state(0)
+      anchored_start = dfa.universal_start_state(1)
+
+      unanchored_start.should_not be_nil
+      anchored_start.should_not be_nil
+      dfa.universal_start_state(2).should be_nil
+
+      unanchored_state = dfa[unanchored_start.as(StateID)]
+      anchored_state = dfa[anchored_start.as(StateID)]
+      unanchored_state.next['b'.ord.to_u8].should_not eq(StateID.new(-1))
+      unanchored_state.next['a'.ord.to_u8].should eq(StateID.new(-1))
+      anchored_state.next['a'.ord.to_u8].should_not eq(StateID.new(-1))
+      anchored_state.next['b'.ord.to_u8].should eq(StateID.new(-1))
+    end
+
     it "finds longest match for literal" do
       nfa_builder = NFA::Builder.new
       ref = nfa_builder.build_literal("hello".to_slice)

@@ -17,6 +17,7 @@ module Regex::Automata
       @pattern_id = pattern_id
       ref = compile_node(hir.node)
       @builder.set_start_unanchored(ref.start)
+      @builder.set_start_anchored(ref.start)
       @builder.build
     end
 
@@ -36,13 +37,16 @@ module Regex::Automata
         # No patterns - create empty match state
         empty_match = @builder.add_state(NFA::Match.new(PatternID.new(0)))
         @builder.set_start_unanchored(empty_match)
+        @builder.set_start_anchored(empty_match)
       elsif pattern_starts.size == 1
         # Single pattern - use its start directly
         @builder.set_start_unanchored(pattern_starts.first)
+        @builder.set_start_anchored(pattern_starts.first)
       else
         # Multiple patterns - create union state
         union_start = @builder.add_state(NFA::Union.new(pattern_starts))
         @builder.set_start_unanchored(union_start)
+        @builder.set_start_anchored(union_start)
       end
 
       @builder.build

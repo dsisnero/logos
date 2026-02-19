@@ -53,12 +53,15 @@ module Regex::Automata::DFA
   # Deterministic Finite Automaton
   class DFA
     getter states : Array(State)
-    getter start : StateID
+    getter start_unanchored : StateID
+    getter start_anchored : StateID
     getter byte_classifier : ByteClasses
     # For backward compatibility, returns alphabet length
     getter byte_classes : Int32
 
-    def initialize(@states : Array(State), @start : StateID, byte_classes : ByteClasses | Int32)
+    def initialize(@states : Array(State), start_unanchored : StateID, byte_classes : ByteClasses | Int32, start_anchored : StateID? = nil)
+      @start_unanchored = start_unanchored
+      @start_anchored = start_anchored || start_unanchored
       @byte_classifier = case byte_classes
                          when ByteClasses
                            byte_classes
@@ -68,6 +71,10 @@ module Regex::Automata::DFA
                            raise "Unreachable"
                          end
       @byte_classes = @byte_classifier.alphabet_len
+    end
+
+    def start : StateID
+      @start_unanchored
     end
 
     # Get number of states
@@ -83,8 +90,8 @@ module Regex::Automata::DFA
     # Remove dead states (unreachable or can't reach accept state)
     def remove_dead_states : DFA
       # Forward reachable from start
-      forward = Set{@start}
-      stack = [@start]
+      forward = Set{@start_unanchored}
+      stack = [@start_unanchored]
       while !stack.empty?
         state_id = stack.pop
         current_state = @states[state_id.to_i]
@@ -157,9 +164,10 @@ module Regex::Automata::DFA
       end
 
       # Update start state
-      new_start = old_to_new[@start]? || StateID.new(0)
+      new_start_unanchored = old_to_new[@start_unanchored]? || StateID.new(0)
+      new_start_anchored = old_to_new[@start_anchored]? || new_start_unanchored
 
-      DFA.new(new_states, new_start, @byte_classifier)
+      DFA.new(new_states, new_start_unanchored, @byte_classifier, new_start_anchored)
     end
 
     # Reduce byte classes using equivalence analysis
@@ -177,7 +185,7 @@ module Regex::Automata::DFA
     # Find the longest match in a byte slice
     def find_longest_match(slice : Bytes) : Tuple(Int32, Array(PatternID))?
       last_match : Tuple(Int32, Array(PatternID))? = nil
-      current_state_id = @start
+      current_state_id = @start_unanchored
       states = @states
       byte_classifier = @byte_classifier
 
@@ -203,8 +211,8 @@ module Regex::Automata::DFA
       end
 
       # Check if start state is accepting (empty string match)
-      if last_match.nil? && states[@start.to_i].accepting?
-        last_match = {0, states[@start.to_i].match}
+      if last_match.nil? && states[@start_unanchored.to_i].accepting?
+        last_match = {0, states[@start_unanchored.to_i].match}
       end
 
       last_match
@@ -245,16 +253,20 @@ module Regex::Automata::DFA
 
     # Get universal start state for given anchored mode
     def universal_start_state(mode : Int32) : StateID?
-      # For now, assume anchored mode 1 (Anchored::Yes) maps to start state
-      # Return nil if no universal start state
-      # TODO: Implement proper anchored modes
-      @start
+      case mode
+      when 0 # Anchored::No
+        @start_unanchored
+      when 1 # Anchored::Yes
+        @start_anchored
+      else
+        nil
+      end
     end
 
     # Whether DFA can match empty string
     def has_empty : Bool
       # Check if start state is a match state
-      is_match_state(@start)
+      is_match_state(@start_unanchored)
     end
 
     # Map byte to its equivalence class
@@ -306,20 +318,28 @@ module Regex::Automata::DFA
 
     # Build DFA from NFA using subset construction
     def build : DFA
-      # Start with epsilon closure of NFA start state
-      start_set = @nfa.epsilon_closure(Set{@nfa.start_unanchored})
+      unanchored_start_nfa = valid_nfa_start(@nfa.start_unanchored)
+      anchored_start_nfa = valid_nfa_start(@nfa.start_anchored, fallback: unanchored_start_nfa)
+      # Start with epsilon closure of NFA start states
+      unanchored_start_set = @nfa.epsilon_closure(Set{unanchored_start_nfa})
+      anchored_start_set = @nfa.epsilon_closure(Set{anchored_start_nfa})
       start_look_have = LookSet.new.insert(Look::StartLF).insert(Look::Start)
       if @nfa_has_crlf
         start_look_have = start_look_have.insert(Look::StartCRLF)
       end
-      start_id = add_dfa_state(start_set, start_look_have, false, false)
+      unanchored_start_id = add_dfa_state(unanchored_start_set, start_look_have, false, false)
+      anchored_start_id = add_dfa_state(anchored_start_set, start_look_have, false, false)
 
       # Process queue of unprocessed DFA states
-      queue = [start_id]
-      processed = Set{start_id}
+      queue = [unanchored_start_id]
+      processed = Set{unanchored_start_id}
+      unless processed.includes?(anchored_start_id)
+        queue << anchored_start_id
+        processed.add(anchored_start_id)
+      end
 
       if ENV["LOGOS_DEBUG_DFA_BUILD"]?
-        puts "DFA build: start_set size #{start_set.size}, start_id #{start_id}"
+        puts "DFA build: unanchored_start_set size #{unanchored_start_set.size}, unanchored_start_id #{unanchored_start_id}, anchored_start_id #{anchored_start_id}"
       end
 
       while !queue.empty?
@@ -451,7 +471,12 @@ module Regex::Automata::DFA
         @dfa_states[idx].eoi_next = eoi_id
       end
 
-      DFA.new(@dfa_states, start_id, @byte_classes)
+      DFA.new(@dfa_states, unanchored_start_id, @byte_classes, anchored_start_id)
+    end
+
+    private def valid_nfa_start(start : StateID, fallback : StateID? = nil) : StateID
+      return start if start.to_i >= 0 && start.to_i < @nfa.states.size
+      fallback || StateID.new(0)
     end
 
     private def add_dfa_state(nfa_set : Set(StateID), look_have : LookSet = LookSet.new, is_from_word : Bool = false, is_half_crlf : Bool = false) : StateID

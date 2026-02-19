@@ -58,9 +58,16 @@ describe Regex::Syntax do
 
     it "parses character class" do
       hir = Regex::Syntax.parse("[a-z]")
-      hir.node.should be_a(Regex::Syntax::Hir::CharClass)
-      char_class = hir.node.as(Regex::Syntax::Hir::CharClass)
-      char_class.intervals.should eq([('a'.ord.to_u8)..('z'.ord.to_u8)])
+      case hir.node
+      when Regex::Syntax::Hir::CharClass
+        char_class = hir.node.as(Regex::Syntax::Hir::CharClass)
+        char_class.intervals.should eq([('a'.ord.to_u8)..('z'.ord.to_u8)])
+      when Regex::Syntax::Hir::UnicodeClass
+        unicode_class = hir.node.as(Regex::Syntax::Hir::UnicodeClass)
+        unicode_class.intervals.should eq([('a'.ord.to_u32)..('z'.ord.to_u32)])
+      else
+        fail "Expected CharClass or UnicodeClass, got #{hir.node.class}"
+      end
     end
 
     it "parses repetition *" do
@@ -136,19 +143,32 @@ describe Regex::Syntax do
 
     it "parses flag group (?i:...)" do
       hir = Regex::Syntax.parse("(?i:ab)")
-      # Should parse correctly (flags not applied yet)
-      case hir.node
-      when Regex::Syntax::Hir::Concat
-        concat = hir.node.as(Regex::Syntax::Hir::Concat)
-        concat.children.size.should eq(2)
-        concat.children[0].should be_a(Regex::Syntax::Hir::Literal)
-        concat.children[1].should be_a(Regex::Syntax::Hir::Literal)
-      when Regex::Syntax::Hir::Literal
-        literal = hir.node.as(Regex::Syntax::Hir::Literal)
-        String.new(literal.bytes).should eq("ab")
-      else
-        fail "Expected Concat or Literal, got #{hir.node.class}"
+      hir.node.should be_a(Regex::Syntax::Hir::Concat)
+      concat = hir.node.as(Regex::Syntax::Hir::Concat)
+      concat.children.size.should eq(2)
+      concat.children[0].should be_a(Regex::Syntax::Hir::CharClass)
+      concat.children[1].should be_a(Regex::Syntax::Hir::CharClass)
+    end
+
+    it "parses global inline flags (?i) for following expression" do
+      hir = Regex::Syntax.parse("(?i)ab")
+      hir.node.should be_a(Regex::Syntax::Hir::Concat)
+      concat = hir.node.as(Regex::Syntax::Hir::Concat)
+      concat.children.size.should eq(2)
+      concat.children[0].should be_a(Regex::Syntax::Hir::CharClass)
+      concat.children[1].should be_a(Regex::Syntax::Hir::CharClass)
+    end
+
+    it "rejects unsupported look-ahead groups" do
+      expect_raises(Regex::Syntax::ParseError, /look-ahead/) do
+        Regex::Syntax.parse("(?=a)b")
       end
+    end
+
+    it "computes whether a pattern can match the empty string" do
+      Regex::Syntax.parse("a+").can_match_empty?.should be_false
+      Regex::Syntax.parse("a*").can_match_empty?.should be_true
+      Regex::Syntax.parse("(?:a|)").can_match_empty?.should be_true
     end
   end
 end

@@ -11,6 +11,7 @@ module Regex::Syntax
     @ignore_case : Bool
     @nest_limit : Int32?
     @nest_depth : Int32
+    @capture_index : Int32
 
     def initialize(*, unicode : Bool = true, ignore_case : Bool = false, nest_limit : Int32? = nil)
       @unicode = unicode
@@ -20,6 +21,7 @@ module Regex::Syntax
       @pos = 0
       @len = 0
       @nest_depth = 0
+      @capture_index = 0
     end
 
     def parse(pattern : String) : Hir::Hir
@@ -27,6 +29,7 @@ module Regex::Syntax
       @pos = 0
       @len = pattern.size
       @nest_depth = 0
+      @capture_index = 0
 
       # Check nest limit
       if nest_limit = @nest_limit
@@ -78,6 +81,7 @@ module Regex::Syntax
 
     private def parse_atom : Hir::Node
       node = parse_primary
+      node = apply_case_folding(node) if @ignore_case
 
       # Check for quantifiers
       case current_char
@@ -317,8 +321,6 @@ module Regex::Syntax
       # Check for special group types
       if current_char == '?'
         advance
-        # TODO: Handle (?... groups
-        # For now, parse as non-capturing group
         return parse_non_capturing_group
       end
 
@@ -335,8 +337,8 @@ module Regex::Syntax
       end
       advance # skip ')'
 
-      # TODO: Assign capture index
-      Hir::Capture.new(child, 0)
+      @capture_index += 1
+      Hir::Capture.new(child, @capture_index)
     end
 
     private def parse_non_capturing_group : Hir::Node
@@ -348,99 +350,44 @@ module Regex::Syntax
       when ':'
         # (?:...) non-capturing group
         advance # skip ':'
-        @nest_depth += 1
-        begin
-          child = parse_alternation
-        ensure
-          @nest_depth -= 1
-        end
-        raise ParseError.new("unclosed group") if current_char != ')'
-        advance # skip ')'
-        # Apply flags to child (TODO: actually apply flags)
-        child
-      when '='
-        # (?=...) positive lookahead
-        advance # skip '='
-        @nest_depth += 1
-        begin
-          child = parse_alternation
-        ensure
-          @nest_depth -= 1
-        end
-        raise ParseError.new("unclosed group") if current_char != ')'
-        advance # skip ')'
-        # TODO: Return lookahead node
-        child
-      when '!'
-        # (?!...) negative lookahead
-        advance # skip '!'
-        @nest_depth += 1
-        begin
-          child = parse_alternation
-        ensure
-          @nest_depth -= 1
-        end
-        raise ParseError.new("unclosed group") if current_char != ')'
-        advance # skip ')'
-        # TODO: Return negative lookahead node
-        child
-      when '<'
-        # Lookbehind: (?<=...) or (?<!...)
-        advance # skip '<'
-        if current_char == '='
-          # (?<=...) positive lookbehind
-          advance # skip '='
-        elsif current_char == '!'
-          # (?<!...) negative lookbehind
-          advance # skip '!'
-        else
-          raise ParseError.new("invalid lookbehind syntax")
-        end
-        @nest_depth += 1
-        begin
-          child = parse_alternation
-        ensure
-          @nest_depth -= 1
-        end
-        raise ParseError.new("unclosed group") if current_char != ')'
-        advance # skip ')'
-        # TODO: Return lookbehind node
-        child
-      when '>'
-        # (?>...) atomic group
-        advance # skip '>'
-        @nest_depth += 1
-        begin
-          child = parse_alternation
-        ensure
-          @nest_depth -= 1
-        end
-        raise ParseError.new("unclosed group") if current_char != ')'
-        advance # skip ')'
-        # TODO: Return atomic group node
-        child
-      else
-        # Could be inline flags: (?i) or (?-i) or (?i:...)
-        # Parse flags (already done above)
-        # Check if we have a colon for flag group
-        if current_char == ':'
-          advance # skip ':'
+        child = with_inline_flags(flags) do
           @nest_depth += 1
           begin
-            child = parse_alternation
+            parse_alternation
           ensure
             @nest_depth -= 1
           end
+        end
+        raise ParseError.new("unclosed group") if current_char != ')'
+        advance # skip ')'
+        child
+      when '='
+        raise ParseError.new("look-ahead groups are not supported")
+      when '!'
+        raise ParseError.new("negative look-ahead groups are not supported")
+      when '<'
+        raise ParseError.new("look-behind groups are not supported")
+      when '>'
+        raise ParseError.new("atomic groups are not supported")
+      else
+        # Could be inline flags: (?i) or (?-i) or (?i:...)
+        if current_char == ':'
+          advance # skip ':'
+          child = with_inline_flags(flags) do
+            @nest_depth += 1
+            begin
+              parse_alternation
+            ensure
+              @nest_depth -= 1
+            end
+          end
           raise ParseError.new("unclosed group") if current_char != ')'
           advance # skip ')'
-          # Apply flags to child (TODO: actually apply flags)
           child
         else
-          # Just flags without group: (?i) or (?-i)
-          # This sets flags for the rest of the pattern
           raise ParseError.new("unclosed group") if current_char != ')'
           advance # skip ')'
-          # TODO: Handle inline flag setting
+          apply_parser_flags(flags)
           Hir::Empty.new
         end
       end
@@ -450,7 +397,9 @@ module Regex::Syntax
       flags = {} of String => Bool
 
       # Parse flag string like "i", "is", "i-s", etc.
-      while !eof? && current_char != ')' && current_char != ':'
+      while !eof? && current_char != ')' && current_char != ':' &&
+            current_char != '=' && current_char != '!' &&
+            current_char != '<' && current_char != '>'
         if current_char == '-'
           advance # skip '-'
           if eof? || current_char == ')' || current_char == ':'
@@ -458,11 +407,13 @@ module Regex::Syntax
           end
           flag = current_char.to_s
           advance
-          flags[flag] = false  # Clear flag
+          validate_flag!(flag)
+          flags[flag] = false
         else
           flag = current_char.to_s
           advance
-          flags[flag] = true   # Set flag
+          validate_flag!(flag)
+          flags[flag] = true
         end
       end
 
@@ -481,8 +432,6 @@ module Regex::Syntax
         # Assertions
         parse_assertion
       when 'x', 'u', '0'..'7'
-        # TODO: Handle numeric escapes
-        # For now, parse as literal
         parse_escape_char_literal
       else
         # Simple escape sequence like \n, \t, \r, etc.
@@ -494,8 +443,6 @@ module Regex::Syntax
       char = current_char
       advance
 
-      # TODO: Create proper Perl character class
-      # For now, return placeholder
       case char
       when 'd'
         # Digit class
@@ -522,9 +469,28 @@ module Regex::Syntax
         ]
         Hir::CharClass.new(false, ranges)
       when 'D', 'W', 'S'
-        # Negated versions
-        # TODO: Implement properly
-        Hir::CharClass.new(true, [] of Range(UInt8, UInt8))
+        # Negated versions: negate against the class ranges.
+        base = case char
+               when 'D'
+                 [('0'.ord.to_u8)..('9'.ord.to_u8)]
+               when 'W'
+                 [
+                   ('a'.ord.to_u8)..('z'.ord.to_u8),
+                   ('A'.ord.to_u8)..('Z'.ord.to_u8),
+                   ('0'.ord.to_u8)..('9'.ord.to_u8),
+                   '_'.ord.to_u8..'_'.ord.to_u8
+                 ]
+               else # 'S'
+                 [
+                   ' '.ord.to_u8..' '.ord.to_u8,
+                   '\t'.ord.to_u8..'\t'.ord.to_u8,
+                   '\n'.ord.to_u8..'\n'.ord.to_u8,
+                   '\r'.ord.to_u8..'\r'.ord.to_u8,
+                   '\f'.ord.to_u8..'\f'.ord.to_u8,
+                   '\v'.ord.to_u8..'\v'.ord.to_u8
+                 ]
+               end
+        Hir::CharClass.new(true, base)
       else
         Hir::CharClass.new
       end
@@ -777,6 +743,43 @@ module Regex::Syntax
       else
         Hir::Literal.new(Bytes.new(bytes.size) { |i| bytes[i] })
       end
+    end
+
+    private def validate_flag!(flag : String) : Nil
+      # Keep permissive support for commonly seen flags. Only i is currently semantic.
+      return if {"i", "m", "s", "R", "U", "u", "x"}.includes?(flag)
+      raise ParseError.new("unsupported inline flag: #{flag}")
+    end
+
+    private def apply_parser_flags(flags : Hash(String, Bool)) : Nil
+      if enabled = flags["i"]?
+        @ignore_case = enabled
+      end
+      if enabled = flags["u"]?
+        @unicode = enabled
+      end
+    end
+
+    private def with_inline_flags(flags : Hash(String, Bool), & : -> Hir::Node) : Hir::Node
+      old_ignore_case = @ignore_case
+      old_unicode = @unicode
+      apply_parser_flags(flags)
+      begin
+        yield
+      ensure
+        @ignore_case = old_ignore_case
+        @unicode = old_unicode
+      end
+    end
+
+    private def apply_case_folding(node : Hir::Node) : Hir::Node
+      hir = Hir::Hir.new(node)
+      folded = if @unicode
+                 Hir.case_fold_unicode(hir)
+               else
+                 Hir.case_fold_ascii(hir)
+               end
+      folded.node
     end
 
     # Helper methods

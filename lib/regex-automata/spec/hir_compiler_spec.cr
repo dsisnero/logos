@@ -92,6 +92,32 @@ describe Regex::Automata::HirCompiler do
     end
   end
 
+  it "compiles grouped repetition ranges" do
+    cases = {
+      "(ab){2}"   => {"ab" => nil, "abab" => 4, "ababab" => 4},
+      "(ab){2,3}" => {"ab" => nil, "abab" => 4, "ababab" => 6, "abababab" => 6},
+      "(ab){2,}"  => {"ab" => nil, "abab" => 4, "ababab" => 6, "abababab" => 8},
+    }
+
+    cases.each do |pattern, inputs|
+      hir = Regex::Syntax.parse(pattern)
+      nfa = Regex::Automata::HirCompiler.new.compile(hir)
+      dfa = Regex::Automata::DFA::Builder.new(nfa).build
+
+      inputs.each do |input, expected_end|
+        match = dfa.find_longest_match(input)
+        if expected_end.nil?
+          match.should be_nil
+        else
+          match.should_not be_nil
+          end_pos, pattern_ids = match.not_nil!
+          end_pos.should eq(expected_end)
+          pattern_ids.should eq([Regex::Automata::PatternID.new(0)])
+        end
+      end
+    end
+  end
+
   it "compiles concatenation" do
     hir = Regex::Syntax.parse("ab")
     compiler = Regex::Automata::HirCompiler.new

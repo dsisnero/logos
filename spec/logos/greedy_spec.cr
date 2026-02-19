@@ -9,7 +9,7 @@ module Logos::Spec::Greedy
 
   Logos.define AllowedToken do
     error_type Nil
-    regex ".*", :All, allow_greedy: true
+    regex ".+", :All, allow_greedy: true
   end
 end
 

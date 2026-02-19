@@ -72,9 +72,9 @@ require "logos"
 
 @[Logos::Options(skip: "\\s+", error: Nil)]
 @[Logos::Subpattern("xdigit", "[0-9a-fA-F]")]
-@[Logos::Token("let", variant: :KeywordLet)]
-@[Logos::Regex("0x(?&xdigit)+", variant: :Hex)]
-@[Logos::Regex("[0-9]+", variant: :Number)]
+@[Logos::Token(:KeywordLet, "let")]
+@[Logos::Regex(:Hex, "0x(?&xdigit)+")]
+@[Logos::Regex(:Number, "[0-9]+")]
 enum Token
   KeywordLet
   Hex
@@ -85,6 +85,10 @@ logos_derive(Token)
 
 lexer = Token.lexer("let 0x10 42")
 ```
+
+Notes:
+- Crystal cannot introspect per-enum-variant annotations the same way Rust proc-macros do, so mappings are declared at the enum type level.
+- `Logos::Token` and `Logos::Regex` support both `(:Variant, "pattern")` and `(pattern, variant: :Variant)` forms.
 
 ### Subpatterns
 
@@ -130,6 +134,12 @@ Crystal ports of the Rust Logos examples are available in `examples/`:
 The project includes two companion shards ported from Rust:
 - `regex-syntax` - Regular expression parser
 - `regex-automata` - Automata construction library
+
+### Hybrid Automaton Status
+
+- `Regex::Automata::Hybrid::LazyDFA` is available as a compatibility API and currently delegates to DFA construction.
+- This keeps the Logos-facing API complete while preserving current behavior.
+- A true lazy hybrid engine remains a future optimization task.
 
 ## Development
 
