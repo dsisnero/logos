@@ -1,39 +1,76 @@
 # regex-automata
 
-TODO: Write a description here
+`regex-automata` is the Crystal port of Rust's `regex-automata` crate used by Logos.
+It compiles `regex-syntax` HIR into Thompson NFA and DFA (plus a lazy Hybrid engine)
+for fast token matching.
 
 ## Installation
 
-1. Add the dependency to your `shard.yml`:
+Add to `shard.yml`:
 
-   ```yaml
-   dependencies:
-     regex-automata:
-       github: dsisnero/regex-automata
-   ```
+```yaml
+dependencies:
+  regex-automata:
+    github: dsisnero/logos
+    path: lib/regex-automata
+```
 
-2. Run `shards install`
+Then run:
+
+```bash
+shards install
+```
 
 ## Usage
 
 ```crystal
+require "regex-syntax"
 require "regex-automata"
+
+hir = Regex::Syntax.parse("[a-z]+")
+nfa = Regex::Automata::HirCompiler.new.compile(hir)
+dfa = Regex::Automata::DFA::Builder.new(nfa).build
+
+match = dfa.find_longest_match("abc123")
+pp match # => {3, [PatternID(0)]}
 ```
 
-TODO: Write usage instructions here
+### Lazy hybrid matching
+
+```crystal
+hybrid = Regex::Automata::Hybrid::LazyDFA.compile(Regex::Syntax.parse("foo|bar"))
+pp hybrid.find_longest_match("bar!") # => {3, [PatternID(0)]}
+```
+
+## Current feature scope
+
+- Thompson NFA builder for Logos-supported regex features
+- DFA subset construction with look-around support used by Logos
+- Anchored/unanchored start-state support
+- EOI-aware transitions and longest-match search
+- Lazy hybrid state expansion (`Hybrid::LazyDFA`)
 
 ## Development
 
-TODO: Write development instructions here
+From this directory:
 
-## Contributing
+```bash
+crystal tool format src spec
+crystal spec
+```
 
-1. Fork it (<https://github.com/dsisnero/regex-automata/fork>)
-2. Create your feature branch (`git checkout -b my-new-feature`)
-3. Commit your changes (`git commit -am 'Add some feature'`)
-4. Push to the branch (`git push origin my-new-feature`)
-5. Create a new Pull Request
+For full-repo checks, run from repository root:
 
-## Contributors
+```bash
+ameba src spec
+crystal spec
+```
 
-- [your-name-here](https://github.com/dsisnero) - creator and maintainer
+## Upstream reference
+
+- Rust source of truth: `vendor/regex-syntax/regex-automata/`
+- Main consumer: `src/logos/macros.cr`
+
+## License
+
+MIT
