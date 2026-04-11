@@ -85,7 +85,7 @@ private def parse_array(lexer) : JsonValue
   awaits_comma = false
   awaits_value = false
 
-  while (result = next_token(lexer))
+  while result = next_token(lexer)
     if result.ok?
       case result.unwrap
       when Token::Bool
@@ -138,7 +138,7 @@ private def parse_object(lexer) : JsonValue
   awaits_comma = false
   awaits_key = false
 
-  while (result = next_token(lexer))
+  while result = next_token(lexer)
     if result.ok?
       case result.unwrap
       when Token::BraceClose

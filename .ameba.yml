@@ -1,0 +1,14 @@
+# Ameba configuration for Logos library
+Version: "1.7.0-dev"
+
+Excluded:
+  - temp/**/*
+  - lib/**/*
+  - vendor/**/*
+  - spec/**/*
+  - examples/**/*
+
+# add paths that need to be excluded so we track in one place
+# Metrics/CyclomaticComplexity:
+#   Excluded:
+#     -

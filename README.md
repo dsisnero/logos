@@ -10,12 +10,12 @@ This is a Crystal port of the Rust Logos library, aiming to provide similar func
 
 ## Features
 
-* **Zero-copy parsing** - Work with slices of your input
-* **Built-in error recovery** - Skip invalid tokens and continue parsing
-* **Token disambiguation** - Automatic priority resolution for overlapping patterns
-* **UTF-8 safe** - Proper handling of Unicode boundaries
-* **No runtime dependencies** - Pure Crystal implementation
-* **Fast compile times** - Minimal macro overhead
+- **Zero-copy parsing** - Work with slices of your input
+- **Built-in error recovery** - Skip invalid tokens and continue parsing
+- **Token disambiguation** - Automatic priority resolution for overlapping patterns
+- **UTF-8 safe** - Proper handling of Unicode boundaries
+- **No runtime dependencies** - Pure Crystal implementation
+- **Fast compile times** - Minimal macro overhead
 
 ## Installation
 
@@ -159,6 +159,7 @@ lexer = Token.lexer("let 0x10 42")
 ```
 
 Notes:
+
 - Crystal cannot introspect per-enum-variant annotations the same way Rust proc-macros do, so mappings are declared at the enum type level.
 - `Logos::Token` and `Logos::Regex` support both `(:Variant, "pattern")` and `(pattern, variant: :Variant)` forms.
 
@@ -177,14 +178,14 @@ end
 
 Crystal ports of the Rust Logos examples are available in `examples/`:
 
-* `examples/brainfuck.cr`
-* `examples/calculator.cr`
-* `examples/custom_error.cr`
-* `examples/extras.cr`
-* `examples/json.cr`
-* `examples/json_borrowed.cr`
-* `examples/string_interpolation.cr`
-* `examples/token_values.cr`
+- `examples/brainfuck.cr`
+- `examples/calculator.cr`
+- `examples/custom_error.cr`
+- `examples/extras.cr`
+- `examples/json.cr`
+- `examples/json_borrowed.cr`
+- `examples/string_interpolation.cr`
+- `examples/token_values.cr`
 
 ## Rust Handbook Parity Index
 
@@ -205,6 +206,7 @@ Reference mapping from Rust handbook topics to Crystal docs/spec coverage:
 Rust uses enum variants with associated payloads. Crystal enums do not, so the port currently uses `Lexer#callback_value_as(T)` as a side-channel.
 
 Planned parity path:
+
 - `logos-nxw` (done): Design union-backed typed payload API.
 - `logos-15n`: Implement typed payload extraction helpers on `Lexer`/`Result`.
 - `logos-pk9`: Port Rust payload-oriented examples to concise Crystal equivalents.
@@ -238,6 +240,7 @@ Planned parity path:
 ### Dependencies
 
 The project includes two companion shards ported from Rust:
+
 - `regex-syntax` - Regular expression parser
 - `regex-automata` - Automata construction library
 
@@ -277,6 +280,6 @@ MIT - see LICENSE file
 
 ## Acknowledgments
 
-* [maciejhirsz/logos](https://github.com/maciejhirsz/logos) - The original Rust implementation
-* [BurntSushi/regex-automata](https://github.com/BurntSushi/regex-automata) - Rust regex engine used as reference
-* [rust-lang/regex](https://github.com/rust-lang/regex) - Rust regex library used as reference
+- [maciejhirsz/logos](https://github.com/maciejhirsz/logos) - The original Rust implementation
+- [BurntSushi/regex-automata](https://github.com/BurntSushi/regex-automata) - Rust regex engine used as reference
+- [rust-lang/regex](https://github.com/rust-lang/regex) - Rust regex library used as reference
