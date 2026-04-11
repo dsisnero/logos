@@ -250,20 +250,43 @@ The project includes two companion shards ported from Rust:
 - It supports anchored/unanchored start states and reuses the same look-around semantics as the DFA builder.
 - This hybrid path is suitable for large regex sets where eager DFA construction has higher startup cost.
 
+## Documentation
+
+For detailed documentation on development, architecture, and contributing:
+
+- **[Architecture](docs/architecture.md)** - System architecture and design decisions
+- **[Development Guide](docs/development.md)** - Development workflow and setup
+- **[Coding Guidelines](docs/coding-guidelines.md)** - Code style and conventions
+- **[Testing Strategy](docs/testing.md)** - Testing patterns and porting guidelines
+- **[PR Workflow](docs/pr-workflow.md)** - Pull request and review process
+- **[Enum Payload Parity](docs/enum_payload_parity.md)** - Plan for enum payload support
+
 ## Development
 
 ```bash
 # Install dependencies
 make install
 
-# Run tests
-make test
+# Update dependencies
+make update
 
 # Format code
-crystal tool format --check
+make format
 
 # Lint code
 make lint
+
+# Run tests
+make test
+
+# Format markdown
+make markdown
+
+# Check markdown formatting
+make markdown-check
+
+# Clean temporary files
+make clean
 ```
 
 ## Contributing
