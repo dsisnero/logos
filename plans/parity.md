@@ -11,9 +11,10 @@ Validated inventory baseline:
 
 Current ledger snapshot:
 
-- `ported`: 2 rows
+- `ported`: 138 rows
 - `partial`: 1 row
-- `missing`: 1032 rows
+- `skipped`: 3 rows
+- `missing`: 893 rows
 - All tracked upstream tests are currently `missing`
 
 Feature roadmap:
@@ -25,7 +26,8 @@ Feature roadmap:
 - [ ] HIR translation pipeline (`src/hir/translate.rs`)
 - [ ] HIR literals, printing, and visitor utilities (`src/hir/literal.rs`, `src/hir/print.rs`, `src/hir/visitor.rs`)
 - [x] Parser facade, crate API, and error surface (`src/parser.rs`, `src/lib.rs`, `src/error.rs`, `src/either.rs`)
-- [ ] Unicode property tables: general categories and boolean properties (`src/unicode.rs`, `src/unicode_tables/general_category.rs`, `src/unicode_tables/property_bool.rs`)
+- [x] Unicode property tables: general categories and boolean properties (`src/unicode_tables/general_category.rs`, `src/unicode_tables/property_bool.rs`)
+- [ ] Unicode query helpers, Perl classes, and case folding (`src/unicode.rs`, `src/unicode_tables.cr`)
 - [ ] Unicode property tables: scripts and script extensions (`src/unicode_tables/script.rs`, `src/unicode_tables/script_extension.rs`)
 - [ ] Unicode property tables: ages, Perl classes, property names/values, and case folding (`src/unicode_tables/age.rs`, `src/unicode_tables/perl_decimal.rs`, `src/unicode_tables/perl_space.rs`, `src/unicode_tables/perl_word.rs`, `src/unicode_tables/property_names.rs`, `src/unicode_tables/property_values.rs`, `src/unicode_tables/case_folding_simple.rs`)
 - [ ] Unicode boundary tables and UTF-8 helpers (`src/unicode_tables/word_break.rs`, `src/unicode_tables/sentence_break.rs`, `src/unicode_tables/grapheme_cluster_break.rs`, `src/utf8.rs`)
