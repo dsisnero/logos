@@ -369,74 +369,74 @@ src/hir/print.rs::test::print_word_boundary	test	ported	lib/regex-syntax/spec/hi
 src/hir/print.rs::test::regression_alternation_concat	test	ported	lib/regex-syntax/spec/hir_print_spec.cr	HIR alternation-in-concat regression covered in Crystal HIR print specs
 src/hir/print.rs::test::regression_repetition_alternation	test	ported	lib/regex-syntax/spec/hir_print_spec.cr	HIR repetition-over-alternation regression covered in Crystal HIR print specs
 src/hir/print.rs::test::regression_repetition_concat	test	ported	lib/regex-syntax/spec/hir_print_spec.cr	HIR repetition-over-concat regression covered in Crystal HIR print specs
-src/hir/translate.rs::func::build	func	missing	-	auto-generated
-src/hir/translate.rs::func::case_insensitive	func	missing	-	auto-generated
-src/hir/translate.rs::func::crlf	func	missing	-	auto-generated
-src/hir/translate.rs::func::dot_matches_new_line	func	missing	-	auto-generated
-src/hir/translate.rs::func::line_terminator	func	missing	-	auto-generated
-src/hir/translate.rs::func::multi_line	func	missing	-	auto-generated
-src/hir/translate.rs::func::new	func	missing	-	auto-generated
-src/hir/translate.rs::func::swap_greed	func	missing	-	auto-generated
-src/hir/translate.rs::func::translate	func	missing	-	auto-generated
-src/hir/translate.rs::func::unicode	func	missing	-	auto-generated
-src/hir/translate.rs::func::utf8	func	missing	-	auto-generated
-src/hir/translate.rs::method::Translator.new	method	missing	-	auto-generated
-src/hir/translate.rs::method::TranslatorBuilder.new	method	missing	-	auto-generated
-src/hir/translate.rs::struct::Translator	struct	missing	-	auto-generated
-src/hir/translate.rs::struct::TranslatorBuilder	struct	missing	-	auto-generated
-src/hir/translate.rs::test::analysis_can_empty	test	missing	-	auto-generated
-src/hir/translate.rs::test::analysis_captures_len	test	missing	-	auto-generated
-src/hir/translate.rs::test::analysis_is_all_assertions	test	missing	-	auto-generated
-src/hir/translate.rs::test::analysis_is_alternation_literal	test	missing	-	auto-generated
-src/hir/translate.rs::test::analysis_is_anchored	test	missing	-	auto-generated
-src/hir/translate.rs::test::analysis_is_any_anchored	test	missing	-	auto-generated
-src/hir/translate.rs::test::analysis_is_literal	test	missing	-	auto-generated
-src/hir/translate.rs::test::analysis_is_utf8	test	missing	-	auto-generated
-src/hir/translate.rs::test::analysis_look_set_prefix_any	test	missing	-	auto-generated
-src/hir/translate.rs::test::analysis_static_captures_len	test	missing	-	auto-generated
-src/hir/translate.rs::test::assertions	test	missing	-	auto-generated
-src/hir/translate.rs::test::cat_alt	test	missing	-	auto-generated
-src/hir/translate.rs::test::cat_class_flattened	test	missing	-	auto-generated
-src/hir/translate.rs::test::class_ascii	test	missing	-	auto-generated
-src/hir/translate.rs::test::class_ascii_multiple	test	missing	-	auto-generated
-src/hir/translate.rs::test::class_bracketed	test	missing	-	auto-generated
-src/hir/translate.rs::test::class_bracketed_difference	test	missing	-	auto-generated
-src/hir/translate.rs::test::class_bracketed_intersect	test	missing	-	auto-generated
-src/hir/translate.rs::test::class_bracketed_intersect_negate	test	missing	-	auto-generated
-src/hir/translate.rs::test::class_bracketed_nested	test	missing	-	auto-generated
-src/hir/translate.rs::test::class_bracketed_symmetric_difference	test	missing	-	auto-generated
-src/hir/translate.rs::test::class_bracketed_union	test	missing	-	auto-generated
-src/hir/translate.rs::test::class_perl_ascii	test	missing	-	auto-generated
-src/hir/translate.rs::test::class_perl_digit_disabled	test	missing	-	auto-generated
-src/hir/translate.rs::test::class_perl_space_disabled	test	missing	-	auto-generated
-src/hir/translate.rs::test::class_perl_unicode	test	missing	-	auto-generated
-src/hir/translate.rs::test::class_perl_word_disabled	test	missing	-	auto-generated
-src/hir/translate.rs::test::class_unicode_age	test	missing	-	auto-generated
-src/hir/translate.rs::test::class_unicode_age_disabled	test	missing	-	auto-generated
-src/hir/translate.rs::test::class_unicode_any_empty	test	missing	-	auto-generated
-src/hir/translate.rs::test::class_unicode_gencat	test	missing	-	auto-generated
-src/hir/translate.rs::test::class_unicode_gencat_disabled	test	missing	-	auto-generated
-src/hir/translate.rs::test::class_unicode_script	test	missing	-	auto-generated
-src/hir/translate.rs::test::class_unicode_script_disabled	test	missing	-	auto-generated
-src/hir/translate.rs::test::dot	test	missing	-	auto-generated
-src/hir/translate.rs::test::empty	test	missing	-	auto-generated
-src/hir/translate.rs::test::escape	test	missing	-	auto-generated
-src/hir/translate.rs::test::flags	test	missing	-	auto-generated
-src/hir/translate.rs::test::group	test	missing	-	auto-generated
-src/hir/translate.rs::test::ignore_whitespace	test	missing	-	auto-generated
-src/hir/translate.rs::test::line_anchors	test	missing	-	auto-generated
-src/hir/translate.rs::test::literal	test	missing	-	auto-generated
-src/hir/translate.rs::test::literal_case_insensitive	test	missing	-	auto-generated
-src/hir/translate.rs::test::regression_alt_empty_concat	test	missing	-	auto-generated
-src/hir/translate.rs::test::regression_empty_alt	test	missing	-	auto-generated
-src/hir/translate.rs::test::regression_fuzz_char_decrement1	test	missing	-	auto-generated
-src/hir/translate.rs::test::regression_fuzz_difference1	test	missing	-	auto-generated
-src/hir/translate.rs::test::regression_fuzz_match	test	missing	-	auto-generated
-src/hir/translate.rs::test::regression_singleton_alt	test	missing	-	auto-generated
-src/hir/translate.rs::test::repetition	test	missing	-	auto-generated
-src/hir/translate.rs::test::smart_alternation	test	missing	-	auto-generated
-src/hir/translate.rs::test::smart_concat	test	missing	-	auto-generated
-src/hir/translate.rs::test::smart_repetition	test	missing	-	auto-generated
+src/hir/translate.rs::func::build	func	ported	Regex::Syntax::TranslatorBuilder#build	Translator builder materialization ported
+src/hir/translate.rs::func::case_insensitive	func	ported	Regex::Syntax::TranslatorBuilder#case_insensitive	Translator builder case-insensitive option ported
+src/hir/translate.rs::func::crlf	func	ported	Regex::Syntax::TranslatorBuilder#crlf	Translator builder CRLF option ported
+src/hir/translate.rs::func::dot_matches_new_line	func	ported	Regex::Syntax::TranslatorBuilder#dot_matches_new_line	Translator builder dot-matches-new-line option ported
+src/hir/translate.rs::func::line_terminator	func	ported	Regex::Syntax::TranslatorBuilder#line_terminator	Translator builder line-terminator option ported
+src/hir/translate.rs::func::multi_line	func	ported	Regex::Syntax::TranslatorBuilder#multi_line	Translator builder multi-line option ported
+src/hir/translate.rs::func::new	func	ported	Regex::Syntax::Translator.new, Regex::Syntax::TranslatorBuilder.new	Translator and translator-builder constructors ported
+src/hir/translate.rs::func::swap_greed	func	ported	Regex::Syntax::TranslatorBuilder#swap_greed	Translator builder swap-greed option ported
+src/hir/translate.rs::func::translate	func	ported	Regex::Syntax::Translator#translate	Direct AST-to-HIR translation entrypoint ported
+src/hir/translate.rs::func::unicode	func	ported	Regex::Syntax::TranslatorBuilder#unicode	Translator builder Unicode option ported
+src/hir/translate.rs::func::utf8	func	ported	Regex::Syntax::TranslatorBuilder#utf8	Translator builder UTF-8 option ported
+src/hir/translate.rs::method::Translator.new	method	ported	Regex::Syntax::Translator.new	Translator constructor ported
+src/hir/translate.rs::method::TranslatorBuilder.new	method	ported	Regex::Syntax::TranslatorBuilder.new	Translator-builder constructor ported
+src/hir/translate.rs::struct::Translator	struct	ported	Regex::Syntax::Translator	AST-to-HIR translator surface ported
+src/hir/translate.rs::struct::TranslatorBuilder	struct	ported	Regex::Syntax::TranslatorBuilder	Translator-builder surface ported
+src/hir/translate.rs::test::analysis_can_empty	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Translation emptiness analysis covered in focused translator parity spec
+src/hir/translate.rs::test::analysis_captures_len	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Translation capture-count analysis covered in focused translator parity spec
+src/hir/translate.rs::test::analysis_is_all_assertions	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Translation all-assertions analysis covered in focused translator parity spec
+src/hir/translate.rs::test::analysis_is_alternation_literal	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Translation alternation-literal analysis covered in focused translator parity spec
+src/hir/translate.rs::test::analysis_is_anchored	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Translation anchored-prefix/suffix analysis covered in focused translator parity spec
+src/hir/translate.rs::test::analysis_is_any_anchored	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Translation any-anchor analysis covered in focused translator parity spec
+src/hir/translate.rs::test::analysis_is_literal	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Translation literal analysis covered in focused translator parity spec
+src/hir/translate.rs::test::analysis_is_utf8	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Translation UTF-8 analysis covered in focused translator parity spec
+src/hir/translate.rs::test::analysis_look_set_prefix_any	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Translation prefix-any look-set analysis covered in focused translator parity spec
+src/hir/translate.rs::test::analysis_static_captures_len	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Translation static capture-count analysis covered in focused translator parity spec
+src/hir/translate.rs::test::assertions	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Assertion translation covered in focused translator parity spec
+src/hir/translate.rs::test::cat_alt	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Concatenation/alternation translation behavior covered in focused translator parity spec
+src/hir/translate.rs::test::cat_class_flattened	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Class-alternation flattening covered in focused translator parity spec
+src/hir/translate.rs::test::class_ascii	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	ASCII class translation covered in focused translator parity spec
+src/hir/translate.rs::test::class_ascii_multiple	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Multiple ASCII class translation behavior covered in focused translator parity spec
+src/hir/translate.rs::test::class_bracketed	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Bracketed-class translation covered in focused translator parity spec
+src/hir/translate.rs::test::class_bracketed_difference	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Bracketed-class difference translation covered in focused translator parity spec
+src/hir/translate.rs::test::class_bracketed_intersect	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Bracketed-class intersection translation covered in focused translator parity spec
+src/hir/translate.rs::test::class_bracketed_intersect_negate	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Bracketed-class negated intersection translation covered in focused translator parity spec
+src/hir/translate.rs::test::class_bracketed_nested	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Nested bracketed-class translation covered in focused translator parity spec
+src/hir/translate.rs::test::class_bracketed_symmetric_difference	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Bracketed-class symmetric-difference translation covered in focused translator parity spec
+src/hir/translate.rs::test::class_bracketed_union	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Bracketed-class union translation covered in focused translator parity spec
+src/hir/translate.rs::test::class_perl_ascii	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	ASCII Perl-class translation covered in focused translator parity spec
+src/hir/translate.rs::test::class_perl_digit_disabled	test	skipped	lib/regex-syntax/src/regex/syntax/unicode_tables/perl_decimal.cr	Crystal port always ships Unicode decimal tables, so the disabled-feature branch is not applicable
+src/hir/translate.rs::test::class_perl_space_disabled	test	skipped	lib/regex-syntax/src/regex/syntax/unicode_tables/perl_space.cr	Crystal port always ships Unicode space tables, so the disabled-feature branch is not applicable
+src/hir/translate.rs::test::class_perl_unicode	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Unicode Perl-class translation covered in focused translator parity spec
+src/hir/translate.rs::test::class_perl_word_disabled	test	skipped	lib/regex-syntax/src/regex/syntax/unicode_tables/perl_word.cr	Crystal port always ships Unicode word tables, so the disabled-feature branch is not applicable
+src/hir/translate.rs::test::class_unicode_age	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Unicode age-property translation covered in focused translator parity spec
+src/hir/translate.rs::test::class_unicode_age_disabled	test	skipped	lib/regex-syntax/src/regex/syntax/unicode_tables/age.cr	Crystal port always ships Unicode age tables, so the disabled-feature branch is not applicable
+src/hir/translate.rs::test::class_unicode_any_empty	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Unicode any/empty-class translation covered in focused translator parity spec
+src/hir/translate.rs::test::class_unicode_gencat	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Unicode general-category translation covered in focused translator parity spec
+src/hir/translate.rs::test::class_unicode_gencat_disabled	test	skipped	lib/regex-syntax/src/regex/syntax/unicode_tables/general_category.cr	Crystal port always ships Unicode general-category tables, so the disabled-feature branch is not applicable
+src/hir/translate.rs::test::class_unicode_script	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Unicode script/property translation covered in focused translator parity spec
+src/hir/translate.rs::test::class_unicode_script_disabled	test	skipped	lib/regex-syntax/src/regex/syntax/unicode_tables/script.cr	Crystal port always ships Unicode script tables, so the disabled-feature branch is not applicable
+src/hir/translate.rs::test::dot	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Dot translation behavior covered in focused translator parity spec
+src/hir/translate.rs::test::empty	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Empty-pattern translation covered in focused translator parity spec
+src/hir/translate.rs::test::escape	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Escape translation covered in focused translator parity spec
+src/hir/translate.rs::test::flags	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Flag-scoped translation behavior covered in focused translator parity spec
+src/hir/translate.rs::test::group	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Group and capture translation covered in focused translator parity spec
+src/hir/translate.rs::test::ignore_whitespace	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Ignore-whitespace translation behavior covered in focused translator parity spec
+src/hir/translate.rs::test::line_anchors	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Line-anchor translation covered in focused translator parity spec
+src/hir/translate.rs::test::literal	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Literal translation covered in focused translator parity spec
+src/hir/translate.rs::test::literal_case_insensitive	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Case-insensitive literal translation covered in focused translator parity spec
+src/hir/translate.rs::test::regression_alt_empty_concat	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Rust regression for empty concat inside alternation covered in focused translator parity spec
+src/hir/translate.rs::test::regression_empty_alt	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Rust regression for empty alternation inside concat covered in focused translator parity spec
+src/hir/translate.rs::test::regression_fuzz_char_decrement1	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Oss-fuzz char-decrement regression covered in focused translator parity spec
+src/hir/translate.rs::test::regression_fuzz_difference1	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Oss-fuzz class-difference regression covered in focused translator parity spec
+src/hir/translate.rs::test::regression_fuzz_match	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Oss-fuzz match regression covered in focused translator parity spec
+src/hir/translate.rs::test::regression_singleton_alt	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Rust regression for singleton alternation inside concat covered in focused translator parity spec
+src/hir/translate.rs::test::repetition	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Repetition translation covered in focused translator parity spec
+src/hir/translate.rs::test::smart_alternation	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Smart alternation simplification covered in focused translator parity spec
+src/hir/translate.rs::test::smart_concat	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Smart concatenation simplification covered in focused translator parity spec
+src/hir/translate.rs::test::smart_repetition	test	ported	lib/regex-syntax/spec/hir_translate_parity_spec.cr	Smart repetition simplification covered in focused translator parity spec
 src/hir/visitor.rs::trait::Visitor	trait	ported	Regex::Syntax::Hir::Visitor, Regex::Syntax::Hir.visit	HIR visitor protocol and traversal entrypoint ported
 src/lib.rs::func::escape	func	ported	Regex::Syntax.escape	Public escape helper matches vendored meta-character escaping
 src/lib.rs::func::escape_into	func	ported	Regex::Syntax.escape_into	Public IO-based escape helper ported to Crystal
