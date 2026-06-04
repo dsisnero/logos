@@ -157,19 +157,19 @@ src/error.rs::enum::Error	enum	skipped	Regex::Syntax::Error, Regex::Syntax::AST:
 src/error.rs::struct::Formatter	struct	ported	Regex::Syntax::Formatter(E)	Vendored formatter ported for AST and HIR error rendering
 src/error.rs::test::regression_464	test	ported	lib/regex-syntax/spec/error_spec.cr	Multiline parser error formatting covered in Crystal error specs
 src/error.rs::test::repetition_quantifier_expects_a_valid_decimal	test	ported	lib/regex-syntax/spec/error_spec.cr	Counted repetition decimal error formatting covered in Crystal error specs
-src/hir/interval.rs::func::case_fold_simple	func	missing	-	auto-generated
-src/hir/interval.rs::func::difference	func	missing	-	auto-generated
-src/hir/interval.rs::func::intersect	func	missing	-	auto-generated
-src/hir/interval.rs::func::intervals	func	missing	-	auto-generated
-src/hir/interval.rs::func::iter	func	missing	-	auto-generated
-src/hir/interval.rs::func::negate	func	missing	-	auto-generated
-src/hir/interval.rs::func::push	func	missing	-	auto-generated
-src/hir/interval.rs::func::symmetric_difference	func	missing	-	auto-generated
-src/hir/interval.rs::func::union	func	missing	-	auto-generated
-src/hir/interval.rs::struct::IntervalSet	struct	missing	-	auto-generated
-src/hir/interval.rs::struct::IntervalSetIter	struct	missing	-	auto-generated
-src/hir/interval.rs::trait::Bound	trait	missing	-	auto-generated
-src/hir/interval.rs::trait::Interval	trait	missing	-	auto-generated
+src/hir/interval.rs::func::case_fold_simple	func	ported	Regex::Syntax::Hir::IntervalSet(B)#case_fold_simple, Regex::Syntax::Hir::IntervalSet(B)#case_fold_simple!	Interval-set simple case folding ported with focused parity coverage
+src/hir/interval.rs::func::difference	func	ported	Regex::Syntax::Hir::IntervalSet(B)#difference, Regex::Syntax::Hir::IntervalSet(B)#difference!	Interval-set difference operations ported with focused parity coverage
+src/hir/interval.rs::func::intersect	func	ported	Regex::Syntax::Hir::IntervalSet(B)#intersect, Regex::Syntax::Hir::IntervalSet(B)#intersect!	Interval-set intersection operations ported with focused parity coverage
+src/hir/interval.rs::func::intervals	func	ported	Regex::Syntax::Hir::IntervalSet(B)#intervals	Interval-set canonical interval accessors ported
+src/hir/interval.rs::func::iter	func	ported	Regex::Syntax::Hir::IntervalSet(B)#iter, Regex::Syntax::Hir::IntervalSetIter(B)	Interval-set iteration ported
+src/hir/interval.rs::func::negate	func	ported	Regex::Syntax::Hir::IntervalSet(B)#negate, Regex::Syntax::Hir::IntervalSet(B)#negate!	Interval-set complement operations ported with focused parity coverage
+src/hir/interval.rs::func::push	func	ported	Regex::Syntax::Hir::IntervalSet(B)#push	Interval-set insertion and recanonicalization ported
+src/hir/interval.rs::func::symmetric_difference	func	ported	Regex::Syntax::Hir::IntervalSet(B)#symmetric_difference, Regex::Syntax::Hir::IntervalSet(B)#symmetric_difference!	Interval-set symmetric-difference operations ported with focused parity coverage
+src/hir/interval.rs::func::union	func	ported	Regex::Syntax::Hir::IntervalSet(B)#union, Regex::Syntax::Hir::IntervalSet(B)#union!	Interval-set union operations ported with focused parity coverage
+src/hir/interval.rs::struct::IntervalSet	struct	ported	Regex::Syntax::Hir::IntervalSet(B)	Generic interval-set container ported
+src/hir/interval.rs::struct::IntervalSetIter	struct	ported	Regex::Syntax::Hir::IntervalSetIter(B)	Interval-set iterator ported
+src/hir/interval.rs::trait::Bound	trait	skipped	UInt8, UInt32	Rust bound traits collapse to Crystal primitive specializations for byte and Unicode interval sets
+src/hir/interval.rs::trait::Interval	trait	skipped	Regex::Syntax::Hir::IntervalSet(B)	Rust interval trait collapses to Crystal generic specializations plus helper modules
 src/hir/literal.rs::enum::ExtractKind	enum	ported	Regex::Syntax::Hir::LiteralExtraction::ExtractKind	Literal-extraction mode enum ported
 src/hir/literal.rs::func::as_bytes	func	ported	Regex::Syntax::Hir::LiteralExtraction::Literal#as_bytes	Literal byte-slice accessor ported
 src/hir/literal.rs::func::cross_forward	func	ported	Regex::Syntax::Hir::LiteralExtraction::Seq#cross_forward	Literal sequence forward cross-product ported
@@ -237,125 +237,125 @@ src/hir/literal.rs::test::look	test	ported	lib/regex-syntax/spec/hir_literal_api
 src/hir/literal.rs::test::odds_and_ends	test	ported	lib/regex-syntax/spec/hir_literal_api_spec.cr	Literal extraction edge cases covered in Crystal HIR literal specs
 src/hir/literal.rs::test::optimize	test	ported	lib/regex-syntax/spec/hir_literal_api_spec.cr	Literal extraction optimization behavior covered in Crystal HIR literal specs
 src/hir/literal.rs::test::repetition	test	ported	lib/regex-syntax/spec/hir_literal_api_spec.cr	Literal extraction repetition behavior covered in Crystal HIR literal specs
-src/hir/mod.rs::enum::Class	enum	missing	-	auto-generated
-src/hir/mod.rs::enum::Dot	enum	missing	-	auto-generated
-src/hir/mod.rs::enum::ErrorKind	enum	missing	-	auto-generated
-src/hir/mod.rs::enum::HirKind	enum	missing	-	auto-generated
-src/hir/mod.rs::enum::Look	enum	missing	-	auto-generated
-src/hir/mod.rs::func::alternation	func	missing	-	auto-generated
-src/hir/mod.rs::func::capture	func	missing	-	auto-generated
-src/hir/mod.rs::func::case_fold_simple	func	missing	-	auto-generated
-src/hir/mod.rs::func::class	func	missing	-	auto-generated
-src/hir/mod.rs::func::concat	func	missing	-	auto-generated
-src/hir/mod.rs::func::contains	func	missing	-	auto-generated
-src/hir/mod.rs::func::contains_anchor	func	missing	-	auto-generated
-src/hir/mod.rs::func::contains_anchor_crlf	func	missing	-	auto-generated
-src/hir/mod.rs::func::contains_anchor_haystack	func	missing	-	auto-generated
-src/hir/mod.rs::func::contains_anchor_lf	func	missing	-	auto-generated
-src/hir/mod.rs::func::contains_anchor_line	func	missing	-	auto-generated
-src/hir/mod.rs::func::contains_word	func	missing	-	auto-generated
-src/hir/mod.rs::func::contains_word_ascii	func	missing	-	auto-generated
-src/hir/mod.rs::func::contains_word_unicode	func	missing	-	auto-generated
-src/hir/mod.rs::func::difference	func	missing	-	auto-generated
-src/hir/mod.rs::func::dot	func	missing	-	auto-generated
-src/hir/mod.rs::func::empty	func	missing	-	auto-generated
-src/hir/mod.rs::func::end	func	missing	-	auto-generated
-src/hir/mod.rs::func::explicit_captures_len	func	missing	-	auto-generated
-src/hir/mod.rs::func::fail	func	missing	-	auto-generated
-src/hir/mod.rs::func::full	func	missing	-	auto-generated
-src/hir/mod.rs::func::insert	func	missing	-	auto-generated
-src/hir/mod.rs::func::intersect	func	missing	-	auto-generated
-src/hir/mod.rs::func::into_kind	func	missing	-	auto-generated
-src/hir/mod.rs::func::is_alternation_literal	func	missing	-	auto-generated
-src/hir/mod.rs::func::is_ascii	func	missing	-	auto-generated
-src/hir/mod.rs::func::is_empty	func	missing	-	auto-generated
-src/hir/mod.rs::func::is_literal	func	missing	-	auto-generated
-src/hir/mod.rs::func::is_utf8	func	missing	-	auto-generated
-src/hir/mod.rs::func::iter	func	missing	-	auto-generated
-src/hir/mod.rs::func::kind	func	missing	-	auto-generated
-src/hir/mod.rs::func::len	func	missing	-	auto-generated
-src/hir/mod.rs::func::literal	func	missing	-	auto-generated
-src/hir/mod.rs::func::look	func	missing	-	auto-generated
-src/hir/mod.rs::func::look_set	func	missing	-	auto-generated
-src/hir/mod.rs::func::look_set_prefix	func	missing	-	auto-generated
-src/hir/mod.rs::func::look_set_prefix_any	func	missing	-	auto-generated
-src/hir/mod.rs::func::look_set_suffix	func	missing	-	auto-generated
-src/hir/mod.rs::func::look_set_suffix_any	func	missing	-	auto-generated
-src/hir/mod.rs::func::maximum_len	func	missing	-	auto-generated
-src/hir/mod.rs::func::memory_usage	func	missing	-	auto-generated
-src/hir/mod.rs::func::minimum_len	func	missing	-	auto-generated
-src/hir/mod.rs::func::negate	func	missing	-	auto-generated
-src/hir/mod.rs::func::new	func	missing	-	auto-generated
-src/hir/mod.rs::func::pattern	func	missing	-	auto-generated
-src/hir/mod.rs::func::properties	func	missing	-	auto-generated
-src/hir/mod.rs::func::push	func	missing	-	auto-generated
-src/hir/mod.rs::func::ranges	func	missing	-	auto-generated
-src/hir/mod.rs::func::read_repr	func	missing	-	auto-generated
-src/hir/mod.rs::func::remove	func	missing	-	auto-generated
-src/hir/mod.rs::func::repetition	func	missing	-	auto-generated
-src/hir/mod.rs::func::set_insert	func	missing	-	auto-generated
-src/hir/mod.rs::func::set_intersect	func	missing	-	auto-generated
-src/hir/mod.rs::func::set_remove	func	missing	-	auto-generated
-src/hir/mod.rs::func::set_subtract	func	missing	-	auto-generated
-src/hir/mod.rs::func::set_union	func	missing	-	auto-generated
-src/hir/mod.rs::func::singleton	func	missing	-	auto-generated
-src/hir/mod.rs::func::span	func	missing	-	auto-generated
-src/hir/mod.rs::func::start	func	missing	-	auto-generated
-src/hir/mod.rs::func::static_explicit_captures_len	func	missing	-	auto-generated
-src/hir/mod.rs::func::subs	func	missing	-	auto-generated
-src/hir/mod.rs::func::subtract	func	missing	-	auto-generated
-src/hir/mod.rs::func::symmetric_difference	func	missing	-	auto-generated
-src/hir/mod.rs::func::to_byte_class	func	missing	-	auto-generated
-src/hir/mod.rs::func::to_unicode_class	func	missing	-	auto-generated
-src/hir/mod.rs::func::try_case_fold_simple	func	missing	-	auto-generated
-src/hir/mod.rs::func::union	func	missing	-	auto-generated
-src/hir/mod.rs::func::with	func	missing	-	auto-generated
-src/hir/mod.rs::func::write_repr	func	missing	-	auto-generated
-src/hir/mod.rs::method::Class.case_fold_simple	method	missing	-	auto-generated
-src/hir/mod.rs::method::ClassBytesRange.new	method	missing	-	auto-generated
-src/hir/mod.rs::method::ClassUnicodeRange.new	method	missing	-	auto-generated
-src/hir/mod.rs::method::Error.kind	method	missing	-	auto-generated
-src/hir/mod.rs::method::Hir.empty	method	missing	-	auto-generated
-src/hir/mod.rs::method::Hir.kind	method	missing	-	auto-generated
-src/hir/mod.rs::method::HirKind.subs	method	missing	-	auto-generated
-src/hir/mod.rs::method::LookSet.empty	method	missing	-	auto-generated
-src/hir/mod.rs::method::Properties.minimum_len	method	missing	-	auto-generated
-src/hir/mod.rs::method::Repetition.with	method	missing	-	auto-generated
-src/hir/mod.rs::struct::Capture	struct	missing	-	auto-generated
-src/hir/mod.rs::struct::ClassBytes	struct	missing	-	auto-generated
-src/hir/mod.rs::struct::ClassBytesIter	struct	missing	-	auto-generated
-src/hir/mod.rs::struct::ClassBytesRange	struct	missing	-	auto-generated
-src/hir/mod.rs::struct::ClassUnicode	struct	missing	-	auto-generated
-src/hir/mod.rs::struct::ClassUnicodeIter	struct	missing	-	auto-generated
-src/hir/mod.rs::struct::ClassUnicodeRange	struct	missing	-	auto-generated
-src/hir/mod.rs::struct::Error	struct	missing	-	auto-generated
-src/hir/mod.rs::struct::Hir	struct	missing	-	auto-generated
-src/hir/mod.rs::struct::Literal	struct	missing	-	auto-generated
-src/hir/mod.rs::struct::LookSet	struct	missing	-	auto-generated
-src/hir/mod.rs::struct::LookSetIter	struct	missing	-	auto-generated
-src/hir/mod.rs::struct::Properties	struct	missing	-	auto-generated
-src/hir/mod.rs::struct::Repetition	struct	missing	-	auto-generated
-src/hir/mod.rs::test::class_canonicalize_bytes	test	missing	-	auto-generated
-src/hir/mod.rs::test::class_canonicalize_unicode	test	missing	-	auto-generated
-src/hir/mod.rs::test::class_case_fold_bytes	test	missing	-	auto-generated
-src/hir/mod.rs::test::class_case_fold_unicode	test	missing	-	auto-generated
-src/hir/mod.rs::test::class_case_fold_unicode_disabled	test	missing	-	auto-generated
-src/hir/mod.rs::test::class_case_fold_unicode_disabled_panics	test	missing	-	auto-generated
-src/hir/mod.rs::test::class_difference_bytes	test	missing	-	auto-generated
-src/hir/mod.rs::test::class_difference_unicode	test	missing	-	auto-generated
-src/hir/mod.rs::test::class_intersect_bytes	test	missing	-	auto-generated
-src/hir/mod.rs::test::class_intersect_unicode	test	missing	-	auto-generated
-src/hir/mod.rs::test::class_negate_bytes	test	missing	-	auto-generated
-src/hir/mod.rs::test::class_negate_unicode	test	missing	-	auto-generated
-src/hir/mod.rs::test::class_range_canonical_bytes	test	missing	-	auto-generated
-src/hir/mod.rs::test::class_range_canonical_unicode	test	missing	-	auto-generated
-src/hir/mod.rs::test::class_symmetric_difference_bytes	test	missing	-	auto-generated
-src/hir/mod.rs::test::class_symmetric_difference_unicode	test	missing	-	auto-generated
-src/hir/mod.rs::test::class_union_bytes	test	missing	-	auto-generated
-src/hir/mod.rs::test::class_union_unicode	test	missing	-	auto-generated
-src/hir/mod.rs::test::look_set_debug	test	missing	-	auto-generated
-src/hir/mod.rs::test::look_set_iter	test	missing	-	auto-generated
-src/hir/mod.rs::test::no_stack_overflow_on_drop	test	missing	-	auto-generated
+src/hir/mod.rs::enum::Class	enum	ported	Regex::Syntax::Hir::Class, Regex::Syntax::Hir::Class::Kind	HIR class sum type ported as a Crystal wrapper class plus kind enum
+src/hir/mod.rs::enum::Dot	enum	ported	Regex::Syntax::Hir::Dot	HIR dot-kind enum ported
+src/hir/mod.rs::enum::ErrorKind	enum	ported	Regex::Syntax::Hir::ErrorKind	HIR translation error kind enum ported
+src/hir/mod.rs::enum::HirKind	enum	ported	Regex::Syntax::Hir::HirKind	HIR kind surface ported as a Crystal alias to the node hierarchy
+src/hir/mod.rs::enum::Look	enum	ported	Regex::Syntax::Hir::Look, Regex::Syntax::Hir::Look::Kind	Look assertion node and kind enum ported
+src/hir/mod.rs::func::alternation	func	ported	Regex::Syntax::Hir::Hir.alternation	HIR alternation smart constructors ported
+src/hir/mod.rs::func::capture	func	ported	Regex::Syntax::Hir::Hir.capture	HIR capture smart constructor ported
+src/hir/mod.rs::func::case_fold_simple	func	ported	Regex::Syntax::Hir::Class#case_fold_simple, Regex::Syntax::Hir::CharClass#case_fold_simple, Regex::Syntax::Hir::UnicodeClass#case_fold_simple	HIR class case-fold helpers ported
+src/hir/mod.rs::func::class	func	ported	Regex::Syntax::Hir::Class.bytes, Regex::Syntax::Hir::Class.unicode	HIR class wrapper constructors ported
+src/hir/mod.rs::func::concat	func	ported	Regex::Syntax::Hir::Hir.concat	HIR concatenation smart constructors ported
+src/hir/mod.rs::func::contains	func	ported	Regex::Syntax::Hir::LookSet#contains	Look-set membership queries ported
+src/hir/mod.rs::func::contains_anchor	func	ported	Regex::Syntax::Hir::LookSet#contains_anchor	Look-set anchor queries ported
+src/hir/mod.rs::func::contains_anchor_crlf	func	ported	Regex::Syntax::Hir::LookSet#contains_anchor_crlf	Look-set CRLF anchor queries ported
+src/hir/mod.rs::func::contains_anchor_haystack	func	ported	Regex::Syntax::Hir::LookSet#contains_anchor_haystack	Look-set haystack-anchor queries ported
+src/hir/mod.rs::func::contains_anchor_lf	func	ported	Regex::Syntax::Hir::LookSet#contains_anchor_lf	Look-set LF anchor queries ported
+src/hir/mod.rs::func::contains_anchor_line	func	ported	Regex::Syntax::Hir::LookSet#contains_anchor_line	Look-set line-anchor queries ported
+src/hir/mod.rs::func::contains_word	func	ported	Regex::Syntax::Hir::LookSet#contains_word	Look-set word-boundary queries ported
+src/hir/mod.rs::func::contains_word_ascii	func	ported	Regex::Syntax::Hir::LookSet#contains_word_ascii	Look-set ASCII word-boundary queries ported
+src/hir/mod.rs::func::contains_word_unicode	func	ported	Regex::Syntax::Hir::LookSet#contains_word_unicode	Look-set Unicode word-boundary queries ported
+src/hir/mod.rs::func::difference	func	ported	Regex::Syntax::Hir::CharClass#difference, Regex::Syntax::Hir::UnicodeClass#difference	HIR class difference operations ported
+src/hir/mod.rs::func::dot	func	ported	Regex::Syntax::Hir.dot, Regex::Syntax::Hir::Hir.dot	HIR dot constructors ported
+src/hir/mod.rs::func::empty	func	ported	Regex::Syntax::Hir::LookSet.empty, Regex::Syntax::Hir::CharClass.empty, Regex::Syntax::Hir::UnicodeClass.empty, Regex::Syntax::Hir::Hir.empty	HIR empty constructors ported across look sets, classes, and HIR nodes
+src/hir/mod.rs::func::end	func	ported	Regex::Syntax::Hir::ClassBytesRange#end, Regex::Syntax::Hir::ClassUnicodeRange#end	HIR class-range end accessors ported
+src/hir/mod.rs::func::explicit_captures_len	func	ported	Regex::Syntax::Hir::Hir#explicit_captures_len	HIR explicit-capture counting ported
+src/hir/mod.rs::func::fail	func	ported	Regex::Syntax::Hir::Hir.fail	HIR fail smart constructor ported
+src/hir/mod.rs::func::full	func	ported	Regex::Syntax::Hir::LookSet.full	Look-set full constructor ported
+src/hir/mod.rs::func::insert	func	ported	Regex::Syntax::Hir::LookSet#insert, Regex::Syntax::Hir::LookSet#insert!	Look-set insertion helpers ported
+src/hir/mod.rs::func::intersect	func	ported	Regex::Syntax::Hir::LookSet#intersect, Regex::Syntax::Hir::LookSet#intersect!, Regex::Syntax::Hir::CharClass#intersect, Regex::Syntax::Hir::UnicodeClass#intersect	Look-set and class intersection operations ported
+src/hir/mod.rs::func::into_kind	func	ported	Regex::Syntax::Hir::Hir#into_kind	HIR kind extraction ported
+src/hir/mod.rs::func::is_alternation_literal	func	ported	Regex::Syntax::Hir::Hir#is_alternation_literal	HIR alternation-literal predicate ported
+src/hir/mod.rs::func::is_ascii	func	ported	Regex::Syntax::Hir::CharClass#is_ascii, Regex::Syntax::Hir::UnicodeClass#is_ascii	HIR class ASCII alias predicates ported
+src/hir/mod.rs::func::is_empty	func	ported	Regex::Syntax::Hir::Class#is_empty	Wrapper-class empty alias predicate ported
+src/hir/mod.rs::func::is_literal	func	ported	Regex::Syntax::Hir::Hir#literal?	HIR literal predicate ported
+src/hir/mod.rs::func::is_utf8	func	ported	Regex::Syntax::Hir::Class#is_utf8, Regex::Syntax::Hir::Hir#utf8?	HIR UTF-8 predicates ported
+src/hir/mod.rs::func::iter	func	ported	Regex::Syntax::Hir::ClassBytes#iter, Regex::Syntax::Hir::ClassUnicode#iter, Regex::Syntax::Hir::LookSet#iter	HIR iterator entrypoints ported
+src/hir/mod.rs::func::kind	func	ported	Regex::Syntax::Hir::Hir#kind, Regex::Syntax::Hir::Look#kind, Regex::Syntax::Hir::Error#kind, Regex::Syntax::Hir::Class#kind	HIR kind accessors ported
+src/hir/mod.rs::func::len	func	ported	Regex::Syntax::Hir::LookSet#len, Regex::Syntax::Hir::ClassBytesRange#len, Regex::Syntax::Hir::ClassUnicodeRange#len	HIR length helpers ported
+src/hir/mod.rs::func::literal	func	ported	Regex::Syntax::Hir::Hir.literal, Regex::Syntax::Hir::Class#literal, Regex::Syntax::Hir::CharClass#literal, Regex::Syntax::Hir::UnicodeClass#literal	HIR literal constructors and literal extraction helpers ported
+src/hir/mod.rs::func::look	func	ported	Regex::Syntax::Hir::Hir.look	HIR look smart constructor ported
+src/hir/mod.rs::func::look_set	func	ported	Regex::Syntax::Hir::Hir#look_set	HIR look-set analysis ported
+src/hir/mod.rs::func::look_set_prefix	func	ported	Regex::Syntax::Hir::Hir#look_set_prefix	HIR prefix look-set analysis ported
+src/hir/mod.rs::func::look_set_prefix_any	func	ported	Regex::Syntax::Hir::Hir#look_set_prefix_any	HIR prefix-any look-set analysis ported
+src/hir/mod.rs::func::look_set_suffix	func	ported	Regex::Syntax::Hir::Hir#look_set_suffix	HIR suffix look-set analysis ported
+src/hir/mod.rs::func::look_set_suffix_any	func	ported	Regex::Syntax::Hir::Hir#look_set_suffix_any	HIR suffix-any look-set analysis ported
+src/hir/mod.rs::func::maximum_len	func	ported	Regex::Syntax::Hir::Hir#maximum_len, Regex::Syntax::Hir::Class#maximum_len, Regex::Syntax::Hir::Properties#maximum_len	HIR maximum-length analysis ported
+src/hir/mod.rs::func::memory_usage	func	ported	Regex::Syntax::Hir::Properties#memory_usage	HIR properties memory-usage helper ported
+src/hir/mod.rs::func::minimum_len	func	ported	Regex::Syntax::Hir::Hir#minimum_len, Regex::Syntax::Hir::Class#minimum_len, Regex::Syntax::Hir::Properties#minimum_len	HIR minimum-length analysis ported
+src/hir/mod.rs::func::negate	func	ported	Regex::Syntax::Hir::Class#negate, Regex::Syntax::Hir::CharClass#negate, Regex::Syntax::Hir::UnicodeClass#negate	HIR class negation helpers ported
+src/hir/mod.rs::func::new	func	ported	Regex::Syntax::Hir::Hir.new, Regex::Syntax::Hir::ClassBytesRange.new, Regex::Syntax::Hir::ClassUnicodeRange.new, Regex::Syntax::Hir::LookSet.new, Regex::Syntax::Hir::Repetition.new	HIR core constructors ported
+src/hir/mod.rs::func::pattern	func	ported	Regex::Syntax::Hir::Error#pattern	HIR translation error pattern accessor ported
+src/hir/mod.rs::func::properties	func	ported	Regex::Syntax::Hir::Hir#properties, Regex::Syntax::Hir::Properties	HIR properties surface ported
+src/hir/mod.rs::func::push	func	ported	Regex::Syntax::Hir::CharClass#push, Regex::Syntax::Hir::UnicodeClass#push	HIR class insertion helpers ported
+src/hir/mod.rs::func::ranges	func	ported	Regex::Syntax::Hir::CharClass#ranges, Regex::Syntax::Hir::UnicodeClass#ranges	HIR class range accessors ported
+src/hir/mod.rs::func::read_repr	func	ported	Regex::Syntax::Hir::LookSet.read_repr	Look-set binary decoding ported
+src/hir/mod.rs::func::remove	func	ported	Regex::Syntax::Hir::LookSet#remove, Regex::Syntax::Hir::LookSet#remove!	Look-set removal helpers ported
+src/hir/mod.rs::func::repetition	func	ported	Regex::Syntax::Hir::Hir.repetition, Regex::Syntax::Hir::Repetition	HIR repetition smart constructors ported
+src/hir/mod.rs::func::set_insert	func	ported	Regex::Syntax::Hir::LookSet#set_insert	Look-set mutating insert alias ported
+src/hir/mod.rs::func::set_intersect	func	ported	Regex::Syntax::Hir::LookSet#set_intersect	Look-set mutating intersect alias ported
+src/hir/mod.rs::func::set_remove	func	ported	Regex::Syntax::Hir::LookSet#set_remove	Look-set mutating remove alias ported
+src/hir/mod.rs::func::set_subtract	func	ported	Regex::Syntax::Hir::LookSet#set_subtract	Look-set mutating subtract alias ported
+src/hir/mod.rs::func::set_union	func	ported	Regex::Syntax::Hir::LookSet#set_union	Look-set mutating union alias ported
+src/hir/mod.rs::func::singleton	func	ported	Regex::Syntax::Hir::LookSet.singleton	Look-set singleton constructor ported
+src/hir/mod.rs::func::span	func	ported	Regex::Syntax::Hir::Error#span	HIR translation error span accessor ported
+src/hir/mod.rs::func::start	func	ported	Regex::Syntax::Hir::ClassBytesRange#start, Regex::Syntax::Hir::ClassUnicodeRange#start	HIR class-range start accessors ported
+src/hir/mod.rs::func::static_explicit_captures_len	func	ported	Regex::Syntax::Hir::Hir#static_explicit_captures_len	HIR static capture-count analysis ported
+src/hir/mod.rs::func::subs	func	ported	Regex::Syntax::Hir::Node#subs, Regex::Syntax::Hir::Repetition#subs, Regex::Syntax::Hir::Capture#subs, Regex::Syntax::Hir::Concat#subs, Regex::Syntax::Hir::Alternation#subs	HIR child-node traversal helpers ported
+src/hir/mod.rs::func::subtract	func	ported	Regex::Syntax::Hir::LookSet#subtract, Regex::Syntax::Hir::LookSet#subtract!	Look-set subtraction helpers ported
+src/hir/mod.rs::func::symmetric_difference	func	ported	Regex::Syntax::Hir::CharClass#symmetric_difference, Regex::Syntax::Hir::UnicodeClass#symmetric_difference	HIR class symmetric-difference helpers ported
+src/hir/mod.rs::func::to_byte_class	func	ported	Regex::Syntax::Hir::UnicodeClass#to_byte_class	Unicode-to-byte class conversion ported
+src/hir/mod.rs::func::to_unicode_class	func	ported	Regex::Syntax::Hir::CharClass#to_unicode_class	Byte-to-Unicode class conversion ported
+src/hir/mod.rs::func::try_case_fold_simple	func	ported	Regex::Syntax::Hir::Class#try_case_fold_simple, Regex::Syntax::Hir::CharClass#try_case_fold_simple, Regex::Syntax::Hir::UnicodeClass#try_case_fold_simple	HIR case-fold alias helpers ported
+src/hir/mod.rs::func::union	func	ported	Regex::Syntax::Hir::LookSet#union, Regex::Syntax::Hir::LookSet#union!, Regex::Syntax::Hir::CharClass#union, Regex::Syntax::Hir::UnicodeClass#union, Regex::Syntax::Hir::Properties.union	HIR union helpers ported across look sets, classes, and properties
+src/hir/mod.rs::func::with	func	ported	Regex::Syntax::Hir::Repetition#with	Repetition node replacement helper ported
+src/hir/mod.rs::func::write_repr	func	ported	Regex::Syntax::Hir::LookSet#write_repr	Look-set binary encoding ported
+src/hir/mod.rs::method::Class.case_fold_simple	method	ported	Regex::Syntax::Hir::Class#case_fold_simple	Wrapper-class case-fold helper ported
+src/hir/mod.rs::method::ClassBytesRange.new	method	ported	Regex::Syntax::Hir::ClassBytesRange.new	Byte range constructor canonicalization ported
+src/hir/mod.rs::method::ClassUnicodeRange.new	method	ported	Regex::Syntax::Hir::ClassUnicodeRange.new	Unicode range constructor canonicalization ported
+src/hir/mod.rs::method::Error.kind	method	ported	Regex::Syntax::Hir::Error#kind	HIR translation error kind accessor ported
+src/hir/mod.rs::method::Hir.empty	method	ported	Regex::Syntax::Hir::Hir.empty	HIR empty smart constructor ported
+src/hir/mod.rs::method::Hir.kind	method	ported	Regex::Syntax::Hir::Hir#kind	HIR kind accessor ported
+src/hir/mod.rs::method::HirKind.subs	method	ported	Regex::Syntax::Hir::Node#subs	HIR child-node accessors ported on the node hierarchy
+src/hir/mod.rs::method::LookSet.empty	method	ported	Regex::Syntax::Hir::LookSet.empty	Look-set empty constructor ported
+src/hir/mod.rs::method::Properties.minimum_len	method	ported	Regex::Syntax::Hir::Properties#minimum_len	HIR properties minimum-length accessor ported
+src/hir/mod.rs::method::Repetition.with	method	ported	Regex::Syntax::Hir::Repetition#with	Repetition node replacement helper ported
+src/hir/mod.rs::struct::Capture	struct	ported	Regex::Syntax::Hir::Capture	HIR capture node ported
+src/hir/mod.rs::struct::ClassBytes	struct	ported	Regex::Syntax::Hir::ClassBytes	Byte-class HIR surface ported via alias to Crystal char-class implementation
+src/hir/mod.rs::struct::ClassBytesIter	struct	ported	Regex::Syntax::Hir::ClassBytesIter	Byte-class iterator ported
+src/hir/mod.rs::struct::ClassBytesRange	struct	ported	Regex::Syntax::Hir::ClassBytesRange	Byte-class range value object ported
+src/hir/mod.rs::struct::ClassUnicode	struct	ported	Regex::Syntax::Hir::ClassUnicode	Unicode-class HIR surface ported via alias to Crystal Unicode-class implementation
+src/hir/mod.rs::struct::ClassUnicodeIter	struct	ported	Regex::Syntax::Hir::ClassUnicodeIter	Unicode-class iterator ported
+src/hir/mod.rs::struct::ClassUnicodeRange	struct	ported	Regex::Syntax::Hir::ClassUnicodeRange	Unicode-class range value object ported
+src/hir/mod.rs::struct::Error	struct	ported	Regex::Syntax::Hir::Error	HIR translation error type ported
+src/hir/mod.rs::struct::Hir	struct	ported	Regex::Syntax::Hir::Hir	HIR wrapper node ported
+src/hir/mod.rs::struct::Literal	struct	ported	Regex::Syntax::Hir::Literal	HIR literal node ported
+src/hir/mod.rs::struct::LookSet	struct	ported	Regex::Syntax::Hir::LookSet	Look-set analysis container ported
+src/hir/mod.rs::struct::LookSetIter	struct	ported	Regex::Syntax::Hir::LookSetIter	Look-set iterator ported
+src/hir/mod.rs::struct::Properties	struct	ported	Regex::Syntax::Hir::Properties	HIR properties container ported
+src/hir/mod.rs::struct::Repetition	struct	ported	Regex::Syntax::Hir::Repetition	HIR repetition node ported
+src/hir/mod.rs::test::class_canonicalize_bytes	test	ported	lib/regex-syntax/spec/hir_core_parity_spec.cr	Byte-class canonicalization behavior covered in focused HIR core parity spec
+src/hir/mod.rs::test::class_canonicalize_unicode	test	ported	lib/regex-syntax/spec/hir_core_parity_spec.cr	Unicode-class canonicalization behavior covered in focused HIR core parity spec
+src/hir/mod.rs::test::class_case_fold_bytes	test	ported	lib/regex-syntax/spec/hir_core_parity_spec.cr	Byte-class case folding behavior covered in focused HIR core parity spec
+src/hir/mod.rs::test::class_case_fold_unicode	test	ported	lib/regex-syntax/spec/hir_core_parity_spec.cr	Unicode-class case folding behavior covered in focused HIR core parity spec
+src/hir/mod.rs::test::class_case_fold_unicode_disabled	test	skipped	lib/regex-syntax/src/regex/syntax/unicode_tables/case_folding_simple.cr	Crystal shard always ships Unicode case-fold tables, so the disabled-feature branch is not applicable
+src/hir/mod.rs::test::class_case_fold_unicode_disabled_panics	test	skipped	lib/regex-syntax/src/regex/syntax/unicode_tables/case_folding_simple.cr	Crystal shard always ships Unicode case-fold tables, so the disabled-feature panic path is not applicable
+src/hir/mod.rs::test::class_difference_bytes	test	ported	lib/regex-syntax/spec/hir_core_parity_spec.cr	Byte-class difference behavior covered in focused HIR core parity spec
+src/hir/mod.rs::test::class_difference_unicode	test	ported	lib/regex-syntax/spec/hir_core_parity_spec.cr	Unicode-class difference behavior covered in focused HIR core parity spec
+src/hir/mod.rs::test::class_intersect_bytes	test	ported	lib/regex-syntax/spec/hir_core_parity_spec.cr	Byte-class intersection behavior covered in focused HIR core parity spec
+src/hir/mod.rs::test::class_intersect_unicode	test	ported	lib/regex-syntax/spec/hir_core_parity_spec.cr	Unicode-class intersection behavior covered in focused HIR core parity spec
+src/hir/mod.rs::test::class_negate_bytes	test	ported	lib/regex-syntax/spec/hir_core_parity_spec.cr	Byte-class negation behavior covered in focused HIR core parity spec
+src/hir/mod.rs::test::class_negate_unicode	test	ported	lib/regex-syntax/spec/hir_core_parity_spec.cr	Unicode-class negation behavior covered in focused HIR core parity spec
+src/hir/mod.rs::test::class_range_canonical_bytes	test	ported	lib/regex-syntax/spec/hir_core_parity_spec.cr	Byte-range constructor canonicalization covered in focused HIR core parity spec
+src/hir/mod.rs::test::class_range_canonical_unicode	test	ported	lib/regex-syntax/spec/hir_core_parity_spec.cr	Unicode-range constructor canonicalization covered in focused HIR core parity spec
+src/hir/mod.rs::test::class_symmetric_difference_bytes	test	ported	lib/regex-syntax/spec/hir_core_parity_spec.cr	Byte-class symmetric-difference behavior covered in focused HIR core parity spec
+src/hir/mod.rs::test::class_symmetric_difference_unicode	test	ported	lib/regex-syntax/spec/hir_core_parity_spec.cr	Unicode-class symmetric-difference behavior covered in focused HIR core parity spec
+src/hir/mod.rs::test::class_union_bytes	test	ported	lib/regex-syntax/spec/hir_core_parity_spec.cr	Byte-class union behavior covered in focused HIR core parity spec
+src/hir/mod.rs::test::class_union_unicode	test	ported	lib/regex-syntax/spec/hir_core_parity_spec.cr	Unicode-class union behavior covered in focused HIR core parity spec
+src/hir/mod.rs::test::look_set_debug	test	ported	lib/regex-syntax/spec/hir_core_parity_spec.cr	Look-set debug/inspect rendering covered in focused HIR core parity spec
+src/hir/mod.rs::test::look_set_iter	test	ported	lib/regex-syntax/spec/hir_core_parity_spec.cr	Look-set iteration order covered in focused HIR core parity spec
+src/hir/mod.rs::test::no_stack_overflow_on_drop	test	skipped	Regex::Syntax::Hir::Hir	Crystal relies on GC-managed object lifetimes here instead of Rust's custom constant-stack drop implementation
 src/hir/print.rs::func::new	func	ported	Regex::Syntax::Hir::Printer.new	HIR printer constructor ported
 src/hir/print.rs::method::Printer.new	method	ported	Regex::Syntax::Hir::Printer.new	HIR printer constructor ported
 src/hir/print.rs::struct::Printer	struct	ported	Regex::Syntax::Hir::Printer	HIR printer surface ported

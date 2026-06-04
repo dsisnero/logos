@@ -11,10 +11,10 @@ Validated inventory baseline:
 
 Current ledger snapshot:
 
-- `ported`: 693 rows
+- `ported`: 820 rows
 - `partial`: 1 row
-- `skipped`: 4 rows
-- `missing`: 337 rows
+- `skipped`: 9 rows
+- `missing`: 205 rows
 - All tracked upstream tests are currently `missing`
 
 Feature roadmap:
@@ -22,7 +22,7 @@ Feature roadmap:
 - [ ] AST core model and assertion semantics (`src/ast/mod.rs`)
 - [ ] AST parser parity (`src/ast/parse.rs`)
 - [x] AST printing and visitor support (`src/ast/print.rs`, `src/ast/visitor.rs`)
-- [ ] HIR core data model and interval operations (`src/hir/mod.rs`, `src/hir/interval.rs`)
+- [x] HIR core data model and interval operations (`src/hir/mod.rs`, `src/hir/interval.rs`)
 - [ ] HIR translation pipeline (`src/hir/translate.rs`)
 - [x] HIR literals, printing, and visitor utilities (`src/hir/literal.rs`, `src/hir/print.rs`, `src/hir/visitor.rs`)
 - [x] Parser facade, crate API, and error surface (`src/parser.rs`, `src/lib.rs`, `src/error.rs`, `src/either.rs`)
