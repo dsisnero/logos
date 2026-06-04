@@ -468,28 +468,28 @@ src/parser.rs::method::Parser.new	method	ported	Regex::Syntax::Parser.new	Defaul
 src/parser.rs::method::ParserBuilder.new	method	ported	Regex::Syntax::ParserBuilder.new	Default parser builder constructor ported
 src/parser.rs::struct::Parser	struct	ported	Regex::Syntax::Parser	Convenience parser combines AST parsing and HIR translation
 src/parser.rs::struct::ParserBuilder	struct	ported	Regex::Syntax::ParserBuilder	Builder combines AST parser and HIR translator configuration
-src/unicode.rs::enum::ClassQuery	enum	missing	-	auto-generated
-src/unicode.rs::enum::Error	enum	missing	-	auto-generated
-src/unicode.rs::func::class	func	missing	-	auto-generated
-src/unicode.rs::func::hir_class	func	missing	-	auto-generated
-src/unicode.rs::func::is_word_character	func	missing	-	auto-generated
-src/unicode.rs::func::mapping	func	missing	-	auto-generated
-src/unicode.rs::func::new	func	missing	-	auto-generated
-src/unicode.rs::func::overlaps	func	missing	-	auto-generated
-src/unicode.rs::func::perl_digit	func	missing	-	auto-generated
-src/unicode.rs::func::perl_space	func	missing	-	auto-generated
-src/unicode.rs::func::perl_word	func	missing	-	auto-generated
-src/unicode.rs::method::SimpleCaseFolder.new	method	missing	-	auto-generated
-src/unicode.rs::struct::CaseFoldError	struct	missing	-	auto-generated
-src/unicode.rs::struct::SimpleCaseFolder	struct	missing	-	auto-generated
-src/unicode.rs::struct::UnicodeWordError	struct	missing	-	auto-generated
-src/unicode.rs::test::range_contains	test	missing	-	auto-generated
-src/unicode.rs::test::regression_466	test	missing	-	auto-generated
-src/unicode.rs::test::simple_fold_a	test	missing	-	auto-generated
-src/unicode.rs::test::simple_fold_disabled	test	missing	-	auto-generated
-src/unicode.rs::test::simple_fold_k	test	missing	-	auto-generated
-src/unicode.rs::test::sym_normalize	test	missing	-	auto-generated
-src/unicode.rs::test::valid_utf8_symbolic	test	missing	-	auto-generated
+src/unicode.rs::enum::ClassQuery	enum	ported	Regex::Syntax::Unicode::ClassQuery::OneLetter, Regex::Syntax::Unicode::ClassQuery::Binary, Regex::Syntax::Unicode::ClassQuery::ByValue	Crystal models Rust enum variants as nested structs under an abstract ClassQuery type
+src/unicode.rs::enum::Error	enum	ported	Regex::Syntax::Unicode::Error	Unicode property and Perl-class lookup error enum ported
+src/unicode.rs::func::class	func	ported	Regex::Syntax::Unicode.class	Unicode class query dispatcher ported
+src/unicode.rs::func::hir_class	func	ported	Regex::Syntax::Unicode.hir_class	Unicode HIR class builder ported
+src/unicode.rs::func::is_word_character	func	ported	Regex::Syntax::Unicode.is_word_character, Regex::Syntax::Unicode.word_character?	Unicode word-character predicate and alias ported
+src/unicode.rs::func::mapping	func	ported	Regex::Syntax::Unicode::SimpleCaseFolder#mapping	Stateful simple case-fold mapping lookup ported
+src/unicode.rs::func::new	func	ported	Regex::Syntax::Unicode::SimpleCaseFolder.new, Regex::Syntax::Unicode::ClassQuery::OneLetter.new, Regex::Syntax::Unicode::ClassQuery::Binary.new, Regex::Syntax::Unicode::ClassQuery::ByValue.new	Unicode helper constructors are public in Crystal
+src/unicode.rs::func::overlaps	func	ported	Regex::Syntax::Unicode::SimpleCaseFolder#overlaps	Simple case-fold overlap probe ported
+src/unicode.rs::func::perl_digit	func	ported	Regex::Syntax::Unicode.perl_digit	Unicode-aware Perl digit class helper ported
+src/unicode.rs::func::perl_space	func	ported	Regex::Syntax::Unicode.perl_space	Unicode-aware Perl space class helper ported
+src/unicode.rs::func::perl_word	func	ported	Regex::Syntax::Unicode.perl_word	Unicode-aware Perl word class helper ported
+src/unicode.rs::method::SimpleCaseFolder.new	method	ported	Regex::Syntax::Unicode::SimpleCaseFolder.new	Simple case-fold table traverser constructor ported
+src/unicode.rs::struct::CaseFoldError	struct	ported	Regex::Syntax::Unicode::CaseFoldError	Unicode case-fold availability error type ported
+src/unicode.rs::struct::SimpleCaseFolder	struct	ported	Regex::Syntax::Unicode::SimpleCaseFolder	Stateful Unicode simple case-fold traverser ported
+src/unicode.rs::struct::UnicodeWordError	struct	ported	Regex::Syntax::UnicodeWordError	Top-level Unicode word-class error surface matches the Rust crate re-export
+src/unicode.rs::test::range_contains	test	ported	lib/regex-syntax/spec/unicode_spec.cr	Simple case-fold overlap behavior covered in Crystal Unicode specs
+src/unicode.rs::test::regression_466	test	ported	lib/regex-syntax/spec/unicode_spec.cr	One-letter general-category canonicalization regression covered in Crystal Unicode specs
+src/unicode.rs::test::simple_fold_a	test	ported	lib/regex-syntax/spec/unicode_spec.cr	ASCII simple case-fold behavior covered in Crystal Unicode specs
+src/unicode.rs::test::simple_fold_disabled	test	skipped	lib/regex-syntax/spec/unicode_query_helper_spec.cr	Crystal shard always ships Unicode case-fold tables, so the disabled-feature error path is not exposed
+src/unicode.rs::test::simple_fold_k	test	ported	lib/regex-syntax/spec/unicode_spec.cr	Kelvin-sign simple case-fold behavior covered in Crystal Unicode specs
+src/unicode.rs::test::sym_normalize	test	ported	lib/regex-syntax/spec/unicode_spec.cr	Symbolic Unicode property-name normalization covered in Crystal Unicode specs
+src/unicode.rs::test::valid_utf8_symbolic	test	ported	lib/regex-syntax/spec/unicode_spec.cr	Symbolic-name byte normalization preserves valid UTF-8 in Crystal Unicode specs
 src/unicode_tables/age.rs::const::BY_NAME	const	ported	Regex::Syntax::UnicodeTables::Age::BY_NAME	Normalized age lookup table ported
 src/unicode_tables/age.rs::const::V10_0	const	ported	Regex::Syntax::UnicodeTables::Age::V10_0	Generated age Unicode table constant ported
 src/unicode_tables/age.rs::const::V11_0	const	ported	Regex::Syntax::UnicodeTables::Age::V11_0	Generated age Unicode table constant ported
