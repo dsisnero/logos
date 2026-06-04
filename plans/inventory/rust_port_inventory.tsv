@@ -139,19 +139,19 @@ src/ast/parse.rs::test::parse_unsupported_backreference	test	missing	-	auto-gene
 src/ast/parse.rs::test::parse_unsupported_lookaround	test	missing	-	auto-generated
 src/ast/parse.rs::test::regression_454_nest_too_big	test	missing	-	auto-generated
 src/ast/parse.rs::test::regression_455_trailing_dash_ignore_whitespace	test	missing	-	auto-generated
-src/ast/print.rs::func::new	func	missing	-	auto-generated
-src/ast/print.rs::method::Printer.new	method	missing	-	auto-generated
-src/ast/print.rs::struct::Printer	struct	missing	-	auto-generated
-src/ast/print.rs::test::print_alternation	test	missing	-	auto-generated
-src/ast/print.rs::test::print_assertion	test	missing	-	auto-generated
-src/ast/print.rs::test::print_class	test	missing	-	auto-generated
-src/ast/print.rs::test::print_concat	test	missing	-	auto-generated
-src/ast/print.rs::test::print_dot	test	missing	-	auto-generated
-src/ast/print.rs::test::print_flags	test	missing	-	auto-generated
-src/ast/print.rs::test::print_group	test	missing	-	auto-generated
-src/ast/print.rs::test::print_literal	test	missing	-	auto-generated
-src/ast/print.rs::test::print_repetition	test	missing	-	auto-generated
-src/ast/visitor.rs::trait::Visitor	trait	missing	-	auto-generated
+src/ast/print.rs::func::new	func	ported	Regex::Syntax::AST::Printer.new	AST printer constructor ported
+src/ast/print.rs::method::Printer.new	method	ported	Regex::Syntax::AST::Printer.new	AST printer constructor ported
+src/ast/print.rs::struct::Printer	struct	ported	Regex::Syntax::AST::Printer	AST printer surface ported
+src/ast/print.rs::test::print_alternation	test	ported	lib/regex-syntax/spec/ast_print_visitor_parity_spec.cr	AST alternation printing covered in Crystal parity spec
+src/ast/print.rs::test::print_assertion	test	ported	lib/regex-syntax/spec/ast_print_visitor_parity_spec.cr	AST assertion printing covered in Crystal parity spec
+src/ast/print.rs::test::print_class	test	ported	lib/regex-syntax/spec/ast_print_visitor_parity_spec.cr	AST class printing covered in Crystal parity spec
+src/ast/print.rs::test::print_concat	test	ported	lib/regex-syntax/spec/ast_print_visitor_parity_spec.cr	AST concatenation printing covered in Crystal parity spec
+src/ast/print.rs::test::print_dot	test	ported	lib/regex-syntax/spec/ast_print_visitor_parity_spec.cr	AST dot printing covered in Crystal parity spec
+src/ast/print.rs::test::print_flags	test	ported	lib/regex-syntax/spec/ast_print_visitor_parity_spec.cr	AST flag printing covered in Crystal parity spec
+src/ast/print.rs::test::print_group	test	ported	lib/regex-syntax/spec/ast_print_visitor_parity_spec.cr	AST group printing covered in Crystal parity spec
+src/ast/print.rs::test::print_literal	test	ported	lib/regex-syntax/spec/ast_print_visitor_parity_spec.cr	AST literal printing covered in Crystal parity spec
+src/ast/print.rs::test::print_repetition	test	ported	lib/regex-syntax/spec/ast_print_visitor_parity_spec.cr	AST repetition printing covered in Crystal parity spec
+src/ast/visitor.rs::trait::Visitor	trait	ported	Regex::Syntax::AST::Visitor, Regex::Syntax::AST.visit	AST visitor protocol and traversal entrypoint ported
 src/either.rs::enum::Either	enum	ported	Regex::Syntax::Either(Left, Right)	Internal binary sum helper ported as a generic Crystal struct with left/right constructors
 src/error.rs::enum::Error	enum	skipped	Regex::Syntax::Error, Regex::Syntax::AST::Error, Regex::Syntax::Hir::Error	Crystal raises structured exception subtypes directly instead of returning a wrapper sum enum
 src/error.rs::struct::Formatter	struct	ported	Regex::Syntax::Formatter(E)	Vendored formatter ported for AST and HIR error rendering
