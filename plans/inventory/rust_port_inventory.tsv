@@ -557,20 +557,20 @@ src/unicode_tables/general_category.rs::const::SYMBOL	const	ported	Regex::Syntax
 src/unicode_tables/general_category.rs::const::TITLECASE_LETTER	const	ported	Regex::Syntax::UnicodeTables::GeneralCategory::TITLECASE_LETTER	Generated general-category Unicode table constant ported
 src/unicode_tables/general_category.rs::const::UNASSIGNED	const	ported	Regex::Syntax::UnicodeTables::GeneralCategory::UNASSIGNED	Generated general-category Unicode table constant ported
 src/unicode_tables/general_category.rs::const::UPPERCASE_LETTER	const	ported	Regex::Syntax::UnicodeTables::GeneralCategory::UPPERCASE_LETTER	Generated general-category Unicode table constant ported
-src/unicode_tables/grapheme_cluster_break.rs::const::BY_NAME	const	missing	-	auto-generated
-src/unicode_tables/grapheme_cluster_break.rs::const::CONTROL	const	missing	-	auto-generated
-src/unicode_tables/grapheme_cluster_break.rs::const::CR	const	missing	-	auto-generated
-src/unicode_tables/grapheme_cluster_break.rs::const::EXTEND	const	missing	-	auto-generated
-src/unicode_tables/grapheme_cluster_break.rs::const::L	const	missing	-	auto-generated
-src/unicode_tables/grapheme_cluster_break.rs::const::LF	const	missing	-	auto-generated
-src/unicode_tables/grapheme_cluster_break.rs::const::LV	const	missing	-	auto-generated
-src/unicode_tables/grapheme_cluster_break.rs::const::LVT	const	missing	-	auto-generated
-src/unicode_tables/grapheme_cluster_break.rs::const::PREPEND	const	missing	-	auto-generated
-src/unicode_tables/grapheme_cluster_break.rs::const::REGIONAL_INDICATOR	const	missing	-	auto-generated
-src/unicode_tables/grapheme_cluster_break.rs::const::SPACINGMARK	const	missing	-	auto-generated
-src/unicode_tables/grapheme_cluster_break.rs::const::T	const	missing	-	auto-generated
-src/unicode_tables/grapheme_cluster_break.rs::const::V	const	missing	-	auto-generated
-src/unicode_tables/grapheme_cluster_break.rs::const::ZWJ	const	missing	-	auto-generated
+src/unicode_tables/grapheme_cluster_break.rs::const::BY_NAME	const	ported	Regex::Syntax::UnicodeTables::GraphemeClusterBreak::BY_NAME	Normalized grapheme-cluster-break lookup table ported
+src/unicode_tables/grapheme_cluster_break.rs::const::CONTROL	const	ported	Regex::Syntax::UnicodeTables::GraphemeClusterBreak::CONTROL	Generated grapheme-cluster-break Unicode table constant ported
+src/unicode_tables/grapheme_cluster_break.rs::const::CR	const	ported	Regex::Syntax::UnicodeTables::GraphemeClusterBreak::CR	Generated grapheme-cluster-break Unicode table constant ported
+src/unicode_tables/grapheme_cluster_break.rs::const::EXTEND	const	ported	Regex::Syntax::UnicodeTables::GraphemeClusterBreak::EXTEND	Generated grapheme-cluster-break Unicode table constant ported
+src/unicode_tables/grapheme_cluster_break.rs::const::L	const	ported	Regex::Syntax::UnicodeTables::GraphemeClusterBreak::L	Generated grapheme-cluster-break Unicode table constant ported
+src/unicode_tables/grapheme_cluster_break.rs::const::LF	const	ported	Regex::Syntax::UnicodeTables::GraphemeClusterBreak::LF	Generated grapheme-cluster-break Unicode table constant ported
+src/unicode_tables/grapheme_cluster_break.rs::const::LV	const	ported	Regex::Syntax::UnicodeTables::GraphemeClusterBreak::LV	Generated grapheme-cluster-break Unicode table constant ported
+src/unicode_tables/grapheme_cluster_break.rs::const::LVT	const	ported	Regex::Syntax::UnicodeTables::GraphemeClusterBreak::LVT	Generated grapheme-cluster-break Unicode table constant ported
+src/unicode_tables/grapheme_cluster_break.rs::const::PREPEND	const	ported	Regex::Syntax::UnicodeTables::GraphemeClusterBreak::PREPEND	Generated grapheme-cluster-break Unicode table constant ported
+src/unicode_tables/grapheme_cluster_break.rs::const::REGIONAL_INDICATOR	const	ported	Regex::Syntax::UnicodeTables::GraphemeClusterBreak::REGIONAL_INDICATOR	Generated grapheme-cluster-break Unicode table constant ported
+src/unicode_tables/grapheme_cluster_break.rs::const::SPACINGMARK	const	ported	Regex::Syntax::UnicodeTables::GraphemeClusterBreak::SPACINGMARK	Generated grapheme-cluster-break Unicode table constant ported
+src/unicode_tables/grapheme_cluster_break.rs::const::T	const	ported	Regex::Syntax::UnicodeTables::GraphemeClusterBreak::T	Generated grapheme-cluster-break Unicode table constant ported
+src/unicode_tables/grapheme_cluster_break.rs::const::V	const	ported	Regex::Syntax::UnicodeTables::GraphemeClusterBreak::V	Generated grapheme-cluster-break Unicode table constant ported
+src/unicode_tables/grapheme_cluster_break.rs::const::ZWJ	const	ported	Regex::Syntax::UnicodeTables::GraphemeClusterBreak::ZWJ	Generated grapheme-cluster-break Unicode table constant ported
 src/unicode_tables/perl_decimal.rs::const::BY_NAME	const	ported	Regex::Syntax::UnicodeTables::PerlDecimal::BY_NAME	Perl decimal table aliases general-category lookup table
 src/unicode_tables/perl_decimal.rs::const::DECIMAL_NUMBER	const	ported	Regex::Syntax::UnicodeTables::PerlDecimal::DECIMAL_NUMBER	Perl decimal table aliases general-category Decimal_Number ranges
 src/unicode_tables/perl_space.rs::const::BY_NAME	const	ported	Regex::Syntax::UnicodeTables::PerlSpace::BY_NAME	Perl space table aliases boolean-property lookup table
@@ -986,51 +986,51 @@ src/unicode_tables/script_extension.rs::const::WARANG_CITI	const	ported	Regex::S
 src/unicode_tables/script_extension.rs::const::YEZIDI	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::YEZIDI	Generated script-extension Unicode table constant ported
 src/unicode_tables/script_extension.rs::const::YI	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::YI	Generated script-extension Unicode table constant ported
 src/unicode_tables/script_extension.rs::const::ZANABAZAR_SQUARE	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::ZANABAZAR_SQUARE	Generated script-extension Unicode table constant ported
-src/unicode_tables/sentence_break.rs::const::ATERM	const	missing	-	auto-generated
-src/unicode_tables/sentence_break.rs::const::BY_NAME	const	missing	-	auto-generated
-src/unicode_tables/sentence_break.rs::const::CLOSE	const	missing	-	auto-generated
-src/unicode_tables/sentence_break.rs::const::CR	const	missing	-	auto-generated
-src/unicode_tables/sentence_break.rs::const::EXTEND	const	missing	-	auto-generated
-src/unicode_tables/sentence_break.rs::const::FORMAT	const	missing	-	auto-generated
-src/unicode_tables/sentence_break.rs::const::LF	const	missing	-	auto-generated
-src/unicode_tables/sentence_break.rs::const::LOWER	const	missing	-	auto-generated
-src/unicode_tables/sentence_break.rs::const::NUMERIC	const	missing	-	auto-generated
-src/unicode_tables/sentence_break.rs::const::OLETTER	const	missing	-	auto-generated
-src/unicode_tables/sentence_break.rs::const::SCONTINUE	const	missing	-	auto-generated
-src/unicode_tables/sentence_break.rs::const::SEP	const	missing	-	auto-generated
-src/unicode_tables/sentence_break.rs::const::SP	const	missing	-	auto-generated
-src/unicode_tables/sentence_break.rs::const::STERM	const	missing	-	auto-generated
-src/unicode_tables/sentence_break.rs::const::UPPER	const	missing	-	auto-generated
-src/unicode_tables/word_break.rs::const::ALETTER	const	missing	-	auto-generated
-src/unicode_tables/word_break.rs::const::BY_NAME	const	missing	-	auto-generated
-src/unicode_tables/word_break.rs::const::CR	const	missing	-	auto-generated
-src/unicode_tables/word_break.rs::const::DOUBLE_QUOTE	const	missing	-	auto-generated
-src/unicode_tables/word_break.rs::const::EXTEND	const	missing	-	auto-generated
-src/unicode_tables/word_break.rs::const::EXTENDNUMLET	const	missing	-	auto-generated
-src/unicode_tables/word_break.rs::const::FORMAT	const	missing	-	auto-generated
-src/unicode_tables/word_break.rs::const::HEBREW_LETTER	const	missing	-	auto-generated
-src/unicode_tables/word_break.rs::const::KATAKANA	const	missing	-	auto-generated
-src/unicode_tables/word_break.rs::const::LF	const	missing	-	auto-generated
-src/unicode_tables/word_break.rs::const::MIDLETTER	const	missing	-	auto-generated
-src/unicode_tables/word_break.rs::const::MIDNUM	const	missing	-	auto-generated
-src/unicode_tables/word_break.rs::const::MIDNUMLET	const	missing	-	auto-generated
-src/unicode_tables/word_break.rs::const::NEWLINE	const	missing	-	auto-generated
-src/unicode_tables/word_break.rs::const::NUMERIC	const	missing	-	auto-generated
-src/unicode_tables/word_break.rs::const::REGIONAL_INDICATOR	const	missing	-	auto-generated
-src/unicode_tables/word_break.rs::const::SINGLE_QUOTE	const	missing	-	auto-generated
-src/unicode_tables/word_break.rs::const::WSEGSPACE	const	missing	-	auto-generated
-src/unicode_tables/word_break.rs::const::ZWJ	const	missing	-	auto-generated
-src/utf8.rs::enum::Utf8Sequence	enum	missing	-	auto-generated
-src/utf8.rs::func::as_slice	func	missing	-	auto-generated
-src/utf8.rs::func::len	func	missing	-	auto-generated
-src/utf8.rs::func::matches	func	missing	-	auto-generated
-src/utf8.rs::func::new	func	missing	-	auto-generated
-src/utf8.rs::func::reset	func	missing	-	auto-generated
-src/utf8.rs::func::reverse	func	missing	-	auto-generated
-src/utf8.rs::method::Utf8Sequences.new	method	missing	-	auto-generated
-src/utf8.rs::struct::Utf8Range	struct	missing	-	auto-generated
-src/utf8.rs::struct::Utf8Sequences	struct	missing	-	auto-generated
-src/utf8.rs::test::bmp	test	missing	-	auto-generated
-src/utf8.rs::test::codepoints_no_surrogates	test	missing	-	auto-generated
-src/utf8.rs::test::reverse	test	missing	-	auto-generated
-src/utf8.rs::test::single_codepoint_one_sequence	test	missing	-	auto-generated
+src/unicode_tables/sentence_break.rs::const::ATERM	const	ported	Regex::Syntax::UnicodeTables::SentenceBreak::ATERM	Generated sentence-break Unicode table constant ported
+src/unicode_tables/sentence_break.rs::const::BY_NAME	const	ported	Regex::Syntax::UnicodeTables::SentenceBreak::BY_NAME	Normalized sentence-break lookup table ported
+src/unicode_tables/sentence_break.rs::const::CLOSE	const	ported	Regex::Syntax::UnicodeTables::SentenceBreak::CLOSE	Generated sentence-break Unicode table constant ported
+src/unicode_tables/sentence_break.rs::const::CR	const	ported	Regex::Syntax::UnicodeTables::SentenceBreak::CR	Generated sentence-break Unicode table constant ported
+src/unicode_tables/sentence_break.rs::const::EXTEND	const	ported	Regex::Syntax::UnicodeTables::SentenceBreak::EXTEND	Generated sentence-break Unicode table constant ported
+src/unicode_tables/sentence_break.rs::const::FORMAT	const	ported	Regex::Syntax::UnicodeTables::SentenceBreak::FORMAT	Generated sentence-break Unicode table constant ported
+src/unicode_tables/sentence_break.rs::const::LF	const	ported	Regex::Syntax::UnicodeTables::SentenceBreak::LF	Generated sentence-break Unicode table constant ported
+src/unicode_tables/sentence_break.rs::const::LOWER	const	ported	Regex::Syntax::UnicodeTables::SentenceBreak::LOWER	Generated sentence-break Unicode table constant ported
+src/unicode_tables/sentence_break.rs::const::NUMERIC	const	ported	Regex::Syntax::UnicodeTables::SentenceBreak::NUMERIC	Generated sentence-break Unicode table constant ported
+src/unicode_tables/sentence_break.rs::const::OLETTER	const	ported	Regex::Syntax::UnicodeTables::SentenceBreak::OLETTER	Generated sentence-break Unicode table constant ported
+src/unicode_tables/sentence_break.rs::const::SCONTINUE	const	ported	Regex::Syntax::UnicodeTables::SentenceBreak::SCONTINUE	Generated sentence-break Unicode table constant ported
+src/unicode_tables/sentence_break.rs::const::SEP	const	ported	Regex::Syntax::UnicodeTables::SentenceBreak::SEP	Generated sentence-break Unicode table constant ported
+src/unicode_tables/sentence_break.rs::const::SP	const	ported	Regex::Syntax::UnicodeTables::SentenceBreak::SP	Generated sentence-break Unicode table constant ported
+src/unicode_tables/sentence_break.rs::const::STERM	const	ported	Regex::Syntax::UnicodeTables::SentenceBreak::STERM	Generated sentence-break Unicode table constant ported
+src/unicode_tables/sentence_break.rs::const::UPPER	const	ported	Regex::Syntax::UnicodeTables::SentenceBreak::UPPER	Generated sentence-break Unicode table constant ported
+src/unicode_tables/word_break.rs::const::ALETTER	const	ported	Regex::Syntax::UnicodeTables::WordBreak::ALETTER	Generated word-break Unicode table constant ported
+src/unicode_tables/word_break.rs::const::BY_NAME	const	ported	Regex::Syntax::UnicodeTables::WordBreak::BY_NAME	Normalized word-break lookup table ported
+src/unicode_tables/word_break.rs::const::CR	const	ported	Regex::Syntax::UnicodeTables::WordBreak::CR	Generated word-break Unicode table constant ported
+src/unicode_tables/word_break.rs::const::DOUBLE_QUOTE	const	ported	Regex::Syntax::UnicodeTables::WordBreak::DOUBLE_QUOTE	Generated word-break Unicode table constant ported
+src/unicode_tables/word_break.rs::const::EXTEND	const	ported	Regex::Syntax::UnicodeTables::WordBreak::EXTEND	Generated word-break Unicode table constant ported
+src/unicode_tables/word_break.rs::const::EXTENDNUMLET	const	ported	Regex::Syntax::UnicodeTables::WordBreak::EXTENDNUMLET	Generated word-break Unicode table constant ported
+src/unicode_tables/word_break.rs::const::FORMAT	const	ported	Regex::Syntax::UnicodeTables::WordBreak::FORMAT	Generated word-break Unicode table constant ported
+src/unicode_tables/word_break.rs::const::HEBREW_LETTER	const	ported	Regex::Syntax::UnicodeTables::WordBreak::HEBREW_LETTER	Generated word-break Unicode table constant ported
+src/unicode_tables/word_break.rs::const::KATAKANA	const	ported	Regex::Syntax::UnicodeTables::WordBreak::KATAKANA	Generated word-break Unicode table constant ported
+src/unicode_tables/word_break.rs::const::LF	const	ported	Regex::Syntax::UnicodeTables::WordBreak::LF	Generated word-break Unicode table constant ported
+src/unicode_tables/word_break.rs::const::MIDLETTER	const	ported	Regex::Syntax::UnicodeTables::WordBreak::MIDLETTER	Generated word-break Unicode table constant ported
+src/unicode_tables/word_break.rs::const::MIDNUM	const	ported	Regex::Syntax::UnicodeTables::WordBreak::MIDNUM	Generated word-break Unicode table constant ported
+src/unicode_tables/word_break.rs::const::MIDNUMLET	const	ported	Regex::Syntax::UnicodeTables::WordBreak::MIDNUMLET	Generated word-break Unicode table constant ported
+src/unicode_tables/word_break.rs::const::NEWLINE	const	ported	Regex::Syntax::UnicodeTables::WordBreak::NEWLINE	Generated word-break Unicode table constant ported
+src/unicode_tables/word_break.rs::const::NUMERIC	const	ported	Regex::Syntax::UnicodeTables::WordBreak::NUMERIC	Generated word-break Unicode table constant ported
+src/unicode_tables/word_break.rs::const::REGIONAL_INDICATOR	const	ported	Regex::Syntax::UnicodeTables::WordBreak::REGIONAL_INDICATOR	Generated word-break Unicode table constant ported
+src/unicode_tables/word_break.rs::const::SINGLE_QUOTE	const	ported	Regex::Syntax::UnicodeTables::WordBreak::SINGLE_QUOTE	Generated word-break Unicode table constant ported
+src/unicode_tables/word_break.rs::const::WSEGSPACE	const	ported	Regex::Syntax::UnicodeTables::WordBreak::WSEGSPACE	Generated word-break Unicode table constant ported
+src/unicode_tables/word_break.rs::const::ZWJ	const	ported	Regex::Syntax::UnicodeTables::WordBreak::ZWJ	Generated word-break Unicode table constant ported
+src/utf8.rs::enum::Utf8Sequence	enum	ported	Regex::Syntax::Utf8::Utf8Sequence.one, Regex::Syntax::Utf8::Utf8Sequence.two, Regex::Syntax::Utf8::Utf8Sequence.three, Regex::Syntax::Utf8::Utf8Sequence.four	Rust enum variants modeled by a Crystal struct with arity-specific constructors
+src/utf8.rs::func::as_slice	func	ported	Regex::Syntax::Utf8::Utf8Sequence#as_slice	Utf8Sequence exposes underlying byte-range slice
+src/utf8.rs::func::len	func	ported	Regex::Syntax::Utf8::Utf8Sequence#len	Utf8Sequence reports byte-range arity
+src/utf8.rs::func::matches	func	ported	Regex::Syntax::Utf8::Utf8Range#matches, Regex::Syntax::Utf8::Utf8Sequence#matches	Utf8 byte-range and sequence matching helpers ported
+src/utf8.rs::func::new	func	ported	Regex::Syntax::Utf8::Utf8Range.new, Regex::Syntax::Utf8::Utf8Sequence.new	Utf8 range and sequence constructors ported
+src/utf8.rs::func::reset	func	ported	Regex::Syntax::Utf8::Utf8Sequences#reset	Utf8 scalar-range iterator reset helper ported
+src/utf8.rs::func::reverse	func	ported	Regex::Syntax::Utf8::Utf8Sequence#reverse, Regex::Syntax::Utf8::Utf8Sequence#reverse!	Utf8Sequence reversal helpers ported
+src/utf8.rs::method::Utf8Sequences.new	method	ported	Regex::Syntax::Utf8::Utf8Sequences.new	Utf8 scalar-range iterator initializer ported
+src/utf8.rs::struct::Utf8Range	struct	ported	Regex::Syntax::Utf8::Utf8Range	Utf8 byte-range value object ported
+src/utf8.rs::struct::Utf8Sequences	struct	ported	Regex::Syntax::Utf8::Utf8Sequences	Utf8 scalar-range iterator ported
+src/utf8.rs::test::bmp	test	ported	lib/regex-syntax/spec/utf8_spec.cr	BMP UTF-8 byte-sequence generation covered in Crystal UTF-8 specs
+src/utf8.rs::test::codepoints_no_surrogates	test	ported	lib/regex-syntax/spec/utf8_spec.cr	Surrogate exclusion behavior covered in Crystal UTF-8 specs
+src/utf8.rs::test::reverse	test	ported	lib/regex-syntax/spec/utf8_spec.cr	Utf8Sequence reversal behavior covered in Crystal UTF-8 specs
+src/utf8.rs::test::single_codepoint_one_sequence	test	ported	lib/regex-syntax/spec/utf8_spec.cr	Single-codepoint sequence generation covered in Crystal UTF-8 specs
