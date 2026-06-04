@@ -232,12 +232,12 @@ macro logos_derive(type)
     end
 
     private def self.patterns_overlap?(left_hir : ::Regex::Syntax::Hir::Hir, right_hir : ::Regex::Syntax::Hir::Hir) : Bool
-      left_nfa = ::Regex::Automata::HirCompiler.new(utf8: {{ utf8_flag }}).compile(left_hir)
-      right_nfa = ::Regex::Automata::HirCompiler.new(utf8: {{ utf8_flag }}).compile(right_hir)
-      left_dfa = ::Regex::Automata::DFA::Builder.new(left_nfa).build
-      right_dfa = ::Regex::Automata::DFA::Builder.new(right_nfa).build
+      left_nfa = ::Regex::Automata::HirCompiler.new(::Regex::Automata::HirCompilerConfig.new(utf8: {{ utf8_flag }})).compile(left_hir)
+      right_nfa = ::Regex::Automata::HirCompiler.new(::Regex::Automata::HirCompilerConfig.new(utf8: {{ utf8_flag }})).compile(right_hir)
+        left_dfa = ::Regex::Automata::DFA::Builder.new(nfa: left_nfa, track_delayed_matches: false).build
+        right_dfa = ::Regex::Automata::DFA::Builder.new(nfa: right_nfa, track_delayed_matches: false).build
 
-      queue = [{left_dfa.start, right_dfa.start}]
+        queue = [{left_dfa.start_anchored, right_dfa.start_anchored}]
       visited = Set(Tuple(::Regex::Automata::StateID, ::Regex::Automata::StateID)).new
 
       until queue.empty?
@@ -254,8 +254,9 @@ macro logos_derive(type)
           byte_u8 = byte.to_u8
           left_next = left_state.next[left_dfa.byte_classifier[byte_u8]]
           right_next = right_state.next[right_dfa.byte_classifier[byte_u8]]
-          next if left_next.to_i < 0 || right_next.to_i < 0
-          queue << {left_next, right_next}
+            next if left_next == ::Regex::Automata::DFA::DEAD_STATE_ID ||
+                    right_next == ::Regex::Automata::DFA::DEAD_STATE_ID
+            queue << {left_next, right_next}
         end
       end
 
@@ -379,11 +380,11 @@ macro logos_derive(type)
         {% if subpatterns.size > 0 %}
           pattern_source = self.substitute_subpatterns({{ pattern_node }})
           pattern_uses_subpattern = {{ pattern_node }}.includes?("(?&")
-          hir = ::Regex::Syntax.parse(pattern_source, unicode: {{ utf8_flag }})
+          hir = ::Regex::Syntax.parse(pattern_source, unicode: {{ utf8_flag }}, utf8: {{ utf8_flag }})
         {% else %}
           pattern_source = {{ pattern_node }}
           pattern_uses_subpattern = false
-          hir = ::Regex::Syntax.parse(pattern_source, unicode: {{ utf8_flag }})
+          hir = ::Regex::Syntax.parse(pattern_source, unicode: {{ utf8_flag }}, utf8: {{ utf8_flag }})
         {% end %}
         {% if item[:ignore_case] %}
           {% if utf8_flag %}
@@ -430,7 +431,7 @@ macro logos_derive(type)
       if hirs.empty?
         dead_state = ::Regex::Automata::DFA::State.new(::Regex::Automata::StateID.new(0), 256)
         256.times { |i| dead_state.set_transition(i, ::Regex::Automata::StateID.new(-1)) }
-        dfa = ::Regex::Automata::DFA::DFA.new([dead_state], ::Regex::Automata::StateID.new(0), 256)
+        dfa = ::Regex::Automata::DFA::DFA.new([dead_state], nil, ::Regex::Automata::StateID.new(0), 256)
         return {dfa: dfa, pattern_to_variant: pattern_to_variant, pattern_is_skip: pattern_is_skip, pattern_priority: pattern_priority, error_variant: error_variant}
       end
 
@@ -444,10 +445,10 @@ macro logos_derive(type)
         end
       end
 
-      hir_compiler = ::Regex::Automata::HirCompiler.new(utf8: {{ utf8_flag }})
+      hir_compiler = ::Regex::Automata::HirCompiler.new(::Regex::Automata::HirCompilerConfig.new(utf8: {{ utf8_flag }}))
       nfa = hir_compiler.compile_multi(hirs)
 
-      dfa_builder = ::Regex::Automata::DFA::Builder.new(nfa)
+      dfa_builder = ::Regex::Automata::DFA::Builder.new(nfa: nfa)
       dfa = dfa_builder.build
 
       {dfa: dfa, pattern_to_variant: pattern_to_variant, pattern_is_skip: pattern_is_skip, pattern_priority: pattern_priority, error_variant: error_variant}
@@ -489,7 +490,7 @@ macro logos_derive(type)
       pattern_is_skip = compiled[:pattern_is_skip]
       pattern_priority = compiled[:pattern_priority]
 
-      match = dfa.find_longest_match(lexer.remainder)
+      match = dfa.find_longest_match_at_start(lexer.remainder)
       if match
         end_pos, pattern_ids = match
         pattern_id = if pattern_ids.size == 1

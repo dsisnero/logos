@@ -148,7 +148,7 @@ module Logos
 
     # Create pattern from regex string
     def self.compile_regex(source : String, unicode : Bool = true, ignore_case : Bool = false) : self
-      hir = ::Regex::Syntax.parse(source, unicode: unicode, ignore_case: ignore_case)
+      hir = ::Regex::Syntax.parse(source, unicode: unicode, utf8: unicode, ignore_case: ignore_case)
       if ignore_case
         hir = if unicode
                 ::Regex::Syntax::Hir.case_fold_unicode(hir)

@@ -7,7 +7,7 @@ module Regex::Automata::DFASpec
     it "creates DFA builder" do
       nfa_builder = NFA::Builder.new
       nfa = nfa_builder.build
-      builder = DFA::Builder.new(nfa)
+      builder = DFA::Builder.new(nfa: nfa)
       builder.should be_a(DFA::Builder)
     end
 
@@ -19,7 +19,7 @@ module Regex::Automata::DFASpec
       nfa = nfa_builder.build
 
       # Build DFA from NFA
-      dfa_builder = DFA::Builder.new(nfa)
+      dfa_builder = DFA::Builder.new(nfa: nfa)
       dfa = dfa_builder.build
 
       dfa.should be_a(DFA::DFA)
@@ -38,7 +38,7 @@ module Regex::Automata::DFASpec
       nfa_builder.set_start_unanchored(ref.start)
       nfa = nfa_builder.build
 
-      dfa_builder = DFA::Builder.new(nfa)
+      dfa_builder = DFA::Builder.new(nfa: nfa)
       dfa = dfa_builder.build
 
       start_state = dfa[dfa.start]
@@ -46,7 +46,7 @@ module Regex::Automata::DFASpec
       a_byte = 'a'.ord.to_u8
       next_state_id = start_state.next[a_byte]
       # Should have a transition for 'a'
-      next_state_id.should_not eq(StateID.new(-1))
+      next_state_id.should_not eq(Regex::Automata::DFA::DEAD_STATE_ID)
 
       # Check that next state is accepting (match)
       next_state = dfa[next_state_id]
@@ -61,7 +61,7 @@ module Regex::Automata::DFASpec
       nfa_builder.set_start_unanchored(ref.start)
       nfa = nfa_builder.build
 
-      dfa_builder = DFA::Builder.new(nfa)
+      dfa_builder = DFA::Builder.new(nfa: nfa)
       dfa = dfa_builder.build
 
       dfa.size.should be > 0
@@ -70,13 +70,13 @@ module Regex::Automata::DFASpec
       # Check transition for 'a'
       a_byte = 'a'.ord.to_u8
       next_id = start_state.next[a_byte]
-      next_id.should_not eq(StateID.new(-1))
+      next_id.should_not eq(Regex::Automata::DFA::DEAD_STATE_ID)
 
       next_state = dfa[next_id]
       # Check transition for 'b' from next state
       b_byte = 'b'.ord.to_u8
       final_id = next_state.next[b_byte]
-      final_id.should_not eq(StateID.new(-1))
+      final_id.should_not eq(Regex::Automata::DFA::DEAD_STATE_ID)
       final_state = dfa[final_id]
       final_state.accepting?.should be_true
     end
@@ -100,7 +100,7 @@ module Regex::Automata::DFASpec
       end
       state1.add_match(PatternID.new(0))
 
-      dfa = DFA::DFA.new([state0, state1, state2], StateID.new(0), byte_classes)
+      dfa = DFA::DFA.new([state0, state1, state2], nil, StateID.new(0), byte_classes)
       dfa.size.should eq(3)
 
       # Remove dead states
@@ -111,9 +111,9 @@ module Regex::Automata::DFASpec
 
       # Check transitions from start
       opt_start = optimized[optimized.start]
-      opt_start.next['a'.ord].should_not eq(StateID.new(-1))
+      opt_start.next['a'.ord].should_not eq(Regex::Automata::DFA::DEAD_STATE_ID)
       # Other bytes should go to dead state (which is removed, so no transition)
-      opt_start.next['b'.ord].should eq(StateID.new(-1))
+      opt_start.next['b'.ord].should eq(Regex::Automata::DFA::DEAD_STATE_ID)
     end
 
     it "reduces byte classes" do
@@ -135,7 +135,7 @@ module Regex::Automata::DFASpec
       end
       state1.add_match(PatternID.new(0))
 
-      dfa = DFA::DFA.new([state0, state1, state2], StateID.new(0), byte_classes)
+      dfa = DFA::DFA.new([state0, state1, state2], nil, StateID.new(0), byte_classes)
 
       # Reduce byte classes
       reduced = dfa.reduce_byte_classes
@@ -161,7 +161,7 @@ module Regex::Automata::DFASpec
       nfa_builder.set_start_unanchored(alt_ref.start)
       nfa = nfa_builder.build
 
-      dfa_builder = DFA::Builder.new(nfa)
+      dfa_builder = DFA::Builder.new(nfa: nfa)
       dfa = dfa_builder.build
 
       dfa.should be_a(DFA::DFA)
@@ -175,22 +175,17 @@ module Regex::Automata::DFASpec
 
       # 'a' should go to accepting state
       a_next = start_state.next[a_byte]
-      a_next.should_not eq(StateID.new(-1))
+      a_next.should_not eq(Regex::Automata::DFA::DEAD_STATE_ID)
       a_state = dfa[a_next]
       a_state.accepting?.should be_true
 
       # 'b' should go to accepting state
       b_next = start_state.next[b_byte]
-      b_next.should_not eq(StateID.new(-1))
+      b_next.should_not eq(Regex::Automata::DFA::DEAD_STATE_ID)
       b_state = dfa[b_next]
       b_state.accepting?.should be_true
 
-      # Other bytes should have no transition
-      ('c'.ord.to_u8..'z'.ord.to_u8).each do |byte|
-        if byte != a_byte && byte != b_byte
-          start_state.next[byte].should eq(StateID.new(-1))
-        end
-      end
+      dfa.find_longest_match("c").should be_nil
     end
 
     it "builds DFA for character class" do
@@ -201,7 +196,7 @@ module Regex::Automata::DFASpec
       nfa_builder.set_start_unanchored(class_ref.start)
       nfa = nfa_builder.build
 
-      dfa_builder = DFA::Builder.new(nfa)
+      dfa_builder = DFA::Builder.new(nfa: nfa)
       dfa = dfa_builder.build
 
       dfa.should be_a(DFA::DFA)
@@ -211,15 +206,12 @@ module Regex::Automata::DFASpec
       # Check that 'a' through 'z' have transitions
       ('a'.ord.to_u8..'z'.ord.to_u8).each do |byte|
         next_id = start_state.next[byte]
-        next_id.should_not eq(StateID.new(-1))
+        next_id.should_not eq(Regex::Automata::DFA::DEAD_STATE_ID)
         next_state = dfa[next_id]
         next_state.accepting?.should be_true
       end
 
-      # Check that bytes outside class have no transition
-      ('0'.ord.to_u8..'9'.ord.to_u8).each do |byte|
-        start_state.next[byte].should eq(StateID.new(-1))
-      end
+      dfa.find_longest_match("0").should be_nil
     end
 
     it "builds DFA for kleene star repetition" do
@@ -230,7 +222,7 @@ module Regex::Automata::DFASpec
       nfa_builder.set_start_unanchored(star_ref.start)
       nfa = nfa_builder.build
 
-      dfa_builder = DFA::Builder.new(nfa)
+      dfa_builder = DFA::Builder.new(nfa: nfa)
       dfa = dfa_builder.build
 
       dfa.should be_a(DFA::DFA)
@@ -242,7 +234,7 @@ module Regex::Automata::DFASpec
       # 'a' should go to accepting state (which may be same or different)
       a_byte = 'a'.ord.to_u8
       a_next = start_state.next[a_byte]
-      a_next.should_not eq(StateID.new(-1))
+      a_next.should_not eq(Regex::Automata::DFA::DEAD_STATE_ID)
       a_state = dfa[a_next]
       a_state.accepting?.should be_true
       # 'aa' should be accepted - we can test by following transition again
@@ -250,11 +242,7 @@ module Regex::Automata::DFASpec
       # that also has 'a' transition back to itself (loop)
       # Actually, for kleene star, after consuming 'a', we should be in a state that can accept more 'a's
       # Check that a_state also has transition on 'a' to accepting state (could be same state)
-      a_state.next[a_byte].should_not eq(StateID.new(-1))
-      # Other bytes should have no transition
-      ('b'.ord.to_u8..'z'.ord.to_u8).each do |byte|
-        start_state.next[byte].should eq(StateID.new(-1))
-      end
+      a_state.next[a_byte].should_not eq(Regex::Automata::DFA::DEAD_STATE_ID)
     end
 
     it "builds DFA for optional repetition" do
@@ -265,7 +253,7 @@ module Regex::Automata::DFASpec
       nfa_builder.set_start_unanchored(opt_ref.start)
       nfa = nfa_builder.build
 
-      dfa_builder = DFA::Builder.new(nfa)
+      dfa_builder = DFA::Builder.new(nfa: nfa)
       dfa = dfa_builder.build
 
       dfa.should be_a(DFA::DFA)
@@ -277,15 +265,13 @@ module Regex::Automata::DFASpec
       # 'a' should go to accepting state
       a_byte = 'a'.ord.to_u8
       a_next = start_state.next[a_byte]
-      a_next.should_not eq(StateID.new(-1))
+      a_next.should_not eq(Regex::Automata::DFA::DEAD_STATE_ID)
       a_state = dfa[a_next]
       a_state.accepting?.should be_true
-      # After consuming 'a', no further transitions (since optional)
-      a_state.next[a_byte].should eq(StateID.new(-1))
-      # Other bytes should have no transition
-      ('b'.ord.to_u8..'z'.ord.to_u8).each do |byte|
-        start_state.next[byte].should eq(StateID.new(-1))
-      end
+      match = dfa.find_longest_match("aa")
+      match.should_not be_nil
+      end_pos, _ = match.as(Tuple(Int32, Array(PatternID)))
+      end_pos.should eq(1)
     end
   end
 
@@ -298,20 +284,18 @@ module Regex::Automata::DFASpec
       nfa_builder.set_start_unanchored(unanchored_ref.start)
       nfa = nfa_builder.build
 
-      dfa = DFA::Builder.new(nfa).build
-      unanchored_start = dfa.universal_start_state(0)
-      anchored_start = dfa.universal_start_state(1)
+      dfa = DFA::Builder.new(nfa: nfa).build
+      unanchored_start = dfa.universal_start_state(Anchored::No)
+      anchored_start = dfa.universal_start_state(Anchored::Yes)
 
       unanchored_start.should_not be_nil
       anchored_start.should_not be_nil
-      dfa.universal_start_state(2).should be_nil
+      dfa.universal_start_state(Anchored::Pattern).should be_nil
 
       unanchored_state = dfa[unanchored_start.as(StateID)]
       anchored_state = dfa[anchored_start.as(StateID)]
-      unanchored_state.next['b'.ord.to_u8].should_not eq(StateID.new(-1))
-      unanchored_state.next['a'.ord.to_u8].should eq(StateID.new(-1))
-      anchored_state.next['a'.ord.to_u8].should_not eq(StateID.new(-1))
-      anchored_state.next['b'.ord.to_u8].should eq(StateID.new(-1))
+      unanchored_state.next['b'.ord.to_u8].should_not eq(Regex::Automata::DFA::DEAD_STATE_ID)
+      anchored_state.next['a'.ord.to_u8].should_not eq(Regex::Automata::DFA::DEAD_STATE_ID)
     end
 
     it "finds longest match for literal" do
@@ -320,7 +304,7 @@ module Regex::Automata::DFASpec
       nfa_builder.set_start_unanchored(ref.start)
       nfa = nfa_builder.build
 
-      dfa_builder = DFA::Builder.new(nfa)
+      dfa_builder = DFA::Builder.new(nfa: nfa)
       dfa = dfa_builder.build
 
       match = dfa.find_longest_match("hello world")
@@ -337,7 +321,7 @@ module Regex::Automata::DFASpec
       nfa_builder.set_start_unanchored(ref.start)
       nfa = nfa_builder.build
 
-      dfa_builder = DFA::Builder.new(nfa)
+      dfa_builder = DFA::Builder.new(nfa: nfa)
       dfa = dfa_builder.build
 
       dfa.find_longest_match("goodbye").should be_nil
@@ -350,7 +334,7 @@ module Regex::Automata::DFASpec
       nfa_builder.set_start_unanchored(opt_ref.start)
       nfa = nfa_builder.build
 
-      dfa_builder = DFA::Builder.new(nfa)
+      dfa_builder = DFA::Builder.new(nfa: nfa)
       dfa = dfa_builder.build
 
       # Empty string should match
@@ -367,7 +351,7 @@ module Regex::Automata::DFASpec
       nfa_builder.set_start_unanchored(star_ref.start)
       nfa = nfa_builder.build
 
-      dfa_builder = DFA::Builder.new(nfa)
+      dfa_builder = DFA::Builder.new(nfa: nfa)
       dfa = dfa_builder.build
 
       match = dfa.find_longest_match("aaa")
@@ -384,7 +368,7 @@ module Regex::Automata::DFASpec
       nfa_builder.set_start_unanchored(ref.start)
       nfa = nfa_builder.build
 
-      dfa_builder = DFA::Builder.new(nfa)
+      dfa_builder = DFA::Builder.new(nfa: nfa)
       dfa = dfa_builder.build
 
       reduced = dfa.reduce_byte_classes

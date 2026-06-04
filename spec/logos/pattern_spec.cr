@@ -140,7 +140,7 @@ describe Logos::Pattern do
       repetition = node.as(Regex::Syntax::Hir::Repetition)
       repetition.min.should eq(1)
       repetition.max.should be_nil
-      repetition.greedy.should be_true
+      repetition.greedy?.should be_true
     end
 
     it "parses alternation" do
@@ -182,8 +182,7 @@ describe Logos::Pattern do
 
     it "parses shorthand classes" do
       pattern = Logos::Pattern.compile_regex("\\d")
-      pattern.hir.as(Regex::Syntax::Hir::Hir).node.should be_a(Regex::Syntax::Hir::CharClass)
-      # Note: In HIR, \d is represented as CharClass with digit intervals
+      pattern.hir.as(Regex::Syntax::Hir::Hir).node.should be_a(Regex::Syntax::Hir::UnicodeClass)
     end
   end
 end
