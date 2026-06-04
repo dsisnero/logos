@@ -170,73 +170,73 @@ src/hir/interval.rs::struct::IntervalSet	struct	missing	-	auto-generated
 src/hir/interval.rs::struct::IntervalSetIter	struct	missing	-	auto-generated
 src/hir/interval.rs::trait::Bound	trait	missing	-	auto-generated
 src/hir/interval.rs::trait::Interval	trait	missing	-	auto-generated
-src/hir/literal.rs::enum::ExtractKind	enum	missing	-	auto-generated
-src/hir/literal.rs::func::as_bytes	func	missing	-	auto-generated
-src/hir/literal.rs::func::cross_forward	func	missing	-	auto-generated
-src/hir/literal.rs::func::cross_reverse	func	missing	-	auto-generated
-src/hir/literal.rs::func::dedup	func	missing	-	auto-generated
-src/hir/literal.rs::func::empty	func	missing	-	auto-generated
-src/hir/literal.rs::func::extend	func	missing	-	auto-generated
-src/hir/literal.rs::func::extract	func	missing	-	auto-generated
-src/hir/literal.rs::func::infinite	func	missing	-	auto-generated
-src/hir/literal.rs::func::into_bytes	func	missing	-	auto-generated
-src/hir/literal.rs::func::is_empty	func	missing	-	auto-generated
-src/hir/literal.rs::func::is_exact	func	missing	-	auto-generated
-src/hir/literal.rs::func::is_finite	func	missing	-	auto-generated
-src/hir/literal.rs::func::is_inexact	func	missing	-	auto-generated
-src/hir/literal.rs::func::is_prefix	func	missing	-	auto-generated
-src/hir/literal.rs::func::is_suffix	func	missing	-	auto-generated
-src/hir/literal.rs::func::keep_first_bytes	func	missing	-	auto-generated
-src/hir/literal.rs::func::keep_last_bytes	func	missing	-	auto-generated
-src/hir/literal.rs::func::kind	func	missing	-	auto-generated
-src/hir/literal.rs::func::len	func	missing	-	auto-generated
-src/hir/literal.rs::func::limit_class	func	missing	-	auto-generated
-src/hir/literal.rs::func::limit_literal_len	func	missing	-	auto-generated
-src/hir/literal.rs::func::limit_repeat	func	missing	-	auto-generated
-src/hir/literal.rs::func::limit_total	func	missing	-	auto-generated
-src/hir/literal.rs::func::literals	func	missing	-	auto-generated
-src/hir/literal.rs::func::longest_common_prefix	func	missing	-	auto-generated
-src/hir/literal.rs::func::longest_common_suffix	func	missing	-	auto-generated
-src/hir/literal.rs::func::make_inexact	func	missing	-	auto-generated
-src/hir/literal.rs::func::make_infinite	func	missing	-	auto-generated
-src/hir/literal.rs::func::max_cross_len	func	missing	-	auto-generated
-src/hir/literal.rs::func::max_literal_len	func	missing	-	auto-generated
-src/hir/literal.rs::func::max_union_len	func	missing	-	auto-generated
-src/hir/literal.rs::func::min_literal_len	func	missing	-	auto-generated
-src/hir/literal.rs::func::minimize_by_preference	func	missing	-	auto-generated
-src/hir/literal.rs::func::new	func	missing	-	auto-generated
-src/hir/literal.rs::func::optimize_for_prefix_by_preference	func	missing	-	auto-generated
-src/hir/literal.rs::func::optimize_for_suffix_by_preference	func	missing	-	auto-generated
-src/hir/literal.rs::func::push	func	missing	-	auto-generated
-src/hir/literal.rs::func::rank	func	missing	-	auto-generated
-src/hir/literal.rs::func::reverse	func	missing	-	auto-generated
-src/hir/literal.rs::func::reverse_literals	func	missing	-	auto-generated
-src/hir/literal.rs::func::singleton	func	missing	-	auto-generated
-src/hir/literal.rs::func::sort	func	missing	-	auto-generated
-src/hir/literal.rs::func::union	func	missing	-	auto-generated
-src/hir/literal.rs::func::union_into_empty	func	missing	-	auto-generated
-src/hir/literal.rs::method::ExtractKind.is_prefix	method	missing	-	auto-generated
-src/hir/literal.rs::method::Extractor.new	method	missing	-	auto-generated
-src/hir/literal.rs::method::Seq.empty	method	missing	-	auto-generated
-src/hir/literal.rs::struct::Extractor	struct	missing	-	auto-generated
-src/hir/literal.rs::struct::Literal	struct	missing	-	auto-generated
-src/hir/literal.rs::struct::Seq	struct	missing	-	auto-generated
-src/hir/literal.rs::test::alternation	test	missing	-	auto-generated
-src/hir/literal.rs::test::anything	test	missing	-	auto-generated
-src/hir/literal.rs::test::anything_small_limits	test	missing	-	auto-generated
-src/hir/literal.rs::test::class	test	missing	-	auto-generated
-src/hir/literal.rs::test::concat	test	missing	-	auto-generated
-src/hir/literal.rs::test::crazy_repeats	test	missing	-	auto-generated
-src/hir/literal.rs::test::empty	test	missing	-	auto-generated
-src/hir/literal.rs::test::holmes	test	missing	-	auto-generated
-src/hir/literal.rs::test::holmes_alt	test	missing	-	auto-generated
-src/hir/literal.rs::test::huge	test	missing	-	auto-generated
-src/hir/literal.rs::test::impossible	test	missing	-	auto-generated
-src/hir/literal.rs::test::literal	test	missing	-	auto-generated
-src/hir/literal.rs::test::look	test	missing	-	auto-generated
-src/hir/literal.rs::test::odds_and_ends	test	missing	-	auto-generated
-src/hir/literal.rs::test::optimize	test	missing	-	auto-generated
-src/hir/literal.rs::test::repetition	test	missing	-	auto-generated
+src/hir/literal.rs::enum::ExtractKind	enum	ported	Regex::Syntax::Hir::LiteralExtraction::ExtractKind	Literal-extraction mode enum ported
+src/hir/literal.rs::func::as_bytes	func	ported	Regex::Syntax::Hir::LiteralExtraction::Literal#as_bytes	Literal byte-slice accessor ported
+src/hir/literal.rs::func::cross_forward	func	ported	Regex::Syntax::Hir::LiteralExtraction::Seq#cross_forward	Literal sequence forward cross-product ported
+src/hir/literal.rs::func::cross_reverse	func	ported	Regex::Syntax::Hir::LiteralExtraction::Seq#cross_reverse	Literal sequence reverse cross-product ported
+src/hir/literal.rs::func::dedup	func	ported	Regex::Syntax::Hir::LiteralExtraction::Seq#dedup	Literal sequence deduplication ported
+src/hir/literal.rs::func::empty	func	ported	Regex::Syntax::Hir::LiteralExtraction::Seq.empty	Literal sequence empty constructor ported
+src/hir/literal.rs::func::extend	func	ported	Regex::Syntax::Hir::LiteralExtraction::Literal#extend	Literal concatenation helper ported
+src/hir/literal.rs::func::extract	func	ported	Regex::Syntax::Hir::LiteralExtraction::Extractor#extract	Literal extraction entrypoints ported
+src/hir/literal.rs::func::infinite	func	ported	Regex::Syntax::Hir::LiteralExtraction::Seq.infinite	Literal sequence infinite constructor ported
+src/hir/literal.rs::func::into_bytes	func	ported	Regex::Syntax::Hir::LiteralExtraction::Literal#into_bytes	Literal byte ownership helper ported
+src/hir/literal.rs::func::is_empty	func	ported	Regex::Syntax::Hir::LiteralExtraction::Literal#empty?, Regex::Syntax::Hir::LiteralExtraction::Seq#empty?	Literal and sequence emptiness predicates ported
+src/hir/literal.rs::func::is_exact	func	ported	Regex::Syntax::Hir::LiteralExtraction::Literal#exact?, Regex::Syntax::Hir::LiteralExtraction::Seq#exact?	Literal and sequence exactness predicates ported
+src/hir/literal.rs::func::is_finite	func	ported	Regex::Syntax::Hir::LiteralExtraction::Seq#finite?	Literal sequence finiteness predicate ported
+src/hir/literal.rs::func::is_inexact	func	ported	Regex::Syntax::Hir::LiteralExtraction::Seq#inexact?, Regex::Syntax::Hir::LiteralExtraction::ExtractKind#is_prefix, Regex::Syntax::Hir::LiteralExtraction::ExtractKind#is_suffix	Literal sequence inexactness and extract-kind alias predicates ported
+src/hir/literal.rs::func::is_prefix	func	ported	Regex::Syntax::Hir::LiteralExtraction::ExtractKind#prefix?, Regex::Syntax::Hir::LiteralExtraction::ExtractKind#is_prefix	Prefix extract-kind predicates ported
+src/hir/literal.rs::func::is_suffix	func	ported	Regex::Syntax::Hir::LiteralExtraction::ExtractKind#suffix?, Regex::Syntax::Hir::LiteralExtraction::ExtractKind#is_suffix	Suffix extract-kind predicates ported
+src/hir/literal.rs::func::keep_first_bytes	func	ported	Regex::Syntax::Hir::LiteralExtraction::Literal#keep_first_bytes, Regex::Syntax::Hir::LiteralExtraction::Seq#keep_first_bytes	Leading-byte trimming helpers ported
+src/hir/literal.rs::func::keep_last_bytes	func	ported	Regex::Syntax::Hir::LiteralExtraction::Literal#keep_last_bytes, Regex::Syntax::Hir::LiteralExtraction::Seq#keep_last_bytes	Trailing-byte trimming helpers ported
+src/hir/literal.rs::func::kind	func	ported	Regex::Syntax::Hir::LiteralExtraction::Extractor#kind	Extractor mode builder ported
+src/hir/literal.rs::func::len	func	ported	Regex::Syntax::Hir::LiteralExtraction::Literal#len, Regex::Syntax::Hir::LiteralExtraction::Seq#len	Literal and sequence length helpers ported
+src/hir/literal.rs::func::limit_class	func	ported	Regex::Syntax::Hir::LiteralExtraction::Extractor#limit_class	Extractor class-width limit builder ported
+src/hir/literal.rs::func::limit_literal_len	func	ported	Regex::Syntax::Hir::LiteralExtraction::Extractor#limit_literal_len	Extractor literal-length limit builder ported
+src/hir/literal.rs::func::limit_repeat	func	ported	Regex::Syntax::Hir::LiteralExtraction::Extractor#limit_repeat	Extractor repetition limit builder ported
+src/hir/literal.rs::func::limit_total	func	ported	Regex::Syntax::Hir::LiteralExtraction::Extractor#limit_total	Extractor total-literal limit builder ported
+src/hir/literal.rs::func::literals	func	ported	Regex::Syntax::Hir::LiteralExtraction::Seq#literals	Literal sequence storage accessor ported
+src/hir/literal.rs::func::longest_common_prefix	func	ported	Regex::Syntax::Hir::LiteralExtraction::Seq#longest_common_prefix	Longest common prefix helper ported
+src/hir/literal.rs::func::longest_common_suffix	func	ported	Regex::Syntax::Hir::LiteralExtraction::Seq#longest_common_suffix	Longest common suffix helper ported
+src/hir/literal.rs::func::make_inexact	func	ported	Regex::Syntax::Hir::LiteralExtraction::Literal#make_inexact, Regex::Syntax::Hir::LiteralExtraction::Seq#make_inexact	Literal and sequence inexact-marking helpers ported
+src/hir/literal.rs::func::make_infinite	func	ported	Regex::Syntax::Hir::LiteralExtraction::Seq#make_infinite	Literal sequence infinity marker ported
+src/hir/literal.rs::func::max_cross_len	func	ported	Regex::Syntax::Hir::LiteralExtraction::Seq#max_cross_len	Literal sequence cross-size estimator ported
+src/hir/literal.rs::func::max_literal_len	func	ported	Regex::Syntax::Hir::LiteralExtraction::Seq#max_literal_len	Literal sequence maximum literal length helper ported
+src/hir/literal.rs::func::max_union_len	func	ported	Regex::Syntax::Hir::LiteralExtraction::Seq#max_union_len	Literal sequence union-size estimator ported
+src/hir/literal.rs::func::min_literal_len	func	ported	Regex::Syntax::Hir::LiteralExtraction::Seq#min_literal_len	Literal sequence minimum literal length helper ported
+src/hir/literal.rs::func::minimize_by_preference	func	ported	Regex::Syntax::Hir::LiteralExtraction::Seq#minimize_by_preference	Literal sequence preference minimizer ported
+src/hir/literal.rs::func::new	func	ported	Regex::Syntax::Hir::LiteralExtraction::Literal.new, Regex::Syntax::Hir::LiteralExtraction::Seq.new, Regex::Syntax::Hir::LiteralExtraction::Extractor.new	Literal extraction constructors ported
+src/hir/literal.rs::func::optimize_for_prefix_by_preference	func	ported	Regex::Syntax::Hir::LiteralExtraction::Seq#optimize_for_prefix_by_preference	Prefix-oriented literal optimization ported
+src/hir/literal.rs::func::optimize_for_suffix_by_preference	func	ported	Regex::Syntax::Hir::LiteralExtraction::Seq#optimize_for_suffix_by_preference	Suffix-oriented literal optimization ported
+src/hir/literal.rs::func::push	func	ported	Regex::Syntax::Hir::LiteralExtraction::Seq#push	Literal sequence append helper ported
+src/hir/literal.rs::func::rank	func	ported	Regex::Syntax::Hir::LiteralExtraction.rank	Literal preference ranking helper ported
+src/hir/literal.rs::func::reverse	func	ported	Regex::Syntax::Hir::LiteralExtraction::Literal#reverse	Literal byte-reversal helper ported
+src/hir/literal.rs::func::reverse_literals	func	ported	Regex::Syntax::Hir::LiteralExtraction::Seq#reverse_literals	Literal sequence reversal helper ported
+src/hir/literal.rs::func::singleton	func	ported	Regex::Syntax::Hir::LiteralExtraction::Seq.singleton	Literal sequence singleton constructor ported
+src/hir/literal.rs::func::sort	func	ported	Regex::Syntax::Hir::LiteralExtraction::Seq#sort	Literal sequence sort helper ported
+src/hir/literal.rs::func::union	func	ported	Regex::Syntax::Hir::LiteralExtraction::Seq#union	Literal sequence union helper ported
+src/hir/literal.rs::func::union_into_empty	func	ported	Regex::Syntax::Hir::LiteralExtraction::Seq#union_into_empty	Literal sequence empty-union fast path ported
+src/hir/literal.rs::method::ExtractKind.is_prefix	method	ported	Regex::Syntax::Hir::LiteralExtraction::ExtractKind#is_prefix	Extract-kind alias predicate ported
+src/hir/literal.rs::method::Extractor.new	method	ported	Regex::Syntax::Hir::LiteralExtraction::Extractor.new	Extractor constructor ported
+src/hir/literal.rs::method::Seq.empty	method	ported	Regex::Syntax::Hir::LiteralExtraction::Seq.empty	Empty sequence constructor ported
+src/hir/literal.rs::struct::Extractor	struct	ported	Regex::Syntax::Hir::LiteralExtraction::Extractor	Literal extraction builder ported
+src/hir/literal.rs::struct::Literal	struct	ported	Regex::Syntax::Hir::LiteralExtraction::Literal	Literal extraction value object ported
+src/hir/literal.rs::struct::Seq	struct	ported	Regex::Syntax::Hir::LiteralExtraction::Seq	Literal extraction sequence container ported
+src/hir/literal.rs::test::alternation	test	ported	lib/regex-syntax/spec/hir_literal_api_spec.cr	Literal extraction alternation behavior covered in Crystal HIR literal specs
+src/hir/literal.rs::test::anything	test	ported	lib/regex-syntax/spec/hir_literal_api_spec.cr	Literal extraction wide-match behavior covered in Crystal HIR literal specs
+src/hir/literal.rs::test::anything_small_limits	test	ported	lib/regex-syntax/spec/hir_literal_api_spec.cr	Literal extraction small-limit behavior covered in Crystal HIR literal specs
+src/hir/literal.rs::test::class	test	ported	lib/regex-syntax/spec/hir_literal_api_spec.cr	Literal extraction class behavior covered in Crystal HIR literal specs
+src/hir/literal.rs::test::concat	test	ported	lib/regex-syntax/spec/hir_literal_api_spec.cr	Literal extraction concatenation behavior covered in Crystal HIR literal specs
+src/hir/literal.rs::test::crazy_repeats	test	ported	lib/regex-syntax/spec/hir_literal_api_spec.cr	Literal extraction repetition limits covered in Crystal HIR literal specs
+src/hir/literal.rs::test::empty	test	ported	lib/regex-syntax/spec/hir_literal_api_spec.cr	Literal extraction empty-node behavior covered in Crystal HIR literal specs
+src/hir/literal.rs::test::holmes	test	ported	lib/regex-syntax/spec/hir_literal_api_spec.cr	Literal extraction Holmes fixture behavior covered in Crystal HIR literal specs
+src/hir/literal.rs::test::holmes_alt	test	ported	lib/regex-syntax/spec/hir_literal_api_spec.cr	Literal extraction Holmes alternation behavior covered in Crystal HIR literal specs
+src/hir/literal.rs::test::huge	test	ported	lib/regex-syntax/spec/hir_literal_api_spec.cr	Literal extraction large-case behavior covered in Crystal HIR literal specs
+src/hir/literal.rs::test::impossible	test	ported	lib/regex-syntax/spec/hir_literal_api_spec.cr	Literal extraction impossible-match behavior covered in Crystal HIR literal specs
+src/hir/literal.rs::test::literal	test	ported	lib/regex-syntax/spec/hir_literal_api_spec.cr	Literal extraction literal behavior covered in Crystal HIR literal specs
+src/hir/literal.rs::test::look	test	ported	lib/regex-syntax/spec/hir_literal_api_spec.cr	Literal extraction look assertion behavior covered in Crystal HIR literal specs
+src/hir/literal.rs::test::odds_and_ends	test	ported	lib/regex-syntax/spec/hir_literal_api_spec.cr	Literal extraction edge cases covered in Crystal HIR literal specs
+src/hir/literal.rs::test::optimize	test	ported	lib/regex-syntax/spec/hir_literal_api_spec.cr	Literal extraction optimization behavior covered in Crystal HIR literal specs
+src/hir/literal.rs::test::repetition	test	ported	lib/regex-syntax/spec/hir_literal_api_spec.cr	Literal extraction repetition behavior covered in Crystal HIR literal specs
 src/hir/mod.rs::enum::Class	enum	missing	-	auto-generated
 src/hir/mod.rs::enum::Dot	enum	missing	-	auto-generated
 src/hir/mod.rs::enum::ErrorKind	enum	missing	-	auto-generated
@@ -356,19 +356,19 @@ src/hir/mod.rs::test::class_union_unicode	test	missing	-	auto-generated
 src/hir/mod.rs::test::look_set_debug	test	missing	-	auto-generated
 src/hir/mod.rs::test::look_set_iter	test	missing	-	auto-generated
 src/hir/mod.rs::test::no_stack_overflow_on_drop	test	missing	-	auto-generated
-src/hir/print.rs::func::new	func	missing	-	auto-generated
-src/hir/print.rs::method::Printer.new	method	missing	-	auto-generated
-src/hir/print.rs::struct::Printer	struct	missing	-	auto-generated
-src/hir/print.rs::test::print_alternation	test	missing	-	auto-generated
-src/hir/print.rs::test::print_anchor	test	missing	-	auto-generated
-src/hir/print.rs::test::print_class	test	missing	-	auto-generated
-src/hir/print.rs::test::print_group	test	missing	-	auto-generated
-src/hir/print.rs::test::print_literal	test	missing	-	auto-generated
-src/hir/print.rs::test::print_repetition	test	missing	-	auto-generated
-src/hir/print.rs::test::print_word_boundary	test	missing	-	auto-generated
-src/hir/print.rs::test::regression_alternation_concat	test	missing	-	auto-generated
-src/hir/print.rs::test::regression_repetition_alternation	test	missing	-	auto-generated
-src/hir/print.rs::test::regression_repetition_concat	test	missing	-	auto-generated
+src/hir/print.rs::func::new	func	ported	Regex::Syntax::Hir::Printer.new	HIR printer constructor ported
+src/hir/print.rs::method::Printer.new	method	ported	Regex::Syntax::Hir::Printer.new	HIR printer constructor ported
+src/hir/print.rs::struct::Printer	struct	ported	Regex::Syntax::Hir::Printer	HIR printer surface ported
+src/hir/print.rs::test::print_alternation	test	ported	lib/regex-syntax/spec/hir_print_spec.cr	HIR alternation printing covered in Crystal HIR print specs
+src/hir/print.rs::test::print_anchor	test	ported	lib/regex-syntax/spec/hir_print_spec.cr	HIR anchor printing covered in Crystal HIR print specs
+src/hir/print.rs::test::print_class	test	ported	lib/regex-syntax/spec/hir_print_spec.cr	HIR class printing covered in Crystal HIR print specs
+src/hir/print.rs::test::print_group	test	ported	lib/regex-syntax/spec/hir_print_spec.cr	HIR group printing covered in Crystal HIR print specs
+src/hir/print.rs::test::print_literal	test	ported	lib/regex-syntax/spec/hir_print_spec.cr	HIR literal printing covered in Crystal HIR print specs
+src/hir/print.rs::test::print_repetition	test	ported	lib/regex-syntax/spec/hir_print_spec.cr	HIR repetition printing covered in Crystal HIR print specs
+src/hir/print.rs::test::print_word_boundary	test	ported	lib/regex-syntax/spec/hir_print_spec.cr	HIR word-boundary printing covered in Crystal HIR print specs
+src/hir/print.rs::test::regression_alternation_concat	test	ported	lib/regex-syntax/spec/hir_print_spec.cr	HIR alternation-in-concat regression covered in Crystal HIR print specs
+src/hir/print.rs::test::regression_repetition_alternation	test	ported	lib/regex-syntax/spec/hir_print_spec.cr	HIR repetition-over-alternation regression covered in Crystal HIR print specs
+src/hir/print.rs::test::regression_repetition_concat	test	ported	lib/regex-syntax/spec/hir_print_spec.cr	HIR repetition-over-concat regression covered in Crystal HIR print specs
 src/hir/translate.rs::func::build	func	missing	-	auto-generated
 src/hir/translate.rs::func::case_insensitive	func	missing	-	auto-generated
 src/hir/translate.rs::func::crlf	func	missing	-	auto-generated
@@ -437,7 +437,7 @@ src/hir/translate.rs::test::repetition	test	missing	-	auto-generated
 src/hir/translate.rs::test::smart_alternation	test	missing	-	auto-generated
 src/hir/translate.rs::test::smart_concat	test	missing	-	auto-generated
 src/hir/translate.rs::test::smart_repetition	test	missing	-	auto-generated
-src/hir/visitor.rs::trait::Visitor	trait	missing	-	auto-generated
+src/hir/visitor.rs::trait::Visitor	trait	ported	Regex::Syntax::Hir::Visitor, Regex::Syntax::Hir.visit	HIR visitor protocol and traversal entrypoint ported
 src/lib.rs::func::escape	func	ported	Regex::Syntax.escape	Public escape helper matches vendored meta-character escaping
 src/lib.rs::func::escape_into	func	ported	Regex::Syntax.escape_into	Public IO-based escape helper ported to Crystal
 src/lib.rs::func::is_escapeable_character	func	ported	Regex::Syntax.is_escapeable_character, Regex::Syntax.escapeable_character?	Predicate and Crystal-style predicate alias are both available

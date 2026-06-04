@@ -11,10 +11,10 @@ Validated inventory baseline:
 
 Current ledger snapshot:
 
-- `ported`: 612 rows
+- `ported`: 693 rows
 - `partial`: 1 row
 - `skipped`: 4 rows
-- `missing`: 418 rows
+- `missing`: 337 rows
 - All tracked upstream tests are currently `missing`
 
 Feature roadmap:
@@ -24,7 +24,7 @@ Feature roadmap:
 - [x] AST printing and visitor support (`src/ast/print.rs`, `src/ast/visitor.rs`)
 - [ ] HIR core data model and interval operations (`src/hir/mod.rs`, `src/hir/interval.rs`)
 - [ ] HIR translation pipeline (`src/hir/translate.rs`)
-- [ ] HIR literals, printing, and visitor utilities (`src/hir/literal.rs`, `src/hir/print.rs`, `src/hir/visitor.rs`)
+- [x] HIR literals, printing, and visitor utilities (`src/hir/literal.rs`, `src/hir/print.rs`, `src/hir/visitor.rs`)
 - [x] Parser facade, crate API, and error surface (`src/parser.rs`, `src/lib.rs`, `src/error.rs`, `src/either.rs`)
 - [x] Unicode property tables: general categories and boolean properties (`src/unicode_tables/general_category.rs`, `src/unicode_tables/property_bool.rs`)
 - [x] Unicode query helpers, Perl classes, and case folding (`src/unicode.rs`, `src/unicode_tables.cr`)
