@@ -98,47 +98,47 @@ src/ast/mod.rs::struct::Span	struct	ported	Regex::Syntax::AST::Span; spec/ast_co
 src/ast/mod.rs::struct::WithComments	struct	ported	Regex::Syntax::AST::WithComments; spec/ast_core_parity_spec.cr	AST plus trailing comment wrapper ported
 src/ast/mod.rs::test::ast_size	test	skipped	-	Rust size assertion is not meaningful for Crystal object layout
 src/ast/mod.rs::test::no_stack_overflow_on_drop	test	skipped	-	Rust drop-stack regression does not translate to Crystal GC semantics
-src/ast/parse.rs::func::build	func	missing	-	auto-generated
-src/ast/parse.rs::func::empty_min_range	func	missing	-	auto-generated
-src/ast/parse.rs::func::ignore_whitespace	func	missing	-	auto-generated
-src/ast/parse.rs::func::nest_limit	func	missing	-	auto-generated
-src/ast/parse.rs::func::new	func	missing	-	auto-generated
-src/ast/parse.rs::func::octal	func	missing	-	auto-generated
-src/ast/parse.rs::func::parse	func	missing	-	auto-generated
-src/ast/parse.rs::func::parse_with_comments	func	missing	-	auto-generated
-src/ast/parse.rs::method::Parser.new	method	missing	-	auto-generated
-src/ast/parse.rs::method::ParserBuilder.new	method	missing	-	auto-generated
-src/ast/parse.rs::struct::Parser	struct	missing	-	auto-generated
-src/ast/parse.rs::struct::ParserBuilder	struct	missing	-	auto-generated
-src/ast/parse.rs::test::maybe_parse_ascii_class	test	missing	-	auto-generated
-src/ast/parse.rs::test::parse_alternate	test	missing	-	auto-generated
-src/ast/parse.rs::test::parse_capture_name	test	missing	-	auto-generated
-src/ast/parse.rs::test::parse_comments	test	missing	-	auto-generated
-src/ast/parse.rs::test::parse_counted_repetition	test	missing	-	auto-generated
-src/ast/parse.rs::test::parse_decimal	test	missing	-	auto-generated
-src/ast/parse.rs::test::parse_escape	test	missing	-	auto-generated
-src/ast/parse.rs::test::parse_flag	test	missing	-	auto-generated
-src/ast/parse.rs::test::parse_flags	test	missing	-	auto-generated
-src/ast/parse.rs::test::parse_group	test	missing	-	auto-generated
-src/ast/parse.rs::test::parse_hex_brace	test	missing	-	auto-generated
-src/ast/parse.rs::test::parse_hex_eight	test	missing	-	auto-generated
-src/ast/parse.rs::test::parse_hex_four	test	missing	-	auto-generated
-src/ast/parse.rs::test::parse_hex_two	test	missing	-	auto-generated
-src/ast/parse.rs::test::parse_holistic	test	missing	-	auto-generated
-src/ast/parse.rs::test::parse_ignore_whitespace	test	missing	-	auto-generated
-src/ast/parse.rs::test::parse_nest_limit	test	missing	-	auto-generated
-src/ast/parse.rs::test::parse_newlines	test	missing	-	auto-generated
-src/ast/parse.rs::test::parse_octal	test	missing	-	auto-generated
-src/ast/parse.rs::test::parse_perl_class	test	missing	-	auto-generated
-src/ast/parse.rs::test::parse_primitive_non_escape	test	missing	-	auto-generated
-src/ast/parse.rs::test::parse_set_class	test	missing	-	auto-generated
-src/ast/parse.rs::test::parse_set_class_open	test	missing	-	auto-generated
-src/ast/parse.rs::test::parse_uncounted_repetition	test	missing	-	auto-generated
-src/ast/parse.rs::test::parse_unicode_class	test	missing	-	auto-generated
-src/ast/parse.rs::test::parse_unsupported_backreference	test	missing	-	auto-generated
-src/ast/parse.rs::test::parse_unsupported_lookaround	test	missing	-	auto-generated
-src/ast/parse.rs::test::regression_454_nest_too_big	test	missing	-	auto-generated
-src/ast/parse.rs::test::regression_455_trailing_dash_ignore_whitespace	test	missing	-	auto-generated
+src/ast/parse.rs::func::build	func	ported	Regex::Syntax::AstParserBuilder#build; Regex::Syntax::AST::Parse::ParserBuilder; spec/ast_parse_parity_spec.cr	AST parser builder constructs vendored parser surface
+src/ast/parse.rs::func::empty_min_range	func	ported	Regex::Syntax::AstParserBuilder#empty_min_range; spec/ast_parse_parity_spec.cr	Optional `{,n}` parsing toggle ported
+src/ast/parse.rs::func::ignore_whitespace	func	ported	Regex::Syntax::AstParserBuilder#ignore_whitespace; Regex::Syntax::AstParser#parse_with_comments; spec/ast_parse_parity_spec.cr	Verbose-mode whitespace and comments configuration ported
+src/ast/parse.rs::func::nest_limit	func	ported	Regex::Syntax::AstParserBuilder#nest_limit; spec/ast_parse_parity_spec.cr	Nesting-limit configuration and error surface ported
+src/ast/parse.rs::func::new	func	ported	Regex::Syntax::AstParser.new; Regex::Syntax::AstParserBuilder.new; Regex::Syntax::AST::Parse::Parser; Regex::Syntax::AST::Parse::ParserBuilder; spec/ast_parse_parity_spec.cr	Concrete parser plus vendored AST::Parse aliases ported
+src/ast/parse.rs::func::octal	func	ported	Regex::Syntax::AstParserBuilder#octal; spec/ast_parse_parity_spec.cr	Optional octal escape mode ported
+src/ast/parse.rs::func::parse	func	ported	Regex::Syntax::AstParser#parse; spec/ast_parse_parity_spec.cr	AST parse entrypoint ported
+src/ast/parse.rs::func::parse_with_comments	func	ported	Regex::Syntax::AstParser#parse_with_comments; spec/ast_parse_parity_spec.cr	Comment-preserving AST parse entrypoint ported
+src/ast/parse.rs::method::Parser.new	method	ported	Regex::Syntax::AstParser.new; Regex::Syntax::AST::Parse::Parser; spec/ast_parse_parity_spec.cr	AST parser constructor exposed directly and through vendored alias
+src/ast/parse.rs::method::ParserBuilder.new	method	ported	Regex::Syntax::AstParserBuilder.new; Regex::Syntax::AST::Parse::ParserBuilder; spec/ast_parse_parity_spec.cr	AST parser builder constructor exposed directly and through vendored alias
+src/ast/parse.rs::struct::Parser	struct	ported	Regex::Syntax::AstParser; Regex::Syntax::AST::Parse::Parser; spec/ast_parse_parity_spec.cr	Rust parser type ported as concrete Crystal AST parser plus alias
+src/ast/parse.rs::struct::ParserBuilder	struct	ported	Regex::Syntax::AstParserBuilder; Regex::Syntax::AST::Parse::ParserBuilder; spec/ast_parse_parity_spec.cr	Rust parser builder type ported as concrete Crystal builder plus alias
+src/ast/parse.rs::test::maybe_parse_ascii_class	test	ported	spec/ast_parse_parity_spec.cr	Committed parser parity spec covers ASCII-class parsing, negation, and invalid-class backtracking
+src/ast/parse.rs::test::parse_alternate	test	ported	spec/ast_parse_parity_spec.cr	Committed parser parity spec covers top-level and grouped alternation parsing
+src/ast/parse.rs::test::parse_capture_name	test	ported	spec/ast_parse_parity_spec.cr	Committed parser parity spec covers named captures, angle-bracket style, and duplicate-name errors
+src/ast/parse.rs::test::parse_comments	test	ported	spec/ast_parse_parity_spec.cr	Committed parser parity spec covers `parse_with_comments` comment capture and spans
+src/ast/parse.rs::test::parse_counted_repetition	test	ported	spec/ast_parse_parity_spec.cr	Committed parser parity spec covers exact, bounded, reluctant, and word-boundary counted repetitions
+src/ast/parse.rs::test::parse_decimal	test	ported	spec/ast_parse_parity_spec.cr	Committed parser parity spec covers decimal repetition parsing plus invalid and empty count errors
+src/ast/parse.rs::test::parse_escape	test	ported	spec/ast_parse_parity_spec.cr	Committed parser parity spec covers escaped metacharacters and malformed escape errors
+src/ast/parse.rs::test::parse_flag	test	ported	spec/ast_parse_parity_spec.cr	Committed parser parity spec covers individual flag parsing through scoped and global flag syntax
+src/ast/parse.rs::test::parse_flags	test	ported	spec/ast_parse_parity_spec.cr	Committed parser parity spec covers grouped/global flags plus duplicate and dangling-negation errors
+src/ast/parse.rs::test::parse_group	test	ported	spec/ast_parse_parity_spec.cr	Committed parser parity spec covers capture, non-capture, and flag-scoped group parsing
+src/ast/parse.rs::test::parse_hex_brace	test	ported	spec/ast_parse_parity_spec.cr	Committed parser parity spec covers brace-form hex and Unicode escapes
+src/ast/parse.rs::test::parse_hex_eight	test	ported	spec/ast_parse_parity_spec.cr	Committed parser parity spec covers eight-digit Unicode escapes
+src/ast/parse.rs::test::parse_hex_four	test	ported	spec/ast_parse_parity_spec.cr	Committed parser parity spec covers four-digit Unicode escapes
+src/ast/parse.rs::test::parse_hex_two	test	ported	spec/ast_parse_parity_spec.cr	Committed parser parity spec covers two-digit hex escapes
+src/ast/parse.rs::test::parse_holistic	test	ported	spec/ast_parse_parity_spec.cr	Committed parser parity spec covers holistic escaped-metacharacter parsing
+src/ast/parse.rs::test::parse_ignore_whitespace	test	ported	spec/ast_parse_parity_spec.cr	Committed parser parity spec covers verbose-mode whitespace toggling and escaped whitespace
+src/ast/parse.rs::test::parse_nest_limit	test	ported	spec/ast_parse_parity_spec.cr	Committed parser parity spec covers representative nest-limit failures and long-pattern acceptance
+src/ast/parse.rs::test::parse_newlines	test	ported	spec/ast_parse_parity_spec.cr	Committed parser parity spec covers newline literals and line/column span tracking
+src/ast/parse.rs::test::parse_octal	test	ported	spec/ast_parse_parity_spec.cr	Committed parser parity spec covers octal escapes when enabled and backreference rejection otherwise
+src/ast/parse.rs::test::parse_perl_class	test	ported	spec/ast_parse_parity_spec.cr	Committed parser parity spec covers Perl class parsing
+src/ast/parse.rs::test::parse_primitive_non_escape	test	ported	spec/ast_parse_parity_spec.cr	Committed parser parity spec covers primitive literals, assertions, dot, and special word-boundary parsing
+src/ast/parse.rs::test::parse_set_class	test	ported	spec/ast_parse_parity_spec.cr	Committed parser parity spec covers ASCII classes, binary ops, and class-range rejection
+src/ast/parse.rs::test::parse_set_class_open	test	ported	spec/ast_parse_parity_spec.cr	Committed parser parity spec covers bracket-opening edge cases like `[]]`, `[-a]`, and `[^]a]`
+src/ast/parse.rs::test::parse_uncounted_repetition	test	ported	spec/ast_parse_parity_spec.cr	Committed parser parity spec covers `*`, `+`, `?`, reluctant forms, and missing-expression errors
+src/ast/parse.rs::test::parse_unicode_class	test	ported	spec/ast_parse_parity_spec.cr	Committed parser parity spec covers short and named Unicode classes plus invalid property syntax
+src/ast/parse.rs::test::parse_unsupported_backreference	test	ported	spec/ast_parse_parity_spec.cr	Committed parser parity spec covers unsupported backreference errors
+src/ast/parse.rs::test::parse_unsupported_lookaround	test	ported	spec/ast_parse_parity_spec.cr	Committed parser parity spec covers unsupported look-behind handling
+src/ast/parse.rs::test::regression_454_nest_too_big	test	ported	spec/ast_parse_parity_spec.cr	Committed parser parity spec covers long alternation tree acceptance under representative nest limit
+src/ast/parse.rs::test::regression_455_trailing_dash_ignore_whitespace	test	ported	spec/ast_parse_parity_spec.cr	Committed parser parity spec covers trailing-dash handling in verbose-mode character classes
 src/ast/print.rs::func::new	func	ported	Regex::Syntax::AST::Printer.new	AST printer constructor ported
 src/ast/print.rs::method::Printer.new	method	ported	Regex::Syntax::AST::Printer.new	AST printer constructor ported
 src/ast/print.rs::struct::Printer	struct	ported	Regex::Syntax::AST::Printer	AST printer surface ported
