@@ -1,103 +1,103 @@
 # source_id	kind	status	crystal_refs	notes
-src/ast/mod.rs::enum::AssertionKind	enum	partial	Regex::Syntax::AST::Assertion::Kind	Missing some variants (WordBoundaryStart, WordBoundaryEnd, WordBoundaryStartAngle, WordBoundaryEndAngle)
+src/ast/mod.rs::enum::AssertionKind	enum	ported	Regex::Syntax::AST::AssertionKind; spec/ast_core_parity_spec.cr	Alias includes vendored word-boundary start/end and angle variants
 src/ast/mod.rs::enum::Ast	enum	ported	Regex::Syntax::AST::Ast (class hierarchy)	Rust enum ported as Crystal class hierarchy
-src/ast/mod.rs::enum::ClassAsciiKind	enum	missing	-	auto-generated
+src/ast/mod.rs::enum::ClassAsciiKind	enum	ported	Regex::Syntax::AST::ClassAsciiKind; spec/ast_core_parity_spec.cr	Alias to ClassAscii::Kind
 src/ast/mod.rs::enum::ClassPerlKind	enum	ported	Regex::Syntax::AST::ClassPerl::Kind	Crystal includes negated variants (DigitNeg, SpaceNeg, WordNeg) not in Rust
-src/ast/mod.rs::enum::ClassSet	enum	missing	-	auto-generated
-src/ast/mod.rs::enum::ClassSetBinaryOpKind	enum	missing	-	auto-generated
-src/ast/mod.rs::enum::ClassSetItem	enum	missing	-	auto-generated
-src/ast/mod.rs::enum::ClassUnicodeKind	enum	missing	-	auto-generated
-src/ast/mod.rs::enum::ClassUnicodeOpKind	enum	missing	-	auto-generated
-src/ast/mod.rs::enum::ErrorKind	enum	missing	-	auto-generated
-src/ast/mod.rs::enum::Flag	enum	missing	-	auto-generated
-src/ast/mod.rs::enum::FlagsItemKind	enum	missing	-	auto-generated
-src/ast/mod.rs::enum::GroupKind	enum	missing	-	auto-generated
-src/ast/mod.rs::enum::HexLiteralKind	enum	missing	-	auto-generated
-src/ast/mod.rs::enum::LiteralKind	enum	missing	-	auto-generated
-src/ast/mod.rs::enum::RepetitionKind	enum	missing	-	auto-generated
-src/ast/mod.rs::enum::RepetitionRange	enum	missing	-	auto-generated
-src/ast/mod.rs::enum::SpecialLiteralKind	enum	missing	-	auto-generated
-src/ast/mod.rs::func::add_item	func	missing	-	auto-generated
-src/ast/mod.rs::func::alternation	func	missing	-	auto-generated
-src/ast/mod.rs::func::assertion	func	missing	-	auto-generated
-src/ast/mod.rs::func::auxiliary_span	func	missing	-	auto-generated
-src/ast/mod.rs::func::byte	func	missing	-	auto-generated
-src/ast/mod.rs::func::capture_index	func	missing	-	auto-generated
-src/ast/mod.rs::func::class_bracketed	func	missing	-	auto-generated
-src/ast/mod.rs::func::class_perl	func	missing	-	auto-generated
-src/ast/mod.rs::func::class_unicode	func	missing	-	auto-generated
-src/ast/mod.rs::func::concat	func	missing	-	auto-generated
-src/ast/mod.rs::func::digits	func	missing	-	auto-generated
-src/ast/mod.rs::func::dot	func	missing	-	auto-generated
-src/ast/mod.rs::func::empty	func	missing	-	auto-generated
-src/ast/mod.rs::func::flag_state	func	missing	-	auto-generated
-src/ast/mod.rs::func::flags	func	missing	-	auto-generated
-src/ast/mod.rs::func::from_name	func	missing	-	auto-generated
-src/ast/mod.rs::func::group	func	missing	-	auto-generated
-src/ast/mod.rs::func::into_ast	func	missing	-	auto-generated
-src/ast/mod.rs::func::into_item	func	missing	-	auto-generated
-src/ast/mod.rs::func::is_capturing	func	missing	-	auto-generated
-src/ast/mod.rs::func::is_empty	func	missing	-	auto-generated
-src/ast/mod.rs::func::is_equal	func	missing	-	auto-generated
-src/ast/mod.rs::func::is_negated	func	missing	-	auto-generated
-src/ast/mod.rs::func::is_negation	func	missing	-	auto-generated
-src/ast/mod.rs::func::is_one_line	func	missing	-	auto-generated
-src/ast/mod.rs::func::is_valid	func	missing	-	auto-generated
-src/ast/mod.rs::func::kind	func	missing	-	auto-generated
-src/ast/mod.rs::func::literal	func	missing	-	auto-generated
-src/ast/mod.rs::func::new	func	missing	-	auto-generated
-src/ast/mod.rs::func::pattern	func	missing	-	auto-generated
-src/ast/mod.rs::func::push	func	missing	-	auto-generated
-src/ast/mod.rs::func::repetition	func	missing	-	auto-generated
-src/ast/mod.rs::func::span	func	missing	-	auto-generated
-src/ast/mod.rs::func::splat	func	missing	-	auto-generated
-src/ast/mod.rs::func::union	func	missing	-	auto-generated
-src/ast/mod.rs::func::with_end	func	missing	-	auto-generated
-src/ast/mod.rs::func::with_start	func	missing	-	auto-generated
-src/ast/mod.rs::method::Alternation.into_ast	method	missing	-	auto-generated
-src/ast/mod.rs::method::Ast.empty	method	missing	-	auto-generated
-src/ast/mod.rs::method::ClassAsciiKind.from_name	method	missing	-	auto-generated
-src/ast/mod.rs::method::ClassSet.union	method	missing	-	auto-generated
-src/ast/mod.rs::method::ClassSetItem.span	method	missing	-	auto-generated
-src/ast/mod.rs::method::ClassSetRange.is_valid	method	missing	-	auto-generated
-src/ast/mod.rs::method::ClassSetUnion.push	method	missing	-	auto-generated
-src/ast/mod.rs::method::ClassUnicode.is_negated	method	missing	-	auto-generated
-src/ast/mod.rs::method::ClassUnicodeOpKind.is_equal	method	missing	-	auto-generated
-src/ast/mod.rs::method::Concat.into_ast	method	missing	-	auto-generated
-src/ast/mod.rs::method::Error.kind	method	missing	-	auto-generated
-src/ast/mod.rs::method::Flags.add_item	method	missing	-	auto-generated
-src/ast/mod.rs::method::FlagsItemKind.is_negation	method	missing	-	auto-generated
-src/ast/mod.rs::method::Group.flags	method	missing	-	auto-generated
-src/ast/mod.rs::method::HexLiteralKind.digits	method	missing	-	auto-generated
-src/ast/mod.rs::method::Literal.byte	method	missing	-	auto-generated
-src/ast/mod.rs::method::Position.new	method	missing	-	auto-generated
-src/ast/mod.rs::method::RepetitionRange.is_valid	method	missing	-	auto-generated
-src/ast/mod.rs::method::Span.new	method	missing	-	auto-generated
-src/ast/mod.rs::struct::Alternation	struct	missing	-	auto-generated
-src/ast/mod.rs::struct::Assertion	struct	missing	-	auto-generated
-src/ast/mod.rs::struct::CaptureName	struct	missing	-	auto-generated
-src/ast/mod.rs::struct::ClassAscii	struct	missing	-	auto-generated
-src/ast/mod.rs::struct::ClassBracketed	struct	missing	-	auto-generated
-src/ast/mod.rs::struct::ClassPerl	struct	missing	-	auto-generated
-src/ast/mod.rs::struct::ClassSetBinaryOp	struct	missing	-	auto-generated
-src/ast/mod.rs::struct::ClassSetRange	struct	missing	-	auto-generated
-src/ast/mod.rs::struct::ClassSetUnion	struct	missing	-	auto-generated
-src/ast/mod.rs::struct::ClassUnicode	struct	missing	-	auto-generated
-src/ast/mod.rs::struct::Comment	struct	missing	-	auto-generated
-src/ast/mod.rs::struct::Concat	struct	missing	-	auto-generated
-src/ast/mod.rs::struct::Error	struct	missing	-	auto-generated
-src/ast/mod.rs::struct::Flags	struct	missing	-	auto-generated
-src/ast/mod.rs::struct::FlagsItem	struct	missing	-	auto-generated
-src/ast/mod.rs::struct::Group	struct	missing	-	auto-generated
-src/ast/mod.rs::struct::Literal	struct	missing	-	auto-generated
-src/ast/mod.rs::struct::Position	struct	missing	-	auto-generated
-src/ast/mod.rs::struct::Repetition	struct	missing	-	auto-generated
-src/ast/mod.rs::struct::RepetitionOp	struct	missing	-	auto-generated
-src/ast/mod.rs::struct::SetFlags	struct	missing	-	auto-generated
-src/ast/mod.rs::struct::Span	struct	missing	-	auto-generated
-src/ast/mod.rs::struct::WithComments	struct	missing	-	auto-generated
-src/ast/mod.rs::test::ast_size	test	missing	-	auto-generated
-src/ast/mod.rs::test::no_stack_overflow_on_drop	test	missing	-	auto-generated
+src/ast/mod.rs::enum::ClassSet	enum	ported	Regex::Syntax::AST::ClassSet; Regex::Syntax::AST::ClassSet::Kind; spec/ast_core_parity_spec.cr	Rust enum ported as Crystal wrapper class plus Kind enum
+src/ast/mod.rs::enum::ClassSetBinaryOpKind	enum	ported	Regex::Syntax::AST::ClassSetBinaryOpKind; spec/ast_core_parity_spec.cr	Alias to ClassSetBinaryOp::Kind
+src/ast/mod.rs::enum::ClassSetItem	enum	ported	Regex::Syntax::AST::ClassSetItem; Regex::Syntax::AST::ClassSetItem::Kind; spec/ast_core_parity_spec.cr	Rust enum ported as Crystal wrapper class plus Kind enum
+src/ast/mod.rs::enum::ClassUnicodeKind	enum	ported	Regex::Syntax::AST::ClassUnicode::ClassUnicodeKind; Regex::Syntax::AST::ClassUnicode::ClassUnicodeKind::Kind; spec/ast_core_parity_spec.cr	Rust enum ported as Crystal value class plus Kind enum
+src/ast/mod.rs::enum::ClassUnicodeOpKind	enum	ported	Regex::Syntax::AST::ClassUnicode::ClassUnicodeOpKind; spec/ast_core_parity_spec.cr	Nested enum ported directly
+src/ast/mod.rs::enum::ErrorKind	enum	ported	Regex::Syntax::AST::ErrorKind; spec/error_spec.cr	Implemented in error.cr and exposed under AST namespace
+src/ast/mod.rs::enum::Flag	enum	ported	Regex::Syntax::AST::Flag; spec/ast_core_parity_spec.cr	Vendored flag enum with char conversion helpers
+src/ast/mod.rs::enum::FlagsItemKind	enum	ported	Regex::Syntax::AST::FlagsItemKind; spec/ast_core_parity_spec.cr	Alias to FlagsItem::Kind
+src/ast/mod.rs::enum::GroupKind	enum	ported	Regex::Syntax::AST::GroupKind; spec/ast_core_parity_spec.cr	Alias to Group::Kind
+src/ast/mod.rs::enum::HexLiteralKind	enum	ported	Regex::Syntax::AST::Literal::HexLiteralKind; spec/ast_core_parity_spec.cr	Nested enum ported directly
+src/ast/mod.rs::enum::LiteralKind	enum	ported	Regex::Syntax::AST::LiteralKind; spec/ast_core_parity_spec.cr	Alias to Literal::Kind
+src/ast/mod.rs::enum::RepetitionKind	enum	ported	Regex::Syntax::AST::RepetitionKind; spec/ast_core_parity_spec.cr	Alias to RepetitionOp::Kind
+src/ast/mod.rs::enum::RepetitionRange	enum	ported	Regex::Syntax::AST::RepetitionRange; Regex::Syntax::AST::RepetitionRange::Kind; spec/ast_core_parity_spec.cr	Rust enum ported as Crystal value class plus Kind enum
+src/ast/mod.rs::enum::SpecialLiteralKind	enum	ported	Regex::Syntax::AST::Literal::SpecialLiteralKind; spec/ast_core_parity_spec.cr	Nested enum ported directly
+src/ast/mod.rs::func::add_item	func	ported	Regex::Syntax::AST::Flags#add_item; spec/ast_core_parity_spec.cr	Flag collection duplicate-detection helper ported
+src/ast/mod.rs::func::alternation	func	ported	Regex::Syntax::AST::Ast.alternation; Regex::Syntax::AST::Alternation#into_ast; spec/ast_core_parity_spec.cr	Alternation wrapper helpers ported
+src/ast/mod.rs::func::assertion	func	ported	Regex::Syntax::AST::Ast.assertion; spec/ast_core_parity_spec.cr	Assertion wrapper helper ported
+src/ast/mod.rs::func::auxiliary_span	func	ported	Regex::Syntax::AST::Error#auxiliary_span; spec/error_spec.cr	AST parse error auxiliary span accessor ported
+src/ast/mod.rs::func::byte	func	ported	Regex::Syntax::AST::Literal#byte; spec/ast_core_parity_spec.cr	Byte literal accessor ported
+src/ast/mod.rs::func::capture_index	func	ported	Regex::Syntax::AST::Group#capture_index; Regex::Syntax::AST::CaptureName#index; spec/ast_core_parity_spec.cr	Capture index is exposed directly and through CaptureName
+src/ast/mod.rs::func::class_bracketed	func	ported	Regex::Syntax::AST::Ast.class_bracketed; spec/ast_core_parity_spec.cr	Bracketed class wrapper helper ported
+src/ast/mod.rs::func::class_perl	func	ported	Regex::Syntax::AST::Ast.class_perl; spec/ast_core_parity_spec.cr	Perl class wrapper helper ported
+src/ast/mod.rs::func::class_unicode	func	ported	Regex::Syntax::AST::Ast.class_unicode; spec/ast_core_parity_spec.cr	Unicode class wrapper helper ported
+src/ast/mod.rs::func::concat	func	ported	Regex::Syntax::AST::Ast.concat; Regex::Syntax::AST::Concat#into_ast; spec/ast_core_parity_spec.cr	Concat wrapper helpers ported
+src/ast/mod.rs::func::digits	func	ported	Regex::Syntax::AST::Literal::HexLiteralKind#digits; spec/ast_core_parity_spec.cr	Fixed-width hex digit count helper ported
+src/ast/mod.rs::func::dot	func	ported	Regex::Syntax::AST::Ast.dot; spec/ast_core_parity_spec.cr	Dot wrapper helper ported
+src/ast/mod.rs::func::empty	func	ported	Regex::Syntax::AST::Ast.empty; Regex::Syntax::AST::Ast#empty?; spec/ast_core_parity_spec.cr	Empty AST constructor and predicate ported
+src/ast/mod.rs::func::flag_state	func	ported	Regex::Syntax::AST::Flags#flag_state; spec/ast_core_parity_spec.cr	Flag state lookup helper ported
+src/ast/mod.rs::func::flags	func	ported	Regex::Syntax::AST::SetFlags#flags; Regex::Syntax::AST::Ast.flags; spec/ast_core_parity_spec.cr	Inline flag-set builder helpers ported
+src/ast/mod.rs::func::from_name	func	ported	Regex::Syntax::AST::ClassAscii::Kind.from_name; spec/ast_core_parity_spec.cr	ASCII class lookup helper ported
+src/ast/mod.rs::func::group	func	ported	Regex::Syntax::AST::Ast.group; spec/ast_core_parity_spec.cr	Group wrapper helper ported
+src/ast/mod.rs::func::into_ast	func	ported	Regex::Syntax::AST::Alternation#into_ast; Regex::Syntax::AST::Concat#into_ast; spec/ast_core_parity_spec.cr	Single-child flattening helpers ported
+src/ast/mod.rs::func::into_item	func	ported	Regex::Syntax::AST::ClassSetUnion#into_item; spec/ast_core_parity_spec.cr	Class-set union item conversion ported
+src/ast/mod.rs::func::is_capturing	func	ported	Regex::Syntax::AST::Group#is_capturing; spec/ast_core_parity_spec.cr	Group capture predicate alias ported
+src/ast/mod.rs::func::is_empty	func	ported	Regex::Syntax::AST::Span#is_empty; Regex::Syntax::AST::Ast#is_empty; spec/ast_core_parity_spec.cr	Predicate alias helpers ported
+src/ast/mod.rs::func::is_equal	func	ported	Regex::Syntax::AST::ClassUnicode::ClassUnicodeOpKind#is_equal; spec/ast_core_parity_spec.cr	Unicode property comparison helper ported
+src/ast/mod.rs::func::is_negated	func	ported	Regex::Syntax::AST::ClassUnicode#is_negated; spec/ast_core_parity_spec.cr	Unicode class negation predicate alias ported
+src/ast/mod.rs::func::is_negation	func	ported	Regex::Syntax::AST::FlagsItem#is_negation; Regex::Syntax::AST::FlagsItemKind#is_negation; spec/ast_core_parity_spec.cr	Flag negation predicate aliases ported
+src/ast/mod.rs::func::is_one_line	func	ported	Regex::Syntax::AST::Span#is_one_line; spec/ast_core_parity_spec.cr	Span predicate alias ported
+src/ast/mod.rs::func::is_valid	func	ported	Regex::Syntax::AST::ClassSetRange#is_valid; Regex::Syntax::AST::RepetitionRange#valid?; Regex::Syntax::AST::RepetitionOp#is_valid; spec/ast_core_parity_spec.cr	Validation helper aliases ported
+src/ast/mod.rs::func::kind	func	ported	Regex::Syntax::AST::Ast#kind; Regex::Syntax::AST::ClassUnicode#kind; spec/ast_core_parity_spec.cr	AST node kind accessors ported
+src/ast/mod.rs::func::literal	func	ported	Regex::Syntax::AST::Ast.literal; spec/ast_core_parity_spec.cr	Literal wrapper helper ported
+src/ast/mod.rs::func::new	func	ported	Regex::Syntax::AST::Position.new; Regex::Syntax::AST::Span.new; spec/ast_core_parity_spec.cr	Core value constructors ported
+src/ast/mod.rs::func::pattern	func	ported	Regex::Syntax::AST::Error#pattern; spec/error_spec.cr	AST parse error pattern accessor ported
+src/ast/mod.rs::func::push	func	ported	Regex::Syntax::AST::ClassSetUnion#push; spec/ast_core_parity_spec.cr	Class-set union append helper ported
+src/ast/mod.rs::func::repetition	func	ported	Regex::Syntax::AST::Ast.repetition; spec/ast_core_parity_spec.cr	Repetition wrapper helper ported
+src/ast/mod.rs::func::span	func	ported	Regex::Syntax::AST::Node#span; spec/ast_core_parity_spec.cr	Node span accessors ported through getters
+src/ast/mod.rs::func::splat	func	ported	Regex::Syntax::AST::Span.splat; spec/ast_core_parity_spec.cr	Single-position span helper ported
+src/ast/mod.rs::func::union	func	ported	Regex::Syntax::AST::ClassSet.union; Regex::Syntax::AST::ClassSet#union; spec/ast_core_parity_spec.cr	Class-set union builders ported
+src/ast/mod.rs::func::with_end	func	ported	Regex::Syntax::AST::Span#with_end; spec/ast_core_parity_spec.cr	Span end-replacement helper ported
+src/ast/mod.rs::func::with_start	func	ported	Regex::Syntax::AST::Span#with_start; spec/ast_core_parity_spec.cr	Span start-replacement helper ported
+src/ast/mod.rs::method::Alternation.into_ast	method	ported	Regex::Syntax::AST::Alternation#into_ast; spec/ast_core_parity_spec.cr	Alternation flattening helper ported
+src/ast/mod.rs::method::Ast.empty	method	ported	Regex::Syntax::AST::Ast.empty; spec/ast_core_parity_spec.cr	Empty AST constructor ported
+src/ast/mod.rs::method::ClassAsciiKind.from_name	method	ported	Regex::Syntax::AST::ClassAscii::Kind.from_name; spec/ast_core_parity_spec.cr	ASCII class name lookup ported
+src/ast/mod.rs::method::ClassSet.union	method	ported	Regex::Syntax::AST::ClassSet#union; Regex::Syntax::AST::ClassSet.union; spec/ast_core_parity_spec.cr	Class-set union methods ported
+src/ast/mod.rs::method::ClassSetItem.span	method	ported	Regex::Syntax::AST::ClassSetItem#span; spec/ast_core_parity_spec.cr	Span getter ported
+src/ast/mod.rs::method::ClassSetRange.is_valid	method	ported	Regex::Syntax::AST::ClassSetRange#is_valid; spec/ast_core_parity_spec.cr	Range predicate alias ported
+src/ast/mod.rs::method::ClassSetUnion.push	method	ported	Regex::Syntax::AST::ClassSetUnion#push; spec/ast_core_parity_spec.cr	Class-set union append helper ported
+src/ast/mod.rs::method::ClassUnicode.is_negated	method	ported	Regex::Syntax::AST::ClassUnicode#is_negated; spec/ast_core_parity_spec.cr	Negation predicate alias ported
+src/ast/mod.rs::method::ClassUnicodeOpKind.is_equal	method	ported	Regex::Syntax::AST::ClassUnicode::ClassUnicodeOpKind#is_equal; spec/ast_core_parity_spec.cr	Unicode comparison helper ported
+src/ast/mod.rs::method::Concat.into_ast	method	ported	Regex::Syntax::AST::Concat#into_ast; spec/ast_core_parity_spec.cr	Concat flattening helper ported
+src/ast/mod.rs::method::Error.kind	method	ported	Regex::Syntax::AST::Error#kind; spec/error_spec.cr	AST parse error kind accessor ported
+src/ast/mod.rs::method::Flags.add_item	method	ported	Regex::Syntax::AST::Flags#add_item; spec/ast_core_parity_spec.cr	Flag collection duplicate-detection helper ported
+src/ast/mod.rs::method::FlagsItemKind.is_negation	method	ported	Regex::Syntax::AST::FlagsItemKind#is_negation; spec/ast_core_parity_spec.cr	Enum predicate alias ported
+src/ast/mod.rs::method::Group.flags	method	ported	Regex::Syntax::AST::Group#flags; spec/ast_core_parity_spec.cr	Optional group flag-set accessor ported
+src/ast/mod.rs::method::HexLiteralKind.digits	method	ported	Regex::Syntax::AST::Literal::HexLiteralKind#digits; spec/ast_core_parity_spec.cr	Fixed-width hex digit count helper ported
+src/ast/mod.rs::method::Literal.byte	method	ported	Regex::Syntax::AST::Literal#byte; spec/ast_core_parity_spec.cr	Byte literal accessor ported
+src/ast/mod.rs::method::Position.new	method	ported	Regex::Syntax::AST::Position.new; spec/ast_core_parity_spec.cr	Position constructors ported
+src/ast/mod.rs::method::RepetitionRange.is_valid	method	ported	Regex::Syntax::AST::RepetitionRange#valid?; spec/ast_core_parity_spec.cr	Range validation helper ported
+src/ast/mod.rs::method::Span.new	method	ported	Regex::Syntax::AST::Span.new; spec/ast_core_parity_spec.cr	Span constructors ported
+src/ast/mod.rs::struct::Alternation	struct	ported	Regex::Syntax::AST::Alternation; spec/ast_core_parity_spec.cr	Alternation node ported
+src/ast/mod.rs::struct::Assertion	struct	ported	Regex::Syntax::AST::Assertion; spec/ast_core_parity_spec.cr	Assertion node ported
+src/ast/mod.rs::struct::CaptureName	struct	ported	Regex::Syntax::AST::CaptureName; spec/ast_core_parity_spec.cr	Capture metadata wrapper ported
+src/ast/mod.rs::struct::ClassAscii	struct	ported	Regex::Syntax::AST::ClassAscii; spec/ast_core_parity_spec.cr	ASCII class node ported
+src/ast/mod.rs::struct::ClassBracketed	struct	ported	Regex::Syntax::AST::ClassBracketed; spec/ast_core_parity_spec.cr	Bracketed class node ported
+src/ast/mod.rs::struct::ClassPerl	struct	ported	Regex::Syntax::AST::ClassPerl; spec/ast_core_parity_spec.cr	Perl class node ported
+src/ast/mod.rs::struct::ClassSetBinaryOp	struct	ported	Regex::Syntax::AST::ClassSetBinaryOp; spec/ast_core_parity_spec.cr	Class-set binary-op node ported
+src/ast/mod.rs::struct::ClassSetRange	struct	ported	Regex::Syntax::AST::ClassSetRange; spec/ast_core_parity_spec.cr	Class-set range node ported
+src/ast/mod.rs::struct::ClassSetUnion	struct	ported	Regex::Syntax::AST::ClassSetUnion; spec/ast_core_parity_spec.cr	Class-set union node ported
+src/ast/mod.rs::struct::ClassUnicode	struct	ported	Regex::Syntax::AST::ClassUnicode; spec/ast_core_parity_spec.cr	Unicode class node ported
+src/ast/mod.rs::struct::Comment	struct	ported	Regex::Syntax::AST::Comment; spec/ast_core_parity_spec.cr	Inline comment wrapper ported
+src/ast/mod.rs::struct::Concat	struct	ported	Regex::Syntax::AST::Concat; spec/ast_core_parity_spec.cr	Concat node ported
+src/ast/mod.rs::struct::Error	struct	ported	Regex::Syntax::AST::Error; spec/error_spec.cr	AST parse error type implemented in error.cr
+src/ast/mod.rs::struct::Flags	struct	ported	Regex::Syntax::AST::Flags; spec/ast_core_parity_spec.cr	Flag collection node ported
+src/ast/mod.rs::struct::FlagsItem	struct	ported	Regex::Syntax::AST::FlagsItem; spec/ast_core_parity_spec.cr	Flag item node ported
+src/ast/mod.rs::struct::Group	struct	ported	Regex::Syntax::AST::Group; spec/ast_core_parity_spec.cr	Group node ported
+src/ast/mod.rs::struct::Literal	struct	ported	Regex::Syntax::AST::Literal; spec/ast_core_parity_spec.cr	Literal node ported
+src/ast/mod.rs::struct::Position	struct	ported	Regex::Syntax::AST::Position; spec/ast_core_parity_spec.cr	Pattern position value ported
+src/ast/mod.rs::struct::Repetition	struct	ported	Regex::Syntax::AST::Repetition; spec/ast_core_parity_spec.cr	Repetition node ported
+src/ast/mod.rs::struct::RepetitionOp	struct	ported	Regex::Syntax::AST::RepetitionOp; spec/ast_core_parity_spec.cr	Repetition operator value ported
+src/ast/mod.rs::struct::SetFlags	struct	ported	Regex::Syntax::AST::SetFlags; spec/ast_core_parity_spec.cr	Inline flag-setting node ported
+src/ast/mod.rs::struct::Span	struct	ported	Regex::Syntax::AST::Span; spec/ast_core_parity_spec.cr	Pattern span value ported
+src/ast/mod.rs::struct::WithComments	struct	ported	Regex::Syntax::AST::WithComments; spec/ast_core_parity_spec.cr	AST plus trailing comment wrapper ported
+src/ast/mod.rs::test::ast_size	test	skipped	-	Rust size assertion is not meaningful for Crystal object layout
+src/ast/mod.rs::test::no_stack_overflow_on_drop	test	skipped	-	Rust drop-stack regression does not translate to Crystal GC semantics
 src/ast/parse.rs::func::build	func	missing	-	auto-generated
 src/ast/parse.rs::func::empty_min_range	func	missing	-	auto-generated
 src/ast/parse.rs::func::ignore_whitespace	func	missing	-	auto-generated
