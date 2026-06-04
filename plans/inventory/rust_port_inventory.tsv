@@ -644,348 +644,348 @@ src/unicode_tables/property_bool.rs::const::XID_CONTINUE	const	ported	Regex::Syn
 src/unicode_tables/property_bool.rs::const::XID_START	const	ported	Regex::Syntax::UnicodeTables::PropertyBool::XID_START	Generated boolean-property Unicode table constant ported
 src/unicode_tables/property_names.rs::const::PROPERTY_NAMES	const	missing	-	auto-generated
 src/unicode_tables/property_values.rs::const::PROPERTY_VALUES	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::ADLAM	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::AHOM	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::ANATOLIAN_HIEROGLYPHS	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::ARABIC	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::ARMENIAN	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::AVESTAN	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::BALINESE	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::BAMUM	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::BASSA_VAH	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::BATAK	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::BENGALI	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::BHAIKSUKI	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::BOPOMOFO	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::BRAHMI	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::BRAILLE	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::BUGINESE	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::BUHID	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::BY_NAME	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::CANADIAN_ABORIGINAL	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::CARIAN	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::CAUCASIAN_ALBANIAN	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::CHAKMA	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::CHAM	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::CHEROKEE	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::CHORASMIAN	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::COMMON	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::COPTIC	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::CUNEIFORM	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::CYPRIOT	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::CYPRO_MINOAN	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::CYRILLIC	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::DESERET	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::DEVANAGARI	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::DIVES_AKURU	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::DOGRA	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::DUPLOYAN	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::EGYPTIAN_HIEROGLYPHS	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::ELBASAN	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::ELYMAIC	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::ETHIOPIC	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::GARAY	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::GEORGIAN	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::GLAGOLITIC	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::GOTHIC	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::GRANTHA	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::GREEK	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::GUJARATI	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::GUNJALA_GONDI	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::GURMUKHI	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::GURUNG_KHEMA	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::HAN	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::HANGUL	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::HANIFI_ROHINGYA	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::HANUNOO	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::HATRAN	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::HEBREW	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::HIRAGANA	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::IMPERIAL_ARAMAIC	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::INHERITED	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::INSCRIPTIONAL_PAHLAVI	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::INSCRIPTIONAL_PARTHIAN	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::JAVANESE	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::KAITHI	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::KANNADA	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::KATAKANA	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::KAWI	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::KAYAH_LI	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::KHAROSHTHI	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::KHITAN_SMALL_SCRIPT	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::KHMER	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::KHOJKI	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::KHUDAWADI	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::KIRAT_RAI	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::LAO	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::LATIN	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::LEPCHA	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::LIMBU	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::LINEAR_A	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::LINEAR_B	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::LISU	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::LYCIAN	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::LYDIAN	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::MAHAJANI	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::MAKASAR	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::MALAYALAM	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::MANDAIC	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::MANICHAEAN	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::MARCHEN	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::MASARAM_GONDI	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::MEDEFAIDRIN	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::MEETEI_MAYEK	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::MENDE_KIKAKUI	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::MEROITIC_CURSIVE	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::MEROITIC_HIEROGLYPHS	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::MIAO	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::MODI	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::MONGOLIAN	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::MRO	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::MULTANI	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::MYANMAR	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::NABATAEAN	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::NAG_MUNDARI	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::NANDINAGARI	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::NEWA	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::NEW_TAI_LUE	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::NKO	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::NUSHU	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::NYIAKENG_PUACHUE_HMONG	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::OGHAM	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::OLD_HUNGARIAN	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::OLD_ITALIC	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::OLD_NORTH_ARABIAN	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::OLD_PERMIC	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::OLD_PERSIAN	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::OLD_SOGDIAN	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::OLD_SOUTH_ARABIAN	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::OLD_TURKIC	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::OLD_UYGHUR	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::OL_CHIKI	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::OL_ONAL	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::ORIYA	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::OSAGE	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::OSMANYA	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::PAHAWH_HMONG	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::PALMYRENE	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::PAU_CIN_HAU	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::PHAGS_PA	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::PHOENICIAN	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::PSALTER_PAHLAVI	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::REJANG	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::RUNIC	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::SAMARITAN	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::SAURASHTRA	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::SHARADA	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::SHAVIAN	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::SIDDHAM	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::SIGNWRITING	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::SINHALA	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::SOGDIAN	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::SORA_SOMPENG	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::SOYOMBO	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::SUNDANESE	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::SUNUWAR	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::SYLOTI_NAGRI	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::SYRIAC	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::TAGALOG	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::TAGBANWA	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::TAI_LE	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::TAI_THAM	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::TAI_VIET	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::TAKRI	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::TAMIL	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::TANGSA	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::TANGUT	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::TELUGU	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::THAANA	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::THAI	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::TIBETAN	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::TIFINAGH	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::TIRHUTA	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::TODHRI	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::TOTO	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::TULU_TIGALARI	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::UGARITIC	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::VAI	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::VITHKUQI	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::WANCHO	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::WARANG_CITI	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::YEZIDI	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::YI	const	missing	-	auto-generated
-src/unicode_tables/script.rs::const::ZANABAZAR_SQUARE	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::ADLAM	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::AHOM	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::ANATOLIAN_HIEROGLYPHS	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::ARABIC	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::ARMENIAN	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::AVESTAN	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::BALINESE	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::BAMUM	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::BASSA_VAH	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::BATAK	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::BENGALI	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::BHAIKSUKI	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::BOPOMOFO	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::BRAHMI	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::BRAILLE	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::BUGINESE	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::BUHID	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::BY_NAME	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::CANADIAN_ABORIGINAL	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::CARIAN	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::CAUCASIAN_ALBANIAN	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::CHAKMA	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::CHAM	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::CHEROKEE	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::CHORASMIAN	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::COMMON	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::COPTIC	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::CUNEIFORM	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::CYPRIOT	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::CYPRO_MINOAN	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::CYRILLIC	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::DESERET	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::DEVANAGARI	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::DIVES_AKURU	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::DOGRA	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::DUPLOYAN	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::EGYPTIAN_HIEROGLYPHS	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::ELBASAN	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::ELYMAIC	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::ETHIOPIC	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::GARAY	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::GEORGIAN	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::GLAGOLITIC	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::GOTHIC	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::GRANTHA	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::GREEK	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::GUJARATI	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::GUNJALA_GONDI	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::GURMUKHI	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::GURUNG_KHEMA	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::HAN	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::HANGUL	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::HANIFI_ROHINGYA	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::HANUNOO	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::HATRAN	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::HEBREW	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::HIRAGANA	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::IMPERIAL_ARAMAIC	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::INHERITED	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::INSCRIPTIONAL_PAHLAVI	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::INSCRIPTIONAL_PARTHIAN	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::JAVANESE	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::KAITHI	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::KANNADA	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::KATAKANA	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::KAWI	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::KAYAH_LI	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::KHAROSHTHI	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::KHITAN_SMALL_SCRIPT	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::KHMER	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::KHOJKI	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::KHUDAWADI	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::KIRAT_RAI	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::LAO	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::LATIN	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::LEPCHA	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::LIMBU	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::LINEAR_A	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::LINEAR_B	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::LISU	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::LYCIAN	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::LYDIAN	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::MAHAJANI	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::MAKASAR	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::MALAYALAM	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::MANDAIC	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::MANICHAEAN	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::MARCHEN	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::MASARAM_GONDI	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::MEDEFAIDRIN	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::MEETEI_MAYEK	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::MENDE_KIKAKUI	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::MEROITIC_CURSIVE	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::MEROITIC_HIEROGLYPHS	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::MIAO	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::MODI	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::MONGOLIAN	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::MRO	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::MULTANI	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::MYANMAR	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::NABATAEAN	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::NAG_MUNDARI	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::NANDINAGARI	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::NEWA	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::NEW_TAI_LUE	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::NKO	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::NUSHU	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::NYIAKENG_PUACHUE_HMONG	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::OGHAM	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::OLD_HUNGARIAN	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::OLD_ITALIC	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::OLD_NORTH_ARABIAN	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::OLD_PERMIC	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::OLD_PERSIAN	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::OLD_SOGDIAN	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::OLD_SOUTH_ARABIAN	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::OLD_TURKIC	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::OLD_UYGHUR	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::OL_CHIKI	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::OL_ONAL	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::ORIYA	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::OSAGE	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::OSMANYA	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::PAHAWH_HMONG	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::PALMYRENE	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::PAU_CIN_HAU	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::PHAGS_PA	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::PHOENICIAN	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::PSALTER_PAHLAVI	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::REJANG	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::RUNIC	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::SAMARITAN	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::SAURASHTRA	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::SHARADA	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::SHAVIAN	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::SIDDHAM	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::SIGNWRITING	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::SINHALA	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::SOGDIAN	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::SORA_SOMPENG	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::SOYOMBO	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::SUNDANESE	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::SUNUWAR	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::SYLOTI_NAGRI	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::SYRIAC	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::TAGALOG	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::TAGBANWA	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::TAI_LE	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::TAI_THAM	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::TAI_VIET	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::TAKRI	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::TAMIL	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::TANGSA	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::TANGUT	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::TELUGU	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::THAANA	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::THAI	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::TIBETAN	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::TIFINAGH	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::TIRHUTA	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::TODHRI	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::TOTO	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::TULU_TIGALARI	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::UGARITIC	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::VAI	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::VITHKUQI	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::WANCHO	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::WARANG_CITI	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::YEZIDI	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::YI	const	missing	-	auto-generated
-src/unicode_tables/script_extension.rs::const::ZANABAZAR_SQUARE	const	missing	-	auto-generated
+src/unicode_tables/script.rs::const::ADLAM	const	ported	Regex::Syntax::UnicodeTables::Script::ADLAM	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::AHOM	const	ported	Regex::Syntax::UnicodeTables::Script::AHOM	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::ANATOLIAN_HIEROGLYPHS	const	ported	Regex::Syntax::UnicodeTables::Script::ANATOLIAN_HIEROGLYPHS	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::ARABIC	const	ported	Regex::Syntax::UnicodeTables::Script::ARABIC	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::ARMENIAN	const	ported	Regex::Syntax::UnicodeTables::Script::ARMENIAN	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::AVESTAN	const	ported	Regex::Syntax::UnicodeTables::Script::AVESTAN	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::BALINESE	const	ported	Regex::Syntax::UnicodeTables::Script::BALINESE	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::BAMUM	const	ported	Regex::Syntax::UnicodeTables::Script::BAMUM	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::BASSA_VAH	const	ported	Regex::Syntax::UnicodeTables::Script::BASSA_VAH	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::BATAK	const	ported	Regex::Syntax::UnicodeTables::Script::BATAK	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::BENGALI	const	ported	Regex::Syntax::UnicodeTables::Script::BENGALI	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::BHAIKSUKI	const	ported	Regex::Syntax::UnicodeTables::Script::BHAIKSUKI	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::BOPOMOFO	const	ported	Regex::Syntax::UnicodeTables::Script::BOPOMOFO	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::BRAHMI	const	ported	Regex::Syntax::UnicodeTables::Script::BRAHMI	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::BRAILLE	const	ported	Regex::Syntax::UnicodeTables::Script::BRAILLE	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::BUGINESE	const	ported	Regex::Syntax::UnicodeTables::Script::BUGINESE	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::BUHID	const	ported	Regex::Syntax::UnicodeTables::Script::BUHID	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::BY_NAME	const	ported	Regex::Syntax::UnicodeTables::Script::BY_NAME	Normalized script lookup table ported
+src/unicode_tables/script.rs::const::CANADIAN_ABORIGINAL	const	ported	Regex::Syntax::UnicodeTables::Script::CANADIAN_ABORIGINAL	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::CARIAN	const	ported	Regex::Syntax::UnicodeTables::Script::CARIAN	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::CAUCASIAN_ALBANIAN	const	ported	Regex::Syntax::UnicodeTables::Script::CAUCASIAN_ALBANIAN	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::CHAKMA	const	ported	Regex::Syntax::UnicodeTables::Script::CHAKMA	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::CHAM	const	ported	Regex::Syntax::UnicodeTables::Script::CHAM	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::CHEROKEE	const	ported	Regex::Syntax::UnicodeTables::Script::CHEROKEE	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::CHORASMIAN	const	ported	Regex::Syntax::UnicodeTables::Script::CHORASMIAN	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::COMMON	const	ported	Regex::Syntax::UnicodeTables::Script::COMMON	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::COPTIC	const	ported	Regex::Syntax::UnicodeTables::Script::COPTIC	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::CUNEIFORM	const	ported	Regex::Syntax::UnicodeTables::Script::CUNEIFORM	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::CYPRIOT	const	ported	Regex::Syntax::UnicodeTables::Script::CYPRIOT	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::CYPRO_MINOAN	const	ported	Regex::Syntax::UnicodeTables::Script::CYPRO_MINOAN	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::CYRILLIC	const	ported	Regex::Syntax::UnicodeTables::Script::CYRILLIC	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::DESERET	const	ported	Regex::Syntax::UnicodeTables::Script::DESERET	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::DEVANAGARI	const	ported	Regex::Syntax::UnicodeTables::Script::DEVANAGARI	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::DIVES_AKURU	const	ported	Regex::Syntax::UnicodeTables::Script::DIVES_AKURU	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::DOGRA	const	ported	Regex::Syntax::UnicodeTables::Script::DOGRA	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::DUPLOYAN	const	ported	Regex::Syntax::UnicodeTables::Script::DUPLOYAN	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::EGYPTIAN_HIEROGLYPHS	const	ported	Regex::Syntax::UnicodeTables::Script::EGYPTIAN_HIEROGLYPHS	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::ELBASAN	const	ported	Regex::Syntax::UnicodeTables::Script::ELBASAN	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::ELYMAIC	const	ported	Regex::Syntax::UnicodeTables::Script::ELYMAIC	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::ETHIOPIC	const	ported	Regex::Syntax::UnicodeTables::Script::ETHIOPIC	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::GARAY	const	ported	Regex::Syntax::UnicodeTables::Script::GARAY	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::GEORGIAN	const	ported	Regex::Syntax::UnicodeTables::Script::GEORGIAN	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::GLAGOLITIC	const	ported	Regex::Syntax::UnicodeTables::Script::GLAGOLITIC	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::GOTHIC	const	ported	Regex::Syntax::UnicodeTables::Script::GOTHIC	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::GRANTHA	const	ported	Regex::Syntax::UnicodeTables::Script::GRANTHA	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::GREEK	const	ported	Regex::Syntax::UnicodeTables::Script::GREEK	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::GUJARATI	const	ported	Regex::Syntax::UnicodeTables::Script::GUJARATI	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::GUNJALA_GONDI	const	ported	Regex::Syntax::UnicodeTables::Script::GUNJALA_GONDI	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::GURMUKHI	const	ported	Regex::Syntax::UnicodeTables::Script::GURMUKHI	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::GURUNG_KHEMA	const	ported	Regex::Syntax::UnicodeTables::Script::GURUNG_KHEMA	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::HAN	const	ported	Regex::Syntax::UnicodeTables::Script::HAN	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::HANGUL	const	ported	Regex::Syntax::UnicodeTables::Script::HANGUL	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::HANIFI_ROHINGYA	const	ported	Regex::Syntax::UnicodeTables::Script::HANIFI_ROHINGYA	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::HANUNOO	const	ported	Regex::Syntax::UnicodeTables::Script::HANUNOO	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::HATRAN	const	ported	Regex::Syntax::UnicodeTables::Script::HATRAN	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::HEBREW	const	ported	Regex::Syntax::UnicodeTables::Script::HEBREW	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::HIRAGANA	const	ported	Regex::Syntax::UnicodeTables::Script::HIRAGANA	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::IMPERIAL_ARAMAIC	const	ported	Regex::Syntax::UnicodeTables::Script::IMPERIAL_ARAMAIC	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::INHERITED	const	ported	Regex::Syntax::UnicodeTables::Script::INHERITED	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::INSCRIPTIONAL_PAHLAVI	const	ported	Regex::Syntax::UnicodeTables::Script::INSCRIPTIONAL_PAHLAVI	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::INSCRIPTIONAL_PARTHIAN	const	ported	Regex::Syntax::UnicodeTables::Script::INSCRIPTIONAL_PARTHIAN	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::JAVANESE	const	ported	Regex::Syntax::UnicodeTables::Script::JAVANESE	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::KAITHI	const	ported	Regex::Syntax::UnicodeTables::Script::KAITHI	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::KANNADA	const	ported	Regex::Syntax::UnicodeTables::Script::KANNADA	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::KATAKANA	const	ported	Regex::Syntax::UnicodeTables::Script::KATAKANA	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::KAWI	const	ported	Regex::Syntax::UnicodeTables::Script::KAWI	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::KAYAH_LI	const	ported	Regex::Syntax::UnicodeTables::Script::KAYAH_LI	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::KHAROSHTHI	const	ported	Regex::Syntax::UnicodeTables::Script::KHAROSHTHI	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::KHITAN_SMALL_SCRIPT	const	ported	Regex::Syntax::UnicodeTables::Script::KHITAN_SMALL_SCRIPT	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::KHMER	const	ported	Regex::Syntax::UnicodeTables::Script::KHMER	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::KHOJKI	const	ported	Regex::Syntax::UnicodeTables::Script::KHOJKI	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::KHUDAWADI	const	ported	Regex::Syntax::UnicodeTables::Script::KHUDAWADI	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::KIRAT_RAI	const	ported	Regex::Syntax::UnicodeTables::Script::KIRAT_RAI	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::LAO	const	ported	Regex::Syntax::UnicodeTables::Script::LAO	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::LATIN	const	ported	Regex::Syntax::UnicodeTables::Script::LATIN	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::LEPCHA	const	ported	Regex::Syntax::UnicodeTables::Script::LEPCHA	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::LIMBU	const	ported	Regex::Syntax::UnicodeTables::Script::LIMBU	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::LINEAR_A	const	ported	Regex::Syntax::UnicodeTables::Script::LINEAR_A	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::LINEAR_B	const	ported	Regex::Syntax::UnicodeTables::Script::LINEAR_B	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::LISU	const	ported	Regex::Syntax::UnicodeTables::Script::LISU	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::LYCIAN	const	ported	Regex::Syntax::UnicodeTables::Script::LYCIAN	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::LYDIAN	const	ported	Regex::Syntax::UnicodeTables::Script::LYDIAN	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::MAHAJANI	const	ported	Regex::Syntax::UnicodeTables::Script::MAHAJANI	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::MAKASAR	const	ported	Regex::Syntax::UnicodeTables::Script::MAKASAR	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::MALAYALAM	const	ported	Regex::Syntax::UnicodeTables::Script::MALAYALAM	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::MANDAIC	const	ported	Regex::Syntax::UnicodeTables::Script::MANDAIC	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::MANICHAEAN	const	ported	Regex::Syntax::UnicodeTables::Script::MANICHAEAN	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::MARCHEN	const	ported	Regex::Syntax::UnicodeTables::Script::MARCHEN	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::MASARAM_GONDI	const	ported	Regex::Syntax::UnicodeTables::Script::MASARAM_GONDI	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::MEDEFAIDRIN	const	ported	Regex::Syntax::UnicodeTables::Script::MEDEFAIDRIN	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::MEETEI_MAYEK	const	ported	Regex::Syntax::UnicodeTables::Script::MEETEI_MAYEK	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::MENDE_KIKAKUI	const	ported	Regex::Syntax::UnicodeTables::Script::MENDE_KIKAKUI	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::MEROITIC_CURSIVE	const	ported	Regex::Syntax::UnicodeTables::Script::MEROITIC_CURSIVE	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::MEROITIC_HIEROGLYPHS	const	ported	Regex::Syntax::UnicodeTables::Script::MEROITIC_HIEROGLYPHS	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::MIAO	const	ported	Regex::Syntax::UnicodeTables::Script::MIAO	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::MODI	const	ported	Regex::Syntax::UnicodeTables::Script::MODI	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::MONGOLIAN	const	ported	Regex::Syntax::UnicodeTables::Script::MONGOLIAN	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::MRO	const	ported	Regex::Syntax::UnicodeTables::Script::MRO	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::MULTANI	const	ported	Regex::Syntax::UnicodeTables::Script::MULTANI	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::MYANMAR	const	ported	Regex::Syntax::UnicodeTables::Script::MYANMAR	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::NABATAEAN	const	ported	Regex::Syntax::UnicodeTables::Script::NABATAEAN	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::NAG_MUNDARI	const	ported	Regex::Syntax::UnicodeTables::Script::NAG_MUNDARI	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::NANDINAGARI	const	ported	Regex::Syntax::UnicodeTables::Script::NANDINAGARI	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::NEWA	const	ported	Regex::Syntax::UnicodeTables::Script::NEWA	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::NEW_TAI_LUE	const	ported	Regex::Syntax::UnicodeTables::Script::NEW_TAI_LUE	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::NKO	const	ported	Regex::Syntax::UnicodeTables::Script::NKO	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::NUSHU	const	ported	Regex::Syntax::UnicodeTables::Script::NUSHU	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::NYIAKENG_PUACHUE_HMONG	const	ported	Regex::Syntax::UnicodeTables::Script::NYIAKENG_PUACHUE_HMONG	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::OGHAM	const	ported	Regex::Syntax::UnicodeTables::Script::OGHAM	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::OLD_HUNGARIAN	const	ported	Regex::Syntax::UnicodeTables::Script::OLD_HUNGARIAN	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::OLD_ITALIC	const	ported	Regex::Syntax::UnicodeTables::Script::OLD_ITALIC	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::OLD_NORTH_ARABIAN	const	ported	Regex::Syntax::UnicodeTables::Script::OLD_NORTH_ARABIAN	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::OLD_PERMIC	const	ported	Regex::Syntax::UnicodeTables::Script::OLD_PERMIC	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::OLD_PERSIAN	const	ported	Regex::Syntax::UnicodeTables::Script::OLD_PERSIAN	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::OLD_SOGDIAN	const	ported	Regex::Syntax::UnicodeTables::Script::OLD_SOGDIAN	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::OLD_SOUTH_ARABIAN	const	ported	Regex::Syntax::UnicodeTables::Script::OLD_SOUTH_ARABIAN	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::OLD_TURKIC	const	ported	Regex::Syntax::UnicodeTables::Script::OLD_TURKIC	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::OLD_UYGHUR	const	ported	Regex::Syntax::UnicodeTables::Script::OLD_UYGHUR	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::OL_CHIKI	const	ported	Regex::Syntax::UnicodeTables::Script::OL_CHIKI	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::OL_ONAL	const	ported	Regex::Syntax::UnicodeTables::Script::OL_ONAL	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::ORIYA	const	ported	Regex::Syntax::UnicodeTables::Script::ORIYA	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::OSAGE	const	ported	Regex::Syntax::UnicodeTables::Script::OSAGE	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::OSMANYA	const	ported	Regex::Syntax::UnicodeTables::Script::OSMANYA	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::PAHAWH_HMONG	const	ported	Regex::Syntax::UnicodeTables::Script::PAHAWH_HMONG	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::PALMYRENE	const	ported	Regex::Syntax::UnicodeTables::Script::PALMYRENE	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::PAU_CIN_HAU	const	ported	Regex::Syntax::UnicodeTables::Script::PAU_CIN_HAU	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::PHAGS_PA	const	ported	Regex::Syntax::UnicodeTables::Script::PHAGS_PA	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::PHOENICIAN	const	ported	Regex::Syntax::UnicodeTables::Script::PHOENICIAN	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::PSALTER_PAHLAVI	const	ported	Regex::Syntax::UnicodeTables::Script::PSALTER_PAHLAVI	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::REJANG	const	ported	Regex::Syntax::UnicodeTables::Script::REJANG	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::RUNIC	const	ported	Regex::Syntax::UnicodeTables::Script::RUNIC	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::SAMARITAN	const	ported	Regex::Syntax::UnicodeTables::Script::SAMARITAN	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::SAURASHTRA	const	ported	Regex::Syntax::UnicodeTables::Script::SAURASHTRA	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::SHARADA	const	ported	Regex::Syntax::UnicodeTables::Script::SHARADA	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::SHAVIAN	const	ported	Regex::Syntax::UnicodeTables::Script::SHAVIAN	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::SIDDHAM	const	ported	Regex::Syntax::UnicodeTables::Script::SIDDHAM	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::SIGNWRITING	const	ported	Regex::Syntax::UnicodeTables::Script::SIGNWRITING	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::SINHALA	const	ported	Regex::Syntax::UnicodeTables::Script::SINHALA	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::SOGDIAN	const	ported	Regex::Syntax::UnicodeTables::Script::SOGDIAN	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::SORA_SOMPENG	const	ported	Regex::Syntax::UnicodeTables::Script::SORA_SOMPENG	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::SOYOMBO	const	ported	Regex::Syntax::UnicodeTables::Script::SOYOMBO	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::SUNDANESE	const	ported	Regex::Syntax::UnicodeTables::Script::SUNDANESE	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::SUNUWAR	const	ported	Regex::Syntax::UnicodeTables::Script::SUNUWAR	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::SYLOTI_NAGRI	const	ported	Regex::Syntax::UnicodeTables::Script::SYLOTI_NAGRI	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::SYRIAC	const	ported	Regex::Syntax::UnicodeTables::Script::SYRIAC	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::TAGALOG	const	ported	Regex::Syntax::UnicodeTables::Script::TAGALOG	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::TAGBANWA	const	ported	Regex::Syntax::UnicodeTables::Script::TAGBANWA	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::TAI_LE	const	ported	Regex::Syntax::UnicodeTables::Script::TAI_LE	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::TAI_THAM	const	ported	Regex::Syntax::UnicodeTables::Script::TAI_THAM	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::TAI_VIET	const	ported	Regex::Syntax::UnicodeTables::Script::TAI_VIET	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::TAKRI	const	ported	Regex::Syntax::UnicodeTables::Script::TAKRI	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::TAMIL	const	ported	Regex::Syntax::UnicodeTables::Script::TAMIL	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::TANGSA	const	ported	Regex::Syntax::UnicodeTables::Script::TANGSA	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::TANGUT	const	ported	Regex::Syntax::UnicodeTables::Script::TANGUT	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::TELUGU	const	ported	Regex::Syntax::UnicodeTables::Script::TELUGU	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::THAANA	const	ported	Regex::Syntax::UnicodeTables::Script::THAANA	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::THAI	const	ported	Regex::Syntax::UnicodeTables::Script::THAI	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::TIBETAN	const	ported	Regex::Syntax::UnicodeTables::Script::TIBETAN	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::TIFINAGH	const	ported	Regex::Syntax::UnicodeTables::Script::TIFINAGH	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::TIRHUTA	const	ported	Regex::Syntax::UnicodeTables::Script::TIRHUTA	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::TODHRI	const	ported	Regex::Syntax::UnicodeTables::Script::TODHRI	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::TOTO	const	ported	Regex::Syntax::UnicodeTables::Script::TOTO	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::TULU_TIGALARI	const	ported	Regex::Syntax::UnicodeTables::Script::TULU_TIGALARI	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::UGARITIC	const	ported	Regex::Syntax::UnicodeTables::Script::UGARITIC	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::VAI	const	ported	Regex::Syntax::UnicodeTables::Script::VAI	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::VITHKUQI	const	ported	Regex::Syntax::UnicodeTables::Script::VITHKUQI	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::WANCHO	const	ported	Regex::Syntax::UnicodeTables::Script::WANCHO	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::WARANG_CITI	const	ported	Regex::Syntax::UnicodeTables::Script::WARANG_CITI	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::YEZIDI	const	ported	Regex::Syntax::UnicodeTables::Script::YEZIDI	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::YI	const	ported	Regex::Syntax::UnicodeTables::Script::YI	Generated script Unicode table constant ported
+src/unicode_tables/script.rs::const::ZANABAZAR_SQUARE	const	ported	Regex::Syntax::UnicodeTables::Script::ZANABAZAR_SQUARE	Generated script Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::ADLAM	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::ADLAM	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::AHOM	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::AHOM	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::ANATOLIAN_HIEROGLYPHS	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::ANATOLIAN_HIEROGLYPHS	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::ARABIC	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::ARABIC	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::ARMENIAN	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::ARMENIAN	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::AVESTAN	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::AVESTAN	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::BALINESE	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::BALINESE	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::BAMUM	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::BAMUM	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::BASSA_VAH	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::BASSA_VAH	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::BATAK	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::BATAK	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::BENGALI	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::BENGALI	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::BHAIKSUKI	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::BHAIKSUKI	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::BOPOMOFO	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::BOPOMOFO	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::BRAHMI	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::BRAHMI	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::BRAILLE	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::BRAILLE	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::BUGINESE	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::BUGINESE	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::BUHID	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::BUHID	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::BY_NAME	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::BY_NAME	Normalized script-extension lookup table ported
+src/unicode_tables/script_extension.rs::const::CANADIAN_ABORIGINAL	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::CANADIAN_ABORIGINAL	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::CARIAN	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::CARIAN	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::CAUCASIAN_ALBANIAN	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::CAUCASIAN_ALBANIAN	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::CHAKMA	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::CHAKMA	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::CHAM	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::CHAM	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::CHEROKEE	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::CHEROKEE	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::CHORASMIAN	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::CHORASMIAN	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::COMMON	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::COMMON	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::COPTIC	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::COPTIC	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::CUNEIFORM	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::CUNEIFORM	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::CYPRIOT	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::CYPRIOT	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::CYPRO_MINOAN	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::CYPRO_MINOAN	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::CYRILLIC	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::CYRILLIC	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::DESERET	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::DESERET	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::DEVANAGARI	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::DEVANAGARI	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::DIVES_AKURU	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::DIVES_AKURU	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::DOGRA	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::DOGRA	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::DUPLOYAN	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::DUPLOYAN	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::EGYPTIAN_HIEROGLYPHS	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::EGYPTIAN_HIEROGLYPHS	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::ELBASAN	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::ELBASAN	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::ELYMAIC	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::ELYMAIC	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::ETHIOPIC	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::ETHIOPIC	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::GARAY	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::GARAY	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::GEORGIAN	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::GEORGIAN	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::GLAGOLITIC	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::GLAGOLITIC	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::GOTHIC	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::GOTHIC	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::GRANTHA	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::GRANTHA	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::GREEK	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::GREEK	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::GUJARATI	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::GUJARATI	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::GUNJALA_GONDI	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::GUNJALA_GONDI	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::GURMUKHI	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::GURMUKHI	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::GURUNG_KHEMA	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::GURUNG_KHEMA	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::HAN	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::HAN	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::HANGUL	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::HANGUL	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::HANIFI_ROHINGYA	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::HANIFI_ROHINGYA	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::HANUNOO	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::HANUNOO	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::HATRAN	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::HATRAN	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::HEBREW	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::HEBREW	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::HIRAGANA	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::HIRAGANA	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::IMPERIAL_ARAMAIC	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::IMPERIAL_ARAMAIC	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::INHERITED	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::INHERITED	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::INSCRIPTIONAL_PAHLAVI	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::INSCRIPTIONAL_PAHLAVI	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::INSCRIPTIONAL_PARTHIAN	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::INSCRIPTIONAL_PARTHIAN	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::JAVANESE	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::JAVANESE	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::KAITHI	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::KAITHI	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::KANNADA	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::KANNADA	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::KATAKANA	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::KATAKANA	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::KAWI	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::KAWI	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::KAYAH_LI	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::KAYAH_LI	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::KHAROSHTHI	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::KHAROSHTHI	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::KHITAN_SMALL_SCRIPT	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::KHITAN_SMALL_SCRIPT	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::KHMER	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::KHMER	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::KHOJKI	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::KHOJKI	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::KHUDAWADI	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::KHUDAWADI	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::KIRAT_RAI	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::KIRAT_RAI	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::LAO	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::LAO	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::LATIN	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::LATIN	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::LEPCHA	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::LEPCHA	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::LIMBU	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::LIMBU	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::LINEAR_A	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::LINEAR_A	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::LINEAR_B	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::LINEAR_B	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::LISU	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::LISU	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::LYCIAN	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::LYCIAN	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::LYDIAN	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::LYDIAN	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::MAHAJANI	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::MAHAJANI	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::MAKASAR	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::MAKASAR	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::MALAYALAM	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::MALAYALAM	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::MANDAIC	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::MANDAIC	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::MANICHAEAN	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::MANICHAEAN	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::MARCHEN	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::MARCHEN	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::MASARAM_GONDI	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::MASARAM_GONDI	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::MEDEFAIDRIN	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::MEDEFAIDRIN	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::MEETEI_MAYEK	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::MEETEI_MAYEK	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::MENDE_KIKAKUI	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::MENDE_KIKAKUI	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::MEROITIC_CURSIVE	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::MEROITIC_CURSIVE	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::MEROITIC_HIEROGLYPHS	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::MEROITIC_HIEROGLYPHS	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::MIAO	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::MIAO	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::MODI	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::MODI	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::MONGOLIAN	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::MONGOLIAN	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::MRO	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::MRO	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::MULTANI	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::MULTANI	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::MYANMAR	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::MYANMAR	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::NABATAEAN	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::NABATAEAN	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::NAG_MUNDARI	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::NAG_MUNDARI	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::NANDINAGARI	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::NANDINAGARI	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::NEWA	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::NEWA	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::NEW_TAI_LUE	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::NEW_TAI_LUE	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::NKO	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::NKO	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::NUSHU	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::NUSHU	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::NYIAKENG_PUACHUE_HMONG	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::NYIAKENG_PUACHUE_HMONG	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::OGHAM	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::OGHAM	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::OLD_HUNGARIAN	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::OLD_HUNGARIAN	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::OLD_ITALIC	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::OLD_ITALIC	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::OLD_NORTH_ARABIAN	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::OLD_NORTH_ARABIAN	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::OLD_PERMIC	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::OLD_PERMIC	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::OLD_PERSIAN	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::OLD_PERSIAN	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::OLD_SOGDIAN	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::OLD_SOGDIAN	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::OLD_SOUTH_ARABIAN	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::OLD_SOUTH_ARABIAN	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::OLD_TURKIC	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::OLD_TURKIC	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::OLD_UYGHUR	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::OLD_UYGHUR	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::OL_CHIKI	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::OL_CHIKI	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::OL_ONAL	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::OL_ONAL	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::ORIYA	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::ORIYA	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::OSAGE	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::OSAGE	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::OSMANYA	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::OSMANYA	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::PAHAWH_HMONG	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::PAHAWH_HMONG	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::PALMYRENE	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::PALMYRENE	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::PAU_CIN_HAU	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::PAU_CIN_HAU	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::PHAGS_PA	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::PHAGS_PA	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::PHOENICIAN	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::PHOENICIAN	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::PSALTER_PAHLAVI	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::PSALTER_PAHLAVI	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::REJANG	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::REJANG	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::RUNIC	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::RUNIC	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::SAMARITAN	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::SAMARITAN	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::SAURASHTRA	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::SAURASHTRA	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::SHARADA	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::SHARADA	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::SHAVIAN	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::SHAVIAN	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::SIDDHAM	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::SIDDHAM	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::SIGNWRITING	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::SIGNWRITING	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::SINHALA	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::SINHALA	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::SOGDIAN	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::SOGDIAN	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::SORA_SOMPENG	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::SORA_SOMPENG	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::SOYOMBO	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::SOYOMBO	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::SUNDANESE	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::SUNDANESE	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::SUNUWAR	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::SUNUWAR	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::SYLOTI_NAGRI	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::SYLOTI_NAGRI	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::SYRIAC	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::SYRIAC	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::TAGALOG	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::TAGALOG	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::TAGBANWA	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::TAGBANWA	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::TAI_LE	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::TAI_LE	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::TAI_THAM	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::TAI_THAM	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::TAI_VIET	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::TAI_VIET	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::TAKRI	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::TAKRI	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::TAMIL	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::TAMIL	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::TANGSA	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::TANGSA	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::TANGUT	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::TANGUT	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::TELUGU	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::TELUGU	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::THAANA	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::THAANA	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::THAI	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::THAI	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::TIBETAN	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::TIBETAN	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::TIFINAGH	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::TIFINAGH	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::TIRHUTA	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::TIRHUTA	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::TODHRI	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::TODHRI	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::TOTO	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::TOTO	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::TULU_TIGALARI	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::TULU_TIGALARI	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::UGARITIC	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::UGARITIC	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::VAI	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::VAI	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::VITHKUQI	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::VITHKUQI	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::WANCHO	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::WANCHO	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::WARANG_CITI	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::WARANG_CITI	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::YEZIDI	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::YEZIDI	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::YI	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::YI	Generated script-extension Unicode table constant ported
+src/unicode_tables/script_extension.rs::const::ZANABAZAR_SQUARE	const	ported	Regex::Syntax::UnicodeTables::ScriptExtension::ZANABAZAR_SQUARE	Generated script-extension Unicode table constant ported
 src/unicode_tables/sentence_break.rs::const::ATERM	const	missing	-	auto-generated
 src/unicode_tables/sentence_break.rs::const::BY_NAME	const	missing	-	auto-generated
 src/unicode_tables/sentence_break.rs::const::CLOSE	const	missing	-	auto-generated
