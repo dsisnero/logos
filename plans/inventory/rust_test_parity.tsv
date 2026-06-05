@@ -1,6 +1,6 @@
 # source_test_id	status	crystal_refs	notes
-src/ast/mod.rs::test::ast_size	missing	-	baseline
-src/ast/mod.rs::test::no_stack_overflow_on_drop	missing	-	baseline
+src/ast/mod.rs::test::ast_size	partial	spec/ast_hir_stack_safety_spec.cr	Rust size_of::<Ast>() guard is not meaningful for Crystal object layout; replaced with stack-safety smoke coverage
+src/ast/mod.rs::test::no_stack_overflow_on_drop	partial	spec/ast_hir_stack_safety_spec.cr	Rust thread-stack destructor test maps to Crystal GC smoke coverage for deep AST release
 src/ast/parse.rs::test::maybe_parse_ascii_class	ported	spec/ast_parse_parity_spec.cr	ASCII class probe, backtracking, and bracketed fallback coverage ported
 src/ast/parse.rs::test::parse_alternate	ported	spec/ast_parse_parity_spec.cr	Alternation parsing and child ordering coverage ported
 src/ast/parse.rs::test::parse_capture_name	ported	spec/ast_parse_parity_spec.cr	Named capture parsing and duplicate-name diagnostics ported
@@ -77,7 +77,7 @@ src/hir/mod.rs::test::class_union_bytes	missing	-	baseline
 src/hir/mod.rs::test::class_union_unicode	missing	-	baseline
 src/hir/mod.rs::test::look_set_debug	missing	-	baseline
 src/hir/mod.rs::test::look_set_iter	missing	-	baseline
-src/hir/mod.rs::test::no_stack_overflow_on_drop	missing	-	baseline
+src/hir/mod.rs::test::no_stack_overflow_on_drop	partial	spec/ast_hir_stack_safety_spec.cr	Rust thread-stack destructor test maps to Crystal GC smoke coverage for deep HIR release
 src/hir/print.rs::test::print_alternation	missing	-	baseline
 src/hir/print.rs::test::print_anchor	missing	-	baseline
 src/hir/print.rs::test::print_class	missing	-	baseline
