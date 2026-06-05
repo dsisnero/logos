@@ -1,0 +1,159 @@
+# source_test_id	status	crystal_refs	notes
+src/ast/mod.rs::test::ast_size	missing	-	baseline
+src/ast/mod.rs::test::no_stack_overflow_on_drop	missing	-	baseline
+src/ast/parse.rs::test::maybe_parse_ascii_class	missing	-	baseline
+src/ast/parse.rs::test::parse_alternate	missing	-	baseline
+src/ast/parse.rs::test::parse_capture_name	missing	-	baseline
+src/ast/parse.rs::test::parse_comments	missing	-	baseline
+src/ast/parse.rs::test::parse_counted_repetition	missing	-	baseline
+src/ast/parse.rs::test::parse_decimal	missing	-	baseline
+src/ast/parse.rs::test::parse_escape	missing	-	baseline
+src/ast/parse.rs::test::parse_flag	missing	-	baseline
+src/ast/parse.rs::test::parse_flags	missing	-	baseline
+src/ast/parse.rs::test::parse_group	missing	-	baseline
+src/ast/parse.rs::test::parse_hex_brace	missing	-	baseline
+src/ast/parse.rs::test::parse_hex_eight	missing	-	baseline
+src/ast/parse.rs::test::parse_hex_four	missing	-	baseline
+src/ast/parse.rs::test::parse_hex_two	missing	-	baseline
+src/ast/parse.rs::test::parse_holistic	missing	-	baseline
+src/ast/parse.rs::test::parse_ignore_whitespace	missing	-	baseline
+src/ast/parse.rs::test::parse_nest_limit	missing	-	baseline
+src/ast/parse.rs::test::parse_newlines	missing	-	baseline
+src/ast/parse.rs::test::parse_octal	missing	-	baseline
+src/ast/parse.rs::test::parse_perl_class	missing	-	baseline
+src/ast/parse.rs::test::parse_primitive_non_escape	missing	-	baseline
+src/ast/parse.rs::test::parse_set_class	missing	-	baseline
+src/ast/parse.rs::test::parse_set_class_open	missing	-	baseline
+src/ast/parse.rs::test::parse_uncounted_repetition	missing	-	baseline
+src/ast/parse.rs::test::parse_unicode_class	missing	-	baseline
+src/ast/parse.rs::test::parse_unsupported_backreference	missing	-	baseline
+src/ast/parse.rs::test::parse_unsupported_lookaround	missing	-	baseline
+src/ast/parse.rs::test::regression_454_nest_too_big	missing	-	baseline
+src/ast/parse.rs::test::regression_455_trailing_dash_ignore_whitespace	missing	-	baseline
+src/ast/print.rs::test::print_alternation	missing	-	baseline
+src/ast/print.rs::test::print_assertion	missing	-	baseline
+src/ast/print.rs::test::print_class	missing	-	baseline
+src/ast/print.rs::test::print_concat	missing	-	baseline
+src/ast/print.rs::test::print_dot	missing	-	baseline
+src/ast/print.rs::test::print_flags	missing	-	baseline
+src/ast/print.rs::test::print_group	missing	-	baseline
+src/ast/print.rs::test::print_literal	missing	-	baseline
+src/ast/print.rs::test::print_repetition	missing	-	baseline
+src/error.rs::test::regression_464	ported	spec/error_spec.cr	Direct multiline formatter regression port
+src/error.rs::test::repetition_quantifier_expects_a_valid_decimal	ported	spec/error_spec.cr	Exact formatter message and caret placement ported
+src/hir/literal.rs::test::alternation	missing	-	baseline
+src/hir/literal.rs::test::anything	missing	-	baseline
+src/hir/literal.rs::test::anything_small_limits	missing	-	baseline
+src/hir/literal.rs::test::class	missing	-	baseline
+src/hir/literal.rs::test::concat	missing	-	baseline
+src/hir/literal.rs::test::crazy_repeats	missing	-	baseline
+src/hir/literal.rs::test::empty	missing	-	baseline
+src/hir/literal.rs::test::holmes	missing	-	baseline
+src/hir/literal.rs::test::holmes_alt	missing	-	baseline
+src/hir/literal.rs::test::huge	missing	-	baseline
+src/hir/literal.rs::test::impossible	missing	-	baseline
+src/hir/literal.rs::test::literal	missing	-	baseline
+src/hir/literal.rs::test::look	missing	-	baseline
+src/hir/literal.rs::test::odds_and_ends	missing	-	baseline
+src/hir/literal.rs::test::optimize	missing	-	baseline
+src/hir/literal.rs::test::repetition	missing	-	baseline
+src/hir/mod.rs::test::class_canonicalize_bytes	missing	-	baseline
+src/hir/mod.rs::test::class_canonicalize_unicode	missing	-	baseline
+src/hir/mod.rs::test::class_case_fold_bytes	missing	-	baseline
+src/hir/mod.rs::test::class_case_fold_unicode	missing	-	baseline
+src/hir/mod.rs::test::class_case_fold_unicode_disabled	missing	-	baseline
+src/hir/mod.rs::test::class_case_fold_unicode_disabled_panics	missing	-	baseline
+src/hir/mod.rs::test::class_difference_bytes	missing	-	baseline
+src/hir/mod.rs::test::class_difference_unicode	missing	-	baseline
+src/hir/mod.rs::test::class_intersect_bytes	missing	-	baseline
+src/hir/mod.rs::test::class_intersect_unicode	missing	-	baseline
+src/hir/mod.rs::test::class_negate_bytes	missing	-	baseline
+src/hir/mod.rs::test::class_negate_unicode	missing	-	baseline
+src/hir/mod.rs::test::class_range_canonical_bytes	missing	-	baseline
+src/hir/mod.rs::test::class_range_canonical_unicode	missing	-	baseline
+src/hir/mod.rs::test::class_symmetric_difference_bytes	missing	-	baseline
+src/hir/mod.rs::test::class_symmetric_difference_unicode	missing	-	baseline
+src/hir/mod.rs::test::class_union_bytes	missing	-	baseline
+src/hir/mod.rs::test::class_union_unicode	missing	-	baseline
+src/hir/mod.rs::test::look_set_debug	missing	-	baseline
+src/hir/mod.rs::test::look_set_iter	missing	-	baseline
+src/hir/mod.rs::test::no_stack_overflow_on_drop	missing	-	baseline
+src/hir/print.rs::test::print_alternation	missing	-	baseline
+src/hir/print.rs::test::print_anchor	missing	-	baseline
+src/hir/print.rs::test::print_class	missing	-	baseline
+src/hir/print.rs::test::print_group	missing	-	baseline
+src/hir/print.rs::test::print_literal	missing	-	baseline
+src/hir/print.rs::test::print_repetition	missing	-	baseline
+src/hir/print.rs::test::print_word_boundary	missing	-	baseline
+src/hir/print.rs::test::regression_alternation_concat	missing	-	baseline
+src/hir/print.rs::test::regression_repetition_alternation	missing	-	baseline
+src/hir/print.rs::test::regression_repetition_concat	missing	-	baseline
+src/hir/translate.rs::test::analysis_can_empty	missing	-	baseline
+src/hir/translate.rs::test::analysis_captures_len	missing	-	baseline
+src/hir/translate.rs::test::analysis_is_all_assertions	missing	-	baseline
+src/hir/translate.rs::test::analysis_is_alternation_literal	missing	-	baseline
+src/hir/translate.rs::test::analysis_is_anchored	missing	-	baseline
+src/hir/translate.rs::test::analysis_is_any_anchored	missing	-	baseline
+src/hir/translate.rs::test::analysis_is_literal	missing	-	baseline
+src/hir/translate.rs::test::analysis_is_utf8	missing	-	baseline
+src/hir/translate.rs::test::analysis_look_set_prefix_any	missing	-	baseline
+src/hir/translate.rs::test::analysis_static_captures_len	missing	-	baseline
+src/hir/translate.rs::test::assertions	missing	-	baseline
+src/hir/translate.rs::test::cat_alt	missing	-	baseline
+src/hir/translate.rs::test::cat_class_flattened	missing	-	baseline
+src/hir/translate.rs::test::class_ascii	missing	-	baseline
+src/hir/translate.rs::test::class_ascii_multiple	missing	-	baseline
+src/hir/translate.rs::test::class_bracketed	missing	-	baseline
+src/hir/translate.rs::test::class_bracketed_difference	missing	-	baseline
+src/hir/translate.rs::test::class_bracketed_intersect	missing	-	baseline
+src/hir/translate.rs::test::class_bracketed_intersect_negate	missing	-	baseline
+src/hir/translate.rs::test::class_bracketed_nested	missing	-	baseline
+src/hir/translate.rs::test::class_bracketed_symmetric_difference	missing	-	baseline
+src/hir/translate.rs::test::class_bracketed_union	missing	-	baseline
+src/hir/translate.rs::test::class_perl_ascii	missing	-	baseline
+src/hir/translate.rs::test::class_perl_digit_disabled	missing	-	baseline
+src/hir/translate.rs::test::class_perl_space_disabled	missing	-	baseline
+src/hir/translate.rs::test::class_perl_unicode	missing	-	baseline
+src/hir/translate.rs::test::class_perl_word_disabled	missing	-	baseline
+src/hir/translate.rs::test::class_unicode_age	missing	-	baseline
+src/hir/translate.rs::test::class_unicode_age_disabled	missing	-	baseline
+src/hir/translate.rs::test::class_unicode_any_empty	missing	-	baseline
+src/hir/translate.rs::test::class_unicode_gencat	missing	-	baseline
+src/hir/translate.rs::test::class_unicode_gencat_disabled	missing	-	baseline
+src/hir/translate.rs::test::class_unicode_script	missing	-	baseline
+src/hir/translate.rs::test::class_unicode_script_disabled	missing	-	baseline
+src/hir/translate.rs::test::dot	missing	-	baseline
+src/hir/translate.rs::test::empty	missing	-	baseline
+src/hir/translate.rs::test::escape	missing	-	baseline
+src/hir/translate.rs::test::flags	missing	-	baseline
+src/hir/translate.rs::test::group	missing	-	baseline
+src/hir/translate.rs::test::ignore_whitespace	missing	-	baseline
+src/hir/translate.rs::test::line_anchors	missing	-	baseline
+src/hir/translate.rs::test::literal	missing	-	baseline
+src/hir/translate.rs::test::literal_case_insensitive	missing	-	baseline
+src/hir/translate.rs::test::regression_alt_empty_concat	missing	-	baseline
+src/hir/translate.rs::test::regression_empty_alt	missing	-	baseline
+src/hir/translate.rs::test::regression_fuzz_char_decrement1	missing	-	baseline
+src/hir/translate.rs::test::regression_fuzz_difference1	missing	-	baseline
+src/hir/translate.rs::test::regression_fuzz_match	missing	-	baseline
+src/hir/translate.rs::test::regression_singleton_alt	missing	-	baseline
+src/hir/translate.rs::test::repetition	missing	-	baseline
+src/hir/translate.rs::test::smart_alternation	missing	-	baseline
+src/hir/translate.rs::test::smart_concat	missing	-	baseline
+src/hir/translate.rs::test::smart_repetition	missing	-	baseline
+src/lib.rs::test::escape_meta	ported	spec/lib_spec.cr	Exact vendored escape_meta example ported
+src/lib.rs::test::word_byte	ported	spec/lib_spec.cr	Exact vendored ASCII word-byte assertions ported
+src/lib.rs::test::word_char	ported	spec/lib_spec.cr	Exact vendored Unicode word-character samples ported
+src/lib.rs::test::word_char_disabled_error	partial	spec/lib_spec.cr	Crystal shard always ships Unicode Perl word tables, so only the enabled behavior is covered and the disabled-feature branch is unreachable
+src/lib.rs::test::word_char_disabled_panic	partial	spec/lib_spec.cr	Crystal shard always ships Unicode Perl word tables, so only the enabled behavior is covered and the disabled-feature branch is unreachable
+src/unicode.rs::test::range_contains	ported	spec/unicode_spec.cr	Exact overlap assertions ported
+src/unicode.rs::test::regression_466	ported	spec/unicode_spec.cr	One-letter general-category regression ported
+src/unicode.rs::test::simple_fold_a	ported	spec/unicode_spec.cr	ASCII simple-fold mapping ported
+src/unicode.rs::test::simple_fold_disabled	partial	spec/unicode_spec.cr	Crystal shard always ships Unicode case-fold tables, so only the enabled behavior is covered and the disabled-feature branch is unreachable
+src/unicode.rs::test::simple_fold_k	ported	spec/unicode_spec.cr	Kelvin-sign simple-fold mapping ported
+src/unicode.rs::test::sym_normalize	ported	spec/unicode_spec.cr	Exact symbolic-name normalization cases ported
+src/unicode.rs::test::valid_utf8_symbolic	ported	spec/unicode_spec.cr	Normalized symbolic bytes stay valid UTF-8 as upstream expects
+src/utf8.rs::test::bmp	ported	spec/utf8_spec.cr	Exact BMP sequence decomposition ported
+src/utf8.rs::test::codepoints_no_surrogates	ported	spec/utf8_spec.cr	Surrogate exclusion sweep ported
+src/utf8.rs::test::reverse	ported	spec/utf8_spec.cr	Exact sequence reversal cases ported
+src/utf8.rs::test::single_codepoint_one_sequence	ported	spec/utf8_spec.cr	Single scalar to one sequence invariant ported
