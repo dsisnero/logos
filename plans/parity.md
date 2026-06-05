@@ -34,7 +34,7 @@ Feature roadmap:
 - [x] Upstream regression specs: crate API, error formatting, Unicode helpers, and UTF-8 (`src/lib.rs`, `src/error.rs`, `src/unicode.rs`, `src/utf8.rs`)
 - [x] Upstream regression specs: AST parser and printer coverage (`src/ast/parse.rs`, `src/ast/print.rs`)
 - [x] Upstream regression specs: AST and HIR stack-safety smoke coverage (`src/ast/mod.rs`, `src/hir/mod.rs`)
-- [ ] Upstream regression specs: HIR core, literal extraction, and printer coverage (`src/hir/mod.rs`, `src/hir/literal.rs`, `src/hir/print.rs`)
+- [x] Upstream regression specs: HIR core, literal extraction, and printer coverage (`src/hir/mod.rs`, `src/hir/literal.rs`, `src/hir/print.rs`)
 - [ ] Upstream regression specs: HIR translation analysis and translator behavior (`src/hir/translate.rs`)
 
 Completion rule:

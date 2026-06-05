@@ -41,53 +41,53 @@ src/ast/print.rs::test::print_literal	ported	spec/ast_print_spec.cr	Literal and 
 src/ast/print.rs::test::print_repetition	ported	spec/ast_print_spec.cr	Repetition printer round-trips ported
 src/error.rs::test::regression_464	ported	spec/error_spec.cr	Direct multiline formatter regression port
 src/error.rs::test::repetition_quantifier_expects_a_valid_decimal	ported	spec/error_spec.cr	Exact formatter message and caret placement ported
-src/hir/literal.rs::test::alternation	missing	-	baseline
-src/hir/literal.rs::test::anything	missing	-	baseline
-src/hir/literal.rs::test::anything_small_limits	missing	-	baseline
-src/hir/literal.rs::test::class	missing	-	baseline
-src/hir/literal.rs::test::concat	missing	-	baseline
-src/hir/literal.rs::test::crazy_repeats	missing	-	baseline
-src/hir/literal.rs::test::empty	missing	-	baseline
-src/hir/literal.rs::test::holmes	missing	-	baseline
-src/hir/literal.rs::test::holmes_alt	missing	-	baseline
-src/hir/literal.rs::test::huge	missing	-	baseline
-src/hir/literal.rs::test::impossible	missing	-	baseline
-src/hir/literal.rs::test::literal	missing	-	baseline
-src/hir/literal.rs::test::look	missing	-	baseline
-src/hir/literal.rs::test::odds_and_ends	missing	-	baseline
-src/hir/literal.rs::test::optimize	missing	-	baseline
-src/hir/literal.rs::test::repetition	missing	-	baseline
-src/hir/mod.rs::test::class_canonicalize_bytes	missing	-	baseline
-src/hir/mod.rs::test::class_canonicalize_unicode	missing	-	baseline
-src/hir/mod.rs::test::class_case_fold_bytes	missing	-	baseline
-src/hir/mod.rs::test::class_case_fold_unicode	missing	-	baseline
-src/hir/mod.rs::test::class_case_fold_unicode_disabled	missing	-	baseline
-src/hir/mod.rs::test::class_case_fold_unicode_disabled_panics	missing	-	baseline
-src/hir/mod.rs::test::class_difference_bytes	missing	-	baseline
-src/hir/mod.rs::test::class_difference_unicode	missing	-	baseline
-src/hir/mod.rs::test::class_intersect_bytes	missing	-	baseline
-src/hir/mod.rs::test::class_intersect_unicode	missing	-	baseline
-src/hir/mod.rs::test::class_negate_bytes	missing	-	baseline
-src/hir/mod.rs::test::class_negate_unicode	missing	-	baseline
-src/hir/mod.rs::test::class_range_canonical_bytes	missing	-	baseline
-src/hir/mod.rs::test::class_range_canonical_unicode	missing	-	baseline
-src/hir/mod.rs::test::class_symmetric_difference_bytes	missing	-	baseline
-src/hir/mod.rs::test::class_symmetric_difference_unicode	missing	-	baseline
-src/hir/mod.rs::test::class_union_bytes	missing	-	baseline
-src/hir/mod.rs::test::class_union_unicode	missing	-	baseline
-src/hir/mod.rs::test::look_set_debug	missing	-	baseline
-src/hir/mod.rs::test::look_set_iter	missing	-	baseline
+src/hir/literal.rs::test::alternation	ported	spec/hir_literal_spec.cr	Alternation extraction ordering and exactness coverage ported
+src/hir/literal.rs::test::anything	ported	spec/hir_literal_spec.cr	Infinite-sequence marker behavior for dot and large classes ported
+src/hir/literal.rs::test::anything_small_limits	ported	spec/hir_literal_spec.cr	Small limit_total abort behavior and finite/infinite transitions ported
+src/hir/literal.rs::test::class	ported	spec/hir_literal_spec.cr	Finite class expansion and case-folded Unicode class extraction ported
+src/hir/literal.rs::test::concat	ported	spec/hir_literal_spec.cr	Concatenation extraction with empty groups and impossible classes ported
+src/hir/literal.rs::test::crazy_repeats	ported	spec/hir_literal_spec.cr	Pathological repeat extraction regression coverage ported
+src/hir/literal.rs::test::empty	ported	spec/hir_literal_spec.cr	Empty and assertion-only extraction semantics ported
+src/hir/literal.rs::test::holmes	ported	spec/hir_literal_spec.cr	Holmes heuristic prefix and suffix minimization coverage ported
+src/hir/literal.rs::test::holmes_alt	ported	spec/hir_literal_spec.cr	Case-insensitive alternation optimization regression coverage ported
+src/hir/literal.rs::test::huge	ported	spec/hir_literal_spec.cr	Large vendored extractor shape and prefix-count regression ported
+src/hir/literal.rs::test::impossible	ported	spec/hir_literal_spec.cr	Impossible-class extraction fallback behavior ported
+src/hir/literal.rs::test::literal	ported	spec/hir_literal_spec.cr	Exact literal extraction across ASCII, bytes, and Unicode case-folding ported
+src/hir/literal.rs::test::look	ported	spec/hir_literal_spec.cr	Look-around extraction-as-empty semantics ported
+src/hir/literal.rs::test::odds_and_ends	ported	spec/hir_literal_spec.cr	Miscellaneous extractor regressions and mixed finite/infinite cases ported
+src/hir/literal.rs::test::optimize	ported	spec/hir_literal_spec.cr	Preference optimization and poisonous-sequence heuristics ported
+src/hir/literal.rs::test::repetition	ported	spec/hir_literal_spec.cr	Repetition extraction exactness and preference ordering ported
+src/hir/mod.rs::test::class_canonicalize_bytes	ported	spec/hir_core_parity_spec.cr	Byte-class canonicalization and interval merging ported
+src/hir/mod.rs::test::class_canonicalize_unicode	ported	spec/hir_core_parity_spec.cr	Unicode-class canonicalization and interval merging ported
+src/hir/mod.rs::test::class_case_fold_bytes	ported	spec/hir_core_parity_spec.cr	ASCII byte-class simple case folding ported
+src/hir/mod.rs::test::class_case_fold_unicode	ported	spec/hir_core_parity_spec.cr	Unicode simple case folding and Kelvin-sign coverage ported
+src/hir/mod.rs::test::class_case_fold_unicode_disabled	partial	spec/hir_core_parity_spec.cr	Rust disabled-feature branch maps to always-on Unicode case-fold coverage in Crystal
+src/hir/mod.rs::test::class_case_fold_unicode_disabled_panics	partial	spec/hir_core_parity_spec.cr	Rust panic-on-disabled-feature contract is not meaningful because Crystal always ships Unicode case folding
+src/hir/mod.rs::test::class_difference_bytes	ported	spec/hir_core_parity_spec.cr	Byte-class difference algebra ported
+src/hir/mod.rs::test::class_difference_unicode	ported	spec/hir_core_parity_spec.cr	Unicode-class difference algebra ported
+src/hir/mod.rs::test::class_intersect_bytes	ported	spec/hir_core_parity_spec.cr	Byte-class intersection algebra ported
+src/hir/mod.rs::test::class_intersect_unicode	ported	spec/hir_core_parity_spec.cr	Unicode-class intersection algebra ported
+src/hir/mod.rs::test::class_negate_bytes	ported	spec/hir_core_parity_spec.cr	Byte-class negation semantics ported
+src/hir/mod.rs::test::class_negate_unicode	ported	spec/hir_core_parity_spec.cr	Unicode-class negation semantics around surrogate gap ported
+src/hir/mod.rs::test::class_range_canonical_bytes	ported	spec/hir_core_parity_spec.cr	Byte range canonicalization helpers ported
+src/hir/mod.rs::test::class_range_canonical_unicode	ported	spec/hir_core_parity_spec.cr	Unicode range canonicalization helpers ported
+src/hir/mod.rs::test::class_symmetric_difference_bytes	ported	spec/hir_core_parity_spec.cr	Byte-class symmetric-difference algebra ported
+src/hir/mod.rs::test::class_symmetric_difference_unicode	ported	spec/hir_core_parity_spec.cr	Unicode-class symmetric-difference algebra ported
+src/hir/mod.rs::test::class_union_bytes	ported	spec/hir_core_parity_spec.cr	Byte-class union algebra ported
+src/hir/mod.rs::test::class_union_unicode	ported	spec/hir_core_parity_spec.cr	Unicode-class union algebra ported
+src/hir/mod.rs::test::look_set_debug	ported	spec/hir_core_parity_spec.cr	LookSet debug repr coverage ported
+src/hir/mod.rs::test::look_set_iter	ported	spec/hir_core_parity_spec.cr	LookSet iteration ordering coverage ported
 src/hir/mod.rs::test::no_stack_overflow_on_drop	partial	spec/ast_hir_stack_safety_spec.cr	Rust thread-stack destructor test maps to Crystal GC smoke coverage for deep HIR release
-src/hir/print.rs::test::print_alternation	missing	-	baseline
-src/hir/print.rs::test::print_anchor	missing	-	baseline
-src/hir/print.rs::test::print_class	missing	-	baseline
-src/hir/print.rs::test::print_group	missing	-	baseline
-src/hir/print.rs::test::print_literal	missing	-	baseline
-src/hir/print.rs::test::print_repetition	missing	-	baseline
-src/hir/print.rs::test::print_word_boundary	missing	-	baseline
-src/hir/print.rs::test::regression_alternation_concat	missing	-	baseline
-src/hir/print.rs::test::regression_repetition_alternation	missing	-	baseline
-src/hir/print.rs::test::regression_repetition_concat	missing	-	baseline
+src/hir/print.rs::test::print_alternation	ported	spec/hir_print_spec.cr	Alternation printer coverage, including explicit empty branches, ported
+src/hir/print.rs::test::print_anchor	ported	spec/hir_print_spec.cr	Anchor printer coverage ported
+src/hir/print.rs::test::print_class	ported	spec/hir_print_spec.cr	Byte and Unicode class printer coverage ported
+src/hir/print.rs::test::print_group	ported	spec/hir_print_spec.cr	Capture and non-capturing group printer coverage ported
+src/hir/print.rs::test::print_literal	ported	spec/hir_print_spec.cr	Literal printer coverage across Unicode and byte mode ported
+src/hir/print.rs::test::print_repetition	ported	spec/hir_print_spec.cr	Repetition printer coverage ported
+src/hir/print.rs::test::print_word_boundary	ported	spec/hir_print_spec.cr	Word-boundary printer coverage for Unicode and ASCII modes ported
+src/hir/print.rs::test::regression_alternation_concat	ported	spec/hir_print_spec.cr	Alternation-inside-concat printer regression ported
+src/hir/print.rs::test::regression_repetition_alternation	ported	spec/hir_print_spec.cr	Repetition-over-alternation printer regression ported
+src/hir/print.rs::test::regression_repetition_concat	ported	spec/hir_print_spec.cr	Repetition-over-concat printer regression ported
 src/hir/translate.rs::test::analysis_can_empty	missing	-	baseline
 src/hir/translate.rs::test::analysis_captures_len	missing	-	baseline
 src/hir/translate.rs::test::analysis_is_all_assertions	missing	-	baseline

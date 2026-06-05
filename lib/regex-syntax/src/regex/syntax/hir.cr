@@ -2115,6 +2115,8 @@ module Regex::Syntax::Hir
       end
 
       if suffixes.all?(&.empty?)
+        # Preserve explicit empty alternation branches like `|` and `||`.
+        return nil if children.all?(&.is_a?(Empty))
         return concat(prefix)
       end
 
