@@ -88,59 +88,59 @@ src/hir/print.rs::test::print_word_boundary	ported	spec/hir_print_spec.cr	Word-b
 src/hir/print.rs::test::regression_alternation_concat	ported	spec/hir_print_spec.cr	Alternation-inside-concat printer regression ported
 src/hir/print.rs::test::regression_repetition_alternation	ported	spec/hir_print_spec.cr	Repetition-over-alternation printer regression ported
 src/hir/print.rs::test::regression_repetition_concat	ported	spec/hir_print_spec.cr	Repetition-over-concat printer regression ported
-src/hir/translate.rs::test::analysis_can_empty	missing	-	baseline
-src/hir/translate.rs::test::analysis_captures_len	missing	-	baseline
-src/hir/translate.rs::test::analysis_is_all_assertions	missing	-	baseline
-src/hir/translate.rs::test::analysis_is_alternation_literal	missing	-	baseline
-src/hir/translate.rs::test::analysis_is_anchored	missing	-	baseline
-src/hir/translate.rs::test::analysis_is_any_anchored	missing	-	baseline
-src/hir/translate.rs::test::analysis_is_literal	missing	-	baseline
-src/hir/translate.rs::test::analysis_is_utf8	missing	-	baseline
-src/hir/translate.rs::test::analysis_look_set_prefix_any	missing	-	baseline
-src/hir/translate.rs::test::analysis_static_captures_len	missing	-	baseline
-src/hir/translate.rs::test::assertions	missing	-	baseline
-src/hir/translate.rs::test::cat_alt	missing	-	baseline
-src/hir/translate.rs::test::cat_class_flattened	missing	-	baseline
-src/hir/translate.rs::test::class_ascii	missing	-	baseline
-src/hir/translate.rs::test::class_ascii_multiple	missing	-	baseline
-src/hir/translate.rs::test::class_bracketed	missing	-	baseline
-src/hir/translate.rs::test::class_bracketed_difference	missing	-	baseline
-src/hir/translate.rs::test::class_bracketed_intersect	missing	-	baseline
-src/hir/translate.rs::test::class_bracketed_intersect_negate	missing	-	baseline
-src/hir/translate.rs::test::class_bracketed_nested	missing	-	baseline
-src/hir/translate.rs::test::class_bracketed_symmetric_difference	missing	-	baseline
-src/hir/translate.rs::test::class_bracketed_union	missing	-	baseline
-src/hir/translate.rs::test::class_perl_ascii	missing	-	baseline
-src/hir/translate.rs::test::class_perl_digit_disabled	missing	-	baseline
-src/hir/translate.rs::test::class_perl_space_disabled	missing	-	baseline
-src/hir/translate.rs::test::class_perl_unicode	missing	-	baseline
-src/hir/translate.rs::test::class_perl_word_disabled	missing	-	baseline
-src/hir/translate.rs::test::class_unicode_age	missing	-	baseline
-src/hir/translate.rs::test::class_unicode_age_disabled	missing	-	baseline
-src/hir/translate.rs::test::class_unicode_any_empty	missing	-	baseline
-src/hir/translate.rs::test::class_unicode_gencat	missing	-	baseline
-src/hir/translate.rs::test::class_unicode_gencat_disabled	missing	-	baseline
-src/hir/translate.rs::test::class_unicode_script	missing	-	baseline
-src/hir/translate.rs::test::class_unicode_script_disabled	missing	-	baseline
-src/hir/translate.rs::test::dot	missing	-	baseline
-src/hir/translate.rs::test::empty	missing	-	baseline
-src/hir/translate.rs::test::escape	missing	-	baseline
-src/hir/translate.rs::test::flags	missing	-	baseline
-src/hir/translate.rs::test::group	missing	-	baseline
-src/hir/translate.rs::test::ignore_whitespace	missing	-	baseline
-src/hir/translate.rs::test::line_anchors	missing	-	baseline
-src/hir/translate.rs::test::literal	missing	-	baseline
-src/hir/translate.rs::test::literal_case_insensitive	missing	-	baseline
-src/hir/translate.rs::test::regression_alt_empty_concat	missing	-	baseline
-src/hir/translate.rs::test::regression_empty_alt	missing	-	baseline
-src/hir/translate.rs::test::regression_fuzz_char_decrement1	missing	-	baseline
-src/hir/translate.rs::test::regression_fuzz_difference1	missing	-	baseline
-src/hir/translate.rs::test::regression_fuzz_match	missing	-	baseline
-src/hir/translate.rs::test::regression_singleton_alt	missing	-	baseline
-src/hir/translate.rs::test::repetition	missing	-	baseline
-src/hir/translate.rs::test::smart_alternation	missing	-	baseline
-src/hir/translate.rs::test::smart_concat	missing	-	baseline
-src/hir/translate.rs::test::smart_repetition	missing	-	baseline
+src/hir/translate.rs::test::analysis_can_empty	ported	spec/hir_translate_parity_spec.cr	Empty-match analysis matrix ported
+src/hir/translate.rs::test::analysis_captures_len	ported	spec/hir_translate_parity_spec.cr	Explicit capture-count analysis matrix ported
+src/hir/translate.rs::test::analysis_is_all_assertions	ported	spec/hir_translate_parity_spec.cr	All-assertion analysis matrix ported
+src/hir/translate.rs::test::analysis_is_alternation_literal	ported	spec/hir_translate_parity_spec.cr	Alternation-literal analysis matrix ported
+src/hir/translate.rs::test::analysis_is_anchored	ported	spec/hir_translate_parity_spec.cr	Start/end anchoring analysis matrix ported
+src/hir/translate.rs::test::analysis_is_any_anchored	ported	spec/hir_translate_parity_spec.cr	Any-anchor detection matrix ported
+src/hir/translate.rs::test::analysis_is_literal	ported	spec/hir_translate_parity_spec.cr	Literal analysis matrix ported
+src/hir/translate.rs::test::analysis_is_utf8	ported	spec/hir_translate_parity_spec.cr	UTF-8 validity analysis matrix ported
+src/hir/translate.rs::test::analysis_look_set_prefix_any	ported	spec/hir_translate_parity_spec.cr	Prefix-any look-set analysis ported
+src/hir/translate.rs::test::analysis_static_captures_len	ported	spec/hir_translate_parity_spec.cr	Static capture-count analysis matrix ported
+src/hir/translate.rs::test::assertions	ported	spec/hir_translate_parity_spec.cr	Assertion translation across text, line, and word boundaries ported
+src/hir/translate.rs::test::cat_alt	ported	spec/hir_translate_parity_spec.cr	Alternation-versus-concat assertion translation matrix ported
+src/hir/translate.rs::test::cat_class_flattened	ported	spec/hir_translate_parity_spec.cr	Class-alternation flattening and byte/unicode split behavior ported
+src/hir/translate.rs::test::class_ascii	ported	spec/hir_translate_parity_spec.cr	ASCII class translation, folding, and invalid-UTF8 error coverage ported
+src/hir/translate.rs::test::class_ascii_multiple	ported	spec/hir_translate_parity_spec.cr	Multiple ASCII class union coverage ported
+src/hir/translate.rs::test::class_bracketed	ported	spec/hir_translate_parity_spec.cr	Bracketed class literals, negation, escapes, and folding coverage ported
+src/hir/translate.rs::test::class_bracketed_difference	ported	spec/hir_translate_parity_spec.cr	Bracketed class difference operator coverage ported
+src/hir/translate.rs::test::class_bracketed_intersect	ported	spec/hir_translate_parity_spec.cr	Bracketed class intersection operator coverage ported
+src/hir/translate.rs::test::class_bracketed_intersect_negate	ported	spec/hir_translate_parity_spec.cr	Bracketed class negated-intersection coverage ported
+src/hir/translate.rs::test::class_bracketed_nested	ported	spec/hir_translate_parity_spec.cr	Nested bracketed class operator coverage ported
+src/hir/translate.rs::test::class_bracketed_symmetric_difference	ported	spec/hir_translate_parity_spec.cr	Bracketed class symmetric-difference coverage ported
+src/hir/translate.rs::test::class_bracketed_union	ported	spec/hir_translate_parity_spec.cr	Bracketed class union coverage ported
+src/hir/translate.rs::test::class_perl_ascii	ported	spec/hir_translate_parity_spec.cr	ASCII Perl-class translation and invalid-UTF8 negation coverage ported
+src/hir/translate.rs::test::class_perl_digit_disabled	partial	spec/hir_translate_parity_spec.cr	Rust disabled-feature branch is not meaningful because this Crystal port always ships Unicode digit tables
+src/hir/translate.rs::test::class_perl_space_disabled	partial	spec/hir_translate_parity_spec.cr	Rust disabled-feature branch is not meaningful because this Crystal port always ships Unicode space tables
+src/hir/translate.rs::test::class_perl_unicode	ported	spec/hir_translate_parity_spec.cr	Unicode Perl-class translation and negation coverage ported
+src/hir/translate.rs::test::class_perl_word_disabled	partial	spec/hir_translate_parity_spec.cr	Rust disabled-feature branch is not meaningful because this Crystal port always ships Unicode word tables
+src/hir/translate.rs::test::class_unicode_age	ported	spec/hir_translate_parity_spec.cr	Unicode age-property error handling coverage ported
+src/hir/translate.rs::test::class_unicode_age_disabled	partial	spec/hir_translate_parity_spec.cr	Rust disabled-feature branch is not meaningful because this Crystal port always ships Unicode age tables
+src/hir/translate.rs::test::class_unicode_any_empty	ported	spec/hir_translate_parity_spec.cr	Negated-any Unicode property empty-class behavior ported
+src/hir/translate.rs::test::class_unicode_gencat	ported	spec/hir_translate_parity_spec.cr	General-category property translation and error coverage ported
+src/hir/translate.rs::test::class_unicode_gencat_disabled	partial	spec/hir_translate_parity_spec.cr	Rust disabled-feature branch is not meaningful because this Crystal port always ships Unicode general-category tables
+src/hir/translate.rs::test::class_unicode_script	ported	spec/hir_translate_parity_spec.cr	Unicode script and script-extension translation/error coverage ported
+src/hir/translate.rs::test::class_unicode_script_disabled	partial	spec/hir_translate_parity_spec.cr	Rust disabled-feature branch is not meaningful because this Crystal port always ships Unicode script tables
+src/hir/translate.rs::test::dot	ported	spec/hir_translate_parity_spec.cr	Dot translation across Unicode, CRLF, and byte modes ported
+src/hir/translate.rs::test::empty	ported	spec/hir_translate_parity_spec.cr	Empty translation coverage ported
+src/hir/translate.rs::test::escape	ported	spec/hir_translate_parity_spec.cr	Escaped-metacharacter literal translation ported
+src/hir/translate.rs::test::flags	ported	spec/hir_translate_parity_spec.cr	Scoped and inherited flag translation semantics ported
+src/hir/translate.rs::test::group	ported	spec/hir_translate_parity_spec.cr	Capturing, non-capturing, and named-group translation coverage ported
+src/hir/translate.rs::test::ignore_whitespace	ported	spec/hir_translate_parity_spec.cr	Verbose-mode escape, property, and counted-repeat translation coverage ported
+src/hir/translate.rs::test::line_anchors	ported	spec/hir_translate_parity_spec.cr	Text, multi-line, and CRLF line-anchor translation coverage ported
+src/hir/translate.rs::test::literal	ported	spec/hir_translate_parity_spec.cr	Literal translation across bytes and Unicode ported
+src/hir/translate.rs::test::literal_case_insensitive	ported	spec/hir_translate_parity_spec.cr	Case-insensitive literal translation across ASCII and Unicode ported
+src/hir/translate.rs::test::regression_alt_empty_concat	ported	spec/hir_translate_parity_spec.cr	Empty-concat-inside-alternation regression ported
+src/hir/translate.rs::test::regression_empty_alt	ported	spec/hir_translate_parity_spec.cr	Empty-alternation-inside-concat regression ported
+src/hir/translate.rs::test::regression_fuzz_char_decrement1	ported	spec/hir_translate_parity_spec.cr	Fuzz regression no-panic coverage for decrement edge cases ported
+src/hir/translate.rs::test::regression_fuzz_difference1	ported	spec/hir_translate_parity_spec.cr	Fuzz regression no-panic coverage for class-difference edge cases ported
+src/hir/translate.rs::test::regression_fuzz_match	ported	spec/hir_translate_parity_spec.cr	Fuzz regression match-shape coverage ported
+src/hir/translate.rs::test::regression_singleton_alt	ported	spec/hir_translate_parity_spec.cr	Singleton-alternation-in-concat regression ported
+src/hir/translate.rs::test::repetition	ported	spec/hir_translate_parity_spec.cr	Repetition translation and greedy/reluctant coverage ported
+src/hir/translate.rs::test::smart_alternation	ported	spec/hir_translate_parity_spec.cr	Smart alternation simplification coverage ported
+src/hir/translate.rs::test::smart_concat	ported	spec/hir_translate_parity_spec.cr	Smart concat simplification coverage ported
+src/hir/translate.rs::test::smart_repetition	ported	spec/hir_translate_parity_spec.cr	Smart repetition simplification coverage ported
 src/lib.rs::test::escape_meta	ported	spec/lib_spec.cr	Exact vendored escape_meta example ported
 src/lib.rs::test::word_byte	ported	spec/lib_spec.cr	Exact vendored ASCII word-byte assertions ported
 src/lib.rs::test::word_char	ported	spec/lib_spec.cr	Exact vendored Unicode word-character samples ported

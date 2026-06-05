@@ -155,6 +155,35 @@ describe "HIR translate parity" do
   end
 
   it "matches vendored class translation, class flattening, and set-operator behavior" do
+    parse_hir("[[:alnum:]]").node.as(Regex::Syntax::Hir::UnicodeClass).intervals.should eq([
+      '0'.ord.to_u32..'9'.ord.to_u32,
+      'A'.ord.to_u32..'Z'.ord.to_u32,
+      'a'.ord.to_u32..'z'.ord.to_u32,
+    ])
+    parse_hir("(?-u)[[:lower:]]", unicode: false, utf8: false).node.as(Regex::Syntax::Hir::CharClass).intervals.should eq([
+      'a'.ord.to_u8..'z'.ord.to_u8,
+    ])
+    parse_hir("(?i-u)[[:lower:]]", unicode: false, utf8: false).node.as(Regex::Syntax::Hir::CharClass).intervals.should eq([
+      'A'.ord.to_u8..'Z'.ord.to_u8,
+      'a'.ord.to_u8..'z'.ord.to_u8,
+    ])
+    expect_hir_error(Regex::Syntax::Hir::ErrorKind::InvalidUtf8, Regex::Syntax::AST::Span.new(5, 17)) do
+      parse_hir("(?-u)[[:^lower:]]", unicode: false)
+    end
+
+    parse_hir("[[:alnum:][:^ascii:]]").node.as(Regex::Syntax::Hir::UnicodeClass).intervals.should eq([
+      '0'.ord.to_u32..'9'.ord.to_u32,
+      'A'.ord.to_u32..'Z'.ord.to_u32,
+      'a'.ord.to_u32..'z'.ord.to_u32,
+      0x80_u32..0x10FFFF_u32,
+    ])
+    parse_hir("(?-u)[[:alnum:][:^ascii:]]", unicode: false, utf8: false).node.as(Regex::Syntax::Hir::CharClass).intervals.should eq([
+      '0'.ord.to_u8..'9'.ord.to_u8,
+      'A'.ord.to_u8..'Z'.ord.to_u8,
+      'a'.ord.to_u8..'z'.ord.to_u8,
+      0x80_u8..0xFF_u8,
+    ])
+
     parse_hir("[a-z]|[A-Z]").node.as(Regex::Syntax::Hir::UnicodeClass).intervals.should eq([
       'A'.ord.to_u32..'Z'.ord.to_u32,
       'a'.ord.to_u32..'z'.ord.to_u32,
@@ -189,15 +218,29 @@ describe "HIR translate parity" do
     ])
 
     parse_hir(%q(\d)).node.as(Regex::Syntax::Hir::UnicodeClass).negated?.should be_false
+    parse_hir(%q(\D)).node.as(Regex::Syntax::Hir::UnicodeClass).negated?.should be_true
+    parse_hir(%q(\S)).node.as(Regex::Syntax::Hir::UnicodeClass).negated?.should be_true
+    parse_hir(%q(\W)).node.as(Regex::Syntax::Hir::UnicodeClass).negated?.should be_true
     parse_hir(%q((?-u)\d), unicode: false).node.as(Regex::Syntax::Hir::CharClass).intervals.should eq([
       '0'.ord.to_u8..'9'.ord.to_u8,
     ])
     parse_hir(%q((?-u)\D), unicode: false, utf8: false).node.as(Regex::Syntax::Hir::CharClass).negated?.should be_true
+    parse_hir(%q((?-u)\S), unicode: false, utf8: false).node.as(Regex::Syntax::Hir::CharClass).negated?.should be_true
+    parse_hir(%q((?-u)\W), unicode: false, utf8: false).node.as(Regex::Syntax::Hir::CharClass).negated?.should be_true
 
     expect_hir_error(Regex::Syntax::Hir::ErrorKind::InvalidUtf8, Regex::Syntax::AST::Span.new(5, 7)) do
       parse_hir(%q((?-u)\D), unicode: false)
     end
+    expect_hir_error(Regex::Syntax::Hir::ErrorKind::InvalidUtf8, Regex::Syntax::AST::Span.new(5, 7)) do
+      parse_hir(%q((?-u)\S), unicode: false)
+    end
+    expect_hir_error(Regex::Syntax::Hir::ErrorKind::InvalidUtf8, Regex::Syntax::AST::Span.new(5, 7)) do
+      parse_hir(%q((?-u)\W), unicode: false)
+    end
 
+    parse_hir(%q(\pZ)).node.as(Regex::Syntax::Hir::UnicodeClass).intervals.should_not be_empty
+    parse_hir(%q(\p{Separator})).node.as(Regex::Syntax::Hir::UnicodeClass).intervals.should_not be_empty
+    parse_hir(%q(\P{separator})).node.as(Regex::Syntax::Hir::UnicodeClass).negated?.should be_true
     parse_hir(%q(\p{Greek})).node.as(Regex::Syntax::Hir::UnicodeClass).intervals.should_not be_empty
     parse_hir(%q(\P{any})).node.as(Regex::Syntax::Hir::UnicodeClass).intervals.should be_empty
     ex = expect_raises(Regex::Syntax::ParseError) do
@@ -205,37 +248,90 @@ describe "HIR translate parity" do
     end
     ex.message.to_s.should contain("Unicode not allowed")
     ex.span.should eq(Regex::Syntax::AST::Span.new(5, 8))
+    expect_parse_error(/invalid Unicode property/) do
+      parse_hir(%q(\pE))
+    end
+    expect_parse_error(/invalid Unicode property/) do
+      parse_hir(%q(\p{Foo}))
+    end
+    expect_parse_error(/invalid Unicode property value/) do
+      parse_hir(%q(\p{gc:Foo}))
+    end
+    expect_parse_error(/invalid Unicode property value/) do
+      parse_hir(%q(\p{sc:Foo}))
+    end
+    expect_parse_error(/invalid Unicode property value/) do
+      parse_hir(%q(\p{scx:Foo}))
+    end
+    expect_parse_error(/invalid Unicode property value/) do
+      parse_hir(%q(\p{age:Foo}))
+    end
   end
 
   it "matches vendored translation analysis semantics" do
     parse_hir("(?-u)\\xFF", unicode: false, utf8: false).utf8?.should be_false
     parse_hir("(?-u)[^a]", unicode: false, utf8: false).utf8?.should be_false
     parse_hir("ab").utf8?.should be_true
+    parse_hir("(?-u)a", unicode: false).utf8?.should be_true
+    parse_hir(%q(\b)).utf8?.should be_true
+    parse_hir(%q((?-u)\b), unicode: false).utf8?.should be_true
 
+    parse_hir("a").explicit_captures_len.should eq(0)
+    parse_hir("(?:a)").explicit_captures_len.should eq(0)
     parse_hir("(a)(b)").explicit_captures_len.should eq(2)
+    parse_hir("((a))").explicit_captures_len.should eq(2)
     parse_hir("(foo)(bar)|(baz)(quux)").static_explicit_captures_len.should eq(2)
+    parse_hir("").static_explicit_captures_len.should eq(0)
+    parse_hir("(foo|bar)").static_explicit_captures_len.should eq(1)
+    parse_hir("(foo)*(bar)").static_explicit_captures_len.should be_nil
     parse_hir("(foo)?{1}").static_explicit_captures_len.should be_nil
 
     parse_hir(%q(\b)).all_assertions?.should be_true
+    parse_hir(%q($|^|\z|\A|\b|\B)).all_assertions?.should be_true
     parse_hir("^a").all_assertions?.should be_false
 
     parse_hir("(?-u)(?i:(?:\\b|_)win(?:32|64|dows)?(?:\\b|_))", unicode: false).look_set_prefix_any.contains(Regex::Syntax::Hir::Look::Kind::WordAscii).should be_true
 
+    parse_hir("^").look_set_prefix.contains(Regex::Syntax::Hir::Look::Kind::StartText).should be_true
+    parse_hir("$").look_set_suffix.contains(Regex::Syntax::Hir::Look::Kind::EndText).should be_true
     parse_hir("^foo|^bar").look_set_prefix.contains(Regex::Syntax::Hir::Look::Kind::StartText).should be_true
     parse_hir("foo$|bar$").look_set_suffix.contains(Regex::Syntax::Hir::Look::Kind::EndText).should be_true
     parse_hir("(?m)^").look_set_prefix.contains(Regex::Syntax::Hir::Look::Kind::StartText).should be_false
     parse_hir("(?m)$").look_set.contains(Regex::Syntax::Hir::Look::Kind::EndText).should be_false
+    parse_hir("^foo|bar").look_set_prefix.contains(Regex::Syntax::Hir::Look::Kind::StartText).should be_false
+    parse_hir("foo|bar$").look_set_suffix.contains(Regex::Syntax::Hir::Look::Kind::EndText).should be_false
+    parse_hir("^").look_set.contains(Regex::Syntax::Hir::Look::Kind::StartText).should be_true
+    parse_hir("$").look_set.contains(Regex::Syntax::Hir::Look::Kind::EndText).should be_true
+    parse_hir("(?m)^").look_set.contains(Regex::Syntax::Hir::Look::Kind::StartText).should be_false
+    parse_hir("(?m)$").look_set.contains(Regex::Syntax::Hir::Look::Kind::EndText).should be_false
+
+    parse_hir("").can_match_empty?.should be_true
+    parse_hir("()").can_match_empty?.should be_true
+    parse_hir("a{0}").can_match_empty?.should be_true
+    parse_hir("a|").can_match_empty?.should be_true
+    parse_hir("|a").can_match_empty?.should be_true
+    parse_hir("a+").can_match_empty?.should be_false
+    parse_hir("[a&&b]").can_match_empty?.should be_false
 
     parse_hir("abc").literal?.should be_true
+    parse_hir("[a]").literal?.should be_true
+    parse_hir("").literal?.should be_false
+    parse_hir("(a)").literal?.should be_false
     parse_hir("[ab]").literal?.should be_false
+    parse_hir("foo|bar").alternation_literal?.should be_true
     parse_hir("foo|bar|baz").alternation_literal?.should be_true
+    parse_hir("a").alternation_literal?.should be_true
+    parse_hir("a|b|c").alternation_literal?.should be_false
     parse_hir("a|b").alternation_literal?.should be_false
   end
 
   it "matches vendored smart-constructor behavior and translate regressions" do
     parse_hir("a{0}").node.should be_a(Regex::Syntax::Hir::Empty)
+    parse_hir("a{1}").node.should be_a(Regex::Syntax::Hir::Literal)
     parse_hir(%q(\B{32111})).node.as(Regex::Syntax::Hir::Look).kind.should eq(Regex::Syntax::Hir::Look::Kind::WordUnicodeNegate)
 
+    parse_hir("").node.should be_a(Regex::Syntax::Hir::Empty)
+    parse_hir("(?:)").node.should be_a(Regex::Syntax::Hir::Empty)
     foobar = parse_hir("(?:foo)(?:bar)")
     foobar.node.should be_a(Regex::Syntax::Hir::Literal)
     String.new(foobar.node.as(Regex::Syntax::Hir::Literal).bytes).should eq("foobar")
@@ -248,6 +344,10 @@ describe "HIR translate parity" do
     ])
     String.new(punctuated[0].as(Regex::Syntax::Hir::Literal).bytes).should eq("foobar")
     String.new(punctuated[2].as(Regex::Syntax::Hir::Literal).bytes).should eq("bazquux")
+
+    nested_alt = parse_hir("quux|(?:abc|(?:def|mno)|xyz)|baz")
+    nested_alt.node.should be_a(Regex::Syntax::Hir::Alternation)
+    nested_alt.node.as(Regex::Syntax::Hir::Alternation).children.size.should eq(6)
 
     lifted = parse_hir("[A-Z]foo|[A-Z]quux")
     lifted.node.should be_a(Regex::Syntax::Hir::Concat)
@@ -289,6 +389,10 @@ describe "HIR translate parity" do
       [Regex::Syntax::AST::Alternation.new(span, [Regex::Syntax::AST::Dot.new(span)] of Regex::Syntax::AST::Node)] of Regex::Syntax::AST::Node
     )
     Regex::Syntax::Hir::Hir.new(Regex::Syntax::Translator.new.translate(singleton_alt)).node.as(Regex::Syntax::Hir::DotNode).kind.should eq(Regex::Syntax::Hir::Dot::AnyCharExceptLF)
+
+    parse_hir(%q((?x)\12 3), ignore_whitespace: true, octal: true).node.as(Regex::Syntax::Hir::Literal).bytes.should eq("\n3".to_slice)
+    parse_hir(%q((?x)\x { 53 }), ignore_whitespace: true).node.as(Regex::Syntax::Hir::Literal).bytes.should eq("S".to_slice)
+    parse_hir(%q((?x)a\  # hi there), ignore_whitespace: true).node.as(Regex::Syntax::Hir::Literal).bytes.should eq("a ".to_slice)
 
     parse_hir("[(\u{6} \0-\u{afdf5}]  \0 ", ignore_whitespace: true, octal: false).node.should be_a(Regex::Syntax::Hir::Concat)
     parse_hir(%q(\W\W|\W[^\v--\W\W\P{Script_Extensions:Pau_Cin_Hau}\u10A1A1-\U{3E3E3}--~~~~--~~~~~~~~------~~~~~~--~~~~~~]*))

@@ -35,7 +35,7 @@ Feature roadmap:
 - [x] Upstream regression specs: AST parser and printer coverage (`src/ast/parse.rs`, `src/ast/print.rs`)
 - [x] Upstream regression specs: AST and HIR stack-safety smoke coverage (`src/ast/mod.rs`, `src/hir/mod.rs`)
 - [x] Upstream regression specs: HIR core, literal extraction, and printer coverage (`src/hir/mod.rs`, `src/hir/literal.rs`, `src/hir/print.rs`)
-- [ ] Upstream regression specs: HIR translation analysis and translator behavior (`src/hir/translate.rs`)
+- [x] Upstream regression specs: HIR translation analysis and translator behavior (`src/hir/translate.rs`)
 
 Completion rule:
 
