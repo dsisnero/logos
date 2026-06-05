@@ -3,3 +3,12 @@ shards:
   ameba:
     git: https://github.com/crystal-ameba/ameba.git
     version: 1.6.4
+
+  regex-automata:
+    path: ./temp/regex-automata
+    version: 0.1.0+git.commit.8ecca8408bf6ca1ae61f741c0742998c0bdf0175
+
+  regex-syntax:
+    git: https://github.com/dsisnero/regex-syntax.git
+    version: 0.5.0+git.commit.482442adc9e3f0f2188407854f87cf75ecfbcde2
+

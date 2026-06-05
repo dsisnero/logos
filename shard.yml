@@ -17,6 +17,10 @@ crystal: '>= 1.19.1'
 license: MIT
 
 dependencies:
+  regex-automata:
+    path: ./temp/regex-automata
+
+
   # Will depend on regex-syntax and regex-automata once ported
 
 development_dependencies:
