@@ -61,6 +61,46 @@ describe "AST parser parity" do
     ) do
       Regex::Syntax::AST::Parse::ParserBuilder.new.nest_limit(0).build.parse("a+")
     end
+
+    nested_pattern = <<-REGEX
+        2(?:
+          [45]\\d{3}|
+          7(?:
+            1[0-267]|
+            2[0-289]|
+            3[0-29]|
+            4[01]|
+            5[1-3]|
+            6[013]|
+            7[0178]|
+            91
+          )|
+          8(?:
+            0[125]|
+            [139][1-6]|
+            2[0157-9]|
+            41|
+            6[1-35]|
+            7[1-5]|
+            8[1-8]|
+            90
+          )|
+          9(?:
+            0[0-2]|
+            1[0-4]|
+            2[568]|
+            3[3-6]|
+            5[5-7]|
+            6[0167]|
+            7[15]|
+            8[0146-9]
+          )
+        )\\d{4}
+        REGEX
+    Regex::Syntax::AST::Parse::ParserBuilder.new
+      .nest_limit(50)
+      .build
+      .parse(nested_pattern)
   end
 
   it "matches vendored group, capture-name, alternation, and flag parsing" do
@@ -251,6 +291,41 @@ describe "AST parser parity" do
 
     expect_parse_error(/invalid character class range/) do
       parser.parse("[z-a]")
+    end
+
+    [
+      "(?x)[ / - ]",
+      "(?x)[ a - ]",
+      <<-REGEX,
+            (?x)[
+            a
+            - ]
+        REGEX
+      <<-REGEX,
+            (?x)[
+            a # wat
+            - ]
+        REGEX
+    ].each do |pattern|
+      parser.parse(pattern)
+    end
+
+    [
+      "(?x)[ / -",
+      "(?x)[ / - ",
+      <<-REGEX,
+            (?x)[
+            / -
+        REGEX
+      <<-REGEX,
+            (?x)[
+            / -
+        \s
+        REGEX
+    ].each do |pattern|
+      expect_ast_error(Regex::Syntax::AST::ErrorKind::ClassUnclosed) do
+        parser.parse(pattern)
+      end
     end
   end
 

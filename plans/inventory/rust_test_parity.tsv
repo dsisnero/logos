@@ -1,44 +1,44 @@
 # source_test_id	status	crystal_refs	notes
 src/ast/mod.rs::test::ast_size	missing	-	baseline
 src/ast/mod.rs::test::no_stack_overflow_on_drop	missing	-	baseline
-src/ast/parse.rs::test::maybe_parse_ascii_class	missing	-	baseline
-src/ast/parse.rs::test::parse_alternate	missing	-	baseline
-src/ast/parse.rs::test::parse_capture_name	missing	-	baseline
-src/ast/parse.rs::test::parse_comments	missing	-	baseline
-src/ast/parse.rs::test::parse_counted_repetition	missing	-	baseline
-src/ast/parse.rs::test::parse_decimal	missing	-	baseline
-src/ast/parse.rs::test::parse_escape	missing	-	baseline
-src/ast/parse.rs::test::parse_flag	missing	-	baseline
-src/ast/parse.rs::test::parse_flags	missing	-	baseline
-src/ast/parse.rs::test::parse_group	missing	-	baseline
-src/ast/parse.rs::test::parse_hex_brace	missing	-	baseline
-src/ast/parse.rs::test::parse_hex_eight	missing	-	baseline
-src/ast/parse.rs::test::parse_hex_four	missing	-	baseline
-src/ast/parse.rs::test::parse_hex_two	missing	-	baseline
-src/ast/parse.rs::test::parse_holistic	missing	-	baseline
-src/ast/parse.rs::test::parse_ignore_whitespace	missing	-	baseline
-src/ast/parse.rs::test::parse_nest_limit	missing	-	baseline
-src/ast/parse.rs::test::parse_newlines	missing	-	baseline
-src/ast/parse.rs::test::parse_octal	missing	-	baseline
-src/ast/parse.rs::test::parse_perl_class	missing	-	baseline
-src/ast/parse.rs::test::parse_primitive_non_escape	missing	-	baseline
-src/ast/parse.rs::test::parse_set_class	missing	-	baseline
-src/ast/parse.rs::test::parse_set_class_open	missing	-	baseline
-src/ast/parse.rs::test::parse_uncounted_repetition	missing	-	baseline
-src/ast/parse.rs::test::parse_unicode_class	missing	-	baseline
-src/ast/parse.rs::test::parse_unsupported_backreference	missing	-	baseline
-src/ast/parse.rs::test::parse_unsupported_lookaround	missing	-	baseline
-src/ast/parse.rs::test::regression_454_nest_too_big	missing	-	baseline
-src/ast/parse.rs::test::regression_455_trailing_dash_ignore_whitespace	missing	-	baseline
-src/ast/print.rs::test::print_alternation	missing	-	baseline
-src/ast/print.rs::test::print_assertion	missing	-	baseline
-src/ast/print.rs::test::print_class	missing	-	baseline
-src/ast/print.rs::test::print_concat	missing	-	baseline
-src/ast/print.rs::test::print_dot	missing	-	baseline
-src/ast/print.rs::test::print_flags	missing	-	baseline
-src/ast/print.rs::test::print_group	missing	-	baseline
-src/ast/print.rs::test::print_literal	missing	-	baseline
-src/ast/print.rs::test::print_repetition	missing	-	baseline
+src/ast/parse.rs::test::maybe_parse_ascii_class	ported	spec/ast_parse_parity_spec.cr	ASCII class probe, backtracking, and bracketed fallback coverage ported
+src/ast/parse.rs::test::parse_alternate	ported	spec/ast_parse_parity_spec.cr	Alternation parsing and child ordering coverage ported
+src/ast/parse.rs::test::parse_capture_name	ported	spec/ast_parse_parity_spec.cr	Named capture parsing and duplicate-name diagnostics ported
+src/ast/parse.rs::test::parse_comments	ported	spec/ast_parse_parity_spec.cr	Verbose-mode comment capture coverage ported
+src/ast/parse.rs::test::parse_counted_repetition	ported	spec/ast_parse_parity_spec.cr	Counted repetition parsing, greediness, and validation coverage ported
+src/ast/parse.rs::test::parse_decimal	ported	spec/ast_parse_parity_spec.cr	Decimal repetition-count parsing and error coverage ported
+src/ast/parse.rs::test::parse_escape	ported	spec/ast_parse_parity_spec.cr	Escape parsing across literals, hex forms, and invalid digits ported
+src/ast/parse.rs::test::parse_flag	ported	spec/ast_parse_parity_spec.cr	Flag parsing and duplicate-negation diagnostics ported through group/flag cases
+src/ast/parse.rs::test::parse_flags	ported	spec/ast_parse_parity_spec.cr	Global and scoped flag-set parsing coverage ported
+src/ast/parse.rs::test::parse_group	ported	spec/ast_parse_parity_spec.cr	Capturing, non-capturing, and flag-group parsing coverage ported
+src/ast/parse.rs::test::parse_hex_brace	ported	spec/ast_parse_parity_spec.cr	Brace-form hex escape parsing and empty-escape diagnostics ported
+src/ast/parse.rs::test::parse_hex_eight	ported	spec/ast_parse_parity_spec.cr	Eight-digit Unicode escape parsing coverage ported
+src/ast/parse.rs::test::parse_hex_four	ported	spec/ast_parse_parity_spec.cr	Four-digit Unicode escape parsing coverage ported
+src/ast/parse.rs::test::parse_hex_two	ported	spec/ast_parse_parity_spec.cr	Two-digit hex escape parsing coverage ported
+src/ast/parse.rs::test::parse_holistic	ported	spec/ast_parse_parity_spec.cr	Holistic escaped-meta parsing coverage ported
+src/ast/parse.rs::test::parse_ignore_whitespace	ported	spec/ast_parse_parity_spec.cr	Whitespace-mode toggling and preserved literal-space coverage ported
+src/ast/parse.rs::test::parse_nest_limit	ported	spec/ast_parse_parity_spec.cr	Nest-limit parsing and regression-454 coverage ported
+src/ast/parse.rs::test::parse_newlines	ported	spec/ast_parse_parity_spec.cr	Newline literal-versus-dot parsing coverage ported
+src/ast/parse.rs::test::parse_octal	ported	spec/ast_parse_parity_spec.cr	Octal parsing and unsupported-backreference diagnostics ported
+src/ast/parse.rs::test::parse_perl_class	ported	spec/ast_parse_parity_spec.cr	Perl class parsing coverage ported
+src/ast/parse.rs::test::parse_primitive_non_escape	ported	spec/ast_parse_parity_spec.cr	Standalone primitive literal coverage ported
+src/ast/parse.rs::test::parse_set_class	ported	spec/ast_parse_parity_spec.cr	Set class parsing, invalid class escapes, and range diagnostics ported
+src/ast/parse.rs::test::parse_set_class_open	ported	spec/ast_parse_parity_spec.cr	Class-open parsing behavior covered via bracketed class edge cases
+src/ast/parse.rs::test::parse_uncounted_repetition	ported	spec/ast_parse_parity_spec.cr	Uncounted repetition parsing and greedy/reluctant coverage ported
+src/ast/parse.rs::test::parse_unicode_class	ported	spec/ast_parse_parity_spec.cr	Unicode class parsing for short and braced forms ported
+src/ast/parse.rs::test::parse_unsupported_backreference	ported	spec/ast_parse_parity_spec.cr	Unsupported backreference diagnostics ported
+src/ast/parse.rs::test::parse_unsupported_lookaround	ported	spec/ast_parse_parity_spec.cr	Unsupported lookaround diagnostics ported
+src/ast/parse.rs::test::regression_454_nest_too_big	ported	spec/ast_parse_parity_spec.cr	Deep-pattern nest-limit regression ported
+src/ast/parse.rs::test::regression_455_trailing_dash_ignore_whitespace	ported	spec/ast_parse_parity_spec.cr	Trailing-dash-in-class verbose-mode regression ported
+src/ast/print.rs::test::print_alternation	ported	spec/ast_print_spec.cr	Alternation printer round-trips ported
+src/ast/print.rs::test::print_assertion	ported	spec/ast_print_spec.cr	Assertion printer round-trips ported
+src/ast/print.rs::test::print_class	ported	spec/ast_print_spec.cr	Class printer round-trips including Unicode property forms ported
+src/ast/print.rs::test::print_concat	ported	spec/ast_print_spec.cr	Concatenation printer round-trips ported
+src/ast/print.rs::test::print_dot	ported	spec/ast_print_spec.cr	Dot printer round-trip ported
+src/ast/print.rs::test::print_flags	ported	spec/ast_print_spec.cr	Flag printer round-trips ported
+src/ast/print.rs::test::print_group	ported	spec/ast_print_spec.cr	Group printer round-trips ported
+src/ast/print.rs::test::print_literal	ported	spec/ast_print_spec.cr	Literal and escape printer round-trips ported
+src/ast/print.rs::test::print_repetition	ported	spec/ast_print_spec.cr	Repetition printer round-trips ported
 src/error.rs::test::regression_464	ported	spec/error_spec.cr	Direct multiline formatter regression port
 src/error.rs::test::repetition_quantifier_expects_a_valid_decimal	ported	spec/error_spec.cr	Exact formatter message and caret placement ported
 src/hir/literal.rs::test::alternation	missing	-	baseline

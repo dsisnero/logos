@@ -32,7 +32,7 @@ Feature roadmap:
 - [x] Unicode property tables: ages, Perl classes, property names/values, and case folding (`src/unicode_tables/age.rs`, `src/unicode_tables/perl_decimal.rs`, `src/unicode_tables/perl_space.rs`, `src/unicode_tables/perl_word.rs`, `src/unicode_tables/property_names.rs`, `src/unicode_tables/property_values.rs`, `src/unicode_tables/case_folding_simple.rs`)
 - [x] Unicode boundary tables and UTF-8 helpers (`src/unicode_tables/word_break.rs`, `src/unicode_tables/sentence_break.rs`, `src/unicode_tables/grapheme_cluster_break.rs`, `src/utf8.rs`)
 - [x] Upstream regression specs: crate API, error formatting, Unicode helpers, and UTF-8 (`src/lib.rs`, `src/error.rs`, `src/unicode.rs`, `src/utf8.rs`)
-- [ ] Upstream regression specs: AST parser and printer coverage (`src/ast/parse.rs`, `src/ast/print.rs`)
+- [x] Upstream regression specs: AST parser and printer coverage (`src/ast/parse.rs`, `src/ast/print.rs`)
 - [ ] Upstream regression specs: AST and HIR stack-safety smoke coverage (`src/ast/mod.rs`, `src/hir/mod.rs`)
 - [ ] Upstream regression specs: HIR core, literal extraction, and printer coverage (`src/hir/mod.rs`, `src/hir/literal.rs`, `src/hir/print.rs`)
 - [ ] Upstream regression specs: HIR translation analysis and translator behavior (`src/hir/translate.rs`)

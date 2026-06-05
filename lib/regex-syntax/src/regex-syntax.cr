@@ -1000,6 +1000,9 @@ module Regex::Syntax
         parse_perl_class(start_pos)
       when 'p', 'P'
         parse_unicode_class(start_pos)
+      when 'b', 'B', 'A', 'z', 'Z', '<', '>'
+        span = AST::Span.new(start_pos, position_after(current_position, current_char))
+        raise ParseError.new("invalid escape sequence in character class", nil, span)
       else
         parse_class_escaped_literal(start_pos)
       end
