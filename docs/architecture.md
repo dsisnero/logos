@@ -53,7 +53,7 @@ Rust-inspired result and option types:
 - `Filter::Emit(T)` / `Filter::Skip`: Callback return types
 - `FilterResult` types: `Emit(T)`, `Skip`, `Error(E)` for extended results
 
-### 5. Pattern System (`src/logos/pattern.cr`, `src/logos/pattern/parser.cr`)
+ ### 5. Pattern System (`src/logos/pattern.cr`, `src/logos/pattern/parser.cr`)
 
 Regex pattern parsing and compilation:
 
@@ -61,6 +61,36 @@ Regex pattern parsing and compilation:
 - **Character class handling**: Supports Unicode and custom character classes
 - **Look-around assertions**: Basic support for word boundaries and anchors
 - **Optimization**: Pattern simplification and DFA minimization
+
+### 6. Regex Syntax Library (`lib/regex-syntax/`)
+
+A faithful port of Rust's `regex-syntax` crate for parsing regular expressions:
+
+- **Abstract Syntax Tree (AST)**: Structured representation of regex patterns
+  - `Regex::Syntax::AST` module with `Node` class hierarchy
+  - Position tracking with `Span` and `Position` types
+  - Support for literals, character classes, repetitions, groups, etc.
+
+- **High-Level Intermediate Representation (HIR)**: Simplified representation for analysis
+  - `Regex::Syntax::Hir` module with `Node` class hierarchy
+  - Canonicalized form for pattern analysis and optimization
+  - Support for Unicode properties and case folding
+
+- **Parser**: Converts regex strings to AST/HIR
+  - `Regex::Syntax::Parser` class with incremental parsing
+  - Error handling with `ParseError` and `Error` types
+  - Support for regex flags and options
+
+- **Unicode Support**: Comprehensive Unicode property handling
+  - Unicode character classes (`\p{L}`, `\p{Greek}`, etc.)
+  - Case folding for case-insensitive matching
+  - Property tables for general categories, scripts, and boolean properties
+
+**Porting Strategy**:
+- **Source fidelity**: Match Rust `regex-syntax` behavior exactly
+- **Crystal idioms**: Follow Crystal conventions while preserving Rust semantics
+- **Test parity**: Port Rust tests faithfully to ensure behavioral correctness
+- **Zero-copy parsing**: Maintain Rust's performance characteristics where possible
 
 ## Design Decisions
 
@@ -102,7 +132,7 @@ Input Source → Lexer.next() → Token Enum + Callback Value
 4. **Value storage**: Callback result stored in `lexer.callback_value`
 5. **Token return**: Enum variant returned from `lexer.next()`
 
-## Directory Structure
+ ## Directory Structure
 
 ```text
 src/
@@ -119,7 +149,15 @@ src/
 
 lib/
 ├── regex-automata/            # Ported regex engine (for advanced features)
-└── regex-syntax/              # Regex parsing library
+└── regex-syntax/              # Regex parsing library (ported from Rust)
+    ├── src/regex-syntax.cr    # Main entry point
+    ├── src/regex/syntax/      # Core implementation
+    │   ├── ast.cr            # Abstract Syntax Tree types
+    │   ├── hir.cr            # High-Level Intermediate Representation
+    │   ├── parser.cr         # Regex pattern parser
+    │   ├── unicode.cr        # Unicode property handling
+    │   └── unicode_tables/   # Unicode property data tables
+    └── spec/                  # Test suite
 
 examples/                      # Usage examples
 spec/                          # Test suite
