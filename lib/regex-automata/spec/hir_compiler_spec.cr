@@ -1,5 +1,5 @@
 require "./spec_helper"
-require "../../regex-syntax/src/regex-syntax"
+require "regex-syntax"
 require "../../regex-automata/src/regex/automata/dfa"
 
 describe Regex::Automata::HirCompiler do
@@ -38,10 +38,10 @@ describe Regex::Automata::HirCompiler do
   it "compiles general repetition ranges" do
     # Test various repetition ranges
     patterns = {
-      "a{2}"    => {min: 2, max: 2},
-      "a{2,5}"  => {min: 2, max: 5},
-      "a{2,}"   => {min: 2, max: nil},
-      "a{0,3}"  => {min: 0, max: 3},
+      "a{2}"   => {min: 2, max: 2},
+      "a{2,5}" => {min: 2, max: 5},
+      "a{2,}"  => {min: 2, max: nil},
+      "a{0,3}" => {min: 0, max: 3},
     }
 
     patterns.each do |pattern, expected|
@@ -52,7 +52,7 @@ describe Regex::Automata::HirCompiler do
       nfa.size.should be > 0
 
       # Basic smoke test: compile DFA and match
-      dfa_builder = Regex::Automata::DFA::Builder.new(nfa)
+      dfa_builder = Regex::Automata::DFA::Builder.from_nfa(nfa)
       dfa = dfa_builder.build
 
       min = expected[:min]
@@ -102,7 +102,7 @@ describe Regex::Automata::HirCompiler do
     cases.each do |pattern, inputs|
       hir = Regex::Syntax.parse(pattern)
       nfa = Regex::Automata::HirCompiler.new.compile(hir)
-      dfa = Regex::Automata::DFA::Builder.new(nfa).build
+      dfa = Regex::Automata::DFA::Builder.from_nfa(nfa).build
 
       inputs.each do |input, expected_end|
         match = dfa.find_longest_match(input)
@@ -156,7 +156,7 @@ describe Regex::Automata::HirCompiler do
     compiler = Regex::Automata::HirCompiler.new
     nfa = compiler.compile_multi(hirs)
 
-    dfa_builder = Regex::Automata::DFA::Builder.new(nfa)
+    dfa_builder = Regex::Automata::DFA::Builder.from_nfa(nfa)
     dfa = dfa_builder.build
 
     # Test each pattern
@@ -182,7 +182,7 @@ describe Regex::Automata::HirCompiler do
 
   it "compiles look-around assertions" do
     # Test that look-around assertions compile to NFA
-    patterns = ["^a", "a$", "\\ba", "a\\b", "\\Aa", "a\\z", "a\\Z"]
+    patterns = ["^a", "a$", "(?-u:\\b)a", "a(?-u:\\b)", "\\Aa", "a\\z", "a\\Z"]
 
     patterns.each do |pattern|
       hir = Regex::Syntax.parse(pattern)
@@ -192,7 +192,7 @@ describe Regex::Automata::HirCompiler do
       nfa.size.should be > 0
 
       # Basic smoke test: compile DFA (even if matching won't work correctly yet)
-      dfa_builder = Regex::Automata::DFA::Builder.new(nfa)
+      dfa_builder = Regex::Automata::DFA::Builder.from_nfa(nfa)
       dfa = dfa_builder.build
       dfa.should be_a(Regex::Automata::DFA::DFA)
     end

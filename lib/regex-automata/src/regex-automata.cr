@@ -1,69 +1,39 @@
+require "regex-syntax"
+
+require "./regex/automata/types"
+require "./regex/automata/search"
+require "./regex/automata/prefilter"
+require "./regex/automata/interpolate"
+require "./regex/automata/captures"
+require "./regex/automata/sparse_set"
 require "./regex/automata/nfa"
+require "./regex/automata/pikevm"
+require "./regex/automata/backtrack"
+require "./regex/automata/automaton"
 require "./regex/automata/dfa"
+require "./regex/automata/sparse"
+require "./regex/automata/onepass"
+require "./regex/automata/dfa_regex"
+require "./regex/automata/determinize_state"
+require "./regex/automata/determinize"
 require "./regex/automata/hybrid"
 require "./regex/automata/hir_compiler"
+require "./regex/automata/minimize"
+require "./regex/automata/errors"
+require "./regex/automata/lazy"
+require "./regex/automata/pool"
+require "./regex/automata/meta_error"
+require "./regex/automata/meta"
+require "./regex/automata/escape"
+require "./regex/automata/wire"
+require "./regex/automata/syntax"
+require "./regex/automata/accel"
+require "./regex/automata/special"
+require "./regex/automata/match_states"
+require "./regex/automata/start_table"
 
 module Regex::Automata
-  VERSION = "0.1.0"
+  VERSION = "0.1.2"
 
   # Deterministic Finite Automaton and hybrid compatibility API
-
-  # Pattern identifiers
-  struct PatternID
-    include Comparable(PatternID)
-
-    @id : Int32
-
-    def initialize(@id : Int32)
-    end
-
-    def <=>(other : self) : Int32
-      @id <=> other.@id
-    end
-
-    def to_i : Int32
-      @id
-    end
-
-    def to_i32 : Int32
-      @id
-    end
-
-    def to_i64 : Int64
-      @id.to_i64
-    end
-  end
-
-  # State identifiers
-  struct StateID
-    include Comparable(StateID)
-
-    @id : Int32
-
-    def initialize(@id : Int32)
-    end
-
-    def <=>(other : self) : Int32
-      @id <=> other.@id
-    end
-
-    def to_i : Int32
-      @id
-    end
-
-    def to_i32 : Int32
-      @id
-    end
-
-    def to_i64 : Int64
-      @id.to_i64
-    end
-  end
-
-  # Error types
-  class Error < Exception
-  end
-
-  class BuildError < Error
-  end
 end

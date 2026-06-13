@@ -12,7 +12,7 @@ module Regex::Automata::DFA
   # Returns children in order of input byte (0..255), then eoi.
   # No deduplication of child states is performed.
   def self.iter_children(dfa : DFA, state : StateID) : Array(StateID)
-    children = Array(StateID).new(257)  # 256 bytes + EOI
+    children = Array(StateID).new(257) # 256 bytes + EOI
 
     # Byte transitions
     256.times do |byte|

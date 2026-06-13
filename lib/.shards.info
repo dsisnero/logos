@@ -4,3 +4,9 @@ shards:
   ameba:
     git: https://github.com/crystal-ameba/ameba.git
     version: 1.6.4
+  regex-syntax:
+    git: https://github.com/dsisnero/regex-syntax.git
+    version: 0.5.0+git.commit.482442adc9e3f0f2188407854f87cf75ecfbcde2
+  regex-automata:
+    git: https://github.com/dsisnero/regex-automata.git
+    version: 0.1.2
