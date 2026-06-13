@@ -5,8 +5,8 @@ shards:
     version: 1.6.4
 
   regex-automata:
-    path: ./temp/regex-automata
-    version: 0.1.0+git.commit.8ecca8408bf6ca1ae61f741c0742998c0bdf0175
+    git: https://github.com/dsisnero/regex-automata.git
+    version: 0.1.2
 
   regex-syntax:
     git: https://github.com/dsisnero/regex-syntax.git

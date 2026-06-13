@@ -234,8 +234,8 @@ macro logos_derive(type)
     private def self.patterns_overlap?(left_hir : ::Regex::Syntax::Hir::Hir, right_hir : ::Regex::Syntax::Hir::Hir) : Bool
       left_nfa = ::Regex::Automata::HirCompiler.new(::Regex::Automata::HirCompilerConfig.new(utf8: {{ utf8_flag }})).compile(left_hir)
       right_nfa = ::Regex::Automata::HirCompiler.new(::Regex::Automata::HirCompilerConfig.new(utf8: {{ utf8_flag }})).compile(right_hir)
-        left_dfa = ::Regex::Automata::DFA::Builder.new(nfa: left_nfa, track_delayed_matches: false).build
-        right_dfa = ::Regex::Automata::DFA::Builder.new(nfa: right_nfa, track_delayed_matches: false).build
+        left_dfa = ::Regex::Automata::DFA::Builder.new(nfa: left_nfa).build
+        right_dfa = ::Regex::Automata::DFA::Builder.new(nfa: right_nfa).build
 
         queue = [{left_dfa.start_anchored, right_dfa.start_anchored}]
       visited = Set(Tuple(::Regex::Automata::StateID, ::Regex::Automata::StateID)).new

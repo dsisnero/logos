@@ -6,6 +6,7 @@ require "./logos/source"
 require "./logos/lexer"
 require "./logos/pattern"
 require "./logos/annotations"
+require "./logos/regex_automata_compat"
 require "./logos/define_macro"
 require "./logos/macros"
 
