@@ -2,15 +2,27 @@
 # via Rust regex-syntax Unicode tables
 
 require "./unicode_tables/script"
+require "./unicode_tables/script_extension"
 require "./unicode_tables/general_category"
 require "./unicode_tables/property_bool"
+require "./unicode_tables/perl_decimal"
+require "./unicode_tables/perl_space"
+require "./unicode_tables/property_names"
+require "./unicode_tables/property_values"
+require "./unicode_tables/age"
+require "./unicode_tables/grapheme_cluster_break"
+require "./unicode_tables/word_break"
+require "./unicode_tables/sentence_break"
+require "./unicode_tables/perl_word"
+require "./unicode_tables/case_folding_simple"
 
 module Regex::Syntax::UnicodeTables
   # Combined lookup table for all property types
   PROPERTY_TABLES = {
-    "script" => Script::BY_NAME,
+    "script"          => Script::BY_NAME,
     "generalcategory" => GeneralCategory::BY_NAME,
-    "propertybool" => PropertyBool::BY_NAME,
+    "propertybool"    => PropertyBool::BY_NAME,
+    "perlword"        => {"word" => PerlWord::PERL_WORD},
   }
 
   # Look up Unicode property ranges by normalized property name
@@ -30,6 +42,6 @@ module Regex::Syntax::UnicodeTables
     PROPERTY_TABLES.each_value do |table|
       names.concat(table.keys)
     end
-    names.uniq.sort
+    names.uniq.sort!
   end
 end

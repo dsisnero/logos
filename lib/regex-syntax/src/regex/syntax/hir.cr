@@ -1546,7 +1546,7 @@ module Regex::Syntax::Hir
     end
 
     def has_greedy_all? : Bool
-      return false unless greedy && max.nil?
+      return false unless greedy? && max.nil?
 
       case sub
       when DotNode

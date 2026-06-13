@@ -1,0 +1,198 @@
+require "./spec_helper"
+
+describe "Flag handling in AST parser" do
+  describe "flag groups" do
+    it "parses (?i:...) flag group" do
+      parser = Regex::Syntax::AstParser.new
+      ast = parser.parse("(?i:ab)")
+
+      ast.root.should be_a(Regex::Syntax::AST::Group)
+      group = ast.root.as(Regex::Syntax::AST::Group)
+      group.kind.should eq(Regex::Syntax::AST::Group::Kind::NonCapture)
+      group.flags.should_not be_nil
+
+      if flags = group.flags
+        flags.flag_state('i').should be_true
+      end
+
+      group.child.should be_a(Regex::Syntax::AST::Concat)
+      child = group.child.as(Regex::Syntax::AST::Concat)
+      child.children.size.should eq(2)
+      child.children[0].as(Regex::Syntax::AST::Literal).bytes.should eq("a".to_slice)
+      child.children[1].as(Regex::Syntax::AST::Literal).bytes.should eq("b".to_slice)
+    end
+
+    it "parses (?i) global flags" do
+      parser = Regex::Syntax::AstParser.new
+      ast = parser.parse("(?i)ab")
+
+      # (?i) should produce a SetFlags node followed by "a" and "b"
+      ast.root.should be_a(Regex::Syntax::AST::Concat)
+      concat = ast.root.as(Regex::Syntax::AST::Concat)
+      concat.children.size.should eq(3)
+      concat.children[0].should be_a(Regex::Syntax::AST::SetFlags)
+      set_flags = concat.children[0].as(Regex::Syntax::AST::SetFlags)
+      set_flags.items.size.should eq(1)
+      set_flags.items[0].kind.should eq(Regex::Syntax::AST::FlagsItem::Kind::Flag)
+      set_flags.items[0].flag.should eq('i')
+      concat.children[1].as(Regex::Syntax::AST::Literal).bytes.should eq("a".to_slice)
+      concat.children[2].as(Regex::Syntax::AST::Literal).bytes.should eq("b".to_slice)
+    end
+
+    it "parses multiple flags (?im:...)" do
+      parser = Regex::Syntax::AstParser.new
+      ast = parser.parse("(?im:ab)")
+
+      ast.root.should be_a(Regex::Syntax::AST::Group)
+      group = ast.root.as(Regex::Syntax::AST::Group)
+      group.kind.should eq(Regex::Syntax::AST::Group::Kind::NonCapture)
+      group.flags.should_not be_nil
+    end
+
+    it "parses the full Rust flag set in scoped groups" do
+      parser = Regex::Syntax::AstParser.new
+
+      {
+        "(?m:a)" => 'm',
+        "(?s:a)" => 's',
+        "(?U:a)" => 'U',
+        "(?u:a)" => 'u',
+        "(?R:a)" => 'R',
+        "(?x:a)" => 'x',
+      }.each do |pattern, flag|
+        ast = parser.parse(pattern)
+        ast.root.should be_a(Regex::Syntax::AST::Group)
+        group = ast.root.as(Regex::Syntax::AST::Group)
+        group.kind.should eq(Regex::Syntax::AST::Group::Kind::NonCapture)
+        group.flags.should_not be_nil
+        if flags = group.flags
+          flags.flag_state(flag).should be_true
+        end
+      end
+    end
+
+    it "parses Rust-style negation placement in flag groups" do
+      parser = Regex::Syntax::AstParser.new
+
+      ast = parser.parse("(?-isU:a)")
+      group = ast.root.as(Regex::Syntax::AST::Group)
+      if flags = group.flags
+        flags.flag_state('i').should be_false
+        flags.flag_state('s').should be_false
+        flags.flag_state('U').should be_false
+      end
+
+      mixed = parser.parse("(?i-sR:a)")
+      mixed_group = mixed.root.as(Regex::Syntax::AST::Group)
+      if mixed_flags = mixed_group.flags
+        mixed_flags.flag_state('i').should be_true
+        mixed_flags.flag_state('s').should be_false
+        mixed_flags.flag_state('R').should be_false
+      end
+    end
+
+    it "parses negative flags (?-i:...)" do
+      parser = Regex::Syntax::AstParser.new
+      ast = parser.parse("(?-i:AB)")
+
+      ast.root.should be_a(Regex::Syntax::AST::Group)
+      group = ast.root.as(Regex::Syntax::AST::Group)
+      group.kind.should eq(Regex::Syntax::AST::Group::Kind::NonCapture)
+      group.flags.should_not be_nil
+
+      if flags = group.flags
+        flags.flag_state('i').should be_false
+      end
+    end
+
+    it "rejects duplicate flags" do
+      parser = Regex::Syntax::AstParser.new
+
+      err = expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::FlagDuplicate,
+        Regex::Syntax::AST::Span.new(3, 4),
+        Regex::Syntax::AST::Span.new(2, 3)
+      ) do
+        parser.parse("(?ii:ab)")
+      end
+      err.raw_message.should match(/duplicate flag/)
+    end
+
+    it "rejects repeated negation" do
+      parser = Regex::Syntax::AstParser.new
+
+      err = expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::FlagRepeatedNegation,
+        Regex::Syntax::AST::Span.new(4, 5),
+        Regex::Syntax::AST::Span.new(3, 4)
+      ) do
+        parser.parse("(?i--m:ab)")
+      end
+      err.raw_message.should match(/repeated flag negation/)
+    end
+
+    it "rejects dangling negation" do
+      parser = Regex::Syntax::AstParser.new
+
+      err = expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::FlagDanglingNegation,
+        Regex::Syntax::AST::Span.new(3, 4)
+      ) do
+        parser.parse("(?i-)")
+      end
+      err.raw_message.should match(/dangling flag negation/)
+    end
+
+    it "rejects unrecognized flags" do
+      parser = Regex::Syntax::AstParser.new
+
+      expect_parse_error(/unrecognized flag/) do
+        parser.parse("(?ia:ab)")
+      end
+
+      err = expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::FlagUnrecognized,
+        Regex::Syntax::AST::Span.new(
+          Regex::Syntax::AST::Position.new(2, 1, 3),
+          Regex::Syntax::AST::Position.new(5, 1, 4)
+        )
+      ) do
+        parser.parse("(?☃:ab)")
+      end
+      err.raw_message.should match(/unrecognized flag/)
+    end
+
+    it "rejects unexpected eof in flag syntax like Rust" do
+      parser = Regex::Syntax::AstParser.new
+
+      expect_parse_error(/unexpected end/) do
+        parser.parse("(?isU")
+      end
+    end
+  end
+
+  describe "flag application in translator" do
+    it "applies case-insensitive flag to literals" do
+      translator = Regex::Syntax::Translator.new(ignore_case: true)
+      ast = Regex::Syntax::AST::Literal.new(
+        Regex::Syntax::AST::Span.new(0, 1),
+        Regex::Syntax::AST::Literal::Kind::Verbatim,
+        c: 'a'
+      )
+
+      hir = translator.translate(ast)
+      hir.should be_a(Regex::Syntax::Hir::UnicodeClass)
+      char_class = hir.as(Regex::Syntax::Hir::UnicodeClass)
+      char_class.intervals.should eq([65_u32..65_u32, 97_u32..97_u32]) # 'A' and 'a'
+    end
+
+    it "applies case-insensitive flag to character classes" do
+      hir = Regex::Syntax.parse("(?i:[a])")
+      hir.node.should be_a(Regex::Syntax::Hir::UnicodeClass)
+      hir.node.as(Regex::Syntax::Hir::UnicodeClass).intervals.should eq([
+        0x41_u32..0x41_u32,
+        0x61_u32..0x61_u32,
+      ])
+    end
+  end
+end
