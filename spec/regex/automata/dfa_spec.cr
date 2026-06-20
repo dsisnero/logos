@@ -1,6 +1,5 @@
 require "../../spec_helper"
-require "../../../lib/regex-automata/src/regex-automata"
-require "../../../lib/regex-automata/src/regex/automata/dfa"
+require "regex-automata"
 
 module Regex::Automata::DFASpec
   describe DFA::Builder do

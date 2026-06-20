@@ -1,5 +1,5 @@
 require "../../spec_helper"
-require "../../../lib/regex-automata/src/regex-automata"
+require "regex-automata"
 
 module Regex::Automata::NFASpec
   describe NFA::Builder do

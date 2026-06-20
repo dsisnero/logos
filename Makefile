@@ -14,7 +14,7 @@ lint:
 	ameba
 
 test:
-	crystal spec
+	CRYSTAL_PATH=$$(if [ -d ../regex-automata/src ]; then printf "../regex-automata/src:%s" "$${CRYSTAL_PATH:-$$(crystal env CRYSTAL_PATH)}"; else printf "%s" "$${CRYSTAL_PATH:-$$(crystal env CRYSTAL_PATH)}"; fi) crystal spec
 
 markdown:
 	rumdl fmt .

@@ -224,8 +224,13 @@ module Logos
       private def self.patterns_overlap?(left_hir : ::Regex::Syntax::Hir::Hir, right_hir : ::Regex::Syntax::Hir::Hir) : Bool
         left_nfa = ::Regex::Automata::HirCompiler.new(::Regex::Automata::HirCompilerConfig.new(utf8: {{ utf8_flag }})).compile(left_hir)
         right_nfa = ::Regex::Automata::HirCompiler.new(::Regex::Automata::HirCompilerConfig.new(utf8: {{ utf8_flag }})).compile(right_hir)
-        left_dfa = ::Regex::Automata::DFA::Builder.new(nfa: left_nfa).build
-        right_dfa = ::Regex::Automata::DFA::Builder.new(nfa: right_nfa).build
+        dfa_config = ::Regex::Automata::Config.new
+          .start_kind(::Regex::Automata::StartKind::Anchored)
+          .prefilter(nil)
+          .accelerate(false)
+          .specialize_start_states(false)
+        left_dfa = ::Regex::Automata::DFA::Builder.from_nfa(left_nfa, dfa_config).build
+        right_dfa = ::Regex::Automata::DFA::Builder.from_nfa(right_nfa, dfa_config.dup).build
 
         queue = [{left_dfa.start_anchored, right_dfa.start_anchored}]
         visited = Set(Tuple(::Regex::Automata::StateID, ::Regex::Automata::StateID)).new
@@ -236,9 +241,12 @@ module Logos
           next if visited.includes?(pair)
           visited.add(pair)
 
+          left_accepting = left_dfa.is_match_state?(left_dfa.next_eoi_state(left_id))
+          right_accepting = right_dfa.is_match_state?(right_dfa.next_eoi_state(right_id))
+          return true if left_accepting && right_accepting
+
           left_state = left_dfa[left_id]
           right_state = right_dfa[right_id]
-          return true if left_state.accepting? && right_state.accepting?
 
           256.times do |byte|
             byte_u8 = byte.to_u8
@@ -255,6 +263,26 @@ module Logos
 
       private def self.hir_matches_invalid_utf8?(hir : ::Regex::Syntax::Hir::Hir) : Bool
         node_matches_invalid_utf8?(hir.node)
+      end
+
+      private def self.prefix_matches_exactly?(vm : ::Regex::Automata::NFA::PikeVM, input : ::String, end_pos : Int32) : Bool
+        return false if end_pos < 0 || end_pos > input.bytesize
+
+        prefix = input.byte_slice(0, end_pos)
+        search = ::Regex::Automata::Input.new(prefix)
+          .anchored(::Regex::Automata::Anchored::Yes)
+        cache = vm.create_cache
+        vm.find(cache, search).try { |match| match.start == 0 && match.end == end_pos } || false
+      end
+
+      private def self.prefix_matches_exactly?(vm : ::Regex::Automata::NFA::PikeVM, slice : ::Bytes, end_pos : Int32) : Bool
+        return false if end_pos < 0 || end_pos > slice.size
+
+        prefix = slice[0, end_pos]
+        input = ::Regex::Automata::Input.new(prefix)
+          .anchored(::Regex::Automata::Anchored::Yes)
+        cache = vm.create_cache
+        vm.find(cache, input).try { |match| match.start == 0 && match.end == end_pos } || false
       end
 
       private def self.node_matches_invalid_utf8?(node : ::Regex::Syntax::Hir::Node) : Bool
@@ -287,18 +315,22 @@ module Logos
 
       @@compiled = nil.as(NamedTuple(
         dfa: ::Regex::Automata::DFA::DFA,
+        pattern_dfas: Array(::Regex::Automata::NFA::PikeVM),
         pattern_to_variant: Array(self),
         pattern_is_skip: Array(Bool),
         pattern_priority: Array(Int32),
+        pattern_priority_explicit: Array(Bool),
         error_variant: self?
       )?)
 
       # DFA compilation method
       private def self.compile_dfa : NamedTuple(
         dfa: ::Regex::Automata::DFA::DFA,
+        pattern_dfas: Array(::Regex::Automata::NFA::PikeVM),
         pattern_to_variant: Array(self),
         pattern_is_skip: Array(Bool),
         pattern_priority: Array(Int32),
+        pattern_priority_explicit: Array(Bool),
         error_variant: self?
       )
         if ENV["LOGOS_DEBUG"]?
@@ -309,6 +341,7 @@ module Logos
         pattern_is_skip = [] of Bool
         pattern_priority = [] of Int32
         pattern_priority_explicit = [] of Bool
+        pattern_dfas = [] of ::Regex::Automata::NFA::PikeVM
         pattern_text = [] of ::String
         pattern_variant_name = [] of ::String
 
@@ -434,7 +467,7 @@ module Logos
           dead_state = ::Regex::Automata::DFA::State.new(::Regex::Automata::StateID.new(0), 256)
           256.times { |i| dead_state.set_transition(i, ::Regex::Automata::StateID.new(-1)) }
           dfa = ::Regex::Automata::DFA::DFA.new([dead_state], nil, ::Regex::Automata::StateID.new(0), 256)
-          return {dfa: dfa, pattern_to_variant: pattern_to_variant, pattern_is_skip: pattern_is_skip, pattern_priority: pattern_priority, error_variant: error_variant}
+          return {dfa: dfa, pattern_dfas: pattern_dfas, pattern_to_variant: pattern_to_variant, pattern_is_skip: pattern_is_skip, pattern_priority: pattern_priority, pattern_priority_explicit: pattern_priority_explicit, error_variant: error_variant}
         end
 
         hirs.size.times do |i|
@@ -452,18 +485,34 @@ module Logos
         nfa = hir_compiler.compile_multi(hirs)
 
         # Build DFA from NFA
-        dfa_builder = ::Regex::Automata::DFA::Builder.new(nfa: nfa)
-        dfa = dfa_builder.build
+        dfa_config = ::Regex::Automata::Config.new
+          .match_kind(::Regex::Automata::MatchKind::All)
+          .start_kind(::Regex::Automata::StartKind::Anchored)
+          .prefilter(nil)
+          .accelerate(false)
+          .starts_for_each_pattern(false)
+          .specialize_start_states(false)
+        dfa = ::Regex::Automata::DFA::Builder.from_nfa(nfa, dfa_config).build
+        hirs.each do |hir|
+          pattern_nfa = ::Regex::Automata::HirCompiler
+            .new(::Regex::Automata::HirCompilerConfig.new(utf8: {{ utf8_flag }}))
+            .build_from_hir(hir)
+          pattern_dfas << ::Regex::Automata::NFA::PikeVM::Builder.new
+            .configure(::Regex::Automata::NFA::PikeVM::Config.new.match_kind(::Regex::Automata::MatchKind::All))
+            .build_from_nfa(pattern_nfa)
+        end
 
-        {dfa: dfa, pattern_to_variant: pattern_to_variant, pattern_is_skip: pattern_is_skip, pattern_priority: pattern_priority, error_variant: error_variant}
+        {dfa: dfa, pattern_dfas: pattern_dfas, pattern_to_variant: pattern_to_variant, pattern_is_skip: pattern_is_skip, pattern_priority: pattern_priority, pattern_priority_explicit: pattern_priority_explicit, error_variant: error_variant}
       end
 
       # Lazy-loaded DFA getter
       private def self.compiled : NamedTuple(
         dfa: ::Regex::Automata::DFA::DFA,
+        pattern_dfas: Array(::Regex::Automata::NFA::PikeVM),
         pattern_to_variant: Array(self),
         pattern_is_skip: Array(Bool),
         pattern_priority: Array(Int32),
+        pattern_priority_explicit: Array(Bool),
         error_variant: self?
       )
         @@compiled ||= compile_dfa
@@ -492,9 +541,11 @@ module Logos
       def self.lex(__lexer : ::Logos::Lexer(self, {{ source_type }}, {{ extras_type }}, {{ error_type }})) : ::Logos::Result(self, {{ error_type }})?
         compiled = self.compiled
         dfa = compiled[:dfa]
+        pattern_dfas = compiled[:pattern_dfas]
         pattern_to_variant = compiled[:pattern_to_variant]
         pattern_is_skip = compiled[:pattern_is_skip]
         pattern_priority = compiled[:pattern_priority]
+        pattern_priority_explicit = compiled[:pattern_priority_explicit]
 
         # DEBUG
         if ENV["LOGOS_DEBUG"]?
@@ -509,7 +560,14 @@ module Logos
 
         if match
           end_pos, pattern_ids = match
+          exact_pattern_ids = pattern_ids.select do |id|
+            self.prefix_matches_exactly?(pattern_dfas[id.to_i], __lexer.remainder, end_pos)
+          end
+          match = exact_pattern_ids.empty? ? nil : {end_pos, exact_pattern_ids}
+        end
 
+        if match
+          end_pos, pattern_ids = match
           # DEBUG
           if ENV["LOGOS_DEBUG"]?
             puts "DEBUG: matched at #{end_pos}, pattern_ids: #{pattern_ids.map(&.to_i)}"
@@ -520,8 +578,14 @@ module Logos
           end
 
           # Determine which variant matched (take pattern with highest priority)
-          pattern_id = if pattern_ids.size == 1
-                         pattern_ids[0]
+          highest_priority = pattern_ids.max_of { |id| pattern_priority[id.to_i] }
+          highest_priority_ids = pattern_ids.select { |id| pattern_priority[id.to_i] == highest_priority }
+          if highest_priority_ids.size > 1 &&
+             highest_priority_ids.all? { |id| pattern_priority_explicit[id.to_i] }
+            raise "Patterns with priority #{highest_priority} can match simultaneously."
+          end
+          pattern_id = if highest_priority_ids.size == 1
+                         highest_priority_ids[0]
                        else
                          pattern_ids.max_by { |id| pattern_priority[id.to_i] }
                        end
