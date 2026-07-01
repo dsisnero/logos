@@ -947,7 +947,7 @@ module Logos::Spec::OldLogosBugs
     end
   end
 
-  # issue_251 pending: needs token variants with associated data
+  # issue_251: callback emits matched slice
   module Issue251
     Logos.define Token do
       error_type Nil
@@ -958,17 +958,25 @@ module Logos::Spec::OldLogosBugs
     end
 
     describe "issue_251: char token with slice" do
-      it "matches any character with slice" do
-        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new("a")
-        result = lexer.next
-        result = result.as(Logos::Result(Token, Nil))
-        result.unwrap.should eq(Token::Char)
-        lexer.callback_value_as(String).should eq("a")
+      it "matches ASCII and Unicode scalars with slice values" do
+        {
+          "*" => 0...1,
+          "😀" => 0...4,
+        }.each do |source, expected_range|
+          lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new(source)
+          result = lexer.next
+          result = result.as(Logos::Result(Token, Nil))
+          result.unwrap.should eq(Token::Char)
+          lexer.callback_value_as(String).should eq(source)
+          lexer.slice.should eq(source)
+          lexer.span.should eq(expected_range)
+          lexer.next.should eq(Iterator::Stop::INSTANCE)
+        end
       end
     end
   end
 
-  # issue_256 pending: needs token variants with associated data
+  # issue_256: integer literal callback with underscore cleanup
   module Issue256
     Logos.define Token do
       error_type Nil
@@ -977,24 +985,45 @@ module Logos::Spec::OldLogosBugs
         Logos::Skip.new
       end
 
-      regex "[0-9][0-9_]*", :Integer do |lex|
-        Logos::Filter::Emit.new(lex.slice.gsub("_", "").to_i)
+      regex "(0|-?[1-9](_?[0-9])*)", :Integer do |lex|
+        Logos::Filter::Emit.new(lex.slice.gsub("_", "").to_i64)
       end
     end
 
     describe "issue_256: integer literal callback" do
-      it "parses integers with underscores" do
-        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new("1_000 42")
+      it "matches upstream integer callback cases" do
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new("-5  -51  0  5  51  1_000  1_ ")
 
-        result = lexer.next
-        result = result.as(Logos::Result(Token, Nil))
-        result.unwrap.should eq(Token::Integer)
-        lexer.callback_value_as(Int32).should eq(1000)
+        expectations = [
+          {:ok, "-5", 0...2, -5_i64},
+          {:ok, "-51", 4...7, -51_i64},
+          {:ok, "0", 9...10, 0_i64},
+          {:ok, "5", 12...13, 5_i64},
+          {:ok, "51", 15...17, 51_i64},
+          {:ok, "1_000", 19...24, 1000_i64},
+          {:ok, "1", 26...27, 1_i64},
+          {:error, "_", 27...28, nil},
+        ]
 
-        result = lexer.next
-        result = result.as(Logos::Result(Token, Nil))
-        result.unwrap.should eq(Token::Integer)
-        lexer.callback_value_as(Int32).should eq(42)
+        expectations.each do |kind, expected_slice, expected_range, expected_value|
+          result = lexer.next
+          result.should_not be_nil
+          result = result.as(Logos::Result(Token, Nil))
+          lexer.slice.should eq(expected_slice)
+          lexer.span.should eq(expected_range)
+
+          case kind
+          when :ok
+            result.unwrap.should eq(Token::Integer)
+            lexer.callback_value_as(Int64).should eq(expected_value)
+          when :error
+            result.error?.should be_true
+          else
+            raise "unreachable"
+          end
+        end
+
+        lexer.next.should eq(Iterator::Stop::INSTANCE)
       end
     end
   end

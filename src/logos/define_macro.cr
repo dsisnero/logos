@@ -684,6 +684,7 @@ module Logos
                        end
           variant = pattern_to_variant[pattern_id.to_i]
           is_skip = pattern_is_skip[pattern_id.to_i]
+          emitted_variant = variant
 
           # Advance lexer by matched length
           __lexer.bump(end_pos)
@@ -741,6 +742,10 @@ module Logos
                  end
                end
 
+               if __callback_result.is_a?(self)
+                 emitted_variant = __callback_result
+               end
+
                # Handle Logos::Result from callbacks
                if __callback_result.is_a?(::Logos::Result)
                  if __callback_result.ok?
@@ -752,7 +757,14 @@ module Logos
                    end
                    if ok_value.is_a?(::Logos::Filter::Emit) ||
                       ok_value.is_a?(::Logos::FilterResult::Emit)
-                     __lexer.callback_value = ::Logos::CallbackValue.new(ok_value.value)
+                     emitted_value = ok_value.value
+                     if emitted_value.is_a?(self)
+                       emitted_variant = emitted_value
+                     else
+                       __lexer.callback_value = ::Logos::CallbackValue.new(emitted_value)
+                     end
+                   elsif ok_value.is_a?(self)
+                     emitted_variant = ok_value
                    elsif !ok_value.nil?
                      __lexer.callback_value = ::Logos::CallbackValue.new(ok_value)
                    end
@@ -771,6 +783,8 @@ module Logos
                      error_value = {{ error_type }}.new
                    {% end %}
                    return ::Logos::Result(self, {{ error_type }}).error(error_value)
+                 elsif option_value.is_a?(self)
+                   emitted_variant = option_value
                  else
                    __lexer.callback_value = ::Logos::CallbackValue.new(option_value)
                  end
@@ -782,8 +796,13 @@ module Logos
                     if ENV["LOGOS_DEBUG"]?
                       puts "DEBUG: Callback returned Emit with value: #{__callback_result.value.inspect}"
                     end
-                    # Store emitted value in lexer for later access
-                    __lexer.callback_value = ::Logos::CallbackValue.new(__callback_result.value)
+                    emitted_value = __callback_result.value
+                    if emitted_value.is_a?(self)
+                      emitted_variant = emitted_value
+                    else
+                      # Store emitted value in lexer for later access
+                      __lexer.callback_value = ::Logos::CallbackValue.new(emitted_value)
+                    end
                   end
               {% end %}
             {% end %}
@@ -792,7 +811,7 @@ module Logos
 
           # Return token unless it's a skip variant
           unless is_skip
-            return ::Logos::Result(self, {{ error_type }}).ok(variant)
+            return ::Logos::Result(self, {{ error_type }}).ok(emitted_variant)
           else
             # Skip variant - return nil to continue lexing
             return nil

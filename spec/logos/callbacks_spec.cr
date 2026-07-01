@@ -261,6 +261,33 @@ module Logos::Spec::Callbacks
     end
   end
 
+  describe "callback returning a token variant" do
+    it "emits the token returned by the callback" do
+      lexer = Logos::Lexer(AnyTokenCallbacksToken, String, Logos::NoExtras, Nil).new("Hello 1 42 -100 pi 3.14 -77.77")
+
+      expected = [
+        {AnyTokenCallbacksToken::Text, "Hello", 0...5},
+        {AnyTokenCallbacksToken::Integer, "1", 6...7},
+        {AnyTokenCallbacksToken::Integer, "42", 8...10},
+        {AnyTokenCallbacksToken::Integer, "-100", 11...15},
+        {AnyTokenCallbacksToken::Text, "pi", 16...18},
+        {AnyTokenCallbacksToken::Float, "3.14", 19...23},
+        {AnyTokenCallbacksToken::Float, "-77.77", 24...30},
+      ]
+
+      expected.each do |expected_token, expected_slice, expected_range|
+        result = lexer.next
+        result.should_not be_nil
+        result = result.as(Logos::Result(AnyTokenCallbacksToken, Nil))
+        result.unwrap.should eq(expected_token)
+        lexer.slice.should eq(expected_slice)
+        lexer.span.should eq(expected_range)
+      end
+
+      lexer.next.should eq(Iterator::Stop::INSTANCE)
+    end
+  end
+
   describe "regex repetition ranges" do
     it "matches a{2,5} with exactly 5 a's" do
       lexer = Logos::Lexer(RepetitionPatterns::Token, String, Logos::NoExtras, Nil).new("aaaaa")
@@ -293,3 +320,17 @@ module Logos::Spec::Callbacks
     end
   end
 end
+
+@[Logos::Options(error_type: Nil)]
+@[Logos::Regex("[ \\t\\n\\r]+", variant: :Whitespace, callback: -> { Logos::Skip.new })]
+@[Logos::Regex("[a-zA-Z]+", variant: :Text, callback: -> { Logos::Spec::Callbacks::AnyTokenCallbacksToken::Text })]
+@[Logos::Regex("-?[0-9]+", variant: :Text, callback: -> { Logos::Spec::Callbacks::AnyTokenCallbacksToken::Integer })]
+@[Logos::Regex("-?[0-9]+\\.[0-9]+", variant: :Text, callback: -> { Logos::Spec::Callbacks::AnyTokenCallbacksToken::Float })]
+enum Logos::Spec::Callbacks::AnyTokenCallbacksToken
+  Whitespace
+  Text
+  Integer
+  Float
+end
+
+logos_derive(Logos::Spec::Callbacks::AnyTokenCallbacksToken)

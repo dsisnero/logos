@@ -659,6 +659,7 @@ macro logos_derive(type)
                      end
         variant = pattern_to_variant[pattern_id.to_i]
         is_skip = pattern_is_skip[pattern_id.to_i]
+        emitted_variant = variant
 
         lexer.bump(end_pos)
 
@@ -691,6 +692,10 @@ macro logos_derive(type)
                 return nil unless __callback_result
               end
 
+              if __callback_result.is_a?(self)
+                emitted_variant = __callback_result
+              end
+
               if __callback_result.is_a?(::Logos::Result)
                 if __callback_result.ok?
                   ok_value = __callback_result.unwrap
@@ -701,7 +706,14 @@ macro logos_derive(type)
                   end
                   if ok_value.is_a?(::Logos::Filter::Emit) ||
                      ok_value.is_a?(::Logos::FilterResult::Emit)
-                    lexer.callback_value = ::Logos::CallbackValue.new(ok_value.value)
+                    emitted_value = ok_value.value
+                    if emitted_value.is_a?(self)
+                      emitted_variant = emitted_value
+                    else
+                      lexer.callback_value = ::Logos::CallbackValue.new(emitted_value)
+                    end
+                  elsif ok_value.is_a?(self)
+                    emitted_variant = ok_value
                   elsif !ok_value.nil?
                     lexer.callback_value = ::Logos::CallbackValue.new(ok_value)
                   end
@@ -719,6 +731,8 @@ macro logos_derive(type)
                     error_value = {{ error_type }}.new
                   {% end %}
                   return ::Logos::Result(self, {{ error_type }}).error(error_value)
+                elsif option_value.is_a?(self)
+                  emitted_variant = option_value
                 else
                   lexer.callback_value = ::Logos::CallbackValue.new(option_value)
                 end
@@ -726,7 +740,12 @@ macro logos_derive(type)
 
               if __callback_result.is_a?(::Logos::Filter::Emit) ||
                  __callback_result.is_a?(::Logos::FilterResult::Emit)
-                lexer.callback_value = ::Logos::CallbackValue.new(__callback_result.value)
+                emitted_value = __callback_result.value
+                if emitted_value.is_a?(self)
+                  emitted_variant = emitted_value
+                else
+                  lexer.callback_value = ::Logos::CallbackValue.new(emitted_value)
+                end
               end
             {% end %}
           {% end %}
@@ -734,7 +753,7 @@ macro logos_derive(type)
         {% end %}
 
         return nil if is_skip
-        return ::Logos::Result(self, {{ error_type }}).ok(variant)
+        return ::Logos::Result(self, {{ error_type }}).ok(emitted_variant)
       elsif error_variant = compiled[:error_variant]
         {% if utf8_flag %}
           if char = lexer.remainder[0]?
