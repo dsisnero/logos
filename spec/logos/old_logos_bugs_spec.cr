@@ -912,6 +912,38 @@ module Logos::Spec::OldLogosBugs
         result.unwrap.should eq(Token::Odd)
         lexer.callback_value_as(Int32).should eq(101)
       end
+
+      it "matches odds and reports even numbers as full error spans" do
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new("41 42 43 44 45")
+
+        expectations = [
+          {:ok, "41", 0...2, 41},
+          {:error, "42", 3...5, nil},
+          {:ok, "43", 6...8, 43},
+          {:error, "44", 9...11, nil},
+          {:ok, "45", 12...14, 45},
+        ]
+
+        expectations.each do |kind, expected_slice, expected_range, expected_value|
+          result = lexer.next
+          result.should_not be_nil
+          result = result.as(Logos::Result(Token, Nil))
+          lexer.slice.should eq(expected_slice)
+          lexer.span.should eq(expected_range)
+
+          case kind
+          when :ok
+            result.unwrap.should eq(Token::Odd)
+            lexer.callback_value_as(Int32).should eq(expected_value)
+          when :error
+            result.error?.should be_true
+          else
+            raise "unreachable"
+          end
+        end
+
+        lexer.next.should eq(Iterator::Stop::INSTANCE)
+      end
     end
   end
 
@@ -991,6 +1023,60 @@ module Logos::Spec::OldLogosBugs
     end
   end
 
+  module Issue201Upstream
+    def self.find_close_bracket(source : String, level : Int32) : Int32?
+      pattern = String.build do |io|
+        io << ']'
+        level.times { io << '=' }
+        io << ']'
+      end
+      source.byte_index(pattern)
+    end
+
+    def self.parse_brackets(lex : Logos::Lexer(Token, String, Logos::NoExtras, Nil)) : Bool
+      level = lex.span.size - 2
+      if offset = find_close_bracket(lex.remainder, level)
+        lex.bump(offset + level + 2)
+        true
+      else
+        false
+      end
+    end
+
+    Logos.define Token do
+      error_type Nil
+
+      skip_regex " +", :Skip
+      regex "\\[=*\\[", :Pair do |lex|
+        Logos::Spec::OldLogosBugs::Issue201Upstream.parse_brackets(lex)
+      end
+    end
+
+    describe "issue_201 upstream: Lua long bracket pairs" do
+      it "matches complete bracket pairs with callback bumping" do
+        source = "[[a]] [=[ b ]] ]=] [===[ C ]===]"
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new(source)
+
+        expected = [
+          {Token::Pair, "[[a]]", 0...5},
+          {Token::Pair, "[=[ b ]] ]=]", 6...18},
+          {Token::Pair, "[===[ C ]===]", 19...32},
+        ]
+
+        expected.each do |expected_token, expected_slice, expected_range|
+          result = lexer.next
+          result.should_not be_nil
+          result = result.as(Logos::Result(Token, Nil))
+          result.unwrap.should eq(expected_token)
+          lexer.slice.should eq(expected_slice)
+          lexer.span.should eq(expected_range)
+        end
+
+        lexer.next.should eq(Iterator::Stop::INSTANCE)
+      end
+    end
+  end
+
   # issue_461: binary mode (utf8 = false) - now implemented
   module Issue461
     Logos.define Token do
@@ -1016,6 +1102,40 @@ module Logos::Spec::OldLogosBugs
         end
 
         tokens.should eq([Token::Zero, Token::FF, Token::AnyByte])
+      end
+    end
+  end
+
+  # issue_461 upstream parity: integer prefix in binary mode
+  module Issue461Upstream
+    Logos.define Token do
+      utf8 false
+      error_type Nil
+
+      regex "-?(0[xob])?[0-9][0-9_]*", :Int
+      token "-", :Dash
+    end
+
+    describe "issue_461 upstream: binary integer prefix" do
+      it "matches -0 then errors on x" do
+        source = Bytes['-'.ord.to_u8, '0'.ord.to_u8, 'x'.ord.to_u8]
+        lexer = Logos::Lexer(Token, Slice(UInt8), Logos::NoExtras, Nil).new(source)
+
+        result = lexer.next
+        result.should_not be_nil
+        result = result.as(Logos::Result(Token, Nil))
+        result.unwrap.should eq(Token::Int)
+        lexer.slice.should eq(Bytes['-'.ord.to_u8, '0'.ord.to_u8])
+        lexer.span.should eq(0...2)
+
+        result = lexer.next
+        result.should_not be_nil
+        result = result.as(Logos::Result(Token, Nil))
+        result.error?.should be_true
+        lexer.slice.should eq(Bytes['x'.ord.to_u8])
+        lexer.span.should eq(2...3)
+
+        lexer.next.should eq(Iterator::Stop::INSTANCE)
       end
     end
   end

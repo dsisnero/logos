@@ -43,10 +43,9 @@ module Logos::Spec::Advanced
         {Logos::Result(Token, Nil).ok(Token::LiteralString), "\"foobar\"", 4...12},
         {Logos::Result(Token, Nil).ok(Token::LiteralString), "\"escaped\\\"quote\"", 13...29},
         {Logos::Result(Token, Nil).ok(Token::LiteralString), "\"escaped\\nnew line\"", 30...49},
-        {Logos::Result(Token, Nil).error(nil), "\"", 50...51},
-        {Logos::Result(Token, Nil).error(nil), "\\", 51...52},
+        {Logos::Result(Token, Nil).error(nil), "\"\\", 50...52},
         {Logos::Result(Token, Nil).error(nil), "x", 52...53},
-        {Logos::Result(Token, Nil).error(nil), "\"", 53...54},
+        {Logos::Result(Token, Nil).error(nil), "\" ", 53...55},
       ]
 
       expected.each do |expected_result, expected_slice, expected_range|

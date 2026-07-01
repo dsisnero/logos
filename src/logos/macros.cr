@@ -295,6 +295,101 @@ macro logos_derive(type)
       vm.find(cache, input).try { |match| match.start == 0 && match.end == end_pos } || false
     end
 
+    private def self.find_exact_match_at_start(dfa : ::Regex::Automata::DFA::DFA, pattern_dfas : Array(::Regex::Automata::NFA::PikeVM), input : ::String) : Tuple(Int32, Array(::Regex::Automata::PatternID))?
+      match = dfa.find_longest_match_at_start(input)
+      return nil unless match
+
+      end_pos, pattern_ids = match
+      exact_pattern_ids = pattern_ids.select do |id|
+        self.prefix_matches_exactly?(pattern_dfas[id.to_i], input, end_pos)
+      end
+      exact_pattern_ids.empty? ? nil : {end_pos, exact_pattern_ids}
+    end
+
+    private def self.find_exact_match_at_start(dfa : ::Regex::Automata::DFA::DFA, pattern_dfas : Array(::Regex::Automata::NFA::PikeVM), input : ::Bytes) : Tuple(Int32, Array(::Regex::Automata::PatternID))?
+      match = dfa.find_longest_match_at_start(input)
+      return nil unless match
+
+      end_pos, pattern_ids = match
+      exact_pattern_ids = pattern_ids.select do |id|
+        self.prefix_matches_exactly?(pattern_dfas[id.to_i], input, end_pos)
+      end
+      exact_pattern_ids.empty? ? nil : {end_pos, exact_pattern_ids}
+    end
+
+    private def self.invalid_span_length(pattern_prefix_dfas : Array(::Regex::Automata::DFA::DFA), input : ::String) : Int32
+      return input.find_boundary(1) if pattern_prefix_dfas.empty?
+
+      bytes = input.to_slice
+      start_states = pattern_prefix_dfas.map(&.start_anchored)
+      alive_states = start_states.dup
+      last_alive_boundary = 0
+      offset = 0
+      first_char_size = 0
+
+      input.each_char do |char|
+        char_bytes = char.bytesize
+        first_char_size = char_bytes if first_char_size == 0
+
+        char_bytes.times do |index|
+          byte = bytes[offset + index]
+          any_alive = false
+
+          pattern_prefix_dfas.each_with_index do |pattern_dfa, pattern_index|
+            state_id = alive_states[pattern_index]
+            next if pattern_dfa.is_dead_state?(state_id)
+
+            next_state = pattern_dfa.next_state(state_id, byte)
+            if pattern_dfa.is_dead_state?(next_state) || pattern_dfa.is_start_state?(next_state)
+              alive_states[pattern_index] = ::Regex::Automata::DFA::DEAD_STATE_ID
+              next
+            end
+
+            alive_states[pattern_index] = next_state
+            any_alive = true
+          end
+
+          return last_alive_boundary > 0 ? last_alive_boundary : first_char_size unless any_alive
+        end
+
+        offset += char_bytes
+        last_alive_boundary = offset
+      end
+
+      last_alive_boundary
+    end
+
+    private def self.invalid_span_length(pattern_prefix_dfas : Array(::Regex::Automata::DFA::DFA), input : ::Bytes) : Int32
+      return 1 if pattern_prefix_dfas.empty?
+
+      start_states = pattern_prefix_dfas.map(&.start_anchored)
+      alive_states = start_states.dup
+      last_alive_offset = 0
+
+      input.each_with_index do |byte, index|
+        any_alive = false
+
+        pattern_prefix_dfas.each_with_index do |pattern_dfa, pattern_index|
+          state_id = alive_states[pattern_index]
+          next if pattern_dfa.is_dead_state?(state_id)
+
+          next_state = pattern_dfa.next_state(state_id, byte)
+          if pattern_dfa.is_dead_state?(next_state) || pattern_dfa.is_start_state?(next_state)
+            alive_states[pattern_index] = ::Regex::Automata::DFA::DEAD_STATE_ID
+            next
+          end
+
+          alive_states[pattern_index] = next_state
+          any_alive = true
+        end
+
+        return last_alive_offset > 0 ? last_alive_offset : 1 unless any_alive
+        last_alive_offset = index + 1
+      end
+
+      last_alive_offset
+    end
+
     private def self.node_matches_invalid_utf8?(node : ::Regex::Syntax::Hir::Node) : Bool
       case node
       when ::Regex::Syntax::Hir::Literal
@@ -326,6 +421,7 @@ macro logos_derive(type)
       @@compiled = nil.as(NamedTuple(
         dfa: ::Regex::Automata::DFA::DFA,
         pattern_dfas: Array(::Regex::Automata::NFA::PikeVM),
+        pattern_prefix_dfas: Array(::Regex::Automata::DFA::DFA),
         pattern_to_variant: Array(self),
         pattern_is_skip: Array(Bool),
         pattern_priority: Array(Int32),
@@ -336,6 +432,7 @@ macro logos_derive(type)
     private def self.compile_dfa : NamedTuple(
         dfa: ::Regex::Automata::DFA::DFA,
         pattern_dfas: Array(::Regex::Automata::NFA::PikeVM),
+        pattern_prefix_dfas: Array(::Regex::Automata::DFA::DFA),
         pattern_to_variant: Array(self),
         pattern_is_skip: Array(Bool),
         pattern_priority: Array(Int32),
@@ -348,6 +445,7 @@ macro logos_derive(type)
       pattern_priority = [] of Int32
       pattern_priority_explicit = [] of Bool
       pattern_dfas = [] of ::Regex::Automata::NFA::PikeVM
+      pattern_prefix_dfas = [] of ::Regex::Automata::DFA::DFA
       pattern_text = [] of ::String
       pattern_variant_name = [] of ::String
 
@@ -465,7 +563,7 @@ macro logos_derive(type)
         dead_state = ::Regex::Automata::DFA::State.new(::Regex::Automata::StateID.new(0), 256)
         256.times { |i| dead_state.set_transition(i, ::Regex::Automata::StateID.new(-1)) }
         dfa = ::Regex::Automata::DFA::DFA.new([dead_state], nil, ::Regex::Automata::StateID.new(0), 256)
-        return {dfa: dfa, pattern_dfas: pattern_dfas, pattern_to_variant: pattern_to_variant, pattern_is_skip: pattern_is_skip, pattern_priority: pattern_priority, pattern_priority_explicit: pattern_priority_explicit, error_variant: error_variant}
+        return {dfa: dfa, pattern_dfas: pattern_dfas, pattern_prefix_dfas: pattern_prefix_dfas, pattern_to_variant: pattern_to_variant, pattern_is_skip: pattern_is_skip, pattern_priority: pattern_priority, pattern_priority_explicit: pattern_priority_explicit, error_variant: error_variant}
       end
 
       hirs.size.times do |i|
@@ -489,24 +587,26 @@ macro logos_derive(type)
         .starts_for_each_pattern(false)
         .specialize_start_states(false)
       dfa = ::Regex::Automata::DFA::Builder.from_nfa(nfa, dfa_config).build
-      hirs.each do |hir|
-        pattern_nfa = ::Regex::Automata::HirCompiler
-          .new(::Regex::Automata::HirCompilerConfig.new(utf8: {{ utf8_flag }}))
-          .build_from_hir(hir)
-        pattern_dfas << ::Regex::Automata::NFA::PikeVM::Builder.new
-          .configure(::Regex::Automata::NFA::PikeVM::Config.new.match_kind(::Regex::Automata::MatchKind::All))
-          .build_from_nfa(pattern_nfa)
-      end
+        hirs.each do |hir|
+          pattern_nfa = ::Regex::Automata::HirCompiler
+            .new(::Regex::Automata::HirCompilerConfig.new(utf8: {{ utf8_flag }}))
+            .build_from_hir(hir)
+          pattern_dfas << ::Regex::Automata::NFA::PikeVM::Builder.new
+            .configure(::Regex::Automata::NFA::PikeVM::Config.new.match_kind(::Regex::Automata::MatchKind::All))
+            .build_from_nfa(pattern_nfa)
+          pattern_prefix_dfas << ::Regex::Automata::DFA::Builder.from_nfa(pattern_nfa, dfa_config.dup).build
+        end
 
-      {dfa: dfa, pattern_dfas: pattern_dfas, pattern_to_variant: pattern_to_variant, pattern_is_skip: pattern_is_skip, pattern_priority: pattern_priority, pattern_priority_explicit: pattern_priority_explicit, error_variant: error_variant}
+      {dfa: dfa, pattern_dfas: pattern_dfas, pattern_prefix_dfas: pattern_prefix_dfas, pattern_to_variant: pattern_to_variant, pattern_is_skip: pattern_is_skip, pattern_priority: pattern_priority, pattern_priority_explicit: pattern_priority_explicit, error_variant: error_variant}
     end
 
     private def self.compiled : NamedTuple(
-      dfa: ::Regex::Automata::DFA::DFA,
-      pattern_dfas: Array(::Regex::Automata::NFA::PikeVM),
-      pattern_to_variant: Array(self),
-      pattern_is_skip: Array(Bool),
-      pattern_priority: Array(Int32),
+        dfa: ::Regex::Automata::DFA::DFA,
+        pattern_dfas: Array(::Regex::Automata::NFA::PikeVM),
+        pattern_prefix_dfas: Array(::Regex::Automata::DFA::DFA),
+        pattern_to_variant: Array(self),
+        pattern_is_skip: Array(Bool),
+        pattern_priority: Array(Int32),
       pattern_priority_explicit: Array(Bool),
       error_variant: self?
     )
@@ -536,19 +636,13 @@ macro logos_derive(type)
       compiled = self.compiled
       dfa = compiled[:dfa]
       pattern_dfas = compiled[:pattern_dfas]
+      pattern_prefix_dfas = compiled[:pattern_prefix_dfas]
       pattern_to_variant = compiled[:pattern_to_variant]
       pattern_is_skip = compiled[:pattern_is_skip]
       pattern_priority = compiled[:pattern_priority]
       pattern_priority_explicit = compiled[:pattern_priority_explicit]
 
-      match = dfa.find_longest_match_at_start(lexer.remainder)
-      if match
-        end_pos, pattern_ids = match
-        exact_pattern_ids = pattern_ids.select do |id|
-          self.prefix_matches_exactly?(pattern_dfas[id.to_i], lexer.remainder, end_pos)
-        end
-        match = exact_pattern_ids.empty? ? nil : {end_pos, exact_pattern_ids}
-      end
+      match = self.find_exact_match_at_start(dfa, pattern_dfas, lexer.remainder)
 
       if match
         end_pos, pattern_ids = match
@@ -659,8 +753,8 @@ macro logos_derive(type)
         {% end %}
       else
         {% if utf8_flag %}
-          if char = lexer.remainder[0]?
-            lexer.bump(char.bytesize)
+          if lexer.remainder.length > 0
+            lexer.bump(self.invalid_span_length(pattern_prefix_dfas, lexer.remainder))
             {% if error_callback %}
               error_value = {{ error_callback }}.call(lexer)
             {% elsif error_type.id == Nil.id %}
