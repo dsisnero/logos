@@ -93,6 +93,34 @@ module Logos::Spec::Callbacks
     end
   end
 
+  module RawStringCallbacks
+    def self.parse_raw_string(lexer : Logos::Lexer(Token, String, Logos::NoExtras, Nil)) : Bool
+      q_hashes = "\"##############################"
+      closing = q_hashes[0, lexer.slice.bytesize - 1]
+
+      if offset = lexer.remainder.byte_index(closing)
+        lexer.bump(offset + closing.bytesize)
+        true
+      else
+        false
+      end
+    end
+
+    Logos.define Token do
+      error_type Nil
+
+      regex "[ \\t\\n\\f]+", :Whitespace do
+        Logos::Skip.new
+      end
+
+      regex "[a-zA-Z_][a-zA-Z0-9_]*", :Ident
+
+      regex "r#*\"", :RawString do |lex|
+        Logos::Spec::Callbacks::RawStringCallbacks.parse_raw_string(lex)
+      end
+    end
+  end
+
   module FilterResultCallbacks
     struct CustomError
       getter message : String
@@ -126,18 +154,62 @@ module Logos::Spec::Callbacks
   end
 
   describe "callback returning bool (filter callbacks)" do
-    it "uses boolean callbacks for custom matching logic" do
+    it "treats false as a lexing error instead of skipping" do
       lexer = Logos::Lexer(BoolCallbacks::Token, String, Logos::NoExtras, Nil).new("keep skip keep")
 
       result = lexer.next
       result = result.as(Logos::Result(BoolCallbacks::Token, Nil))
       result.unwrap.should eq(BoolCallbacks::Token::Word)
       lexer.slice.should eq("keep")
+      lexer.span.should eq(0...4)
+
+      result = lexer.next
+      result = result.as(Logos::Result(BoolCallbacks::Token, Nil))
+      result.error?.should be_true
+      lexer.slice.should eq("skip")
+      lexer.span.should eq(5...9)
 
       result = lexer.next
       result = result.as(Logos::Result(BoolCallbacks::Token, Nil))
       result.unwrap.should eq(BoolCallbacks::Token::Word)
       lexer.slice.should eq("keep")
+      lexer.span.should eq(10...14)
+
+      lexer.next.should eq(Iterator::Stop::INSTANCE)
+    end
+  end
+
+  describe "bool callbacks with lexer.bump side effects" do
+    it "matches closed raw strings and errors on unterminated ones" do
+      lexer = Logos::Lexer(RawStringCallbacks::Token, String, Logos::NoExtras, Nil).new(%( r"foo" r#"bar"# r#####"baz"##### r###"error"## ))
+
+      expected = [
+        {:ok, RawStringCallbacks::Token::RawString, %(r"foo"), 1...7},
+        {:ok, RawStringCallbacks::Token::RawString, %(r#"bar"#), 8...16},
+        {:ok, RawStringCallbacks::Token::RawString, %(r#####"baz"#####), 17...33},
+        {:error, nil, %(r###"), 34...39},
+        {:ok, RawStringCallbacks::Token::Ident, "error", 39...44},
+        {:error, nil, %("), 44...45},
+        {:error, nil, "#", 45...46},
+        {:error, nil, "#", 46...47},
+      ]
+
+      expected.each do |kind, expected_token, expected_slice, expected_range|
+        result = lexer.next
+        result.should_not be_nil
+        result = result.as(Logos::Result(RawStringCallbacks::Token, Nil))
+        lexer.slice.should eq(expected_slice)
+        lexer.span.should eq(expected_range)
+
+        case kind
+        when :ok
+          result.unwrap.should eq(expected_token)
+        when :error
+          result.error?.should be_true
+        else
+          raise "unreachable"
+        end
+      end
 
       lexer.next.should eq(Iterator::Stop::INSTANCE)
     end

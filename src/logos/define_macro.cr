@@ -734,11 +734,23 @@ module Logos
                      puts "DEBUG: Callback returned true, accepting token"
                    end
                  else
-                   # Skip token
+                   # False maps to the default error for the matched span.
                    if ENV["LOGOS_DEBUG"]?
-                     puts "DEBUG: Callback returned false, skipping token"
+                     puts "DEBUG: Callback returned false, returning default error"
                    end
-                   return nil
+                   {% if error_callback %}
+                     {% if error_callback.args.size == 1 %}
+                       {{ error_callback.args[0].id }} = __lexer
+                     {% end %}
+                     error_value = begin
+                       {{ error_callback.body }}
+                     end
+                   {% elsif error_type.id == Nil.id %}
+                     error_value = nil
+                   {% else %}
+                     error_value = {{ error_type }}.new
+                   {% end %}
+                   return ::Logos::Result(self, {{ error_type }}).error(error_value)
                  end
                end
 

@@ -689,7 +689,16 @@ macro logos_derive(type)
               end
 
               if __callback_result.is_a?(Bool)
-                return nil unless __callback_result
+                unless __callback_result
+                  {% if error_callback %}
+                    error_value = {{ error_callback }}.call(lexer)
+                  {% elsif error_type.id == Nil.id %}
+                    error_value = nil
+                  {% else %}
+                    error_value = {{ error_type }}.new
+                  {% end %}
+                  return ::Logos::Result(self, {{ error_type }}).error(error_value)
+                end
               end
 
               if __callback_result.is_a?(self)
