@@ -1,44 +1,69 @@
-# Rust `regex-syntax` Parity Plan
+# Rust `logos` Parity Plan
 
-Upstream source root: `vendor/regex-syntax/regex-syntax`
+Upstream source root: `logos_rust`
 
-Validated inventory baseline:
+Primary parity target:
 
-- `./scripts/ensure_parity_plan.sh . vendor/regex-syntax/regex-syntax rust auto 0`
-- `plans/inventory/rust_port_inventory.tsv`: 1035 tracked source items
-- `plans/inventory/rust_source_parity.tsv`: 877 tracked API items
-- `plans/inventory/rust_test_parity.tsv`: 158 tracked upstream tests
+- `logos_rust/tests/tests/*.rs`
 
-Current ledger snapshot:
+Dependency verification sources when a failing Logos case depends on regex internals:
 
-- `ported`: 1018 rows
-- `partial`: 0 rows
-- `skipped`: 17 rows
-- `missing`: 0 rows
-- Upstream test parity rows will be closed incrementally feature by feature
+- `vendor/regex-automata/**`
+- `vendor/regex-syntax/**`
+- `../regex-automata/vendor/**`
+- `../regex-syntax/vendor/**`
 
-Feature roadmap:
+Current state:
 
-- [x] AST core model and assertion semantics (`src/ast/mod.rs`)
-- [x] AST parser parity (`src/ast/parse.rs`)
-- [x] AST printing and visitor support (`src/ast/print.rs`, `src/ast/visitor.rs`)
-- [x] HIR core data model and interval operations (`src/hir/mod.rs`, `src/hir/interval.rs`)
-- [x] HIR translation pipeline (`src/hir/translate.rs`)
-- [x] HIR literals, printing, and visitor utilities (`src/hir/literal.rs`, `src/hir/print.rs`, `src/hir/visitor.rs`)
-- [x] Parser facade, crate API, and error surface (`src/parser.rs`, `src/lib.rs`, `src/error.rs`, `src/either.rs`)
-- [x] Unicode property tables: general categories and boolean properties (`src/unicode_tables/general_category.rs`, `src/unicode_tables/property_bool.rs`)
-- [x] Unicode query helpers, Perl classes, and case folding (`src/unicode.rs`, `src/unicode_tables.cr`)
-- [x] Unicode property tables: scripts and script extensions (`src/unicode_tables/script.rs`, `src/unicode_tables/script_extension.rs`)
-- [x] Unicode property tables: ages, Perl classes, property names/values, and case folding (`src/unicode_tables/age.rs`, `src/unicode_tables/perl_decimal.rs`, `src/unicode_tables/perl_space.rs`, `src/unicode_tables/perl_word.rs`, `src/unicode_tables/property_names.rs`, `src/unicode_tables/property_values.rs`, `src/unicode_tables/case_folding_simple.rs`)
-- [x] Unicode boundary tables and UTF-8 helpers (`src/unicode_tables/word_break.rs`, `src/unicode_tables/sentence_break.rs`, `src/unicode_tables/grapheme_cluster_break.rs`, `src/utf8.rs`)
-- [x] Upstream regression specs: crate API, error formatting, Unicode helpers, and UTF-8 (`src/lib.rs`, `src/error.rs`, `src/unicode.rs`, `src/utf8.rs`)
-- [x] Upstream regression specs: AST parser and printer coverage (`src/ast/parse.rs`, `src/ast/print.rs`)
-- [x] Upstream regression specs: AST and HIR stack-safety smoke coverage (`src/ast/mod.rs`, `src/hir/mod.rs`)
-- [x] Upstream regression specs: HIR core, literal extraction, and printer coverage (`src/hir/mod.rs`, `src/hir/literal.rs`, `src/hir/print.rs`)
-- [x] Upstream regression specs: HIR translation analysis and translator behavior (`src/hir/translate.rs`)
+- The active porting target is Rust `logos`, not `regex-syntax`.
+- `plans/inventory/rust_port_inventory.tsv`, `plans/inventory/rust_source_parity.tsv`, and `plans/inventory/rust_test_parity.tsv` are still historical `regex-syntax` ledgers and should not be treated as the current Logos signoff artifact.
+- Remaining work should be finished in the feature slices below. Do not stop after isolated helper changes, single weak assertion upgrades, or one-off regex fixes unless the whole slice is green.
+
+Working rules:
+
+- Verify expected behavior from vendored upstream logic before changing Crystal behavior or patching shard code.
+- If the failing behavior comes from regex compilation or matching semantics, inspect the vendored `regex-automata` and `regex-syntax` logic first, then patch via shard workflow instead of editing `lib/` directly.
+- Keep red-green TDD: add or tighten the failing Logos spec first, implement the fix, then rerun the relevant feature slice.
+- Commit after a full feature slice is green.
+
+Remaining feature roadmap:
+
+- [ ] Old Logos bugs: regex feature support gaps (`spec/logos/old_logos_bugs_spec.cr`)
+  Exit criteria:
+  - Close the current pending ports for `issue_220`, `issue_272`, `issue_384`, and `issue_420`.
+  - Match upstream token, skip, error, and span behavior with exact assertions.
+  - Use vendored regex logic to decide whether each fix belongs in Logos glue code or in a shard patch.
+
+- [x] Old Logos bugs: replace compile-only ports with exact behavioral parity (`spec/logos/old_logos_bugs_spec.cr`)
+  Exit criteria:
+  - Replace weak coverage for `issue_240`, `issue_258`, `issue_261`, `issue_269`, and `issue_336`.
+  - Assert concrete tokens, spans, skipped regions, or error results instead of compile-only or `ok?` checks.
+  - Remove stale comments that still describe already-fixed cases as pending.
+
+- [ ] Callback and error semantics hardening (`spec/logos/callbacks_spec.cr`, `spec/logos/custom_error_spec.cr`, `spec/logos/error_callback_spec.cr`)
+  Exit criteria:
+  - Tighten remaining callback specs that still only assert successful compilation or broad success.
+  - Verify token emission, skip behavior, false-return handling, and custom error propagation against upstream behavior.
+  - Keep exact span expectations where callbacks affect lexer advancement.
+
+- [ ] Greedy, source, and lexer-mode parity audit (`spec/logos/greedy_spec.cr`, `spec/logos/source_spec.cr`, `spec/logos/lexer_modes_spec.cr`)
+  Exit criteria:
+  - Audit for weak or Crystal-only assertions and replace them with upstream-equivalent outcomes.
+  - Confirm greedy matching, source slicing, and mode transitions against Rust test intent.
+  - Finish any fixes needed so the full slice passes without pending examples.
+
+- [ ] String, binary, and Unicode edge-case parity audit (`spec/logos/string_spec.cr`, `spec/logos/binary_spec.cr`, `spec/logos/unicode_dot_spec.cr`, `spec/logos/ignore_case_spec.cr`, `spec/logos/edgecase_spec.cr`)
+  Exit criteria:
+  - Audit boundary behavior that depends on byte vs character handling, Unicode classes, or case folding.
+  - Replace broad success checks with exact tokenization and span assertions where still missing.
+  - Verify any regex-engine-sensitive expectations from vendored sources before patching.
+
+- [ ] Final upstream test sweep and inventory refresh (`spec/logos/*.cr`, `plans/inventory/*`)
+  Exit criteria:
+  - Run the full Logos spec suite and close remaining parity gaps in feature-sized groups rather than one test at a time.
+  - Refresh the parity inventory so it tracks Rust `logos` sources and tests instead of the old `regex-syntax` baseline.
+  - Mark the roadmap complete only after the refreshed inventory, full specs, lint, and format checks are green.
 
 Completion rule:
 
-Mark a feature `[x]` only after its mapped inventory rows are updated with real
-`crystal_refs`, the relevant Crystal specs are green, and the three parity
-checks still pass.
+Mark a feature `[x]` only after the whole slice is green, the relevant specs use exact behavioral assertions, vendored upstream logic has been checked for any regex-sensitive changes, and the follow-up commit is ready as a coherent feature unit.

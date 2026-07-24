@@ -557,7 +557,7 @@ module Logos::Spec::OldLogosBugs
     end
   end
 
-  # issue_220 pending: Pascal-style comment regex with (?m) flag not supported
+  # issue_220: Pascal-style comment regex with (?m) flag
   module Issue220
     Logos.define Token do
       error_type Nil
@@ -579,7 +579,7 @@ module Logos::Spec::OldLogosBugs
     end
   end
 
-  # issue_272 pending: possessive quantifier ?+ not supported
+  # issue_272: possessive quantifier ?+
   module Issue272
     Logos.define Token do
       error_type Nil
@@ -601,7 +601,7 @@ module Logos::Spec::OldLogosBugs
     end
   end
 
-  # issue_384 pending: complex string literal regex with escapes
+  # issue_384: complex string literal regex with escapes
   module Issue384
     Logos.define Token do
       error_type Nil
@@ -672,7 +672,7 @@ module Logos::Spec::OldLogosBugs
     end
   end
 
-  # issue_420 pending: skip pattern .|[\r\n] with priority needs debugging
+  # issue_420: skip pattern .|[\r\n] with priority
   module Issue420
     Logos.define Token do
       error_type Nil
@@ -790,7 +790,15 @@ module Logos::Spec::OldLogosBugs
       regex "\"?[a-zA-Z](?&alphanumeric)*\"?", :Sale do |lex|
         Logos::Filter::Emit.new(lex.slice)
       end
-      regex "comment *: *\".*\";", :Comment, allow_greedy: true, priority: 100
+      regex "[a-zA-Z_]+_function : \"[a-zA-Z0-9_ !&+\\-)(|*'^]+\";", :Function do |lex|
+        Logos::Filter::Emit.new(lex.slice)
+      end
+      regex "comment *: *\".*\";", :Comment, allow_greedy: true, priority: 100 do |lex|
+        Logos::Filter::Emit.new(lex.slice)
+      end
+      regex "[a-z_]+_unit : \"1[a-zA-Z]+\";", :Unit do |lex|
+        Logos::Filter::Emit.new(lex.slice)
+      end
     end
 
     describe "issue_240: subpattern-heavy tokens" do
@@ -798,11 +806,53 @@ module Logos::Spec::OldLogosBugs
         lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new("\"foo_1\"")
         result = lexer.next.as(Logos::Result(Token, Nil))
         result.unwrap.should eq(Token::Sale)
+        lexer.slice.should eq("\"foo_1\"")
+        lexer.span.should eq(0...7)
         lexer.callback_value_as(String).should eq("\"foo_1\"")
+        lexer.next.should eq(Iterator::Stop::INSTANCE)
 
         lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new("comment: \"hello\";")
         result = lexer.next.as(Logos::Result(Token, Nil))
-        result.ok?.should be_true
+        result.unwrap.should eq(Token::Comment)
+        lexer.slice.should eq("comment: \"hello\";")
+        lexer.span.should eq(0...17)
+        lexer.callback_value_as(String).should eq("comment: \"hello\";")
+        lexer.next.should eq(Iterator::Stop::INSTANCE)
+      end
+
+      it "matches function and unit directives" do
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new("foo_function : \"A1 +!\";")
+        result = lexer.next.as(Logos::Result(Token, Nil))
+        result.unwrap.should eq(Token::Function)
+        lexer.slice.should eq("foo_function : \"A1 +!\";")
+        lexer.span.should eq(0...23)
+        lexer.callback_value_as(String).should eq("foo_function : \"A1 +!\";")
+        lexer.next.should eq(Iterator::Stop::INSTANCE)
+
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new("distance_unit : \"1km\";")
+        result = lexer.next.as(Logos::Result(Token, Nil))
+        result.unwrap.should eq(Token::Unit)
+        lexer.slice.should eq("distance_unit : \"1km\";")
+        lexer.span.should eq(0...22)
+        lexer.callback_value_as(String).should eq("distance_unit : \"1km\";")
+        lexer.next.should eq(Iterator::Stop::INSTANCE)
+      end
+    end
+  end
+
+  module Issue240Part2
+    Logos.define Token do
+      regex "a(?:(?:'|'')[b'[^']])*", :Problem
+    end
+
+    describe "issue_240 part2: nested quote regex" do
+      it "matches the simplest valid form" do
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new("a")
+        result = lexer.next.as(Logos::Result(Token, Nil))
+        result.unwrap.should eq(Token::Problem)
+        lexer.slice.should eq("a")
+        lexer.span.should eq(0...1)
+        lexer.next.should eq(Iterator::Stop::INSTANCE)
       end
     end
   end
@@ -835,6 +885,15 @@ module Logos::Spec::OldLogosBugs
         lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new("abc->def[")
         lexer.next.should eq(Iterator::Stop::INSTANCE)
       end
+
+      it "still emits arrow tokens outside skipped spans" do
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new("abc->def[->")
+        result = lexer.next.as(Logos::Result(Token, Nil))
+        result.unwrap.should eq(Token::Arrow)
+        lexer.slice.should eq("->")
+        lexer.span.should eq(9...11)
+        lexer.next.should eq(Iterator::Stop::INSTANCE)
+      end
     end
   end
 
@@ -846,9 +905,31 @@ module Logos::Spec::OldLogosBugs
     end
 
     describe "issue_261: decimal vs greedy identifier" do
-      it "compiles and lexes input" do
+      it "falls back to the greedy identifier when the decimal form does not match" do
         lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new("12#.3")
-        lexer.next.should_not eq(Iterator::Stop::INSTANCE)
+        result = lexer.next.as(Logos::Result(Token, Nil))
+        result.unwrap.should eq(Token::BareIdentifier)
+        lexer.slice.should eq("12#.3")
+        lexer.span.should eq(0...5)
+        lexer.next.should eq(Iterator::Stop::INSTANCE)
+      end
+
+      it "prefers the decimal token for a matching numeric form" do
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new("12#x#3")
+        result = lexer.next.as(Logos::Result(Token, Nil))
+        result.unwrap.should eq(Token::Decimal)
+        lexer.slice.should eq("12#x#3")
+        lexer.span.should eq(0...6)
+        lexer.next.should eq(Iterator::Stop::INSTANCE)
+      end
+
+      it "falls back to the greedy identifier for ordinary bare input" do
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new("abc")
+        result = lexer.next.as(Logos::Result(Token, Nil))
+        result.unwrap.should eq(Token::BareIdentifier)
+        lexer.slice.should eq("abc")
+        lexer.span.should eq(0...3)
+        lexer.next.should eq(Iterator::Stop::INSTANCE)
       end
     end
   end
@@ -860,31 +941,93 @@ module Logos::Spec::OldLogosBugs
     end
 
     describe "issue_269: string regex form" do
-      it "matches simple quoted strings" do
-        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new("\"fubar\"")
+      it "matches the empty quoted form" do
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new("\"\"")
         result = lexer.next.as(Logos::Result(Token, Nil))
-        (result.ok? || result.error?).should be_true
+        result.unwrap.should eq(Token::String)
+        lexer.slice.should eq("\"\"")
+        lexer.span.should eq(0...2)
+        lexer.next.should eq(Iterator::Stop::INSTANCE)
+      end
+
+      it "rejects plain quoted strings without escapes" do
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new("\"fubar\"")
+
+        expected_errors = [
+          {"\"", 0...1},
+          {"f", 1...2},
+          {"u", 2...3},
+          {"b", 3...4},
+          {"a", 4...5},
+          {"r", 5...6},
+          {"\"", 6...7},
+        ]
+
+        expected_errors.each do |expected_slice, expected_span|
+          result = lexer.next.as(Logos::Result(Token, Nil))
+          result.error?.should be_true
+          lexer.slice.should eq(expected_slice)
+          lexer.span.should eq(expected_span)
+        end
+
+        lexer.next.should eq(Iterator::Stop::INSTANCE)
       end
     end
   end
 
   # issue_336: reduced catastrophic patterns should compile
-  module Issue336
+  module Issue336Part1
     Logos.define Token do
-      regex "(0+)*x?.0+", :Float1
-      regex "(0+)*.0+", :Float2
-      regex "0*.0+", :Float3
+      regex "(0+)*x?.0+", :Float
     end
 
-    describe "issue_336: reduced catastrophic patterns" do
-      it "compiles and tokenizes simple float-like input" do
+    describe "issue_336 part1: optional x float" do
+      it "matches a simple float-like input" do
         lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new("000.0")
-        lexer.next.should_not eq(Iterator::Stop::INSTANCE)
+        result = lexer.next.as(Logos::Result(Token, Nil))
+        result.unwrap.should eq(Token::Float)
+        lexer.slice.should eq("000.0")
+        lexer.span.should eq(0...5)
+        lexer.next.should eq(Iterator::Stop::INSTANCE)
       end
     end
   end
 
-  # issue_242 pending: needs token variants with associated data (callbacks returning values)
+  module Issue336Part2
+    Logos.define Token do
+      regex "(0+)*.0+", :Float
+    end
+
+    describe "issue_336 part2: wildcard float" do
+      it "matches a simple float-like input" do
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new("000.0")
+        result = lexer.next.as(Logos::Result(Token, Nil))
+        result.unwrap.should eq(Token::Float)
+        lexer.slice.should eq("000.0")
+        lexer.span.should eq(0...5)
+        lexer.next.should eq(Iterator::Stop::INSTANCE)
+      end
+    end
+  end
+
+  module Issue336Part3
+    Logos.define Token do
+      regex "0*.0+", :Float
+    end
+
+    describe "issue_336 part3: greedy zero float" do
+      it "matches a simple float-like input" do
+        lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new("000.0")
+        result = lexer.next.as(Logos::Result(Token, Nil))
+        result.unwrap.should eq(Token::Float)
+        lexer.slice.should eq("000.0")
+        lexer.span.should eq(0...5)
+        lexer.next.should eq(Iterator::Stop::INSTANCE)
+      end
+    end
+  end
+
+  # issue_242: callback returning values
   module Issue242
     Logos.define Token do
       error_type Nil
@@ -1028,7 +1171,7 @@ module Logos::Spec::OldLogosBugs
     end
   end
 
-  # issue_201 pending: needs boolean filter callbacks
+  # issue_201: boolean filter callbacks
   module Issue201
     Logos.define Token do
       error_type Nil

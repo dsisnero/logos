@@ -299,9 +299,12 @@ macro logos_derive(type)
       match = dfa.find_longest_match_at_start(input)
       return nil unless match
 
-      end_pos, pattern_ids = match
-      exact_pattern_ids = pattern_ids.select do |id|
-        self.prefix_matches_exactly?(pattern_dfas[id.to_i], input, end_pos)
+      end_pos, _pattern_ids = match
+      exact_pattern_ids = [] of ::Regex::Automata::PatternID
+      pattern_dfas.each_with_index do |vm, index|
+        if self.prefix_matches_exactly?(vm, input, end_pos)
+          exact_pattern_ids << ::Regex::Automata::PatternID.new(index)
+        end
       end
       exact_pattern_ids.empty? ? nil : {end_pos, exact_pattern_ids}
     end
@@ -310,9 +313,12 @@ macro logos_derive(type)
       match = dfa.find_longest_match_at_start(input)
       return nil unless match
 
-      end_pos, pattern_ids = match
-      exact_pattern_ids = pattern_ids.select do |id|
-        self.prefix_matches_exactly?(pattern_dfas[id.to_i], input, end_pos)
+      end_pos, _pattern_ids = match
+      exact_pattern_ids = [] of ::Regex::Automata::PatternID
+      pattern_dfas.each_with_index do |vm, index|
+        if self.prefix_matches_exactly?(vm, input, end_pos)
+          exact_pattern_ids << ::Regex::Automata::PatternID.new(index)
+        end
       end
       exact_pattern_ids.empty? ? nil : {end_pos, exact_pattern_ids}
     end

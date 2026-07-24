@@ -49,16 +49,13 @@ module Logos
         {% bytes = false %}
         {% if node.block %}
           {% callback = node.block %}
-        {% elsif node.named_args %}
-          {% found_callback = false %}
-          {% found_priority = false %}
+        {% end %}
+        {% if node.named_args %}
           {% for named_arg in node.named_args %}
-            {% if named_arg.name == "callback" %}
+            {% if named_arg.name == "callback" && callback.nil? %}
               {% callback = named_arg.value %}
-              {% found_callback = true %}
             {% elsif named_arg.name == "priority" %}
               {% priority = named_arg.value %}
-              {% found_priority = true %}
             {% elsif named_arg.name == "ignore_case" || named_arg.name == "ignore_ascii_case" %}
               {% ignore_case = named_arg.value %}
             {% elsif named_arg.name == "allow_greedy" %}
@@ -289,9 +286,12 @@ module Logos
         match = dfa.find_longest_match_at_start(input)
         return nil unless match
 
-        end_pos, pattern_ids = match
-        exact_pattern_ids = pattern_ids.select do |id|
-          self.prefix_matches_exactly?(pattern_dfas[id.to_i], input, end_pos)
+        end_pos, _pattern_ids = match
+        exact_pattern_ids = [] of ::Regex::Automata::PatternID
+        pattern_dfas.each_with_index do |vm, index|
+          if self.prefix_matches_exactly?(vm, input, end_pos)
+            exact_pattern_ids << ::Regex::Automata::PatternID.new(index)
+          end
         end
         exact_pattern_ids.empty? ? nil : {end_pos, exact_pattern_ids}
       end
@@ -300,9 +300,12 @@ module Logos
         match = dfa.find_longest_match_at_start(input)
         return nil unless match
 
-        end_pos, pattern_ids = match
-        exact_pattern_ids = pattern_ids.select do |id|
-          self.prefix_matches_exactly?(pattern_dfas[id.to_i], input, end_pos)
+        end_pos, _pattern_ids = match
+        exact_pattern_ids = [] of ::Regex::Automata::PatternID
+        pattern_dfas.each_with_index do |vm, index|
+          if self.prefix_matches_exactly?(vm, input, end_pos)
+            exact_pattern_ids << ::Regex::Automata::PatternID.new(index)
+          end
         end
         exact_pattern_ids.empty? ? nil : {end_pos, exact_pattern_ids}
       end
