@@ -263,7 +263,7 @@ module Logos
       end
 
       private def self.prefix_matches_exactly?(vm : ::Regex::Automata::NFA::PikeVM, input : ::String, end_pos : Int32) : Bool
-        return false if end_pos < 0 || end_pos > input.bytesize
+        return false if end_pos <= 0 || end_pos > input.bytesize
 
         prefix = input.byte_slice(0, end_pos)
         search = ::Regex::Automata::Input.new(prefix)
@@ -273,7 +273,7 @@ module Logos
       end
 
       private def self.prefix_matches_exactly?(vm : ::Regex::Automata::NFA::PikeVM, slice : ::Bytes, end_pos : Int32) : Bool
-        return false if end_pos < 0 || end_pos > slice.size
+        return false if end_pos <= 0 || end_pos > slice.size
 
         prefix = slice[0, end_pos]
         input = ::Regex::Automata::Input.new(prefix)
@@ -286,28 +286,57 @@ module Logos
         match = dfa.find_longest_match_at_start(input)
         return nil unless match
 
-        end_pos, _pattern_ids = match
-        exact_pattern_ids = [] of ::Regex::Automata::PatternID
-        pattern_dfas.each_with_index do |vm, index|
+        end_pos, pattern_ids = match
+        return nil if end_pos <= 0
+
+        # Use DFA-reported pattern IDs as a filter: only verify those patterns
+        # with PikeVM. This is much faster than checking ALL patterns when the
+        # DFA narrows down to just 1-2 candidates.
+        if pattern_ids.empty?
+          nil
+        elsif pattern_ids.size == 1
+          pid = pattern_ids.first
+          vm = pattern_dfas[pid.to_i]
           if self.prefix_matches_exactly?(vm, input, end_pos)
-            exact_pattern_ids << ::Regex::Automata::PatternID.new(index)
+            {end_pos, [pid]}
           end
+        else
+          exact_pattern_ids = [] of ::Regex::Automata::PatternID
+          pattern_ids.each do |pid|
+            vm = pattern_dfas[pid.to_i]
+            if self.prefix_matches_exactly?(vm, input, end_pos)
+              exact_pattern_ids << pid
+            end
+          end
+          exact_pattern_ids.empty? ? nil : {end_pos, exact_pattern_ids}
         end
-        exact_pattern_ids.empty? ? nil : {end_pos, exact_pattern_ids}
       end
 
       private def self.find_exact_match_at_start(dfa : ::Regex::Automata::DFA::DFA, pattern_dfas : Array(::Regex::Automata::NFA::PikeVM), input : ::Bytes) : Tuple(Int32, Array(::Regex::Automata::PatternID))?
         match = dfa.find_longest_match_at_start(input)
         return nil unless match
 
-        end_pos, _pattern_ids = match
-        exact_pattern_ids = [] of ::Regex::Automata::PatternID
-        pattern_dfas.each_with_index do |vm, index|
+        end_pos, pattern_ids = match
+        return nil if end_pos <= 0
+
+        if pattern_ids.empty?
+          nil
+        elsif pattern_ids.size == 1
+          pid = pattern_ids.first
+          vm = pattern_dfas[pid.to_i]
           if self.prefix_matches_exactly?(vm, input, end_pos)
-            exact_pattern_ids << ::Regex::Automata::PatternID.new(index)
+            {end_pos, [pid]}
           end
+        else
+          exact_pattern_ids = [] of ::Regex::Automata::PatternID
+          pattern_ids.each do |pid|
+            vm = pattern_dfas[pid.to_i]
+            if self.prefix_matches_exactly?(vm, input, end_pos)
+              exact_pattern_ids << pid
+            end
+          end
+          exact_pattern_ids.empty? ? nil : {end_pos, exact_pattern_ids}
         end
-        exact_pattern_ids.empty? ? nil : {end_pos, exact_pattern_ids}
       end
 
       private def self.invalid_span_length(pattern_prefix_dfas : Array(::Regex::Automata::DFA::DFA), input : ::String) : Int32
