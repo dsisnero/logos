@@ -3,7 +3,7 @@
 # Usage:
 #   crystal run examples/extras.cr -- <path/to/file>
 
-require "logos"
+require "../src/logos"
 
 class PositionExtras
   property line : Int32

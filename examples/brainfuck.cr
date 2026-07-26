@@ -6,7 +6,7 @@
 # Example:
 #   crystal run examples/brainfuck.cr -- examples/hello_world.bf
 
-require "logos"
+require "../src/logos"
 
 # Each Op variant is a single character.
 Logos.define Op do

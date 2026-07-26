@@ -3,7 +3,7 @@
 # Usage:
 #   crystal run examples/string_interpolation.cr
 
-require "logos"
+require "../src/logos"
 
 alias SymbolTable = Hash(String, String)
 
@@ -14,29 +14,29 @@ Logos.define VariableDefinitionContext do
 
   regex "[[:alpha:]][[:alnum:]]*", :Id do |lex|
     id = lex.slice
-
-    # Use a clone to parse the rest without disturbing the original lexer.
     lookahead = lex.clone
-
     next_token = lookahead.next
-    return false if next_token.is_a?(Iterator::Stop)
-    next_result = next_token.as(Logos::Result(VariableDefinitionContext, Nil))
-    return false unless next_result.ok? && next_result.unwrap == VariableDefinitionContext::Equals
-
-    next_token = lookahead.next
-    return false if next_token.is_a?(Iterator::Stop)
-    next_result = next_token.as(Logos::Result(VariableDefinitionContext, Nil))
-    return false unless next_result.ok? && next_result.unwrap == VariableDefinitionContext::Quote
-
-    string_lex = lookahead.morph(StringContext)
-    value = get_string_content(string_lex)
-
-    # Advance original lexer to the end of the parsed string.
-    delta = string_lex.span.end - lex.span.end
-    lex.bump(delta)
-
-    lex.extras[id] = value
-    Logos::Filter::Emit.new({id, value})
+    if next_token.is_a?(Iterator::Stop)
+      false
+    elsif !(next_result = next_token.as(Logos::Result(VariableDefinitionContext, Nil))).ok? ||
+          next_result.unwrap != VariableDefinitionContext::Equals
+      false
+    else
+      next_token = lookahead.next
+      if next_token.is_a?(Iterator::Stop)
+        false
+      elsif !(next_result = next_token.as(Logos::Result(VariableDefinitionContext, Nil))).ok? ||
+            next_result.unwrap != VariableDefinitionContext::Quote
+        false
+      else
+        string_lex = lookahead.morph(StringContext)
+        value = get_string_content(string_lex)
+        delta = string_lex.span.end - lex.span.end
+        lex.bump(delta)
+        lex.extras[id] = value
+        Logos::Filter::Emit.new({id, value})
+      end
+    end
   end
 
   token "=", :Equals

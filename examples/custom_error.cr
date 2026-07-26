@@ -3,7 +3,7 @@
 # Usage:
 #   crystal run examples/custom_error.cr
 
-require "logos"
+require "../src/logos"
 
 struct LexingError
   enum Kind

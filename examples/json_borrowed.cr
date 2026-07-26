@@ -6,7 +6,7 @@
 # Example:
 #   crystal run examples/json_borrowed.cr -- examples/example.json
 
-require "logos"
+require "../src/logos"
 
 alias JsonValue = Nil | Bool | Float64 | String | Array(JsonValue) | Hash(String, JsonValue)
 
@@ -22,11 +22,11 @@ Logos.define Token do
   error_type Nil
   skip_regex "[ \t\r\n\f]+", :Whitespace
 
-  token "false", :Bool do |_lex|
+  token "false", :FalseValue do |_lex|
     Logos::Filter::Emit.new(false)
   end
 
-  token "true", :Bool do |_lex|
+  token "true", :TrueValue do |_lex|
     Logos::Filter::Emit.new(true)
   end
 
@@ -60,8 +60,10 @@ private def parse_value(lexer) : JsonValue
 
   if result.ok?
     case result.unwrap
-    when Token::Bool
-      lexer.callback_value_as(Bool).not_nil!
+    when Token::FalseValue
+      false
+    when Token::TrueValue
+      true
     when Token::BraceOpen
       parse_object(lexer)
     when Token::BracketOpen
@@ -89,9 +91,13 @@ private def parse_array(lexer) : JsonValue
   while result = next_token(lexer)
     if result.ok?
       case result.unwrap
-      when Token::Bool
+      when Token::FalseValue
         raise JsonParseError.new("unexpected token here (context: array)", lexer.span) if awaits_comma
-        array << lexer.callback_value_as(Bool).not_nil!
+        array << false
+        awaits_value = false
+      when Token::TrueValue
+        raise JsonParseError.new("unexpected token here (context: array)", lexer.span) if awaits_comma
+        array << true
         awaits_value = false
       when Token::BraceOpen
         raise JsonParseError.new("unexpected token here (context: array)", lexer.span) if awaits_comma
