@@ -58,11 +58,16 @@ Remaining feature roadmap:
     upstream `EscapedCodepoint`/`EscapedOctal`/`EscapedNewline` morph tests. 19 greedy/source/modes
     tests pass (was 15).
 
-- [ ] String, binary, and Unicode edge-case parity audit (`spec/logos/string_spec.cr`, `spec/logos/binary_spec.cr`, `spec/logos/unicode_dot_spec.cr`, `spec/logos/ignore_case_spec.cr`, `spec/logos/edgecase_spec.cr`)
+- [x] String, binary, and Unicode edge-case parity audit (`spec/logos/string_spec.cr`, `spec/logos/binary_spec.cr`, `spec/logos/unicode_dot_spec.cr`, `spec/logos/ignore_case_spec.cr`, `spec/logos/edgecase_spec.cr`)
   Exit criteria:
   - Audit boundary behavior that depends on byte vs character handling, Unicode classes, or case folding.
   - Replace broad success checks with exact tokenization and span assertions where still missing.
   - Verify any regex-engine-sensitive expectations from vendored sources before patching.
+  - Status: Tightened binary `AdvancedByteToken` test from weak `>=6` to exact
+    upstream-matching assertions including error tokens. Added `colors` keyword
+    priority test and `unicode_error_split` emoji span test from upstream
+    `edgecase.rs`. Fixed `trivia` test to assert end-of-stream and error tokens.
+    207 Logos tests pass.
 
 - [ ] Final upstream test sweep and inventory refresh (`spec/logos/*.cr`, `plans/inventory/*`)
   Exit criteria:

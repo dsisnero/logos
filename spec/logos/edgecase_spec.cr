@@ -180,22 +180,88 @@ describe "trivia" do
     lexer = Logos::Lexer(Logos::Spec::Edgecase::TriviaTest::Token, String, Logos::NoExtras, Nil).new(source)
 
     expected = [
-      {Logos::Spec::Edgecase::TriviaTest::Token::Number, "12345", 3...8},
-      {Logos::Spec::Edgecase::TriviaTest::Token::Number, "67890", 11...16},
+      {:ok, Logos::Spec::Edgecase::TriviaTest::Token::Number, "12345", 3...8},
+      {:ok, Logos::Spec::Edgecase::TriviaTest::Token::Number, "67890", 11...16},
+      {:error, nil, " ", 16...17},
+      {:error, nil, "x", 19...20},
     ]
 
-    expected.each do |expected_token, expected_slice, expected_range|
+    expected.each do |entry|
+      kind = entry[0]
+      expected_token = entry[1]
+      expected_slice = entry[2]
+      expected_range = entry[3]
+
       result = lexer.next
       result.should_not be_nil
       result = result.as(Logos::Result(Logos::Spec::Edgecase::TriviaTest::Token, Nil))
+      lexer.slice.should eq(expected_slice)
+      lexer.span.should eq(expected_range)
+
+      case kind
+      when :ok
+        result.ok?.should be_true
+        result.unwrap.should eq(expected_token)
+      when :error
+        result.error?.should be_true
+      end
+    end
+
+    lexer.next.should eq(Iterator::Stop::INSTANCE)
+  end
+end
+
+describe "colors" do
+  it "prefers keyword tokens over generic identifier" do
+    source = "red fred redf green fgreen greenf blue bluef fblue"
+    lexer = Logos::Lexer(Logos::Spec::Edgecase::ColorsTest::Token, String, Logos::NoExtras, Nil).new(source)
+
+    expected = [
+      {Logos::Spec::Edgecase::ColorsTest::Token::Red, "red", 0...3},
+      {Logos::Spec::Edgecase::ColorsTest::Token::Whitespace, " ", 3...4},
+      {Logos::Spec::Edgecase::ColorsTest::Token::NoHighlight, "fred", 4...8},
+      {Logos::Spec::Edgecase::ColorsTest::Token::Whitespace, " ", 8...9},
+      {Logos::Spec::Edgecase::ColorsTest::Token::NoHighlight, "redf", 9...13},
+      {Logos::Spec::Edgecase::ColorsTest::Token::Whitespace, " ", 13...14},
+      {Logos::Spec::Edgecase::ColorsTest::Token::Green, "green", 14...19},
+      {Logos::Spec::Edgecase::ColorsTest::Token::Whitespace, " ", 19...20},
+      {Logos::Spec::Edgecase::ColorsTest::Token::NoHighlight, "fgreen", 20...26},
+      {Logos::Spec::Edgecase::ColorsTest::Token::Whitespace, " ", 26...27},
+      {Logos::Spec::Edgecase::ColorsTest::Token::NoHighlight, "greenf", 27...33},
+      {Logos::Spec::Edgecase::ColorsTest::Token::Whitespace, " ", 33...34},
+      {Logos::Spec::Edgecase::ColorsTest::Token::Blue, "blue", 34...38},
+      {Logos::Spec::Edgecase::ColorsTest::Token::Whitespace, " ", 38...39},
+      {Logos::Spec::Edgecase::ColorsTest::Token::NoHighlight, "bluef", 39...44},
+      {Logos::Spec::Edgecase::ColorsTest::Token::Whitespace, " ", 44...45},
+      {Logos::Spec::Edgecase::ColorsTest::Token::NoHighlight, "fblue", 45...50},
+    ]
+
+    expected.each do |entry|
+      expected_token = entry[0]
+      expected_slice = entry[1]
+      expected_range = entry[2]
+      result = lexer.next
+      result.should_not be_nil
+      result = result.as(Logos::Result(Logos::Spec::Edgecase::ColorsTest::Token, Nil))
       result.unwrap.should eq(expected_token)
       lexer.slice.should eq(expected_slice)
       lexer.span.should eq(expected_range)
     end
 
-    # The remaining characters should cause errors, but we don't have error variant yet
-    # So lexer will stop (no match). For now, we'll just verify lexer stops
-    # lexer.next.should eq(Iterator::Stop::INSTANCE)
+    lexer.next.should eq(Iterator::Stop::INSTANCE)
+  end
+end
+
+describe "unicode_error_split" do
+  it "returns full emoji span for error on unrecognized input" do
+    lexer = Logos::Lexer(Logos::Spec::Edgecase::UnicodeErrorSplitTest::Token, String, Logos::NoExtras, Nil).new("💩")
+    result = lexer.next
+    result.should_not be_nil
+    result = result.as(Logos::Result(Logos::Spec::Edgecase::UnicodeErrorSplitTest::Token, Nil))
+    result.error?.should be_true
+    lexer.slice.should eq("💩")
+    lexer.span.should eq(0...4)
+    lexer.next.should eq(Iterator::Stop::INSTANCE)
   end
 end
 
@@ -402,5 +468,21 @@ module Logos::Spec::Edgecase::MaybeInLoopTest
     skip_regex "[ \\t\\n\\f]+", :SkipWhitespace
     regex "f(f?oo)*", :Foo
     error :Error
+  end
+end
+
+module Logos::Spec::Edgecase::ColorsTest
+  Logos.define Token do
+    token " ", :Whitespace
+    regex "red", :Red
+    regex "green", :Green
+    regex "blue", :Blue
+    regex "[a-zA-Z0-9_$]+", :NoHighlight
+  end
+end
+
+module Logos::Spec::Edgecase::UnicodeErrorSplitTest
+  Logos.define Token do
+    token "a", :A
   end
 end
