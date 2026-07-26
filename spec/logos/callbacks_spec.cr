@@ -2,6 +2,210 @@ require "../spec_helper"
 require "regex-automata"
 
 module Logos::Spec::Callbacks
+  module ReturnResultSkip
+    struct LexerError
+      def ==(other : self) : Bool
+        true
+      end
+    end
+
+    Logos.define Token do
+      error_type LexerError
+      extras Logos::NoExtras
+
+      regex "[ \\t\\n\\f]+", :Whitespace do
+        Logos::Skip.new
+      end
+
+      regex "<[a-zA-Z0-9-]+>", :Tag do |lex|
+        lex.slice[1..-2]
+      end
+
+      token "<!--", :Comment do |lex|
+        if offset = lex.remainder.index("-->")
+          lex.bump(offset + 3)
+          Logos::Result(Logos::Skip, LexerError).ok(Logos::Skip.new)
+        else
+          Logos::Result(Logos::Skip, LexerError).error(LexerError.new)
+        end
+      end
+    end
+  end
+
+  module SkipCallbackFunction
+    Logos.define Token do
+      error_type Nil
+      extras Logos::NoExtras
+
+      regex "[ \\t\\n\\f]+", :Whitespace do
+        Logos::Skip.new
+      end
+
+      regex "<[a-zA-Z0-9-]+>", :Tag do |lex|
+        lex.slice[1..-2]
+      end
+
+      token "<!--", :Comment do |lex|
+        if offset = lex.remainder.index("-->")
+          lex.bump(offset + 3)
+          Logos::Skip.new
+        else
+          false
+        end
+      end
+    end
+  end
+
+  describe "callback returning Result<Skip, E>" do
+    it "skips matching comments and errors on unterminated ones" do
+      lexer = Logos::Lexer(ReturnResultSkip::Token, String, Logos::NoExtras, ReturnResultSkip::LexerError).new("<foo> <!-- comment --> <bar>")
+      result = lexer.next
+      result = result.as(Logos::Result(ReturnResultSkip::Token, ReturnResultSkip::LexerError))
+      result.unwrap.should eq(ReturnResultSkip::Token::Tag)
+      lexer.slice.should eq("<foo>")
+
+      result = lexer.next
+      result = result.as(Logos::Result(ReturnResultSkip::Token, ReturnResultSkip::LexerError))
+      result.unwrap.should eq(ReturnResultSkip::Token::Tag)
+      lexer.slice.should eq("<bar>")
+
+      lexer.next.should eq(Iterator::Stop::INSTANCE)
+    end
+
+    it "errors on unterminated comment" do
+      lexer = Logos::Lexer(ReturnResultSkip::Token, String, Logos::NoExtras, ReturnResultSkip::LexerError).new("<foo> <!-- unterminated")
+      result = lexer.next
+      result = result.as(Logos::Result(ReturnResultSkip::Token, ReturnResultSkip::LexerError))
+      result.unwrap.should eq(ReturnResultSkip::Token::Tag)
+      lexer.slice.should eq("<foo>")
+
+      result = lexer.next
+      result = result.as(Logos::Result(ReturnResultSkip::Token, ReturnResultSkip::LexerError))
+      result.error?.should be_true
+    end
+  end
+
+  describe "skip callback function" do
+    it "skips comments by bumping lexer past the closing delimiter" do
+      lexer = Logos::Lexer(SkipCallbackFunction::Token, String, Logos::NoExtras, Nil).new("<foo> <!-- comment --> <bar>")
+      result = lexer.next
+      result = result.as(Logos::Result(SkipCallbackFunction::Token, Nil))
+      result.unwrap.should eq(SkipCallbackFunction::Token::Tag)
+      lexer.slice.should eq("<foo>")
+
+      result = lexer.next
+      result = result.as(Logos::Result(SkipCallbackFunction::Token, Nil))
+      result.unwrap.should eq(SkipCallbackFunction::Token::Tag)
+      lexer.slice.should eq("<bar>")
+
+      lexer.next.should eq(Iterator::Stop::INSTANCE)
+    end
+
+    it "returns default error for unterminated comment" do
+      lexer = Logos::Lexer(SkipCallbackFunction::Token, String, Logos::NoExtras, Nil).new("<foo> <!-- unterminated")
+      result = lexer.next
+      result = result.as(Logos::Result(SkipCallbackFunction::Token, Nil))
+      result.unwrap.should eq(SkipCallbackFunction::Token::Tag)
+      lexer.slice.should eq("<foo>")
+
+      result = lexer.next
+      result = result.as(Logos::Result(SkipCallbackFunction::Token, Nil))
+      result.error?.should be_true
+    end
+  end
+
+  module SkipAllCallbackTypes
+    def self.labelled_callback(lex)
+      lex.extras << "labelled_callback"
+    end
+
+    def self.labelled_skip_callback(lex)
+      lex.extras << "labelled_skip_callback"
+      Logos::Skip.new
+    end
+
+    def self.labelled_result_callback(lex)
+      lex.extras << "labelled_result_callback"
+      case lex.slice
+      when "e" then Logos::Skip.new
+      when "f" then Logos::FilterResult::Error.new("f")
+      else          Logos::Skip.new
+      end
+    end
+
+    def self.labelled_skip_result_callback(lex)
+      lex.extras << "labelled_skip_result_callback"
+      case lex.slice
+      when "g" then Logos::Skip.new
+      when "h" then Logos::FilterResult::Error.new("h")
+      else          Logos::Skip.new
+      end
+    end
+
+    Logos.define Token do
+      error_type String
+      extras Array(String)
+
+      skip_regex "a", :SkipA
+      skip_regex "b", :SkipB do |lex|
+        lex.extras << "inline_callback"
+        Logos::Skip.new
+      end
+      skip_regex "c", :SkipC do |lex|
+        Logos::Spec::Callbacks::SkipAllCallbackTypes.labelled_callback(lex)
+        Logos::Skip.new
+      end
+      skip_regex "d", :SkipD do |lex|
+        Logos::Spec::Callbacks::SkipAllCallbackTypes.labelled_skip_callback(lex)
+      end
+      skip_regex "e|f", :SkipEF do |lex|
+        Logos::Spec::Callbacks::SkipAllCallbackTypes.labelled_result_callback(lex)
+      end
+      skip_regex "g|h", :SkipGH do |lex|
+        Logos::Spec::Callbacks::SkipAllCallbackTypes.labelled_skip_result_callback(lex)
+      end
+    end
+  end
+
+  describe "skip all callback types" do
+    it "handles all skip callback patterns matching upstream" do
+      lexer = Logos::Lexer(SkipAllCallbackTypes::Token, String, Array(String), String).new("abcdefghhgfedcba")
+
+      errors = [] of String
+      lexer.each do |result|
+        case result
+        when Logos::Result(SkipAllCallbackTypes::Token, String)
+          if result.error?
+            errors << result.unwrap_error
+          end
+        end
+      end
+
+      errors.should eq(["f", "h", "h", "f"])
+    end
+
+    it "calls callbacks in the expected order" do
+      lexer = Logos::Lexer(SkipAllCallbackTypes::Token, String, Array(String), String).new("abcdefghhgfedcba")
+      lexer.each { |_| }
+      lexer.extras.should eq([
+        "inline_callback",
+        "labelled_callback",
+        "labelled_skip_callback",
+        "labelled_result_callback",
+        "labelled_result_callback",
+        "labelled_skip_result_callback",
+        "labelled_skip_result_callback",
+        "labelled_skip_result_callback",
+        "labelled_skip_result_callback",
+        "labelled_result_callback",
+        "labelled_result_callback",
+        "labelled_skip_callback",
+        "labelled_callback",
+        "inline_callback",
+      ])
+    end
+  end
+
   module CallbackValues
     Logos.define Token do
       error_type Nil

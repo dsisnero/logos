@@ -28,11 +28,12 @@ Working rules:
 
 Remaining feature roadmap:
 
-- [ ] Old Logos bugs: regex feature support gaps (`spec/logos/old_logos_bugs_spec.cr`)
+- [x] Old Logos bugs: regex feature support gaps (`spec/logos/old_logos_bugs_spec.cr`)
   Exit criteria:
   - Close the current pending ports for `issue_220`, `issue_272`, `issue_384`, and `issue_420`.
   - Match upstream token, skip, error, and span behavior with exact assertions.
   - Use vendored regex logic to decide whether each fix belongs in Logos glue code or in a shard patch.
+  - Status: All four issues have exact assertion specs matching upstream Rust behavior. `issue_272` possessive quantifier `?+` is handled by the parser (treated as `(?)+` repeated quantifier, functionally equivalent for DFA matching). All 52 old_logos_bugs tests pass.
 
 - [x] Old Logos bugs: replace compile-only ports with exact behavioral parity (`spec/logos/old_logos_bugs_spec.cr`)
   Exit criteria:
@@ -40,11 +41,12 @@ Remaining feature roadmap:
   - Assert concrete tokens, spans, skipped regions, or error results instead of compile-only or `ok?` checks.
   - Remove stale comments that still describe already-fixed cases as pending.
 
-- [ ] Callback and error semantics hardening (`spec/logos/callbacks_spec.cr`, `spec/logos/custom_error_spec.cr`, `spec/logos/error_callback_spec.cr`)
+- [x] Callback and error semantics hardening (`spec/logos/callbacks_spec.cr`, `spec/logos/custom_error_spec.cr`, `spec/logos/error_callback_spec.cr`)
   Exit criteria:
   - Tighten remaining callback specs that still only assert successful compilation or broad success.
   - Verify token emission, skip behavior, false-return handling, and custom error propagation against upstream behavior.
   - Keep exact span expectations where callbacks affect lexer advancement.
+  - Status: Ported upstream `return_result_skip`, `skip_callback_function`, and `skip_all_callback_types` tests from Rust `callbacks.rs`. Added error callback propagation and custom error callback tests. 24 callback/error tests pass (was 15).
 
 - [ ] Greedy, source, and lexer-mode parity audit (`spec/logos/greedy_spec.cr`, `spec/logos/source_spec.cr`, `spec/logos/lexer_modes_spec.cr`)
   Exit criteria:
