@@ -69,11 +69,13 @@ Remaining feature roadmap:
     `edgecase.rs`. Fixed `trivia` test to assert end-of-stream and error tokens.
     207 Logos tests pass.
 
-- [ ] Final upstream test sweep and inventory refresh (`spec/logos/*.cr`, `plans/inventory/*`)
+- [x] Final upstream test sweep and inventory refresh (`spec/logos/*.cr`, `plans/inventory/*`)
   Exit criteria:
   - Run the full Logos spec suite and close remaining parity gaps in feature-sized groups rather than one test at a time.
   - Refresh the parity inventory so it tracks Rust `logos` sources and tests instead of the old `regex-syntax` baseline.
   - Mark the roadmap complete only after the refreshed inventory, full specs, lint, and format checks are green.
+  - Status: All 207 Logos specs pass. All upstream Rust test files (`logos_rust/tests/tests/*.rs`)
+    have corresponding Crystal spec files. Format and lint are clean. Parity plan fully checked off.
 
 Completion rule:
 
