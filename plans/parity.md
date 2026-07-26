@@ -48,11 +48,15 @@ Remaining feature roadmap:
   - Keep exact span expectations where callbacks affect lexer advancement.
   - Status: Ported upstream `return_result_skip`, `skip_callback_function`, and `skip_all_callback_types` tests from Rust `callbacks.rs`. Added error callback propagation and custom error callback tests. 24 callback/error tests pass (was 15).
 
-- [ ] Greedy, source, and lexer-mode parity audit (`spec/logos/greedy_spec.cr`, `spec/logos/source_spec.cr`, `spec/logos/lexer_modes_spec.cr`)
+- [x] Greedy, source, and lexer-mode parity audit (`spec/logos/greedy_spec.cr`, `spec/logos/source_spec.cr`, `spec/logos/lexer_modes_spec.cr`)
   Exit criteria:
   - Audit for weak or Crystal-only assertions and replace them with upstream-equivalent outcomes.
   - Confirm greedy matching, source slicing, and mode transitions against Rust test intent.
   - Finish any fixes needed so the full slice passes without pending examples.
+  - Status: Extended greedy detection to test `(a|b.*)` groups. Fixed `Text` regex in lexer_modes from
+    `[^\\x22]` (negated-hex quote) to `[^\\"]` (negated backslash+quote) matching upstream. Ported
+    upstream `EscapedCodepoint`/`EscapedOctal`/`EscapedNewline` morph tests. 19 greedy/source/modes
+    tests pass (was 15).
 
 - [ ] String, binary, and Unicode edge-case parity audit (`spec/logos/string_spec.cr`, `spec/logos/binary_spec.cr`, `spec/logos/unicode_dot_spec.cr`, `spec/logos/ignore_case_spec.cr`, `spec/logos/edgecase_spec.cr`)
   Exit criteria:
