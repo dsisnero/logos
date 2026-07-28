@@ -1,0 +1,16 @@
+# Shared worktree checks for Logos.
+#
+# Project hooks require each developer's approval before their first run.
+
+# New worktrees need shard dependencies before they can build or test.
+[pre-start]
+install = "make install"
+
+# Keep this check-only: `make lint` currently runs `ameba --fix` first.
+[pre-commit]
+format = "make format"
+lint = "ameba"
+
+# Run the behavioral suite only after the branch has been rebased for merge.
+[pre-merge]
+test = "make test"
