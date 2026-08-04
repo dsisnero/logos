@@ -14,6 +14,19 @@ module Logos::Spec::GeneratedMatcher
   Logos.define OffsetToken do
     token "a", :A
   end
+
+  Logos.register_generated_matcher(
+    "InvalidUtf8OffsetToken",
+    ->(input : Bytes, offset : Int32) : Logos::GeneratedMatch do
+      if offset < input.size
+        {1, [::Regex::Automata::DFA::PatternID.new(0)]}
+      end
+    end
+  )
+
+  Logos.define InvalidUtf8OffsetToken do
+    regex ".", :Character
+  end
 end
 
 describe "generated matchers" do
@@ -23,5 +36,11 @@ describe "generated matchers" do
     lexer.next.as(Logos::Result(Logos::Spec::GeneratedMatcher::OffsetToken, Nil)).unwrap.should eq(Logos::Spec::GeneratedMatcher::OffsetToken::A)
     lexer.next.as(Logos::Result(Logos::Spec::GeneratedMatcher::OffsetToken, Nil)).unwrap.should eq(Logos::Spec::GeneratedMatcher::OffsetToken::A)
     lexer.next.should eq(Iterator::Stop::INSTANCE)
+  end
+
+  it "keeps UTF-8 boundary validation for registered generated matchers" do
+    lexer = Logos::Spec::GeneratedMatcher::InvalidUtf8OffsetToken.lexer("é")
+
+    expect_raises(Exception, "Invalid Lexer bump") { lexer.next }
   end
 end

@@ -14,7 +14,7 @@ Logos.define BenchmarkToken do
 end
 
 SOURCE = ("let variable = 12345;\n" * 1_000)
-ROUNDS = 10
+ROUNDS = ENV.fetch("LOGOS_BENCH_ROUNDS", "10").to_i
 
 count = 0
 ROUNDS.times do
