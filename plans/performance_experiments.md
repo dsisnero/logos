@@ -37,6 +37,7 @@ No active experiment. The next experiment must start from the documented baselin
 | Direct pattern-ID matcher result | pre-ledger `performance-prebuild` | no commit | About 136.8 ms mean versus the prior offset-generated result around 32–36 ms. | Reverted. |
 | Capacity-two array, short harness | pre-ledger `performance-prebuild` | no commit | 1.05x nominal improvement with ±0.73 uncertainty; best run regressed. | Re-run under the stable harness as the active isolated experiment. |
 | Pattern-ID capacity, long harness | `codex/perf-pattern-id-capacity` | `6a1e048adbb0b22537d454f95f735838aa2f1fdb` | `LOGOS_BENCH_ROUNDS=500`, 5 runs: baseline 5.986 s mean (min 5.235 s); capacity-two 6.268 s mean (min 5.489 s), 4.7% slower. Focused generated-matcher specs passed. | Rejected; branch intentionally not merged. |
+| Compact UInt8 state tables, long harness | `codex/perf-compact-u8-tables` | `b63baca8c6f4835fbb7ebebbd7e9c19b91c0761a` | `LOGOS_BENCH_ROUNDS=500`, 5 runs: baseline 6.083 s mean (min 5.638 s); UInt8 tables 6.442 s mean (min 5.670 s), 5.9% slower. Focused generated-matcher specs passed. | Rejected; branch intentionally not merged. |
 
 ## Queue
 
