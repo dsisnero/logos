@@ -1,0 +1,16 @@
+{
+  "name": "Op",
+  "utf8": true,
+  "subpatterns": {},
+  "patterns": [
+    {"kind": "token", "pattern": ">"},
+    {"kind": "token", "pattern": "<"},
+    {"kind": "token", "pattern": "+"},
+    {"kind": "token", "pattern": "-"},
+    {"kind": "token", "pattern": "."},
+    {"kind": "token", "pattern": ","},
+    {"kind": "token", "pattern": "["},
+    {"kind": "token", "pattern": "]"},
+    {"kind": "regex", "pattern": ".|\\n"}
+  ]
+}

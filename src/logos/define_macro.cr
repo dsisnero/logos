@@ -130,7 +130,6 @@ module Logos
 
     {% all_defs = token_defs + regex_defs %}
     {% has_callbacks = all_defs.any? { |item| item[:callback] } %}
-
     # Collect unique variants (outside begin block to avoid nested macro issues)
     {% unique_variant_ids = [] of String %}
     {% unique_variants = [] of Crystal::ASTNode %}
@@ -610,11 +609,6 @@ module Logos
           end
         end
 
-        # Compile NFA from multiple patterns
-        hir_compiler = ::Regex::Automata::HirCompiler.new(::Regex::Automata::HirCompilerConfig.new(utf8: {{ utf8_flag }}))
-        nfa = hir_compiler.compile_multi(hirs)
-
-        # Build DFA from NFA
         dfa_config = ::Regex::Automata::Config.new
           .match_kind(::Regex::Automata::MatchKind::All)
           .start_kind(::Regex::Automata::StartKind::Anchored)
@@ -622,6 +616,8 @@ module Logos
           .accelerate(false)
           .starts_for_each_pattern(false)
           .specialize_start_states(false)
+        hir_compiler = ::Regex::Automata::HirCompiler.new(::Regex::Automata::HirCompilerConfig.new(utf8: {{ utf8_flag }}))
+        nfa = hir_compiler.compile_multi(hirs)
         dfa = ::Regex::Automata::DFA::Builder.from_nfa(nfa, dfa_config).build
         hirs.each do |hir|
           pattern_nfa = ::Regex::Automata::HirCompiler
@@ -660,6 +656,13 @@ module Logos
         ::Logos::Lexer(self, {{ source_type }}, {{ extras_type }}, {{ error_type }}).new(source, extras)
       end
 
+      # Whether a generated source matcher was registered before this lexer
+      # definition. Source generation is an explicit pre-build step; macros
+      # do not execute external programs during compilation.
+      def self.precompiled_dfa? : Bool
+        !::Logos.generated_matcher?("{{ name }}").nil?
+      end
+
       def self.lex_all(source : {{ source_type }}, extras : {{ extras_type }} = {{ extras_type }}.new) : Array(::Logos::Result(self, {{ error_type }}))
         lexer = ::Logos::Lexer(self, {{ source_type }}, {{ extras_type }}, {{ error_type }}).new(source, extras)
         results = [] of ::Logos::Result(self, {{ error_type }})
@@ -671,14 +674,52 @@ module Logos
       end
 
       def self.lex(__lexer : ::Logos::Lexer(self, {{ source_type }}, {{ extras_type }}, {{ error_type }})) : ::Logos::Result(self, {{ error_type }})?
-        compiled = self.compiled
-        dfa = compiled[:dfa]
-        pattern_dfas = compiled[:pattern_dfas]
-        pattern_prefix_dfas = compiled[:pattern_prefix_dfas]
-        pattern_to_variant = compiled[:pattern_to_variant]
-        pattern_is_skip = compiled[:pattern_is_skip]
-        pattern_priority = compiled[:pattern_priority]
-        pattern_priority_explicit = compiled[:pattern_priority_explicit]
+        generated_matcher = ::Logos.generated_matcher?("{{ name }}")
+        if generated_matcher
+          pattern_to_variant = [
+            {% for item in all_defs %}
+              {{ item[:variant] }},
+            {% end %}
+          ]
+          pattern_is_skip = [
+            {% for item in all_defs %}
+              {{ item[:skip] }},
+            {% end %}
+          ]
+          pattern_priority = [
+            {% for item in all_defs %}
+              {% if item[:priority] %}
+                {{ item[:priority] }},
+              {% else %}
+                0,
+              {% end %}
+            {% end %}
+          ] of Int32
+          pattern_priority_explicit = [
+            {% for item in all_defs %}
+              {{ !item[:priority].nil? }},
+            {% end %}
+          ]
+          pattern_prefix_dfas = [] of ::Regex::Automata::DFA::DFA
+          match = generated_matcher.not_nil!.call(
+            {% if utf8_flag %}
+              __lexer.source.to_slice,
+            {% else %}
+              __lexer.source,
+            {% end %}
+            __lexer.offset
+          )
+        else
+          compiled = self.compiled
+          dfa = compiled[:dfa]
+          pattern_dfas = compiled[:pattern_dfas]
+          pattern_prefix_dfas = compiled[:pattern_prefix_dfas]
+          pattern_to_variant = compiled[:pattern_to_variant]
+          pattern_is_skip = compiled[:pattern_is_skip]
+          pattern_priority = compiled[:pattern_priority]
+          pattern_priority_explicit = compiled[:pattern_priority_explicit]
+          match = self.find_exact_match_at_start(dfa, pattern_dfas, __lexer.remainder)
+        end
 
         # DEBUG
         if ENV["LOGOS_DEBUG"]?
@@ -686,7 +727,6 @@ module Logos
         end
 
         # Find longest match
-        match = self.find_exact_match_at_start(dfa, pattern_dfas, __lexer.remainder)
         if ENV["LOGOS_DEBUG"]?
           puts "DEBUG: find_longest_match returned: #{match.inspect}"
         end
@@ -860,7 +900,7 @@ module Logos
             # Skip variant - return nil to continue lexing
             return nil
           end
-         elsif error_variant = compiled[:error_variant]
+         elsif error_variant = {% if error_def %} {{ error_def[:variant] }} {% else %} nil {% end %}
           # No pattern matched, but we have an error variant
           # Match a single byte (or UTF-8 code point for String source)
           {% if utf8_flag %}

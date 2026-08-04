@@ -109,6 +109,12 @@ module Logos
       @source.slice_unchecked(@token_end...@source.length)
     end
 
+    # Byte offset where the next token match begins. Generated matchers use
+    # this with `source.to_slice` to avoid allocating the remaining input.
+    def offset : Int32
+      @token_end
+    end
+
     # Bumps the end of currently lexed token by `n` bytes.
     #
     # **Panics** if adding `n` to current offset would place the `Lexer` beyond the last byte,

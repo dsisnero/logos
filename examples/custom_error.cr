@@ -5,6 +5,10 @@
 
 require "../src/logos"
 
+{% if flag?(:precompiled) %}
+  require "generated_token_with_error"
+{% end %}
+
 struct LexingError
   enum Kind
     InvalidInteger

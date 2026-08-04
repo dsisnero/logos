@@ -11,6 +11,8 @@ description: |
 targets:
   logos:
     main: src/logos.cr
+  logos-codegen:
+    main: src/logos_codegen.cr
 
 crystal: '>= 1.19.1'
 

@@ -5,6 +5,10 @@
 
 require "../src/logos"
 
+{% if flag?(:precompiled) %}
+  require "generated_token"
+{% end %}
+
 class PositionExtras
   property line : Int32
   property line_start : Int32
