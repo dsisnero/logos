@@ -25,9 +25,7 @@ exact winning commit after that merge so its code can be reloaded directly.
 
 ## Active experiments
 
-| Experiment | Branch | Base commit | Hypothesis | Result |
-| --- | --- | --- | --- | --- |
-| Pattern-ID capacity | `codex/perf-pattern-id-capacity` | `f6b9b6ad2fc382ce27c7775cd25da807c8194954` | Preallocate two pattern-ID slots, matching the common accept-state cardinality. | Baseline long-run timing in progress. |
+No active experiment. The next experiment must start from the documented baseline on its own branch.
 
 ## Rejected experiments
 
@@ -38,6 +36,7 @@ exact winning commit after that merge so its code can be reloaded directly.
 | Allocation-free generic priority selection | pre-ledger `performance-prebuild` | no commit | Side-by-side control was 1.66x faster than the change. | Reverted. |
 | Direct pattern-ID matcher result | pre-ledger `performance-prebuild` | no commit | About 136.8 ms mean versus the prior offset-generated result around 32–36 ms. | Reverted. |
 | Capacity-two array, short harness | pre-ledger `performance-prebuild` | no commit | 1.05x nominal improvement with ±0.73 uncertainty; best run regressed. | Re-run under the stable harness as the active isolated experiment. |
+| Pattern-ID capacity, long harness | `codex/perf-pattern-id-capacity` | `6a1e048adbb0b22537d454f95f735838aa2f1fdb` | `LOGOS_BENCH_ROUNDS=500`, 5 runs: baseline 5.986 s mean (min 5.235 s); capacity-two 6.268 s mean (min 5.489 s), 4.7% slower. Focused generated-matcher specs passed. | Rejected; branch intentionally not merged. |
 
 ## Queue
 
