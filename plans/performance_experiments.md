@@ -20,7 +20,7 @@ exact winning commit after that merge so its code can be reloaded directly.
 
 | Item | Branch | Commit | Status |
 | --- | --- | --- | --- |
-| Current runtime baseline for new experiments | `main` | `33cc9aa7c81e24c7d9f4b1c51c0ec323310e3c2e` | Includes the compact prebuilt DFA, stable benchmark harness, UTF-8 safety contract, cached source bytes, cached debug flags, and allocation-free priority selection winners. All future experiment branches start here. |
+| Current runtime baseline for new experiments | `main` | `137ddc94aad517635a6e756aab8efeace5ea9aca` | Includes the compact prebuilt DFA, stable benchmark harness, UTF-8 safety contract, cached source bytes, cached debug flags, allocation-free priority selection, and direct single-pattern generated matches. All future experiment branches start here. |
 | Compact prebuilt DFA and offset scanning | `performance-prebuild` | `d02f4a3` | Existing baseline: eliminated runtime DFA construction and remainder-string allocation. |
 | Stable benchmark control and generated UTF-8 safety contract | `performance-prebuild` | `f6b9b6ad2fc382ce27c7775cd25da807c8194954` | Base for all new isolated experiments; merged as a dependency of the first winner. |
 
@@ -31,6 +31,7 @@ exact winning commit after that merge so its code can be reloaded directly.
 | Cache generated matcher source bytes | `codex/perf-cache-source-bytes` | `5ca35d98681dd7a7e341aa8aa0e8452e17e9e2e5` | `cbef751d444910a5d11bd33043d833d89d6fecfb` | `LOGOS_BENCH_ROUNDS=500`, 10 runs: 7.404 s mean vs 8.060 s baseline (8.1% faster); median 6.910 s vs 7.985 s (13.5% faster). Focused generated-matcher specs passed. |
 | Cache lexer debug flags | `codex/perf-cache-debug-flags` | `b726f38cc19bff81f888eae4df8c8d07c5379c92` | `2550530462cc99394a072a094f6ce16f263be22d` | `LOGOS_BENCH_ROUNDS=500`, 5 runs: 2.280 s mean vs 6.177 s current baseline (2.71x faster; 63.1% lower). Focused generated-matcher specs passed. |
 | Allocation-free priority selection | `codex/perf-priority-loop-post-debug` | `ece0ab4bda216166247a9ce8d47c7673dacb099d` | `33cc9aa7c81e24c7d9f4b1c51c0ec323310e3c2e` | `LOGOS_BENCH_ROUNDS=500`, 5 runs: 2.880 s mean vs 3.494 s current baseline (17.6% faster); median 2.984 s vs 3.469 s (14.0% faster). Generated-matcher, ambiguity, and priority specs passed. |
+| Direct single-pattern generated match | `codex/perf-single-pattern-fastpath` | `ee79cff110a219bb912932982225d0479345e898` | `137ddc94aad517635a6e756aab8efeace5ea9aca` | `LOGOS_BENCH_ROUNDS=500`, 5 runs: 2.165 s mean vs 2.465 s current baseline (12.2% faster); median 2.153 s vs 2.450 s (12.1% faster). Generated-matcher, ambiguity, and priority specs passed. |
 
 ## Active experiments
 
