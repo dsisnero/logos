@@ -20,7 +20,7 @@ exact winning commit after that merge so its code can be reloaded directly.
 
 | Item | Branch | Commit | Status |
 | --- | --- | --- | --- |
-| Current runtime baseline for new experiments | `main` | `690b3e5b27639012e4fb34b7603fbdb510442a77` | Includes the compact prebuilt DFA, stable benchmark harness, UTF-8 safety contract, and cached generated-matcher source bytes winner. All future experiment branches start here. |
+| Current runtime baseline for new experiments | `main` | `2550530462cc99394a072a094f6ce16f263be22d` | Includes the compact prebuilt DFA, stable benchmark harness, UTF-8 safety contract, cached source bytes, and cached debug flags winners. All future experiment branches start here. |
 | Compact prebuilt DFA and offset scanning | `performance-prebuild` | `d02f4a3` | Existing baseline: eliminated runtime DFA construction and remainder-string allocation. |
 | Stable benchmark control and generated UTF-8 safety contract | `performance-prebuild` | `f6b9b6ad2fc382ce27c7775cd25da807c8194954` | Base for all new isolated experiments; merged as a dependency of the first winner. |
 
@@ -29,6 +29,7 @@ exact winning commit after that merge so its code can be reloaded directly.
 | Experiment | Branch | Exact experiment commit | Main merge commit | Runtime result |
 | --- | --- | --- | --- | --- |
 | Cache generated matcher source bytes | `codex/perf-cache-source-bytes` | `5ca35d98681dd7a7e341aa8aa0e8452e17e9e2e5` | `cbef751d444910a5d11bd33043d833d89d6fecfb` | `LOGOS_BENCH_ROUNDS=500`, 10 runs: 7.404 s mean vs 8.060 s baseline (8.1% faster); median 6.910 s vs 7.985 s (13.5% faster). Focused generated-matcher specs passed. |
+| Cache lexer debug flags | `codex/perf-cache-debug-flags` | `b726f38cc19bff81f888eae4df8c8d07c5379c92` | `2550530462cc99394a072a094f6ce16f263be22d` | `LOGOS_BENCH_ROUNDS=500`, 5 runs: 2.280 s mean vs 6.177 s current baseline (2.71x faster; 63.1% lower). Focused generated-matcher specs passed. |
 
 ## Active experiments
 
