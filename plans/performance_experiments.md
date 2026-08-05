@@ -21,7 +21,13 @@ exact winning commit after that merge so its code can be reloaded directly.
 | Item | Branch | Commit | Status |
 | --- | --- | --- | --- |
 | Compact prebuilt DFA and offset scanning | `performance-prebuild` | `d02f4a3` | Existing baseline: eliminated runtime DFA construction and remainder-string allocation. |
-| Stable benchmark control and generated UTF-8 safety contract | `performance-prebuild` | `f6b9b6ad2fc382ce27c7775cd25da807c8194954` | Base for all new isolated experiments; not merged yet. |
+| Stable benchmark control and generated UTF-8 safety contract | `performance-prebuild` | `f6b9b6ad2fc382ce27c7775cd25da807c8194954` | Base for all new isolated experiments; merged as a dependency of the first winner. |
+
+## Winners merged into main
+
+| Experiment | Branch | Exact experiment commit | Main merge commit | Runtime result |
+| --- | --- | --- | --- | --- |
+| Cache generated matcher source bytes | `codex/perf-cache-source-bytes` | `5ca35d98681dd7a7e341aa8aa0e8452e17e9e2e5` | `cbef751d444910a5d11bd33043d833d89d6fecfb` | `LOGOS_BENCH_ROUNDS=500`, 10 runs: 7.404 s mean vs 8.060 s baseline (8.1% faster); median 6.910 s vs 7.985 s (13.5% faster). Focused generated-matcher specs passed. |
 
 ## Active experiments
 
