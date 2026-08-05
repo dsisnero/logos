@@ -744,18 +744,31 @@ module Logos
             end
           end
 
-          # Determine which variant matched (take pattern with highest priority)
-          highest_priority = pattern_ids.max_of { |id| pattern_priority[id.to_i] }
-          highest_priority_ids = pattern_ids.select { |id| pattern_priority[id.to_i] == highest_priority }
-          if highest_priority_ids.size > 1 &&
-             highest_priority_ids.all? { |id| pattern_priority_explicit[id.to_i] }
+          # Determine the highest-priority variant without allocating an
+          # intermediate array for every successful token.
+          pattern_id = pattern_ids[0]
+          highest_priority = pattern_priority[pattern_id.to_i]
+          highest_priority_count = 1
+          highest_priority_all_explicit = pattern_priority_explicit[pattern_id.to_i]
+          index = 1
+          while index < pattern_ids.size
+            candidate = pattern_ids[index]
+            candidate_index = candidate.to_i
+            candidate_priority = pattern_priority[candidate_index]
+            if candidate_priority > highest_priority
+              pattern_id = candidate
+              highest_priority = candidate_priority
+              highest_priority_count = 1
+              highest_priority_all_explicit = pattern_priority_explicit[candidate_index]
+            elsif candidate_priority == highest_priority
+              highest_priority_count += 1
+              highest_priority_all_explicit &&= pattern_priority_explicit[candidate_index]
+            end
+            index += 1
+          end
+          if highest_priority_count > 1 && highest_priority_all_explicit
             raise "Patterns with priority #{highest_priority} can match simultaneously."
           end
-          pattern_id = if highest_priority_ids.size == 1
-                         highest_priority_ids[0]
-                       else
-                         pattern_ids.max_by { |id| pattern_priority[id.to_i] }
-                       end
           variant = pattern_to_variant[pattern_id.to_i]
           is_skip = pattern_is_skip[pattern_id.to_i]
           emitted_variant = variant
