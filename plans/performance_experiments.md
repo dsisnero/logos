@@ -48,6 +48,7 @@ No active experiment. The next experiment must start from the documented baselin
 | Full-byte transition table, long harness | `codex/perf-full-byte-transition-table` | `47512238722a5faafc3b69293a8c3b36f74b2538` | `LOGOS_BENCH_ROUNDS=500`, 5 runs: baseline 7.291 s mean (σ 0.688 s); full-byte table 7.249 s mean (σ 0.242 s), 0.6% faster and not significant. Focused generated-matcher specs passed. | Rejected as runtime-flat; branch intentionally not merged. |
 | Sparse direct state dispatch, long harness | `codex/perf-sparse-direct-dispatch` | `47c9a0dce23ee1603c54f0003a717ed2be54d1f9` | `LOGOS_BENCH_ROUNDS=500`, 5 runs: baseline 6.242 s mean (min 5.663 s); direct dispatch 9.264 s mean (min 6.409 s), 48% slower. Focused generated-matcher specs passed. | Rejected; branch intentionally not merged. |
 | Enum metadata constants | `codex/perf-generated-metadata-constants` | `58d2b3d94c558b72f18a0583202d79cfa30d4bcd` | Red compile failed: Crystal rejects enum array constants (`invalid constant value`). The marker commit intentionally contains no invalid source. | Rejected before measurement; branch intentionally not merged. |
+| Elide generated empty prefix-DFA allocation | `codex/perf-elide-generated-empty-prefix` | `7b1137deda708aacdb8575af04e25d8514d9b4cd` | `LOGOS_BENCH_ROUNDS=500`, 5 runs against the cached-byte winner: 6.719 s mean vs 6.766 s (0.7% nominal); median regressed, 6.759 s vs 6.741 s. Focused generated-matcher specs passed. | Rejected as runtime-flat; branch intentionally not merged. |
 
 ## Queue
 
