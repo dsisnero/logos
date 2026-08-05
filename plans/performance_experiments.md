@@ -20,6 +20,7 @@ exact winning commit after that merge so its code can be reloaded directly.
 
 | Item | Branch | Commit | Status |
 | --- | --- | --- | --- |
+| Current runtime baseline for new experiments | `main` | `690b3e5b27639012e4fb34b7603fbdb510442a77` | Includes the compact prebuilt DFA, stable benchmark harness, UTF-8 safety contract, and cached generated-matcher source bytes winner. All future experiment branches start here. |
 | Compact prebuilt DFA and offset scanning | `performance-prebuild` | `d02f4a3` | Existing baseline: eliminated runtime DFA construction and remainder-string allocation. |
 | Stable benchmark control and generated UTF-8 safety contract | `performance-prebuild` | `f6b9b6ad2fc382ce27c7775cd25da807c8194954` | Base for all new isolated experiments; merged as a dependency of the first winner. |
 
