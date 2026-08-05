@@ -38,11 +38,11 @@ No active experiment. The next experiment must start from the documented baselin
 | Capacity-two array, short harness | pre-ledger `performance-prebuild` | no commit | 1.05x nominal improvement with ±0.73 uncertainty; best run regressed. | Re-run under the stable harness as the active isolated experiment. |
 | Pattern-ID capacity, long harness | `codex/perf-pattern-id-capacity` | `6a1e048adbb0b22537d454f95f735838aa2f1fdb` | `LOGOS_BENCH_ROUNDS=500`, 5 runs: baseline 5.986 s mean (min 5.235 s); capacity-two 6.268 s mean (min 5.489 s), 4.7% slower. Focused generated-matcher specs passed. | Rejected; branch intentionally not merged. |
 | Compact UInt8 state tables, long harness | `codex/perf-compact-u8-tables` | `b63baca8c6f4835fbb7ebebbd7e9c19b91c0761a` | `LOGOS_BENCH_ROUNDS=500`, 5 runs: baseline 6.083 s mean (min 5.638 s); UInt8 tables 6.442 s mean (min 5.670 s), 5.9% slower. Focused generated-matcher specs passed. | Rejected; branch intentionally not merged. |
+| Full-byte transition table, long harness | `codex/perf-full-byte-transition-table` | `47512238722a5faafc3b69293a8c3b36f74b2538` | `LOGOS_BENCH_ROUNDS=500`, 5 runs: baseline 7.291 s mean (σ 0.688 s); full-byte table 7.249 s mean (σ 0.242 s), 0.6% faster and not significant. Focused generated-matcher specs passed. | Rejected as runtime-flat; branch intentionally not merged. |
 
 ## Queue
 
-1. Generate sparse direct state dispatch only when it remains smaller than the
-   compact-table source and has a compile-time budget.
+1. Generate sparse direct state dispatch and judge it on runtime only.
 2. Generate a specialized token dispatch path for manifest-compatible token
    definitions, preserving callbacks/errors with contract tests.
 3. Profile the long-workload binary to distinguish matcher work from generic
