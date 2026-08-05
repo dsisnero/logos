@@ -703,7 +703,7 @@ module Logos
           pattern_prefix_dfas = [] of ::Regex::Automata::DFA::DFA
           match = generated_matcher.not_nil!.call(
             {% if utf8_flag %}
-              __lexer.source.to_slice,
+              __lexer.source_bytes,
             {% else %}
               __lexer.source,
             {% end %}
