@@ -1,0 +1,11 @@
+{
+  "name": "Token",
+  "utf8": true,
+  "subpatterns": {},
+  "patterns": [
+    {"kind": "regex", "pattern": "[ \\t]+"},
+    {"kind": "regex", "pattern": "[a-zA-Z]+"},
+    {"kind": "regex", "pattern": "[0-9]+"},
+    {"kind": "regex", "pattern": "[^\\x00-\\x7F]+"}
+  ]
+}

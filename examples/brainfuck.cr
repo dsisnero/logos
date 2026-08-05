@@ -8,6 +8,10 @@
 
 require "../src/logos"
 
+{% if flag?(:precompiled) %}
+  require "generated_op"
+{% end %}
+
 # Each Op variant is a single character.
 Logos.define Op do
   # Skip all non-op characters (lowest priority).

@@ -3,6 +3,7 @@ module Logos
   # `Source` and produce tokens for enums implementing the `Logos` trait.
   class Lexer(Token, Source, Extras, Error)
     @source : Source
+    @source_bytes : Bytes
     @token_start : Int32
     @token_end : Int32
     @extras : Extras
@@ -21,6 +22,7 @@ module Logos
     # Due to type inference, it might be more ergonomic to construct
     # it by calling `Token.lexer_with_extras` on any `Token` with derived `Logos`.
     def initialize(@source : Source, extras : Extras = Extras.new)
+      @source_bytes = @source.to_slice
       @token_start = 0
       @token_end = 0
       @extras = extras
@@ -77,6 +79,12 @@ module Logos
       @source
     end
 
+    # Immutable byte view used by source-generated matchers. Keeping it on the
+    # lexer avoids recreating a String slice for each token.
+    def source_bytes : Bytes
+      @source_bytes
+    end
+
     # Wrap the `Lexer` in an `Iterator` that produces tuples of `(Token, Span)`.
     #
     # ```
@@ -107,6 +115,12 @@ module Logos
     # Get a slice of remaining source, starting at the end of current token.
     def remainder : Source
       @source.slice_unchecked(@token_end...@source.length)
+    end
+
+    # Byte offset where the next token match begins. Generated matchers use
+    # this with `source.to_slice` to avoid allocating the remaining input.
+    def offset : Int32
+      @token_end
     end
 
     # Bumps the end of currently lexed token by `n` bytes.

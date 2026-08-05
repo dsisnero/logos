@@ -50,6 +50,69 @@ make install
    git checkout -b feat/feature-name
    ```
 
+### Prebuilding Lexer Matchers
+
+`Logos.define` normally constructs its DFA lazily when the lexer first runs.
+For an application with stable token definitions, generate a compact Crystal
+matcher during its build instead. The generated source contains only reduced
+byte-class transition tables: it performs no regex parsing, NFA construction,
+or DFA deserialization at runtime.
+
+Generated matchers scan the original source bytes at the lexer's current byte
+offset. They do not create a new `String` for the remaining source on every
+token, which is important for large inputs with many short tokens.
+
+Create a JSON manifest next to the program. `name` must be the enum name, and
+the patterns must be in the same order Logos uses: all `token`/`skip` literals
+first, followed by all `regex`/`skip_regex` patterns.
+
+```json
+{
+  "name": "Token",
+  "utf8": true,
+  "subpatterns": {},
+  "patterns": [
+    {"kind": "token", "pattern": "let"},
+    {"kind": "regex", "pattern": "[A-Za-z_][A-Za-z0-9_]*"}
+  ]
+}
+```
+
+Generate the file into `temp/`, which is intentionally disposable:
+
+```bash
+make prebuild MANIFEST=examples/extras.logos.json OUT=temp/generated_token.cr
+```
+
+Require the generated file before the matching `Logos.define` call, guarded by
+a compile-time flag so normal development builds retain the runtime fallback:
+
+```crystal
+require "../src/logos"
+
+{% if flag?(:precompiled) %}
+  require "generated_token"
+{% end %}
+
+Logos.define Token do
+  # Definitions mirrored by the manifest.
+end
+```
+
+Build the application with `-Dprecompiled` and include `temp/` on Crystal's
+load path:
+
+```bash
+CRYSTAL_PATH="$PWD/temp:$(crystal env CRYSTAL_PATH)" \
+  crystal build --release -Dprecompiled examples/extras.cr -o bin/extras
+```
+
+The prebuild command uses the sibling `../regex-automata` checkout when it is
+available, so code generation follows its current DFA implementation. It does
+not use Crystal macros to run external code. Regenerate the output whenever a
+manifest, token definition, or regex-automata version changes; `make clean`
+removes all generated files.
+
 ### Porting from Rust
 
 When porting code from Rust (`vendor/regex-syntax/`):

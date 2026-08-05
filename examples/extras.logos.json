@@ -1,0 +1,9 @@
+{
+  "name": "Token",
+  "utf8": true,
+  "subpatterns": {},
+  "patterns": [
+    {"kind": "regex", "pattern": "\\n"},
+    {"kind": "regex", "pattern": "\\w+"}
+  ]
+}
