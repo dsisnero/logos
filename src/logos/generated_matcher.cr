@@ -1,5 +1,6 @@
 module Logos
-  alias GeneratedMatch = Tuple(Int32, Array(::Regex::Automata::PatternID))?
+  alias GeneratedPatternIDs = ::Regex::Automata::PatternID | Array(::Regex::Automata::PatternID)
+  alias GeneratedMatch = Tuple(Int32, GeneratedPatternIDs)?
   alias GeneratedMatcher = Proc(::Bytes, Int32, GeneratedMatch)
 
   @@generated_matchers = {} of String => GeneratedMatcher
