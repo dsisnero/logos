@@ -737,38 +737,43 @@ module Logos
           end_pos, pattern_ids = match
           # DEBUG
           if @@debug_enabled
-            puts "DEBUG: matched at #{end_pos}, pattern_ids: #{pattern_ids.map(&.to_i)}"
+            puts "DEBUG: matched at #{end_pos}, pattern_ids: #{pattern_ids.inspect}"
             puts "DEBUG: matched substring: '#{__lexer.remainder[0, end_pos]}'"
-            if pattern_ids.empty?
+            if pattern_ids.is_a?(Array) && pattern_ids.empty?
               puts "DEBUG: WARNING: pattern_ids empty but match state accepting"
             end
           end
 
           # Determine the highest-priority variant without allocating an
           # intermediate array for every successful token.
-          pattern_id = pattern_ids[0]
-          highest_priority = pattern_priority[pattern_id.to_i]
-          highest_priority_count = 1
-          highest_priority_all_explicit = pattern_priority_explicit[pattern_id.to_i]
-          index = 1
-          while index < pattern_ids.size
-            candidate = pattern_ids[index]
-            candidate_index = candidate.to_i
-            candidate_priority = pattern_priority[candidate_index]
-            if candidate_priority > highest_priority
-              pattern_id = candidate
-              highest_priority = candidate_priority
-              highest_priority_count = 1
-              highest_priority_all_explicit = pattern_priority_explicit[candidate_index]
-            elsif candidate_priority == highest_priority
-              highest_priority_count += 1
-              highest_priority_all_explicit &&= pattern_priority_explicit[candidate_index]
-            end
-            index += 1
-          end
-          if highest_priority_count > 1 && highest_priority_all_explicit
-            raise "Patterns with priority #{highest_priority} can match simultaneously."
-          end
+          pattern_id = if pattern_ids.is_a?(::Regex::Automata::PatternID)
+                         pattern_ids
+                       else
+                         highest_priority = pattern_priority[pattern_ids[0].to_i]
+                         selected = pattern_ids[0]
+                         highest_priority_count = 1
+                         highest_priority_all_explicit = pattern_priority_explicit[selected.to_i]
+                         index = 1
+                         while index < pattern_ids.size
+                           candidate = pattern_ids[index]
+                           candidate_index = candidate.to_i
+                           candidate_priority = pattern_priority[candidate_index]
+                           if candidate_priority > highest_priority
+                             selected = candidate
+                             highest_priority = candidate_priority
+                             highest_priority_count = 1
+                             highest_priority_all_explicit = pattern_priority_explicit[candidate_index]
+                           elsif candidate_priority == highest_priority
+                             highest_priority_count += 1
+                             highest_priority_all_explicit &&= pattern_priority_explicit[candidate_index]
+                           end
+                           index += 1
+                         end
+                         if highest_priority_count > 1 && highest_priority_all_explicit
+                           raise "Patterns with priority #{highest_priority} can match simultaneously."
+                         end
+                         selected
+                       end
           variant = pattern_to_variant[pattern_id.to_i]
           is_skip = pattern_is_skip[pattern_id.to_i]
           emitted_variant = variant
