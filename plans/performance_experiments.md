@@ -47,6 +47,7 @@ No active experiment. The next experiment must start from the documented baselin
 | Compact UInt8 state tables, long harness | `codex/perf-compact-u8-tables` | `b63baca8c6f4835fbb7ebebbd7e9c19b91c0761a` | `LOGOS_BENCH_ROUNDS=500`, 5 runs: baseline 6.083 s mean (min 5.638 s); UInt8 tables 6.442 s mean (min 5.670 s), 5.9% slower. Focused generated-matcher specs passed. | Rejected; branch intentionally not merged. |
 | Full-byte transition table, long harness | `codex/perf-full-byte-transition-table` | `47512238722a5faafc3b69293a8c3b36f74b2538` | `LOGOS_BENCH_ROUNDS=500`, 5 runs: baseline 7.291 s mean (σ 0.688 s); full-byte table 7.249 s mean (σ 0.242 s), 0.6% faster and not significant. Focused generated-matcher specs passed. | Rejected as runtime-flat; branch intentionally not merged. |
 | Sparse direct state dispatch, long harness | `codex/perf-sparse-direct-dispatch` | `47c9a0dce23ee1603c54f0003a717ed2be54d1f9` | `LOGOS_BENCH_ROUNDS=500`, 5 runs: baseline 6.242 s mean (min 5.663 s); direct dispatch 9.264 s mean (min 6.409 s), 48% slower. Focused generated-matcher specs passed. | Rejected; branch intentionally not merged. |
+| Enum metadata constants | `codex/perf-generated-metadata-constants` | `58d2b3d94c558b72f18a0583202d79cfa30d4bcd` | Red compile failed: Crystal rejects enum array constants (`invalid constant value`). The marker commit intentionally contains no invalid source. | Rejected before measurement; branch intentionally not merged. |
 
 ## Queue
 
