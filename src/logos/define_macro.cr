@@ -449,6 +449,8 @@ module Logos
         pattern_priority_explicit: Array(Bool),
         error_variant: self?
       )?)
+      @@debug_enabled = !ENV["LOGOS_DEBUG"]?.nil?
+      @@debug_priority_enabled = !ENV["LOGOS_DEBUG_PRIORITY"]?.nil?
 
       # DFA compilation method
       private def self.compile_dfa : NamedTuple(
@@ -461,7 +463,7 @@ module Logos
         pattern_priority_explicit: Array(Bool),
         error_variant: self?
       )
-        if ENV["LOGOS_DEBUG"]?
+        if @@debug_enabled
           puts "DEBUG: compile_dfa called"
         end
         hirs = [] of ::Regex::Syntax::Hir::Hir
@@ -583,7 +585,7 @@ module Logos
         error_variant = {% if error_def %} {{ error_def[:variant] }} {% else %} nil {% end %}
 
         # DEBUG: Print priorities
-        if ENV["LOGOS_DEBUG_PRIORITY"]?
+        if @@debug_priority_enabled
           puts "Pattern priorities:"
           pattern_to_variant.each_with_index do |variant, i|
             puts "  Pattern #{i}: #{variant} = #{pattern_priority[i]}"
@@ -722,19 +724,19 @@ module Logos
         end
 
         # DEBUG
-        if ENV["LOGOS_DEBUG"]?
+        if @@debug_enabled
           puts "DEBUG: lexer remainder = '#{__lexer.remainder.inspect}' (#{__lexer.remainder.class})"
         end
 
         # Find longest match
-        if ENV["LOGOS_DEBUG"]?
+        if @@debug_enabled
           puts "DEBUG: find_longest_match returned: #{match.inspect}"
         end
 
         if match
           end_pos, pattern_ids = match
           # DEBUG
-          if ENV["LOGOS_DEBUG"]?
+          if @@debug_enabled
             puts "DEBUG: matched at #{end_pos}, pattern_ids: #{pattern_ids.map(&.to_i)}"
             puts "DEBUG: matched substring: '#{__lexer.remainder[0, end_pos]}'"
             if pattern_ids.empty?
@@ -775,14 +777,14 @@ module Logos
               __callback_result = begin
                 {{ cb.body }}
               end
-              if ENV["LOGOS_DEBUG"]?
+              if @@debug_enabled
                 puts "DEBUG: Callback result: #{__callback_result.inspect}, type: #{__callback_result.class}"
               end
 
               # Handle FilterResult::Error
               if __callback_result.is_a?(::Logos::FilterResult::Error)
                 error_value = __callback_result.error
-                if ENV["LOGOS_DEBUG"]?
+                if @@debug_enabled
                   puts "DEBUG: Callback returned FilterResult::Error, returning error: #{error_value.inspect}"
                 end
                 return ::Logos::Result(self, {{ error_type }}).error(error_value)
@@ -792,7 +794,7 @@ module Logos
                if __callback_result.is_a?(::Logos::Skip) ||
                   __callback_result.is_a?(::Logos::Filter::Skip) ||
                   __callback_result.is_a?(::Logos::FilterResult::Skip)
-                 if ENV["LOGOS_DEBUG"]?
+                 if @@debug_enabled
                    puts "DEBUG: Callback returned Skip, skipping token"
                  end
                  return nil
@@ -802,12 +804,12 @@ module Logos
                if __callback_result.is_a?(Bool)
                  if __callback_result
                    # Accept token - continue to emit variant
-                   if ENV["LOGOS_DEBUG"]?
+                   if @@debug_enabled
                      puts "DEBUG: Callback returned true, accepting token"
                    end
                  else
                    # False maps to the default error for the matched span.
-                   if ENV["LOGOS_DEBUG"]?
+                   if @@debug_enabled
                      puts "DEBUG: Callback returned false, returning default error"
                    end
                    {% if error_callback %}
@@ -877,7 +879,7 @@ module Logos
                   # Handle Filter::Emit and FilterResult::Emit - store value in lexer
                   if __callback_result.is_a?(::Logos::Filter::Emit) ||
                      __callback_result.is_a?(::Logos::FilterResult::Emit)
-                    if ENV["LOGOS_DEBUG"]?
+                    if @@debug_enabled
                       puts "DEBUG: Callback returned Emit with value: #{__callback_result.value.inspect}"
                     end
                     emitted_value = __callback_result.value
