@@ -79,12 +79,12 @@ module Logos::Codegen
       io << "  MATCH_IDS = #{static_array(match_ids, "_i32")}\n"
       io << "  START_STATE = #{start}\n  BYTE_CLASS_COUNT = #{class_count}\n\n"
       io << "  def self.match(input : ::Bytes, start_index : Int32) : ::Logos::GeneratedMatch\n"
-      io << "    state = START_STATE\n    end_pos = -1\n    pattern_ids = [] of ::Regex::Automata::PatternID\n    pattern_id = nil.as(::Regex::Automata::PatternID?)\n    index = start_index\n"
+      io << "    state = START_STATE\n    end_pos = -1\n    pattern_ids = nil.as(Array(::Regex::Automata::PatternID)?)\n    pattern_id = nil.as(::Regex::Automata::PatternID?)\n    index = start_index\n"
       io << "    while index < input.size\n      next_state = TRANSITIONS[state * BYTE_CLASS_COUNT + BYTE_CLASSES[input[index]]]\n"
       io << "      break if next_state == 0 || (state != START_STATE && next_state == START_STATE)\n      state = next_state\n"
       io << "      eoi_state = EOI_TRANSITIONS[state]\n      match_start = MATCH_OFFSETS[eoi_state]\n      match_finish = MATCH_OFFSETS[eoi_state + 1]\n"
-      io << "      if match_start < match_finish\n        end_pos = index - start_index + 1\n        if match_finish == match_start + 1\n          pattern_id = ::Regex::Automata::PatternID.new(MATCH_IDS[match_start])\n        else\n          pattern_id = nil\n          pattern_ids.clear\n          while match_start < match_finish\n            pattern_ids << ::Regex::Automata::PatternID.new(MATCH_IDS[match_start])\n            match_start += 1\n          end\n        end\n      end\n      index += 1\n    end\n"
-      io << "    end_pos < 0 ? nil : {end_pos, pattern_id || pattern_ids}\n  end\nend\n"
+      io << "      if match_start < match_finish\n        end_pos = index - start_index + 1\n        if match_finish == match_start + 1\n          pattern_id = ::Regex::Automata::PatternID.new(MATCH_IDS[match_start])\n        else\n          pattern_id = nil\n          ids = pattern_ids ||= [] of ::Regex::Automata::PatternID\n          ids.clear\n          while match_start < match_finish\n            ids << ::Regex::Automata::PatternID.new(MATCH_IDS[match_start])\n            match_start += 1\n          end\n        end\n      end\n      index += 1\n    end\n"
+      io << "    end_pos < 0 ? nil : {end_pos, pattern_id || pattern_ids.not_nil!}\n  end\nend\n"
       io << "Logos.register_generated_matcher(#{name.inspect}, ->(input : ::Bytes, start_index : Int32) { Logos::GeneratedMatchers::#{module_name}.match(input, start_index) })"
     end
   end
