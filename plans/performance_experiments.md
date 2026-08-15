@@ -24,6 +24,32 @@ exact winning commit after that merge so its code can be reloaded directly.
 | Compact prebuilt DFA and offset scanning | `performance-prebuild` | `d02f4a3` | Existing baseline: eliminated runtime DFA construction and remainder-string allocation. |
 | Stable benchmark control and generated UTF-8 safety contract | `performance-prebuild` | `f6b9b6ad2fc382ce27c7775cd25da807c8194954` | Base for all new isolated experiments; merged as a dependency of the first winner. |
 
+## Rust comparison and diagnosis (2026-08-15)
+
+The current target is **within 4x Rust runtime** for the identical benchmark
+token set and source, measured on this machine in release mode. The baseline is
+currently about **69x slower**, so representation-only micro-optimizations are
+not enough.
+
+| Implementation | Command workload | Mean | Notes |
+| --- | --- | --- | --- |
+| Crystal `main` prebuilt matcher | 2,000 rounds, 7 runs | 1.907 s ± 0.108 s | `crystal build --release -Dprecompiled benchmarks/lexer_compare.cr` at `main` `ea47131`. |
+| Rust Logos 0.16.1 | same source/rules, 2,000 rounds, 20 runs | 27.7 ms ± 12.8 ms | Temporary local harness using the checked-out `logos_rust` crate and `#[derive(Logos)]`. |
+
+The ratio is 68.8x by means; even the most favorable observed run variance does
+not approach the 4x target.
+
+The structural difference is decisive: Rust's proc macro sees the enum and
+emits a specialized state machine whose accepting states directly call the
+appropriate generated leaf action. Its generator also emits byte-range forks,
+256-entry jump tables where appropriate, and an unrolled self-loop fast path.
+Crystal's external manifest generator emits a generic compact-table walker;
+then every token returns a pattern-ID representation to `Logos.define`, which
+performs generic matcher lookup, constructs per-call metadata arrays, chooses a
+priority, and only then maps the ID to a variant. The next experiments must
+remove that generic post-DFA work on the generated path, rather than only
+changing how pattern IDs are stored.
+
 ## Winners merged into main
 
 | Experiment | Branch | Exact experiment commit | Main merge commit | Runtime result |
@@ -57,7 +83,17 @@ No active experiment. The next experiment must start from the documented baselin
 
 ## Queue
 
-1. Generate a specialized token dispatch path for manifest-compatible token
-   definitions, preserving callbacks/errors with contract tests.
-2. Re-profile the long-workload binary after each material winner before
-   attempting another matcher representation change.
+1. **Generated direct leaf dispatch (highest priority):** extend the manifest
+   with variants, skip flags, priorities, and callback eligibility; generate a
+   matcher that returns the token/skip action directly, bypassing pattern-ID
+   arrays, priority scans, and per-token metadata arrays. First prove plain
+   token/regex/skip parity, then callbacks and errors.
+2. **Generated state-specialized control flow:** emit range-compressed `case`
+   dispatch or direct state functions for the manifest DFA, retaining compact
+   tables only when they benchmark faster. Add a self-loop bulk scan for common
+   identifier, whitespace, and integer states, modeled on Rust's unrolled loop.
+3. **Separate iterator/result overhead:** add an internal token-count benchmark
+   that drives the generated matcher directly and compare it with `Lexer#next`.
+   This quantifies the remaining Crystal abstraction cost after direct dispatch.
+4. Re-profile the long-workload binary after each material winner and retain
+   only improvements confirmed with a longer workload.
