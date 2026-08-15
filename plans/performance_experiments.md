@@ -6,6 +6,12 @@ kept only after focused correctness checks and a same-machine release
 comparison. A winning branch is merged into `main`; this ledger records the
 exact winning commit after that merge so its code can be reloaded directly.
 
+**Completion rule:** do not start, report, or leave an experiment as active
+until it has run its focused correctness gate and release benchmark, has been
+explicitly accepted or rejected, its branch result is committed, and this
+ledger update is committed on `main`. A winner must additionally be merged
+into `main` before the next experiment starts.
+
 ## Measurement contract
 
 - Build with `crystal build --release -Dprecompiled benchmarks/lexer_compare.cr`.
