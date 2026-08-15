@@ -64,6 +64,7 @@ changing how pattern IDs are stored.
 | Cache lexer debug flags | `codex/perf-cache-debug-flags` | `b726f38cc19bff81f888eae4df8c8d07c5379c92` | `2550530462cc99394a072a094f6ce16f263be22d` | `LOGOS_BENCH_ROUNDS=500`, 5 runs: 2.280 s mean vs 6.177 s current baseline (2.71x faster; 63.1% lower). Focused generated-matcher specs passed. |
 | Allocation-free priority selection | `codex/perf-priority-loop-post-debug` | `ece0ab4bda216166247a9ce8d47c7673dacb099d` | `33cc9aa7c81e24c7d9f4b1c51c0ec323310e3c2e` | `LOGOS_BENCH_ROUNDS=500`, 5 runs: 2.880 s mean vs 3.494 s current baseline (17.6% faster); median 2.984 s vs 3.469 s (14.0% faster). Generated-matcher, ambiguity, and priority specs passed. |
 | Direct single-pattern generated match | `codex/perf-single-pattern-fastpath` | `ee79cff110a219bb912932982225d0479345e898` | `137ddc94aad517635a6e756aab8efeace5ea9aca` | `LOGOS_BENCH_ROUNDS=500`, 5 runs: 2.165 s mean vs 2.465 s current baseline (12.2% faster); median 2.153 s vs 2.450 s (12.1% faster). Generated-matcher, ambiguity, and priority specs passed. |
+| Direct dispatch for single generated matches | `codex/perf-direct-generated-dispatch` | `21f17e343b6c9f162e142addb95fc121ce2fcf76` | `9cf35cbb289065db8118f9fab5efbb006a2d32fc` | `LOGOS_BENCH_ROUNDS=500`, 5 runs: 536.1 ms ± 51.7 ms vs 1.788 s ± 0.302 s baseline (3.33x faster). Generated-matcher, diagnostics, and edge-case specs passed (26 examples). |
 
 ## Active experiments
 
