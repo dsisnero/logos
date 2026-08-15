@@ -53,12 +53,11 @@ No active experiment. The next experiment must start from the documented baselin
 | Enum metadata constants | `codex/perf-generated-metadata-constants` | `58d2b3d94c558b72f18a0583202d79cfa30d4bcd` | Red compile failed: Crystal rejects enum array constants (`invalid constant value`). The marker commit intentionally contains no invalid source. | Rejected before measurement; branch intentionally not merged. |
 | Elide generated empty prefix-DFA allocation | `codex/perf-elide-generated-empty-prefix` | `7b1137deda708aacdb8575af04e25d8514d9b4cd` | `LOGOS_BENCH_ROUNDS=500`, 5 runs against the cached-byte winner: 6.719 s mean vs 6.766 s (0.7% nominal); median regressed, 6.759 s vs 6.741 s. Focused generated-matcher specs passed. | Rejected as runtime-flat; branch intentionally not merged. |
 | Lazily allocate multi-pattern result arrays | `codex/perf-lazy-multi-pattern-array` | `40791c2ec26e2776e6a11e2f09f4a8757dfd5afd` | `LOGOS_BENCH_ROUNDS=500`, 5 runs: 1.688 s mean vs 1.720 s baseline (1.9% nominal); median 1.684 s vs 1.713 s, within machine variance. Generated-matcher, diagnostics, and edge-case specs passed (26 examples). | Rejected as runtime-flat; branch intentionally not merged. |
+| Tuple fast path for exactly two generated pattern IDs | `codex/perf-two-pattern-fastpath` | `41845bb60e71de09ea659499fa3660f66a6225ee` | Initial 500-round run suggested 1.091 s vs 1.197 s (8.9% faster), but the longer confirmation at 2,000 rounds measured 3.172 s ± 0.459 s vs 1.907 s ± 0.108 s baseline (66.3% slower). Generated-matcher, diagnostics, and edge-case specs passed (27 examples). | Rejected: the longer benchmark disproved the initial noisy result; branch intentionally not merged. |
 
 ## Queue
 
-1. Represent exactly two accepted patterns without a heap array, while
-   preserving priority and ambiguity behavior with generated-matcher specs.
-2. Generate a specialized token dispatch path for manifest-compatible token
+1. Generate a specialized token dispatch path for manifest-compatible token
    definitions, preserving callbacks/errors with contract tests.
-3. Re-profile the long-workload binary after each material winner before
+2. Re-profile the long-workload binary after each material winner before
    attempting another matcher representation change.
