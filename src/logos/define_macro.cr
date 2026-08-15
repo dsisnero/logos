@@ -678,30 +678,6 @@ module Logos
       def self.lex(__lexer : ::Logos::Lexer(self, {{ source_type }}, {{ extras_type }}, {{ error_type }})) : ::Logos::Result(self, {{ error_type }})?
         generated_matcher = ::Logos.generated_matcher?("{{ name }}")
         if generated_matcher
-          pattern_to_variant = [
-            {% for item in all_defs %}
-              {{ item[:variant] }},
-            {% end %}
-          ]
-          pattern_is_skip = [
-            {% for item in all_defs %}
-              {{ item[:skip] }},
-            {% end %}
-          ]
-          pattern_priority = [
-            {% for item in all_defs %}
-              {% if item[:priority] %}
-                {{ item[:priority] }},
-              {% else %}
-                0,
-              {% end %}
-            {% end %}
-          ] of Int32
-          pattern_priority_explicit = [
-            {% for item in all_defs %}
-              {{ !item[:priority].nil? }},
-            {% end %}
-          ]
           pattern_prefix_dfas = [] of ::Regex::Automata::DFA::DFA
           match = generated_matcher.not_nil!.call(
             {% if utf8_flag %}
@@ -744,28 +720,70 @@ module Logos
             end
           end
 
-          # Determine the highest-priority variant without allocating an
-          # intermediate array for every successful token.
-          pattern_id = if pattern_ids.is_a?(::Regex::Automata::PatternID)
-                         pattern_ids
-                       else
-                         highest_priority = pattern_priority[pattern_ids[0].to_i]
+          if generated_matcher && pattern_ids.is_a?(::Regex::Automata::PatternID)
+            # The external generator returns one accepted pattern for the
+            # common case. Emit the action mapping directly: unlike the
+            # runtime-DFA path, no metadata arrays or priority scan are needed.
+            pattern_id = pattern_ids
+            case pattern_id.to_i
+            {% for i in 0...all_defs.size %}
+              {% item = all_defs[i] %}
+            when {{ i }}
+              variant = {{ item[:variant] }}
+              is_skip = {{ item[:skip] }}
+            {% end %}
+            else
+              raise "generated matcher returned an unknown pattern ID"
+            end
+          else
+            if generated_matcher
+              pattern_to_variant = [
+                {% for item in all_defs %}
+                  {{ item[:variant] }},
+                {% end %}
+              ]
+              pattern_is_skip = [
+                {% for item in all_defs %}
+                  {{ item[:skip] }},
+                {% end %}
+              ]
+              pattern_priority = [
+                {% for item in all_defs %}
+                  {% if item[:priority] %}
+                    {{ item[:priority] }},
+                  {% else %}
+                    0,
+                  {% end %}
+                {% end %}
+              ] of Int32
+              pattern_priority_explicit = [
+                {% for item in all_defs %}
+                  {{ !item[:priority].nil? }},
+                {% end %}
+              ]
+            end
+            # Determine the highest-priority variant without allocating an
+            # intermediate array for every successful token.
+            pattern_id = if pattern_ids.is_a?(::Regex::Automata::PatternID)
+                           pattern_ids
+                         else
+                         highest_priority = pattern_priority.not_nil![pattern_ids[0].to_i]
                          selected = pattern_ids[0]
                          highest_priority_count = 1
-                         highest_priority_all_explicit = pattern_priority_explicit[selected.to_i]
+                         highest_priority_all_explicit = pattern_priority_explicit.not_nil![selected.to_i]
                          index = 1
                          while index < pattern_ids.size
                            candidate = pattern_ids[index]
                            candidate_index = candidate.to_i
-                           candidate_priority = pattern_priority[candidate_index]
+                           candidate_priority = pattern_priority.not_nil![candidate_index]
                            if candidate_priority > highest_priority
                              selected = candidate
                              highest_priority = candidate_priority
                              highest_priority_count = 1
-                             highest_priority_all_explicit = pattern_priority_explicit[candidate_index]
+                             highest_priority_all_explicit = pattern_priority_explicit.not_nil![candidate_index]
                            elsif candidate_priority == highest_priority
                              highest_priority_count += 1
-                             highest_priority_all_explicit &&= pattern_priority_explicit[candidate_index]
+                             highest_priority_all_explicit &&= pattern_priority_explicit.not_nil![candidate_index]
                            end
                            index += 1
                          end
@@ -773,9 +791,10 @@ module Logos
                            raise "Patterns with priority #{highest_priority} can match simultaneously."
                          end
                          selected
-                       end
-          variant = pattern_to_variant[pattern_id.to_i]
-          is_skip = pattern_is_skip[pattern_id.to_i]
+                         end
+            variant = pattern_to_variant.not_nil![pattern_id.to_i]
+            is_skip = pattern_is_skip.not_nil![pattern_id.to_i]
+          end
           emitted_variant = variant
 
           # Advance lexer by matched length
