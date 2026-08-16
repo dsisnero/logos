@@ -451,6 +451,7 @@ module Logos
       )?)
       @@debug_enabled = !ENV["LOGOS_DEBUG"]?.nil?
       @@debug_priority_enabled = !ENV["LOGOS_DEBUG_PRIORITY"]?.nil?
+      @@empty_pattern_prefix_dfas = [] of ::Regex::Automata::DFA::DFA
 
       # DFA compilation method
       private def self.compile_dfa : NamedTuple(
@@ -678,7 +679,7 @@ module Logos
       def self.lex(__lexer : ::Logos::Lexer(self, {{ source_type }}, {{ extras_type }}, {{ error_type }})) : ::Logos::Result(self, {{ error_type }})?
         generated_matcher = ::Logos.generated_matcher?("{{ name }}")
         if generated_matcher
-          pattern_prefix_dfas = [] of ::Regex::Automata::DFA::DFA
+          pattern_prefix_dfas = @@empty_pattern_prefix_dfas
           match = generated_matcher.not_nil!.call(
             {% if utf8_flag %}
               __lexer.source_bytes,
