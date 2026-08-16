@@ -1,5 +1,5 @@
 module Logos
-  alias GeneratedPatternIDs = ::Regex::Automata::PatternID | Array(::Regex::Automata::PatternID)
+  alias GeneratedPatternIDs = ::Regex::Automata::PatternID | StaticArray(::Regex::Automata::PatternID, 2) | Array(::Regex::Automata::PatternID)
   alias GeneratedMatch = Tuple(Int32, GeneratedPatternIDs)?
   alias GeneratedMatcher = Proc(::Bytes, Int32, GeneratedMatch)
 
