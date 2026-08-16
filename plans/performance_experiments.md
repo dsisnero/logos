@@ -67,6 +67,7 @@ changing how pattern IDs are stored.
 | Direct dispatch for single generated matches | `codex/perf-direct-generated-dispatch` | `21f17e343b6c9f162e142addb95fc121ce2fcf76` | `9cf35cbb289065db8118f9fab5efbb006a2d32fc` | `LOGOS_BENCH_ROUNDS=500`, 5 runs: 536.1 ms ± 51.7 ms vs 1.788 s ± 0.302 s baseline (3.33x faster). Generated-matcher, diagnostics, and edge-case specs passed (26 examples). |
 | Lazy multi-pattern generated result array | `codex/perf-lazy-pattern-result-post-dispatch` | `1bc454629603e5e97e7675c7a5d105d92d0da4d1` | `c12c54e6270b87a63055b306279dfc76d0d27d96` | `LOGOS_BENCH_ROUNDS=2,000`, 5 runs: 2.748 s ± 0.271 s vs 4.134 s ± 0.275 s baseline (33.5% faster). Generated-matcher, diagnostics, and edge-case specs passed (26 examples). |
 | Inline exactly two generated pattern IDs | `codex/perf-generated-lexer-result-path` | `df199bc011dfa63c6825c1c12f8769108570a75c` | `ecb49188e5c437e6b773759b1bfec1f0045e4297` | `LOGOS_BENCH_ROUNDS=2,000`, 5 runs: 1.006 s ± 0.099 s vs 1.100 s ± 0.043 s baseline (9.3% faster). Focused generated-matcher, diagnostics, and edge-case specs passed (26 examples). |
+| Cache empty prefix-DFA array for generated matches | `codex/perf-cache-empty-prefix-dfas` | `563a8a960bd4250a26e04779361329b1585a1788` | `b5b7efb9093202c8a645655bf2c2c7d508ca53a9` | `LOGOS_BENCH_ROUNDS=2,000`, 5 runs: 543.0 ms ± 47.7 ms vs 632.1 ms ± 38.2 ms baseline (16.4% faster). Focused generated-matcher, diagnostics, and edge-case specs passed (26 examples). |
 
 ## Active experiments
 
