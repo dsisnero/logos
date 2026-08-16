@@ -66,6 +66,7 @@ changing how pattern IDs are stored.
 | Direct single-pattern generated match | `codex/perf-single-pattern-fastpath` | `ee79cff110a219bb912932982225d0479345e898` | `137ddc94aad517635a6e756aab8efeace5ea9aca` | `LOGOS_BENCH_ROUNDS=500`, 5 runs: 2.165 s mean vs 2.465 s current baseline (12.2% faster); median 2.153 s vs 2.450 s (12.1% faster). Generated-matcher, ambiguity, and priority specs passed. |
 | Direct dispatch for single generated matches | `codex/perf-direct-generated-dispatch` | `21f17e343b6c9f162e142addb95fc121ce2fcf76` | `9cf35cbb289065db8118f9fab5efbb006a2d32fc` | `LOGOS_BENCH_ROUNDS=500`, 5 runs: 536.1 ms ± 51.7 ms vs 1.788 s ± 0.302 s baseline (3.33x faster). Generated-matcher, diagnostics, and edge-case specs passed (26 examples). |
 | Lazy multi-pattern generated result array | `codex/perf-lazy-pattern-result-post-dispatch` | `1bc454629603e5e97e7675c7a5d105d92d0da4d1` | `c12c54e6270b87a63055b306279dfc76d0d27d96` | `LOGOS_BENCH_ROUNDS=2,000`, 5 runs: 2.748 s ± 0.271 s vs 4.134 s ± 0.275 s baseline (33.5% faster). Generated-matcher, diagnostics, and edge-case specs passed (26 examples). |
+| Inline exactly two generated pattern IDs | `codex/perf-generated-lexer-result-path` | `df199bc011dfa63c6825c1c12f8769108570a75c` | `ecb49188e5c437e6b773759b1bfec1f0045e4297` | `LOGOS_BENCH_ROUNDS=2,000`, 5 runs: 1.006 s ± 0.099 s vs 1.100 s ± 0.043 s baseline (9.3% faster). Focused generated-matcher, diagnostics, and edge-case specs passed (26 examples). |
 
 ## Active experiments
 
