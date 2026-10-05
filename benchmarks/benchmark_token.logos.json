@@ -3,11 +3,11 @@
   "utf8": true,
   "subpatterns": {},
   "patterns": [
-    {"kind": "token", "pattern": "let"},
-    {"kind": "token", "pattern": "="},
-    {"kind": "token", "pattern": ";"},
-    {"kind": "regex", "pattern": "[ \\t\\r\\n]+"},
-    {"kind": "regex", "pattern": "[A-Za-z_][A-Za-z0-9_]*"},
-    {"kind": "regex", "pattern": "[0-9]+"}
+    {"kind": "token", "pattern": "let", "resolved_priority": 0},
+    {"kind": "token", "pattern": "=", "resolved_priority": 0},
+    {"kind": "token", "pattern": ";", "resolved_priority": 0},
+    {"kind": "regex", "pattern": "[ \\t\\r\\n]+", "resolved_priority": 0},
+    {"kind": "regex", "pattern": "[A-Za-z_][A-Za-z0-9_]*", "resolved_priority": 0},
+    {"kind": "regex", "pattern": "[0-9]+", "resolved_priority": 0}
   ]
 }
