@@ -113,6 +113,22 @@ not use Crystal macros to run external code. Regenerate the output whenever a
 manifest, token definition, or regex-automata version changes; `make clean`
 removes all generated files.
 
+To resolve accepting-state priority during prebuild, every manifest pattern
+may supply an integer `resolved_priority`. This is an opt-in contract: values
+must match the priority used by the consuming lexer. The existing generated
+path uses zero for omitted priorities, so the benchmark manifest records zero
+for all six rules. Ties retain the first DFA-reported pattern, matching that
+path. Set `priority_explicit: true` for explicitly specified priorities; tied
+explicit winners produce a generation error. If any pattern omits
+`resolved_priority`, generation retains the generic multi-pattern result.
+Variant, skip, callbacks, and error handling still use `Logos.define`.
+
+Verify the benchmark's generated/runtime token and span contract with
+`crystal run benchmarks/prebuild_contract.cr` after generating its matcher.
+Run generator priority specs with
+`crystal spec -Dcodegen_library spec/logos/codegen_priority_spec.cr`; the flag
+suppresses the generator command-line entry point when importing it for tests.
+
 ### Porting from Rust
 
 When porting code from Rust (`vendor/regex-syntax/`):
