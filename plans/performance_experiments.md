@@ -26,7 +26,7 @@ into `main` before the next experiment starts.
 
 | Item | Branch | Commit | Status |
 | --- | --- | --- | --- |
-| Current runtime baseline for new experiments | `main` | `137ddc94aad517635a6e756aab8efeace5ea9aca` | Includes the compact prebuilt DFA, stable benchmark harness, UTF-8 safety contract, cached source bytes, cached debug flags, allocation-free priority selection, and direct single-pattern generated matches. All future experiment branches start here. |
+| Current runtime baseline for new experiments | `main` | `da2ab30a68d2ec275490151e07e90337188a2611` | Includes all winners below and opt-in pre-resolved accept priorities. New experiments start from current main, including subsequent ledger-only commits. |
 | Compact prebuilt DFA and offset scanning | `performance-prebuild` | `d02f4a3` | Existing baseline: eliminated runtime DFA construction and remainder-string allocation. |
 | Stable benchmark control and generated UTF-8 safety contract | `performance-prebuild` | `f6b9b6ad2fc382ce27c7775cd25da807c8194954` | Base for all new isolated experiments; merged as a dependency of the first winner. |
 
@@ -34,7 +34,7 @@ into `main` before the next experiment starts.
 
 The current target is **within 4x Rust runtime** for the identical benchmark
 token set and source, measured on this machine in release mode. The baseline is
-currently about **69x slower**, so representation-only micro-optimizations are
+was about **69x slower** in that historical comparison, so representation-only micro-optimizations are
 not enough.
 
 | Implementation | Command workload | Mean | Notes |
@@ -68,6 +68,24 @@ changing how pattern IDs are stored.
 | Lazy multi-pattern generated result array | `codex/perf-lazy-pattern-result-post-dispatch` | `1bc454629603e5e97e7675c7a5d105d92d0da4d1` | `c12c54e6270b87a63055b306279dfc76d0d27d96` | `LOGOS_BENCH_ROUNDS=2,000`, 5 runs: 2.748 s ± 0.271 s vs 4.134 s ± 0.275 s baseline (33.5% faster). Generated-matcher, diagnostics, and edge-case specs passed (26 examples). |
 | Inline exactly two generated pattern IDs | `codex/perf-generated-lexer-result-path` | `df199bc011dfa63c6825c1c12f8769108570a75c` | `ecb49188e5c437e6b773759b1bfec1f0045e4297` | `LOGOS_BENCH_ROUNDS=2,000`, 5 runs: 1.006 s ± 0.099 s vs 1.100 s ± 0.043 s baseline (9.3% faster). Focused generated-matcher, diagnostics, and edge-case specs passed (26 examples). |
 | Cache empty prefix-DFA array for generated matches | `codex/perf-cache-empty-prefix-dfas` | `563a8a960bd4250a26e04779361329b1585a1788` | `b5b7efb9093202c8a645655bf2c2c7d508ca53a9` | `LOGOS_BENCH_ROUNDS=2,000`, 5 runs: 543.0 ms ± 47.7 ms vs 632.1 ms ± 38.2 ms baseline (16.4% faster). Focused generated-matcher, diagnostics, and edge-case specs passed (26 examples). |
+| Resolve accepting-state priorities during prebuild | `codex/perf-direct-generated-actions` | `c0af513615f0b8b4cc9c22d3950924dbb08c8fdf` | `da2ab30a68d2ec275490151e07e90337188a2611` | 2026-10-05, fresh Crystal release binaries, 2,000 rounds, 2 warmups, 7 runs: 620.9 ms ± 39.8 ms vs 1.159 s ± 0.165 s (46.4% less time). Reverse-order confirmation: 568.7 ms ± 24.3 ms vs 920.3 ms ± 47.5 ms (38.2% less time, 1.62x throughput). Opt-in resolved priorities return a single winning pattern ID, eliminating multi-match priority/metadata allocation. |
+
+### Pre-resolved priority verification (2026-10-05)
+
+- `crystal spec -Dcodegen_library spec/logos/codegen_priority_spec.cr spec/logos/generated_matcher_spec.cr spec/logos/diagnostics_spec.cr spec/logos/edgecase_spec.cr`: 28 examples passed.
+- `crystal run benchmarks/prebuild_contract.cr`: generated/runtime token names,
+  spans, whitespace skips, errors, longest matches, and end-of-input agree.
+- `make format` and `make lint`: passed.
+- `make test`: 240 examples, eight failures in legacy `spec/regex/automata/dfa_spec.cr`.
+  Running that file on unchanged baseline main reproduced all eight failures;
+  these are not introduced by the experiment.
+- Release commands: `CRYSTAL_CACHE_DIR=/private/tmp/logos-oct-cache crystal build --release -Dprecompiled benchmarks/lexer_compare.cr -o /private/tmp/logos-resolved-actions`,
+  with baseline built identically from `a4ae684` into `/private/tmp/logos-main-oct`.
+- Timing: `hyperfine --warmup 2 --runs 7 'LOGOS_BENCH_ROUNDS=2000 /private/tmp/logos-main-oct' 'LOGOS_BENCH_ROUNDS=2000 /private/tmp/logos-resolved-actions'`, then repeat in reverse order.
+- No new Rust ratio is claimed: the August Rust measurements are not a current
+  comparison under the October compiler/system conditions.
+- Beads commands could not create a task: the resolved `.beads` directory has
+  no usable database. The committed ledger tracks this experiment.
 
 ## Active experiments
 
