@@ -79,4 +79,10 @@ Remaining feature roadmap:
 
 Completion rule:
 
+DFA dependency follow-up: corrected the eight host DFA failures using Rust's
+delayed-match contract and repaired materialized-index/EOI transformation bugs.
+Host: 240/240; dependency: 336/336. See
+[DFA patch evidence and upstream review](../docs/dfa-parity-fix.md).
+Upstream publication is pending approval; this is not full regex-automata signoff.
+
 Mark a feature `[x]` only after the whole slice is green, the relevant specs use exact behavioral assertions, vendored upstream logic has been checked for any regex-sensitive changes, and the follow-up commit is ready as a coherent feature unit.
