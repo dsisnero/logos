@@ -3,22 +3,21 @@
 ## Where we are
 
 - **Current focus** — [Phase 2, Logos parity inventory and coverage](#phase-2-logos-parity-inventory-and-coverage).
-  The result API and the payload-driven example suite are complete.
+  The payload-driven examples and installed-dependency qualification are
+  complete.
 - **Next up**
-  1. Audit the Logos parity inventory against the pinned upstream and close
-     the coverage gaps it exposes.
-  2. [Qualify the installed shard and generated matchers](#phase-3-installed-dependency-and-generated-matcher-qualification)
-     when a released `regex-automata` includes the DFA fix. Phase 2 can
-     proceed with the verified local shard.
+  1. Curate the source and test inventories for pinned Logos. The discovery
+     run found 269 source items, 122 Rust test functions, and 127 supporting
+     or UI fixture items in the test tree.
+  2. Verify and close the behavior gaps identified by that audit.
 - **Status by area** — Core lexer behavior, the upstream test-file sweep,
-  and the payload examples are complete. The Logos inventory audit is open.
-  Installed-dependency qualification is waiting for a release containing
-  the DFA fix.
-- **Gates** — Format and lint pass. All 253 specs pass with local shard fix
-  `e27d6a9`, including nine executable example checks. Installed
-  `regex-automata` 0.2.0 has a known error in the DFA dead-state removal
-  spec. See the [DFA follow-up](../docs/dfa-parity-fix.md).
-- **Last feature commit** — `feat: migrate payload-driven Logos examples`.
+  payload examples, and dependency qualification are complete. The Logos
+  inventory audit is open.
+- **Gates** — Format and lint pass. All 253 specs pass with installed
+  `regex-automata` 0.2.1, including after a clean frozen install. The
+  standalone DFA regression and ASCII and Unicode generated matcher
+  comparisons pass. See the [DFA follow-up](../docs/dfa-parity-fix.md).
+- **Last feature commit** — `chore: qualify regex-automata 0.2.1 for Logos`.
 
 ## Scope and verification
 
@@ -28,7 +27,7 @@
 - Until Phase 2 is complete, the TSVs under `plans/inventory/` describe the
   historical `regex-syntax` port. The beads export is a stale Phase 1–7
   snapshot. Keep per-symbol and per-test decisions in the inventory.
-- The installed lock selects `regex-automata` 0.2.0 and `regex-syntax` 0.5.0
+- The installed lock selects `regex-automata` 0.2.1 and `regex-syntax` 0.5.0
   at `1623e24`. Verify the resolved shard sources before reporting a gate
   result. The tracked `lib/` snapshots can contain local upgrades.
 - For regex-sensitive behavior, compare the pinned Rust code in
@@ -68,8 +67,10 @@ recorded shard revision.
 
 ### Phase 2. Logos parity inventory and coverage
 
-**Pending.** The test-file sweep established corresponding Crystal files.
-This phase establishes coverage for the upstream behavior within them.
+**In progress.** The test-file sweep established corresponding Crystal files.
+Tree-sitter discovery and all three structural drift checks passed on fresh
+scratch manifests. The committed TSVs remain historical until the behavior
+audit assigns evidence to the discovered Logos items.
 
 - Regenerate the source and test manifests against pinned Logos runtime,
   derive and codegen sources and the upstream test suite. Map each in-scope
@@ -87,9 +88,10 @@ with the recorded shard revision.
 
 ### Phase 3. Installed dependency and generated matcher qualification
 
-**Waiting for a shard release containing the DFA fix.** The local patch in
-`e27d6a9` passes the host regression. See the
-[DFA follow-up](../docs/dfa-parity-fix.md).
+**Complete.** Shard release 0.2.1 includes the DFA fix. The clean frozen
+install, full test suite, and generated matcher comparisons passed.
+The Unicode extras example compiled and agreed with the runtime matcher.
+See the [qualification evidence](../docs/dfa-parity-fix.md#regex-automata-021-qualification).
 
 - Adopt a released shard containing the fix and verify a clean install using
   the committed lockfile. Exercise delayed EOI acceptance, dead-state

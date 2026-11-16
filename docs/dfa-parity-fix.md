@@ -1,7 +1,7 @@
 # DFA failure analysis and upstream patch
 
-See the [0.2.0 follow-up](#follow-up-for-regex-automata-020) for the
-current blocker and patch. The original 0.1.2 analysis follows.
+See the [v0.2.1 qualification](#regex-automata-021-qualification) for the
+current dependency baseline. The original 0.1.2 analysis follows.
 
 ## Verified Rust behavior
 
@@ -111,5 +111,40 @@ CRYSTAL_CACHE_DIR="$PWD/temp/crystal-cache" \
   make test
 ```
 
-The follow-up commit is local. Logos remains locked to the installed 0.2.0
-release, which can be checked against the local fix using the command above.
+The follow-up commit was verified locally against the installed 0.2.0
+release. The released fix and current lockfile are recorded below.
+
+## regex-automata 0.2.1 qualification
+
+Logos now locks `regex-automata` 0.2.1
+(`d5c9ed47f8da084858131d60609f7ae3016fe58d`) and `regex-syntax` 0.5.0 at
+`1623e24e374171bcc165e7ca7e82f5a9fd5336db`. A clean
+`shards install --frozen --local` succeeded in a scratch checkout using
+cached Git repositories and kept the lockfile byte-for-byte intact.
+Both that install and the workspace's installed shards passed 253 specs
+without a shard source override. The standalone reproduction also passes.
+See the [local shard issue](../shards_issues/regex-automata.1.md).
+
+Generated matcher verification used Crystal 1.22.3 and LLVM 23.1.5 on
+AArch64 macOS. The benchmark contract compared variants, errors, and byte
+spans across ASCII input and Unicode rejection. A second contract checked
+Unicode matches and skips in `" éλ 🎉a é"`, with expected spans
+`1...5`, `6...10`, `10...11` (error), and `12...14`.
+
+The Unicode extras example compiled with default optimization, and the
+generated and runtime output matched byte for byte. This check did not
+reproduce the LLVM crash observed with v0.2.0. The command below uses the
+installed shard even when a sibling checkout is present.
+
+```sh
+mkdir -p temp/shard-v021
+crystal run src/logos_codegen.cr -- --manifest examples/extras.logos.json \
+  --out temp/shard-v021/generated_token.cr
+printf 'one two\né λ three 🎉\n' > temp/shard-v021/extras-input.txt
+crystal run examples/extras.cr -- temp/shard-v021/extras-input.txt \
+  > temp/shard-v021/extras-runtime.txt
+CRYSTAL_PATH="$PWD/temp/shard-v021:$(crystal env CRYSTAL_PATH)" \
+  crystal run -Dprecompiled examples/extras.cr -- temp/shard-v021/extras-input.txt \
+  > temp/shard-v021/extras-generated.txt
+diff -u temp/shard-v021/extras-runtime.txt temp/shard-v021/extras-generated.txt
+```
