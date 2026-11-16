@@ -1,7 +1,7 @@
 # ASCII tokens lexer with custom error type.
 #
 # Usage:
-#   crystal run examples/custom_error.cr
+#   crystal run examples/custom_error.cr -- [input]
 
 require "../src/logos"
 
@@ -57,13 +57,13 @@ Logos.define Token do
     end
   end
 
-  regex "[^\x00-\x7F]+", :NonAscii do |lex|
+  regex "[^\x00-\x7F]", :NonAscii do |lex|
     char = lex.slice[0]
     Logos::FilterResult::Error.new(LexingError.non_ascii(char))
   end
 end
 
-lex = Token.lexer("Hello 256 Jérome")
+lex = Token.lexer(ARGV.first? || "Hello 256 Jérome")
 
 while token = lex.next
   break if token.is_a?(Iterator::Stop)
@@ -73,7 +73,7 @@ while token = lex.next
     when Token::Word
       puts "Word: #{lex.slice}"
     when Token::Integer
-      puts "Integer: #{lex.callback_value_as(UInt8)}"
+      puts "Integer: #{result.payload_for!(Token::Integer, UInt8)}"
     else
       # Skip
     end

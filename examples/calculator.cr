@@ -21,14 +21,6 @@ Logos.define Token do
   end
 end
 
-struct TokenEntry
-  getter token : Token
-  getter value : Int64?
-
-  def initialize(@token : Token, @value : Int64?)
-  end
-end
-
 abstract class Expr
   abstract def eval : Int64
 end
@@ -72,7 +64,7 @@ class BinExpr < Expr
     when :mul
       @lhs.eval * @rhs.eval
     when :div
-      @lhs.eval // @rhs.eval
+      @lhs.eval.tdiv(@rhs.eval)
     else
       raise "unknown op"
     end
@@ -96,14 +88,14 @@ class BinExpr < Expr
 end
 
 class Parser
-  def initialize(@tokens : Array(TokenEntry))
+  def initialize(@tokens : Array(Logos::Result(Token, Nil)))
     @index = 0
   end
 
   def parse : Expr
     expr = parse_add_sub
-    if current
-      raise "unexpected token: #{current.not_nil!.token}"
+    if token = current
+      raise "unexpected token: #{token.unwrap}"
     end
     expr
   end
@@ -155,18 +147,14 @@ class Parser
       return expr
     end
 
-    entry = advance
-    raise "expected integer" if entry.nil?
+    result = advance
+    raise "expected integer" unless result && result.matches?(Token::Integer)
 
-    if entry.token == Token::Integer
-      IntExpr.new(entry.value.not_nil!)
-    else
-      raise "expected integer"
-    end
+    IntExpr.new(result.payload_for!(Token::Integer, Int64))
   end
 
   private def match?(token : Token) : Bool
-    if current.try(&.token) == token
+    if current.try(&.matches?(token))
       @index += 1
       true
     else
@@ -180,11 +168,11 @@ class Parser
     end
   end
 
-  private def current : TokenEntry?
+  private def current : Logos::Result(Token, Nil)?
     @tokens[@index]?
   end
 
-  private def advance : TokenEntry?
+  private def advance : Logos::Result(Token, Nil)?
     entry = current
     @index += 1
     entry
@@ -197,21 +185,12 @@ end
 
 input = ARGV.first
 lexer = Token.lexer(input)
-entries = [] of TokenEntry
+tokens = lexer.spanned.map do |(result, span)|
+  raise "lexer error at #{span}" if result.error?
+  result
+end.to_a
 
-while token = lexer.next
-  break if token.is_a?(Iterator::Stop)
-  result = token.as(Logos::Result(Token, Nil))
-  if result.ok?
-    parsed_token = result.unwrap
-    value = lexer.payload_for(result, Token::Integer, Int64)
-    entries << TokenEntry.new(parsed_token, value)
-  else
-    raise "lexer error at #{lexer.span}"
-  end
-end
-
-parser = Parser.new(entries)
+parser = Parser.new(tokens)
 expr = parser.parse
 puts "[AST]\n#{expr}"
 puts "\n[result]\n#{expr.eval}"

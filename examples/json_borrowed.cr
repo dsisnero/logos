@@ -1,4 +1,4 @@
-# JSON parser variant that keeps string slices (no extra copies).
+# JSON parser variant that keeps read-only byte views of its source.
 #
 # Usage:
 #   crystal run examples/json_borrowed.cr -- <path/to/file>
@@ -8,7 +8,14 @@
 
 require "../src/logos"
 
-alias JsonValue = Nil | Bool | Float64 | String | Array(JsonValue) | Hash(String, JsonValue)
+# A raw JSON string, including its quotes and any escape sequences.
+record RawJsonString, bytes : Bytes do
+  def pretty_print(pp : PrettyPrint) : Nil
+    String.new(bytes).pretty_print(pp)
+  end
+end
+
+alias JsonValue = Nil | Bool | Float64 | RawJsonString | Array(JsonValue) | Hash(RawJsonString, JsonValue)
 
 class JsonParseError < Exception
   getter span : Logos::Span
@@ -22,11 +29,11 @@ Logos.define Token do
   error_type Nil
   skip_regex "[ \t\r\n\f]+", :Whitespace
 
-  token "false", :FalseValue do |_lex|
+  token "false", :Boolean do |_lex|
     Logos::Filter::Emit.new(false)
   end
 
-  token "true", :TrueValue do |_lex|
+  token "true", :Boolean do |_lex|
     Logos::Filter::Emit.new(true)
   end
 
@@ -43,8 +50,7 @@ Logos.define Token do
   end
 
   regex %q("([^"\\\x00-\x1F]|\\(["\\bnfrt/]|u[a-fA-F0-9]{4}))*"), :String do |lex|
-    # Use the slice directly (no extra copy).
-    Logos::Filter::Emit.new(lex.slice)
+    Logos::Filter::Emit.new(RawJsonString.new(lex.source_bytes[lex.span]))
   end
 end
 
@@ -60,10 +66,8 @@ private def parse_value(lexer) : JsonValue
 
   if result.ok?
     case result.unwrap
-    when Token::FalseValue
-      false
-    when Token::TrueValue
-      true
+    when Token::Boolean
+      result.payload_for!(Token::Boolean, Bool)
     when Token::BraceOpen
       parse_object(lexer)
     when Token::BracketOpen
@@ -71,9 +75,9 @@ private def parse_value(lexer) : JsonValue
     when Token::Null
       nil
     when Token::Number
-      lexer.callback_value_as(Float64).not_nil!
+      result.payload_for!(Token::Number, Float64)
     when Token::String
-      lexer.callback_value_as(String).not_nil!
+      result.payload_for!(Token::String, RawJsonString)
     else
       raise JsonParseError.new("unexpected token here (context: value)", lexer.span)
     end
@@ -91,13 +95,9 @@ private def parse_array(lexer) : JsonValue
   while result = next_token(lexer)
     if result.ok?
       case result.unwrap
-      when Token::FalseValue
+      when Token::Boolean
         raise JsonParseError.new("unexpected token here (context: array)", lexer.span) if awaits_comma
-        array << false
-        awaits_value = false
-      when Token::TrueValue
-        raise JsonParseError.new("unexpected token here (context: array)", lexer.span) if awaits_comma
-        array << true
+        array << result.payload_for!(Token::Boolean, Bool)
         awaits_value = false
       when Token::BraceOpen
         raise JsonParseError.new("unexpected token here (context: array)", lexer.span) if awaits_comma
@@ -117,11 +117,11 @@ private def parse_array(lexer) : JsonValue
         awaits_value = false
       when Token::Number
         raise JsonParseError.new("unexpected token here (context: array)", lexer.span) if awaits_comma
-        array << lexer.callback_value_as(Float64).not_nil!
+        array << result.payload_for!(Token::Number, Float64)
         awaits_value = false
       when Token::String
         raise JsonParseError.new("unexpected token here (context: array)", lexer.span) if awaits_comma
-        array << lexer.callback_value_as(String).not_nil!
+        array << result.payload_for!(Token::String, RawJsonString)
         awaits_value = false
       else
         raise JsonParseError.new("unexpected token here (context: array)", lexer.span)
@@ -136,7 +136,7 @@ private def parse_array(lexer) : JsonValue
 end
 
 private def parse_object(lexer) : JsonValue
-  map = {} of String => JsonValue
+  map = {} of RawJsonString => JsonValue
   start_span = lexer.span
   awaits_comma = false
   awaits_key = false
@@ -150,7 +150,7 @@ private def parse_object(lexer) : JsonValue
         awaits_key = true if awaits_comma
       when Token::String
         raise JsonParseError.new("unexpected token here (context: object)", lexer.span) if awaits_comma
-        key = lexer.callback_value_as(String).not_nil!
+        key = result.payload_for!(Token::String, RawJsonString)
         next_colon = next_token(lexer)
         if next_colon.nil? || !next_colon.ok? || next_colon.unwrap != Token::Colon
           raise JsonParseError.new("unexpected token here, expecting ':'", lexer.span)

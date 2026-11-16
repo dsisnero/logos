@@ -25,38 +25,20 @@ Logos.define Token do
 end
 
 source = "123 + 45.67 \"hello\""
-lexer = Token.lexer(source)
+results = Token.lex_all(source)
 
 puts "Tokenizing: #{source}"
 puts ""
 
-while result = lexer.next
-  break if result.is_a?(Iterator::Stop)
-
-  if result.ok?
-    token = result.unwrap
-    case token
-    when Token::Integer
-      puts "Integer: #{lexer.payload_for!(result, Token::Integer, Int64)}"
-    when Token::Float
-      puts "Float: #{lexer.payload_for!(result, Token::Float, Float64)}"
-    when Token::String
-      puts "String: #{lexer.payload_for!(result, Token::String, String)}"
-    when Token::Plus
-      puts "Plus"
-    end
-  end
-end
-
-puts ""
-puts "Alternative pattern using callback_value directly:"
-lexer = Token.lexer(source)
-lexer.each do |res|
-  if res.ok?
-    token = res.unwrap
-    value = lexer.callback_value
-
-    puts "#{token}: #{value.inspect}"
-    lexer.clear_callback_value
+results.each do |result|
+  case result.unwrap
+  when Token::Integer
+    puts "Integer: #{result.payload_for!(Token::Integer, Int64)}"
+  when Token::Float
+    puts "Float: #{result.payload_for!(Token::Float, Float64)}"
+  when Token::String
+    puts "String: #{result.payload_for!(Token::String, String)}"
+  when Token::Plus
+    puts "Plus"
   end
 end

@@ -84,8 +84,7 @@ private def get_string_content(lex : Logos::Lexer(StringContext, String, SymbolT
       when StringContext::DollarSign
         io << "$"
       when StringContext::InterpolationStart
-        value = lex.callback_value_as(String)
-        io << value if value
+        io << result.payload_for!(StringContext::InterpolationStart, String)
       when StringContext::Quote
         break
       end
@@ -103,8 +102,7 @@ private def evaluate_interpolation(lex : Logos::Lexer(StringContext, String, Sym
 
       case result.unwrap
       when StringInterpolationContext::Id
-        value = inter.callback_value_as(String)
-        io << value if value
+        io << result.payload_for!(StringInterpolationContext::Id, String)
       when StringInterpolationContext::Quote
         string_lex = inter.clone.morph(StringContext)
         nested = get_string_content(string_lex)
@@ -124,20 +122,6 @@ private def evaluate_interpolation(lex : Logos::Lexer(StringContext, String, Sym
   Logos::Filter::Emit.new(buffer)
 end
 
-private def expect_definition(token, &)
-  if token.is_a?(Iterator::Stop)
-    raise "expected definition"
-  end
-
-  result = token.as(Logos::Result(VariableDefinitionContext, Nil))
-  unless result.ok? && result.unwrap == VariableDefinitionContext::Id
-    raise "expected definition"
-  end
-
-  value = yield
-  value
-end
-
 lex = VariableDefinitionContext.lexer(
   "name = 'Mark'\n" +
   "greeting = 'Hi ${name}!'\n" +
@@ -146,27 +130,7 @@ lex = VariableDefinitionContext.lexer(
   "greeting3 = 'Hi ${name ' ${surname}!'}!'\n"
 )
 
-expect_definition(lex.next) do
-  tuple = lex.callback_value_as(Tuple(String, String)).not_nil!
-  puts "#{tuple[0]} = #{tuple[1]}"
-end
-
-expect_definition(lex.next) do
-  tuple = lex.callback_value_as(Tuple(String, String)).not_nil!
-  puts "#{tuple[0]} = #{tuple[1]}"
-end
-
-expect_definition(lex.next) do
-  tuple = lex.callback_value_as(Tuple(String, String)).not_nil!
-  puts "#{tuple[0]} = #{tuple[1]}"
-end
-
-expect_definition(lex.next) do
-  tuple = lex.callback_value_as(Tuple(String, String)).not_nil!
-  puts "#{tuple[0]} = #{tuple[1]}"
-end
-
-expect_definition(lex.next) do
-  tuple = lex.callback_value_as(Tuple(String, String)).not_nil!
-  puts "#{tuple[0]} = #{tuple[1]}"
+lex.each do |result|
+  name, value = result.payload_for!(VariableDefinitionContext::Id, Tuple(String, String))
+  puts "#{name} = #{value}"
 end

@@ -26,3 +26,25 @@ current callback value.
 - `logos-nxw`: Design token-payload API. Complete.
 - `logos-15n`: Bind typed payload extraction to each result. Complete.
 - `logos-pk9`: Port Rust payload-oriented examples to the result API. Open.
+
+## Executable examples
+
+The [token values example](../examples/token_values.cr) collects the lexer
+results before reading their integer, float, and string payloads.
+The [calculator](../examples/calculator.cr) passes results with their payloads
+to the parser. The custom error, extras, and interpolation examples use
+payloads alongside error results, lexer state, and mode changes. The Crystal
+extras example displays one-based lines and zero-based byte columns. The Rust
+example starts both at zero.
+
+Both JSON examples preserve raw quoted string spelling. The
+[owned example](../examples/json.cr) stores Crystal `String` values. The
+[borrowed example](../examples/json_borrowed.cr) stores read-only `Bytes` views
+into the UTF-8 source, including object keys. It creates strings when pretty
+printing the parsed value. Rust's borrowed example uses `&str` views.
+
+Run the example checks with:
+
+```sh
+crystal spec spec/logos/payload_examples_spec.cr
+```

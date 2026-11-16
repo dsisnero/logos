@@ -2,118 +2,125 @@
 
 ## Where we are
 
-- **Current focus:** `logos-pk9`, port the Rust payload-oriented examples to
-  the result-owned payload API.
-- **Next up:**
-  1. `logos-pk9`: port Rust payload-oriented examples and verify their output.
-  2. Refresh `plans/inventory/*.tsv` against Rust `logos` sources and tests.
-  3. Revalidate the installed dependency when a released shard includes the
-     DFA fix. Use local shard commit `e27d6a9` for verification meanwhile.
-- **Status by area:**
-  - The upstream Logos test sweep is complete. Test inventory refresh remains
-    open, and the existing TSVs cover the historical `regex-syntax` port.
-  - `logos-15n` is complete. Both macro entry points attach callback payloads
-    to the emitted `Result`. The lexer accessors remain available.
-    `logos-pk9` remains open. See [enum payload parity](../docs/enum_payload_parity.md).
-  - The installed lock selects `regex-automata` 0.2.0 and `regex-syntax` 0.5.0
-    at `1623e24`. The shard release records its own signoff against Rust
-    `regex-automata` 0.4.18. Logos' release integration check is still open.
-- **Scoping notes:**
-  - The upgraded syntax shard lowers dot and single-character alternatives to
-    Unicode classes. Rust Logos gives a class priority 2, so the host specs
-    now assert that value and the exact HIR ranges.
-  - The upgraded automata shard uses premultiplied DFA state IDs. Raw fixture
-    rows passed into the constructor use ordinary indices. With a valid
-    fixture, 0.2.0 still fails in `remove_dead_states` because it omits EOI
-    edges from reachability and remapping.
-  - The shard's native DFA wire change requires regenerating artifacts stored
-    in its former binary format. Logos prebuild emits Crystal source.
-  - The installed shard snapshots under `lib/` are tracked and have local
-    upgrade changes. Verify which revision a gate exercises.
-  - `.beads/issues.jsonl` is a stale Phase 1–7 snapshot.
-- **Last commit:** `feat: bind typed callback payloads to lexer results`.
-- **Gates:** Logos format and lint pass. All 244 specs pass with local shard
-  fix `e27d6a9`. The installed 0.2.0 release has a known error in the
-  dead-state removal spec. See [DFA follow-up](../docs/dfa-parity-fix.md).
+- **Current focus** — [Phase 2, Logos parity inventory and coverage](#phase-2-logos-parity-inventory-and-coverage).
+  The result API and the payload-driven example suite are complete.
+- **Next up**
+  1. Audit the Logos parity inventory against the pinned upstream and close
+     the coverage gaps it exposes.
+  2. [Qualify the installed shard and generated matchers](#phase-3-installed-dependency-and-generated-matcher-qualification)
+     when a released `regex-automata` includes the DFA fix. Phase 2 can
+     proceed with the verified local shard.
+- **Status by area** — Core lexer behavior, the upstream test-file sweep,
+  and the payload examples are complete. The Logos inventory audit is open.
+  Installed-dependency qualification is waiting for a release containing
+  the DFA fix.
+- **Gates** — Format and lint pass. All 253 specs pass with local shard fix
+  `e27d6a9`, including nine executable example checks. Installed
+  `regex-automata` 0.2.0 has a known error in the DFA dead-state removal
+  spec. See the [DFA follow-up](../docs/dfa-parity-fix.md).
+- **Last feature commit** — `feat: migrate payload-driven Logos examples`.
 
-Upstream source root: `logos_rust`
+## Scope and verification
 
-Primary parity target:
+- Logos parity targets `maciejhirsz/logos` v0.16.1 (`c7d40fa`) under
+  `logos_rust/`, including the runtime, derive and codegen behavior,
+  `tests/tests/*.rs`, and examples.
+- Until Phase 2 is complete, the TSVs under `plans/inventory/` describe the
+  historical `regex-syntax` port. The beads export is a stale Phase 1–7
+  snapshot. Keep per-symbol and per-test decisions in the inventory.
+- The installed lock selects `regex-automata` 0.2.0 and `regex-syntax` 0.5.0
+  at `1623e24`. Verify the resolved shard sources before reporting a gate
+  result. The tracked `lib/` snapshots can contain local upgrades.
+- For regex-sensitive behavior, compare the pinned Rust code in
+  `vendor/regex-syntax/` or the sibling shard repositories with the Crystal
+  source loaded for the test. Use the shard patch workflow for dependency
+  fixes. Add or tighten a failing behavioral spec before changing behavior.
+- Each phase ends in a coherent commit after its exit criteria and the
+  applicable format, lint, and test gates pass. Refresh **Where we are** with
+  the evidence and any remaining dependency conditions.
 
-- `logos_rust/tests/tests/*.rs`
+## Feature roadmap
 
-Dependency verification sources when a failing Logos case depends on regex internals:
+### Phase 1. Payload-driven examples
 
-- `lib/regex-automata/**` (tracked shard checkout used by `spec/`)
-- `lib/regex-syntax/**` (tracked shard checkout used by `spec/`)
-- `vendor/regex-syntax/**` (Rust reference for the syntax shard)
-- `../regex-automata/` and `../regex-syntax/` (sibling upstream repos)
+**Complete.** All seven payload-oriented Crystal examples read from results.
+The executable checks cover Rust-style integer division, raw JSON key
+equality and error spans, per-character non-ASCII diagnostics, byte columns,
+and nested interpolation. The generated custom-error matcher also passed.
+See [enum payload parity](../docs/enum_payload_parity.md).
 
-Current state:
+- Migrate calculator and token values, owned and borrowed JSON, custom errors,
+  extras, and string interpolation to extract callback data from the result
+  that emitted it. Use the existing Crystal examples as the starting point
+  and compare their behavior with the corresponding Rust examples.
+- Verify the features together through executable examples. Check calculator
+  answers, parsed JSON values, custom error output, word positions, and
+  interpolation output. Preserve error handling, spans where reported, and
+  mode transitions. Verify the borrowed JSON example's handling of raw string
+  slices against the Rust example and document any representation difference.
+- Update usage docs to show typical result payload extraction and explain the
+  existing lexer accessor for current-token reads.
 
-- The active porting target is Rust `logos`, not `regex-syntax`.
-- `plans/inventory/rust_port_inventory.tsv`, `plans/inventory/rust_source_parity.tsv`, and `plans/inventory/rust_test_parity.tsv` are still historical `regex-syntax` ledgers and should not be treated as the current Logos signoff artifact.
-- Remaining work should be finished in the feature slices below. Do not stop after isolated helper changes, single weak assertion upgrades, or one-off regex fixes unless the whole slice is green.
+**Exit criteria.** Each migrated example runs with representative input and
+produces the expected result or diagnostic. Both macro entry points retain
+their payload regression coverage, and the full Logos gates pass with the
+recorded shard revision.
 
-Working rules:
+### Phase 2. Logos parity inventory and coverage
 
-- Verify expected behavior from vendored upstream logic before changing Crystal behavior or patching shard code.
-- If the failing behavior comes from regex compilation or matching semantics, inspect the vendored `regex-automata` and `regex-syntax` logic first, then patch via shard workflow instead of editing `lib/` directly.
-- Keep red-green TDD: add or tighten the failing Logos spec first, implement the fix, then rerun the relevant feature slice.
-- Commit after a full feature slice is green.
+**Pending.** The test-file sweep established corresponding Crystal files.
+This phase establishes coverage for the upstream behavior within them.
 
-Remaining feature roadmap:
+- Regenerate the source and test manifests against pinned Logos runtime,
+  derive and codegen sources and the upstream test suite. Map each in-scope
+  test or API contract to its Crystal implementation and behavioral evidence,
+  or record a specific divergence or exclusion.
+- Check that upstream token, skip, error, and span assertions have Crystal
+  equivalents where relevant. Close gaps found by the audit, grouping fixes
+  with the contract they cover.
+- Record how to reproduce the manifests and run drift checks against the
+  pinned upstream. Include the example evidence from Phase 1 in the signoff.
 
-- [x] Old Logos bugs: regex feature support gaps (`spec/logos/old_logos_bugs_spec.cr`)
-  Exit criteria:
-  - Close the current pending ports for `issue_220`, `issue_272`, `issue_384`, and `issue_420`.
-  - Match upstream token, skip, error, and span behavior with exact assertions.
-  - Use vendored regex logic to decide whether each fix belongs in Logos glue code or in a shard patch.
-  - Status: All four issues have exact assertion specs matching upstream Rust behavior. `issue_272` possessive quantifier `?+` is handled by the parser (treated as `(?)+` repeated quantifier, functionally equivalent for DFA matching). All 52 old_logos_bugs tests pass.
+**Exit criteria.** The current ledgers describe Logos, with a disposition and
+evidence for every in-scope item. Drift checks and the full Logos gates pass
+with the recorded shard revision.
 
-- [x] Old Logos bugs: replace compile-only ports with exact behavioral parity (`spec/logos/old_logos_bugs_spec.cr`)
-  Exit criteria:
-  - Replace weak coverage for `issue_240`, `issue_258`, `issue_261`, `issue_269`, and `issue_336`.
-  - Assert concrete tokens, spans, skipped regions, or error results instead of compile-only or `ok?` checks.
-  - Remove stale comments that still describe already-fixed cases as pending.
+### Phase 3. Installed dependency and generated matcher qualification
 
-- [x] Callback and error semantics hardening (`spec/logos/callbacks_spec.cr`, `spec/logos/custom_error_spec.cr`, `spec/logos/error_callback_spec.cr`)
-  Exit criteria:
-  - Tighten remaining callback specs that still only assert successful compilation or broad success.
-  - Verify token emission, skip behavior, false-return handling, and custom error propagation against upstream behavior.
-  - Keep exact span expectations where callbacks affect lexer advancement.
-  - Status: Ported upstream `return_result_skip`, `skip_callback_function`, and `skip_all_callback_types` tests from Rust `callbacks.rs`. Added error callback propagation and custom error callback tests. 24 callback/error tests pass (was 15).
+**Waiting for a shard release containing the DFA fix.** The local patch in
+`e27d6a9` passes the host regression. See the
+[DFA follow-up](../docs/dfa-parity-fix.md).
 
-- [x] Greedy, source, and lexer-mode parity audit (`spec/logos/greedy_spec.cr`, `spec/logos/source_spec.cr`, `spec/logos/lexer_modes_spec.cr`)
-  Exit criteria:
-  - Audit for weak or Crystal-only assertions and replace them with upstream-equivalent outcomes.
-  - Confirm greedy matching, source slicing, and mode transitions against Rust test intent.
-  - Finish any fixes needed so the full slice passes without pending examples.
-  - Status: Extended greedy detection to test `(a|b.*)` groups. Fixed `Text` regex in lexer_modes from
-    `[^\\x22]` (negated-hex quote) to `[^\\"]` (negated backslash+quote) matching upstream. Ported
-    upstream `EscapedCodepoint`/`EscapedOctal`/`EscapedNewline` morph tests. 19 greedy/source/modes
-    tests pass (was 15).
+- Adopt a released shard containing the fix and verify a clean install using
+  the committed lockfile. Exercise delayed EOI acceptance, dead-state
+  removal, byte-class reduction, and the HIR class and priority expectations
+  on the installed shards.
+- Build generated matcher source and compare its token and span output with
+  the runtime matcher on representative ASCII and Unicode inputs. Recheck
+  the recorded LLVM crash on the Unicode extras example and record the
+  compiler version and verified behavior. The shard's native DFA binary
+  format change applies to persisted DFA blobs. Logos prebuild emits Crystal
+  source.
+- Record the installed versions and gate results in the parity plan so a
+  fresh checkout can reproduce the signoff.
 
-- [x] String, binary, and Unicode edge-case parity audit (`spec/logos/string_spec.cr`, `spec/logos/binary_spec.cr`, `spec/logos/unicode_dot_spec.cr`, `spec/logos/ignore_case_spec.cr`, `spec/logos/edgecase_spec.cr`)
-  Exit criteria:
-  - Audit boundary behavior that depends on byte vs character handling, Unicode classes, or case folding.
-  - Replace broad success checks with exact tokenization and span assertions where still missing.
-  - Verify any regex-engine-sensitive expectations from vendored sources before patching.
-  - Status: Tightened binary `AdvancedByteToken` test from weak `>=6` to exact
-    upstream-matching assertions including error tokens. Added `colors` keyword
-    priority test and `unicode_error_split` emoji span test from upstream
-    `edgecase.rs`. Fixed `trivia` test to assert end-of-stream and error tokens.
-    207 Logos tests pass.
+**Exit criteria.** A clean install passes the full Logos suite without a
+local shard override. The generated matcher checks pass on a verified
+toolchain, with any remaining compiler limitation documented against its
+reproduction.
 
-- [x] Final upstream test sweep (`spec/logos/*.cr`)
-  Exit criteria:
-  - Run the full Logos spec suite and close remaining parity gaps in feature-sized groups rather than one test at a time.
-  - Status: All 207 Logos specs pass. All upstream Rust test files (`logos_rust/tests/tests/*.rs`)
-    have corresponding Crystal spec files. Format and lint were clean at signoff.
+## Completed feature phases
 
-Completion rule:
-
-Mark a feature `[x]` only after the whole slice is green, the relevant specs use exact behavioral assertions, vendored upstream logic has been checked for any regex-sensitive changes, and the follow-up commit is ready as a coherent feature unit.
+- **Core lexer semantics and regression coverage.** Ported the legacy Logos
+  bug cases, including regex gaps in issues 220, 272, 384, and 420 and exact
+  assertion upgrades for 240, 258, 261, 269, and 336. Verified greedy matching,
+  source slicing, mode transitions, byte inputs, Unicode handling, priority,
+  and error spans. The upstream test-file sweep had 207 passing Logos specs.
+- **Callback, error, and result contracts.** Covered callback emission,
+  skips, false returns, custom errors, and span advancement. Both Crystal
+  macro entry points now attach each typed callback payload to its emitted
+  result with regression coverage for consecutive results of the same
+  variant. See [enum payload parity](../docs/enum_payload_parity.md).
 
 ## Intentional divergences
 
@@ -121,6 +128,10 @@ Mark a feature `[x]` only after the whole slice is green, the relevant specs use
   keeps the enum tag and a boxed callback value in `Logos::Result`.
   Typed access uses the variant and expected type. Result equality and hashing
   retain the existing variant/error semantics.
+- **Example output:** The extras example reports one-based lines and
+  zero-based byte columns. Rust reports both from zero. The borrowed JSON
+  example uses read-only byte slices for source views, with string conversion
+  for pretty printing. Rust uses `&str`.
 - **Annotation placement:** Crystal cannot introspect per-variant annotations,
   so `Logos::Token` / `Logos::Regex` mappings are declared at the enum type
   level instead of on individual variants.
