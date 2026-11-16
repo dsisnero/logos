@@ -47,7 +47,7 @@ describe Logos::Pattern do
     end
   end
 
-  describe "AST complexity calculation" do
+  describe "HIR priority calculation" do
     it "calculates complexity for empty" do
       hir = Regex::Syntax::Hir::Hir.new(Regex::Syntax::Hir::Empty.new)
       pattern = Logos::Pattern.new(false, "test", hir)
@@ -63,7 +63,7 @@ describe Logos::Pattern do
     it "calculates complexity for char class" do
       hir = Regex::Syntax::Hir::Hir.dot(Regex::Syntax::Hir::Dot::AnyChar)
       pattern = Logos::Pattern.new(false, "test", hir)
-      pattern.priority.should eq(1)
+      pattern.priority.should eq(2)
     end
 
     it "calculates complexity for concat" do
@@ -71,7 +71,7 @@ describe Logos::Pattern do
       child2 = Regex::Syntax::Hir::Hir.dot(Regex::Syntax::Hir::Dot::AnyChar).node
       hir = Regex::Syntax::Hir::Hir.new(Regex::Syntax::Hir::Concat.new([child1, child2]))
       pattern = Logos::Pattern.new(false, "test", hir)
-      pattern.priority.should eq(3) # 2 + 1
+      pattern.priority.should eq(4) # literal and class each contribute 2
     end
 
     it "calculates complexity for alternation" do
@@ -110,11 +110,10 @@ describe Logos::Pattern do
       end
     end
 
-    it "parses dot" do
+    it "lowers dot to a Unicode class excluding LF" do
       pattern = Logos::Pattern.compile_regex(".")
-      pattern.hir.as(Regex::Syntax::Hir::Hir).node.should be_a(Regex::Syntax::Hir::DotNode)
-      dot_node = pattern.hir.as(Regex::Syntax::Hir::Hir).node.as(Regex::Syntax::Hir::DotNode)
-      dot_node.kind.should eq(Regex::Syntax::Hir::Dot::AnyCharExceptLF)
+      node = pattern.hir.as(Regex::Syntax::Hir::Hir).node.as(Regex::Syntax::Hir::UnicodeClass)
+      node.intervals.should eq([0_u32..9_u32, 11_u32..0x10ffff_u32])
     end
 
     it "parses character class" do
@@ -143,12 +142,10 @@ describe Logos::Pattern do
       repetition.greedy?.should be_true
     end
 
-    it "parses alternation" do
+    it "folds an alternation of single characters into a Unicode class" do
       pattern = Logos::Pattern.compile_regex("a|b")
-      node = pattern.hir.as(Regex::Syntax::Hir::Hir).node
-      node.should be_a(Regex::Syntax::Hir::Alternation)
-      alternation = node.as(Regex::Syntax::Hir::Alternation)
-      alternation.children.size.should eq(2)
+      node = pattern.hir.as(Regex::Syntax::Hir::Hir).node.as(Regex::Syntax::Hir::UnicodeClass)
+      node.intervals.should eq([97_u32..98_u32])
     end
 
     it "parses group" do

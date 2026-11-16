@@ -1,5 +1,8 @@
 # DFA failure analysis and upstream patch
 
+See the [0.2.0 follow-up](#follow-up-for-regex-automata-020) for the
+current blocker and patch. The original 0.1.2 analysis follows.
+
 ## Verified Rust behavior
 
 Source: `vendor/regex-syntax/regex-automata`, revision
@@ -69,3 +72,44 @@ commit, review the diff, and create a PR only with separate approval. Then pin
 the published dependency revision.
 
 Beads tracking is unavailable: `bd ready` reports no beads database found.
+
+## Follow-up for regex-automata 0.2.0
+
+The old patch targets 0.1.2's materialized row indices. Version 0.2.0
+materializes public premultiplied IDs, so the old implementation cannot be
+applied as-is. The release's byte-class reduction passes the host parity specs.
+
+The host dead-state fixture now converts cloned transitions and EOI targets to
+ordinary row indices before constructing an extended DFA. With this valid
+fixture, the 0.2.0 release raises `ArgumentError: invalid 'to' state` inside
+`remove_dead_states` when rebuilding the transition table. A delayed match
+requires the EOI edge to participate in both reachability and remapping.
+
+The follow-up patch traverses public IDs from all start states, includes EOI
+edges, preserves paths to quit, and remaps the compact DFA back to row indices
+for construction. The regression verifies that pruning reduces the DFA,
+preserves the EOI match for `ab`, and still rejects `!`.
+
+- Shard release base `babe0f378e1191c2c851be5e2ebf7d4d759b4e00`.
+- Local commit `e27d6a9524686efee526326b132b892558edbc2e` on
+  `codex/fix-dfa-dead-state-removal` in `temp/regex-automata-v020`.
+- The shard's DFA suite passed 197 specs, including the focused regression.
+  Changed-file format and lint passed. Host format and lint passed.
+  Host tests with the installed release yielded 239 passes and one error.
+  With the local patch first on `CRYSTAL_PATH`, all 240 host specs passed.
+- A generated ASCII matcher compiled and tokenized `abc!` as a word and
+  punctuation. The Unicode extras example generated source and passed type
+  checking. Crystal 1.22.3 with LLVM 23.1.5 crashed at default optimization
+  during machine-code generation for that example.
+
+Reproduce the host run with the local patch from the Logos root:
+
+```bash
+mkdir -p temp/crystal-cache
+CRYSTAL_CACHE_DIR="$PWD/temp/crystal-cache" \
+  CRYSTAL_PATH="$PWD/temp/regex-automata-v020/src:$(crystal env CRYSTAL_PATH)" \
+  make test
+```
+
+The follow-up commit is local. Logos remains locked to the installed 0.2.0
+release, which can be checked against the local fix using the command above.

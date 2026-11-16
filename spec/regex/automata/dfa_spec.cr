@@ -19,8 +19,10 @@ module Regex::Automata::DFASpec
   end
 
   describe DFA::Builder do
-    it "creates DFA builder" do
-      DFA::Builder.new(nfa: NFA::Builder.new.build).should be_a(DFA::Builder)
+    it "builds a DFA from a never-match NFA" do
+      dfa = DFA::Builder.from_nfa(NFA::NFA.never_match).build
+      dfa.find_longest_match("").should be_nil
+      dfa.find_longest_match("a").should be_nil
     end
 
     it "builds DFA from simple literal NFA" do
@@ -46,11 +48,17 @@ module Regex::Automata::DFASpec
 
     it "removes unreachable states without losing delayed matches" do
       original = DFASpec.literal_dfa("ab")
-      table = original.tt.as(DFA::TransitionTable)
-      states = original.states.dup
+      # The constructor takes row indices. Materialized states expose
+      # premultiplied IDs in v0.2.0.
+      states = original.states.map_with_index do |state, index|
+        copy = state.dup(StateID.new(index))
+        copy.next.map! { |id| StateID.new(original.to_index(id)) }
+        copy.eoi_next = StateID.new(original.to_index(copy.eoi_next))
+        copy
+      end
       states << DFA::State.new(StateID.new(states.size), original.byte_classes)
-      extended = DFA::DFA.new(states, nil, StateID.new(table.to_index(original.start)),
-        original.byte_classifier, StateID.new(table.to_index(original.start_anchored)))
+      extended = DFA::DFA.new(states, nil, StateID.new(original.to_index(original.start)),
+        original.byte_classifier, StateID.new(original.to_index(original.start_anchored)))
       optimized = extended.remove_dead_states
       optimized.size.should be < extended.size
       DFASpec.assert_eoi_match(optimized, "ab")

@@ -1,5 +1,46 @@
 # Rust `logos` Parity Plan
 
+## Where we are
+
+- **Current focus:** finish validating the upgrade to `regex-automata` 0.2.0
+  and restore a green Logos suite on the installed dependency.
+- **Next up:**
+  1. The DFA fix is committed locally as `e27d6a9`. Use the local checkout
+     for verification until a released shard includes the fix. The installed
+     0.2.0 baseline remains open.
+  2. `logos-15n`: attach typed callback payloads to the returned
+     `Logos::Result`. Both macro entry points must preserve a result's payload
+     after the lexer advances, including consecutive tokens of the same
+     variant. Keep the existing lexer accessors compatible.
+  3. `logos-pk9`: port the Rust payload-oriented examples using that API.
+  4. Refresh `plans/inventory/*.tsv` against Rust `logos` sources and tests.
+- **Status by area:**
+  - The upstream Logos test sweep is complete. Test inventory refresh remains
+    open, and the existing TSVs cover the historical `regex-syntax` port.
+  - Enum payload parity is in progress. `Lexer#payload_for` checks the variant
+    but reads mutable lexer state, so an older result can see a newer token's
+    payload. `logos-15n` and `logos-pk9` remain open.
+  - The installed lock selects `regex-automata` 0.2.0 and `regex-syntax` 0.5.0
+    at `1623e24`. The shard release records its own signoff against Rust
+    `regex-automata` 0.4.18. Logos' release integration check is still open.
+- **Scoping notes:**
+  - The upgraded syntax shard lowers dot and single-character alternatives to
+    Unicode classes. Rust Logos gives a class priority 2, so the host specs
+    now assert that value and the exact HIR ranges.
+  - The upgraded automata shard uses premultiplied DFA state IDs. Raw fixture
+    rows passed into the constructor use ordinary indices. With a valid
+    fixture, 0.2.0 still fails in `remove_dead_states` because it omits EOI
+    edges from reachability and remapping.
+  - The shard's native DFA wire change requires regenerating artifacts stored
+    in its former binary format. Logos prebuild emits Crystal source.
+  - The installed shard snapshots under `lib/` are tracked and have local
+    upgrade changes. Verify which revision a gate exercises.
+  - `.beads/issues.jsonl` is a stale Phase 1–7 snapshot.
+- **Last commit:** `test: check Logos against regex-automata 0.2.0` records
+  the upgrade checks. See [DFA follow-up](../docs/dfa-parity-fix.md).
+- **Gates:** Logos format and lint pass. The installed 0.2.0 release has
+  one error in 240 specs. All 240 pass with local shard fix `e27d6a9`.
+
 Upstream source root: `logos_rust`
 
 Primary parity target:
@@ -8,10 +49,10 @@ Primary parity target:
 
 Dependency verification sources when a failing Logos case depends on regex internals:
 
-- `vendor/regex-automata/**`
-- `vendor/regex-syntax/**`
-- `../regex-automata/vendor/**`
-- `../regex-syntax/vendor/**`
+- `lib/regex-automata/**` (tracked shard checkout used by `spec/`)
+- `lib/regex-syntax/**` (tracked shard checkout used by `spec/`)
+- `vendor/regex-syntax/**` (Rust reference for the syntax shard)
+- `../regex-automata/` and `../regex-syntax/` (sibling upstream repos)
 
 Current state:
 
@@ -69,20 +110,26 @@ Remaining feature roadmap:
     `edgecase.rs`. Fixed `trivia` test to assert end-of-stream and error tokens.
     207 Logos tests pass.
 
-- [x] Final upstream test sweep and inventory refresh (`spec/logos/*.cr`, `plans/inventory/*`)
+- [x] Final upstream test sweep (`spec/logos/*.cr`)
   Exit criteria:
   - Run the full Logos spec suite and close remaining parity gaps in feature-sized groups rather than one test at a time.
-  - Refresh the parity inventory so it tracks Rust `logos` sources and tests instead of the old `regex-syntax` baseline.
-  - Mark the roadmap complete only after the refreshed inventory, full specs, lint, and format checks are green.
   - Status: All 207 Logos specs pass. All upstream Rust test files (`logos_rust/tests/tests/*.rs`)
-    have corresponding Crystal spec files. Format and lint are clean. Parity plan fully checked off.
+    have corresponding Crystal spec files. Format and lint were clean at signoff.
 
 Completion rule:
 
-DFA dependency follow-up: corrected the eight host DFA failures using Rust's
-delayed-match contract and repaired materialized-index/EOI transformation bugs.
-Host: 240/240; dependency: 336/336. See
-[DFA patch evidence and upstream review](../docs/dfa-parity-fix.md).
-Upstream publication is pending approval; this is not full regex-automata signoff.
-
 Mark a feature `[x]` only after the whole slice is green, the relevant specs use exact behavioral assertions, vendored upstream logic has been checked for any regex-sensitive changes, and the follow-up commit is ready as a coherent feature unit.
+
+## Intentional divergences
+
+- **Enum payloads:** Rust `logos` attaches data to enum variants; Crystal enums
+  cannot, so payloads travel through `Lexer#callback_value_as(T)` until the
+  `logos-15n` typed extraction API lands.
+- **Annotation placement:** Crystal cannot introspect per-variant annotations,
+  so `Logos::Token` / `Logos::Regex` mappings are declared at the enum type
+  level instead of on individual variants.
+- **Byte-oriented patterns:** Rust infers non-UTF-8 patterns and rejects them in
+  the `regex-non-utf8` UI test; the Crystal port requires the explicit
+  `bytes: true` flag.
+- **`export_dir`:** the Rust-only `export_dir` derive option is not implemented;
+  the Crystal equivalent is `make prebuild MANIFEST=... OUT=...`.
