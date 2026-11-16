@@ -1,0 +1,12 @@
+{
+  "base": "logos_rust",
+  "parser_requested": "tree-sitter",
+  "backend": "chiasmus-tree-sitter",
+  "binary": "chiasmus-discover --language rust --dir logos_rust --parser tree-sitter",
+  "include_paths": [
+    "logos-codegen/src",
+    "logos-derive/src",
+    "src"
+  ],
+  "exclude_patterns": []
+}

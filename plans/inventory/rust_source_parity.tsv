@@ -1,878 +1,270 @@
 # source_api_id	status	crystal_refs	notes
-src/ast/mod.rs::enum::AssertionKind	missing	-	baseline
-src/ast/mod.rs::enum::Ast	missing	-	baseline
-src/ast/mod.rs::enum::ClassAsciiKind	missing	-	baseline
-src/ast/mod.rs::enum::ClassPerlKind	missing	-	baseline
-src/ast/mod.rs::enum::ClassSet	missing	-	baseline
-src/ast/mod.rs::enum::ClassSetBinaryOpKind	missing	-	baseline
-src/ast/mod.rs::enum::ClassSetItem	missing	-	baseline
-src/ast/mod.rs::enum::ClassUnicodeKind	missing	-	baseline
-src/ast/mod.rs::enum::ClassUnicodeOpKind	missing	-	baseline
-src/ast/mod.rs::enum::ErrorKind	missing	-	baseline
-src/ast/mod.rs::enum::Flag	missing	-	baseline
-src/ast/mod.rs::enum::FlagsItemKind	missing	-	baseline
-src/ast/mod.rs::enum::GroupKind	missing	-	baseline
-src/ast/mod.rs::enum::HexLiteralKind	missing	-	baseline
-src/ast/mod.rs::enum::LiteralKind	missing	-	baseline
-src/ast/mod.rs::enum::RepetitionKind	missing	-	baseline
-src/ast/mod.rs::enum::RepetitionRange	missing	-	baseline
-src/ast/mod.rs::enum::SpecialLiteralKind	missing	-	baseline
-src/ast/mod.rs::func::add_item	missing	-	baseline
-src/ast/mod.rs::func::alternation	missing	-	baseline
-src/ast/mod.rs::func::assertion	missing	-	baseline
-src/ast/mod.rs::func::auxiliary_span	missing	-	baseline
-src/ast/mod.rs::func::byte	missing	-	baseline
-src/ast/mod.rs::func::capture_index	missing	-	baseline
-src/ast/mod.rs::func::class_bracketed	missing	-	baseline
-src/ast/mod.rs::func::class_perl	missing	-	baseline
-src/ast/mod.rs::func::class_unicode	missing	-	baseline
-src/ast/mod.rs::func::concat	missing	-	baseline
-src/ast/mod.rs::func::digits	missing	-	baseline
-src/ast/mod.rs::func::dot	missing	-	baseline
-src/ast/mod.rs::func::empty	missing	-	baseline
-src/ast/mod.rs::func::flag_state	missing	-	baseline
-src/ast/mod.rs::func::flags	missing	-	baseline
-src/ast/mod.rs::func::from_name	missing	-	baseline
-src/ast/mod.rs::func::group	missing	-	baseline
-src/ast/mod.rs::func::into_ast	missing	-	baseline
-src/ast/mod.rs::func::into_item	missing	-	baseline
-src/ast/mod.rs::func::is_capturing	missing	-	baseline
-src/ast/mod.rs::func::is_empty	missing	-	baseline
-src/ast/mod.rs::func::is_equal	missing	-	baseline
-src/ast/mod.rs::func::is_negated	missing	-	baseline
-src/ast/mod.rs::func::is_negation	missing	-	baseline
-src/ast/mod.rs::func::is_one_line	missing	-	baseline
-src/ast/mod.rs::func::is_valid	missing	-	baseline
-src/ast/mod.rs::func::kind	missing	-	baseline
-src/ast/mod.rs::func::literal	missing	-	baseline
-src/ast/mod.rs::func::new	missing	-	baseline
-src/ast/mod.rs::func::pattern	missing	-	baseline
-src/ast/mod.rs::func::push	missing	-	baseline
-src/ast/mod.rs::func::repetition	missing	-	baseline
-src/ast/mod.rs::func::span	missing	-	baseline
-src/ast/mod.rs::func::splat	missing	-	baseline
-src/ast/mod.rs::func::union	missing	-	baseline
-src/ast/mod.rs::func::with_end	missing	-	baseline
-src/ast/mod.rs::func::with_start	missing	-	baseline
-src/ast/mod.rs::method::Alternation.into_ast	missing	-	baseline
-src/ast/mod.rs::method::Ast.empty	missing	-	baseline
-src/ast/mod.rs::method::ClassAsciiKind.from_name	missing	-	baseline
-src/ast/mod.rs::method::ClassSet.union	missing	-	baseline
-src/ast/mod.rs::method::ClassSetItem.span	missing	-	baseline
-src/ast/mod.rs::method::ClassSetRange.is_valid	missing	-	baseline
-src/ast/mod.rs::method::ClassSetUnion.push	missing	-	baseline
-src/ast/mod.rs::method::ClassUnicode.is_negated	missing	-	baseline
-src/ast/mod.rs::method::ClassUnicodeOpKind.is_equal	missing	-	baseline
-src/ast/mod.rs::method::Concat.into_ast	missing	-	baseline
-src/ast/mod.rs::method::Error.kind	missing	-	baseline
-src/ast/mod.rs::method::Flags.add_item	missing	-	baseline
-src/ast/mod.rs::method::FlagsItemKind.is_negation	missing	-	baseline
-src/ast/mod.rs::method::Group.flags	missing	-	baseline
-src/ast/mod.rs::method::HexLiteralKind.digits	missing	-	baseline
-src/ast/mod.rs::method::Literal.byte	missing	-	baseline
-src/ast/mod.rs::method::Position.new	missing	-	baseline
-src/ast/mod.rs::method::RepetitionRange.is_valid	missing	-	baseline
-src/ast/mod.rs::method::Span.new	missing	-	baseline
-src/ast/mod.rs::struct::Alternation	missing	-	baseline
-src/ast/mod.rs::struct::Assertion	missing	-	baseline
-src/ast/mod.rs::struct::CaptureName	missing	-	baseline
-src/ast/mod.rs::struct::ClassAscii	missing	-	baseline
-src/ast/mod.rs::struct::ClassBracketed	missing	-	baseline
-src/ast/mod.rs::struct::ClassPerl	missing	-	baseline
-src/ast/mod.rs::struct::ClassSetBinaryOp	missing	-	baseline
-src/ast/mod.rs::struct::ClassSetRange	missing	-	baseline
-src/ast/mod.rs::struct::ClassSetUnion	missing	-	baseline
-src/ast/mod.rs::struct::ClassUnicode	missing	-	baseline
-src/ast/mod.rs::struct::Comment	missing	-	baseline
-src/ast/mod.rs::struct::Concat	missing	-	baseline
-src/ast/mod.rs::struct::Error	missing	-	baseline
-src/ast/mod.rs::struct::Flags	missing	-	baseline
-src/ast/mod.rs::struct::FlagsItem	missing	-	baseline
-src/ast/mod.rs::struct::Group	missing	-	baseline
-src/ast/mod.rs::struct::Literal	missing	-	baseline
-src/ast/mod.rs::struct::Position	missing	-	baseline
-src/ast/mod.rs::struct::Repetition	missing	-	baseline
-src/ast/mod.rs::struct::RepetitionOp	missing	-	baseline
-src/ast/mod.rs::struct::SetFlags	missing	-	baseline
-src/ast/mod.rs::struct::Span	missing	-	baseline
-src/ast/mod.rs::struct::WithComments	missing	-	baseline
-src/ast/parse.rs::func::build	missing	-	baseline
-src/ast/parse.rs::func::empty_min_range	missing	-	baseline
-src/ast/parse.rs::func::ignore_whitespace	missing	-	baseline
-src/ast/parse.rs::func::nest_limit	missing	-	baseline
-src/ast/parse.rs::func::new	missing	-	baseline
-src/ast/parse.rs::func::octal	missing	-	baseline
-src/ast/parse.rs::func::parse	missing	-	baseline
-src/ast/parse.rs::func::parse_with_comments	missing	-	baseline
-src/ast/parse.rs::method::Parser.new	missing	-	baseline
-src/ast/parse.rs::method::ParserBuilder.new	missing	-	baseline
-src/ast/parse.rs::struct::Parser	missing	-	baseline
-src/ast/parse.rs::struct::ParserBuilder	missing	-	baseline
-src/ast/print.rs::func::new	missing	-	baseline
-src/ast/print.rs::method::Printer.new	missing	-	baseline
-src/ast/print.rs::struct::Printer	missing	-	baseline
-src/ast/visitor.rs::trait::Visitor	missing	-	baseline
-src/either.rs::enum::Either	missing	-	baseline
-src/error.rs::enum::Error	missing	-	baseline
-src/error.rs::struct::Formatter	missing	-	baseline
-src/hir/interval.rs::func::case_fold_simple	missing	-	baseline
-src/hir/interval.rs::func::difference	missing	-	baseline
-src/hir/interval.rs::func::intersect	missing	-	baseline
-src/hir/interval.rs::func::intervals	missing	-	baseline
-src/hir/interval.rs::func::iter	missing	-	baseline
-src/hir/interval.rs::func::negate	missing	-	baseline
-src/hir/interval.rs::func::push	missing	-	baseline
-src/hir/interval.rs::func::symmetric_difference	missing	-	baseline
-src/hir/interval.rs::func::union	missing	-	baseline
-src/hir/interval.rs::struct::IntervalSet	missing	-	baseline
-src/hir/interval.rs::struct::IntervalSetIter	missing	-	baseline
-src/hir/interval.rs::trait::Bound	missing	-	baseline
-src/hir/interval.rs::trait::Interval	missing	-	baseline
-src/hir/literal.rs::enum::ExtractKind	missing	-	baseline
-src/hir/literal.rs::func::as_bytes	missing	-	baseline
-src/hir/literal.rs::func::cross_forward	missing	-	baseline
-src/hir/literal.rs::func::cross_reverse	missing	-	baseline
-src/hir/literal.rs::func::dedup	missing	-	baseline
-src/hir/literal.rs::func::empty	missing	-	baseline
-src/hir/literal.rs::func::extend	missing	-	baseline
-src/hir/literal.rs::func::extract	missing	-	baseline
-src/hir/literal.rs::func::infinite	missing	-	baseline
-src/hir/literal.rs::func::into_bytes	missing	-	baseline
-src/hir/literal.rs::func::is_empty	missing	-	baseline
-src/hir/literal.rs::func::is_exact	missing	-	baseline
-src/hir/literal.rs::func::is_finite	missing	-	baseline
-src/hir/literal.rs::func::is_inexact	missing	-	baseline
-src/hir/literal.rs::func::is_prefix	missing	-	baseline
-src/hir/literal.rs::func::is_suffix	missing	-	baseline
-src/hir/literal.rs::func::keep_first_bytes	missing	-	baseline
-src/hir/literal.rs::func::keep_last_bytes	missing	-	baseline
-src/hir/literal.rs::func::kind	missing	-	baseline
-src/hir/literal.rs::func::len	missing	-	baseline
-src/hir/literal.rs::func::limit_class	missing	-	baseline
-src/hir/literal.rs::func::limit_literal_len	missing	-	baseline
-src/hir/literal.rs::func::limit_repeat	missing	-	baseline
-src/hir/literal.rs::func::limit_total	missing	-	baseline
-src/hir/literal.rs::func::literals	missing	-	baseline
-src/hir/literal.rs::func::longest_common_prefix	missing	-	baseline
-src/hir/literal.rs::func::longest_common_suffix	missing	-	baseline
-src/hir/literal.rs::func::make_inexact	missing	-	baseline
-src/hir/literal.rs::func::make_infinite	missing	-	baseline
-src/hir/literal.rs::func::max_cross_len	missing	-	baseline
-src/hir/literal.rs::func::max_literal_len	missing	-	baseline
-src/hir/literal.rs::func::max_union_len	missing	-	baseline
-src/hir/literal.rs::func::min_literal_len	missing	-	baseline
-src/hir/literal.rs::func::minimize_by_preference	missing	-	baseline
-src/hir/literal.rs::func::new	missing	-	baseline
-src/hir/literal.rs::func::optimize_for_prefix_by_preference	missing	-	baseline
-src/hir/literal.rs::func::optimize_for_suffix_by_preference	missing	-	baseline
-src/hir/literal.rs::func::push	missing	-	baseline
-src/hir/literal.rs::func::rank	missing	-	baseline
-src/hir/literal.rs::func::reverse	missing	-	baseline
-src/hir/literal.rs::func::reverse_literals	missing	-	baseline
-src/hir/literal.rs::func::singleton	missing	-	baseline
-src/hir/literal.rs::func::sort	missing	-	baseline
-src/hir/literal.rs::func::union	missing	-	baseline
-src/hir/literal.rs::func::union_into_empty	missing	-	baseline
-src/hir/literal.rs::method::ExtractKind.is_prefix	missing	-	baseline
-src/hir/literal.rs::method::Extractor.new	missing	-	baseline
-src/hir/literal.rs::method::Seq.empty	missing	-	baseline
-src/hir/literal.rs::struct::Extractor	missing	-	baseline
-src/hir/literal.rs::struct::Literal	missing	-	baseline
-src/hir/literal.rs::struct::Seq	missing	-	baseline
-src/hir/mod.rs::enum::Class	missing	-	baseline
-src/hir/mod.rs::enum::Dot	missing	-	baseline
-src/hir/mod.rs::enum::ErrorKind	missing	-	baseline
-src/hir/mod.rs::enum::HirKind	missing	-	baseline
-src/hir/mod.rs::enum::Look	missing	-	baseline
-src/hir/mod.rs::func::alternation	missing	-	baseline
-src/hir/mod.rs::func::capture	missing	-	baseline
-src/hir/mod.rs::func::case_fold_simple	missing	-	baseline
-src/hir/mod.rs::func::class	missing	-	baseline
-src/hir/mod.rs::func::concat	missing	-	baseline
-src/hir/mod.rs::func::contains	missing	-	baseline
-src/hir/mod.rs::func::contains_anchor	missing	-	baseline
-src/hir/mod.rs::func::contains_anchor_crlf	missing	-	baseline
-src/hir/mod.rs::func::contains_anchor_haystack	missing	-	baseline
-src/hir/mod.rs::func::contains_anchor_lf	missing	-	baseline
-src/hir/mod.rs::func::contains_anchor_line	missing	-	baseline
-src/hir/mod.rs::func::contains_word	missing	-	baseline
-src/hir/mod.rs::func::contains_word_ascii	missing	-	baseline
-src/hir/mod.rs::func::contains_word_unicode	missing	-	baseline
-src/hir/mod.rs::func::difference	missing	-	baseline
-src/hir/mod.rs::func::dot	missing	-	baseline
-src/hir/mod.rs::func::empty	missing	-	baseline
-src/hir/mod.rs::func::end	missing	-	baseline
-src/hir/mod.rs::func::explicit_captures_len	missing	-	baseline
-src/hir/mod.rs::func::fail	missing	-	baseline
-src/hir/mod.rs::func::full	missing	-	baseline
-src/hir/mod.rs::func::insert	missing	-	baseline
-src/hir/mod.rs::func::intersect	missing	-	baseline
-src/hir/mod.rs::func::into_kind	missing	-	baseline
-src/hir/mod.rs::func::is_alternation_literal	missing	-	baseline
-src/hir/mod.rs::func::is_ascii	missing	-	baseline
-src/hir/mod.rs::func::is_empty	missing	-	baseline
-src/hir/mod.rs::func::is_literal	missing	-	baseline
-src/hir/mod.rs::func::is_utf8	missing	-	baseline
-src/hir/mod.rs::func::iter	missing	-	baseline
-src/hir/mod.rs::func::kind	missing	-	baseline
-src/hir/mod.rs::func::len	missing	-	baseline
-src/hir/mod.rs::func::literal	missing	-	baseline
-src/hir/mod.rs::func::look	missing	-	baseline
-src/hir/mod.rs::func::look_set	missing	-	baseline
-src/hir/mod.rs::func::look_set_prefix	missing	-	baseline
-src/hir/mod.rs::func::look_set_prefix_any	missing	-	baseline
-src/hir/mod.rs::func::look_set_suffix	missing	-	baseline
-src/hir/mod.rs::func::look_set_suffix_any	missing	-	baseline
-src/hir/mod.rs::func::maximum_len	missing	-	baseline
-src/hir/mod.rs::func::memory_usage	missing	-	baseline
-src/hir/mod.rs::func::minimum_len	missing	-	baseline
-src/hir/mod.rs::func::negate	missing	-	baseline
-src/hir/mod.rs::func::new	missing	-	baseline
-src/hir/mod.rs::func::pattern	missing	-	baseline
-src/hir/mod.rs::func::properties	missing	-	baseline
-src/hir/mod.rs::func::push	missing	-	baseline
-src/hir/mod.rs::func::ranges	missing	-	baseline
-src/hir/mod.rs::func::read_repr	missing	-	baseline
-src/hir/mod.rs::func::remove	missing	-	baseline
-src/hir/mod.rs::func::repetition	missing	-	baseline
-src/hir/mod.rs::func::set_insert	missing	-	baseline
-src/hir/mod.rs::func::set_intersect	missing	-	baseline
-src/hir/mod.rs::func::set_remove	missing	-	baseline
-src/hir/mod.rs::func::set_subtract	missing	-	baseline
-src/hir/mod.rs::func::set_union	missing	-	baseline
-src/hir/mod.rs::func::singleton	missing	-	baseline
-src/hir/mod.rs::func::span	missing	-	baseline
-src/hir/mod.rs::func::start	missing	-	baseline
-src/hir/mod.rs::func::static_explicit_captures_len	missing	-	baseline
-src/hir/mod.rs::func::subs	missing	-	baseline
-src/hir/mod.rs::func::subtract	missing	-	baseline
-src/hir/mod.rs::func::symmetric_difference	missing	-	baseline
-src/hir/mod.rs::func::to_byte_class	missing	-	baseline
-src/hir/mod.rs::func::to_unicode_class	missing	-	baseline
-src/hir/mod.rs::func::try_case_fold_simple	missing	-	baseline
-src/hir/mod.rs::func::union	missing	-	baseline
-src/hir/mod.rs::func::with	missing	-	baseline
-src/hir/mod.rs::func::write_repr	missing	-	baseline
-src/hir/mod.rs::method::Class.case_fold_simple	missing	-	baseline
-src/hir/mod.rs::method::ClassBytesRange.new	missing	-	baseline
-src/hir/mod.rs::method::ClassUnicodeRange.new	missing	-	baseline
-src/hir/mod.rs::method::Error.kind	missing	-	baseline
-src/hir/mod.rs::method::Hir.empty	missing	-	baseline
-src/hir/mod.rs::method::Hir.kind	missing	-	baseline
-src/hir/mod.rs::method::HirKind.subs	missing	-	baseline
-src/hir/mod.rs::method::LookSet.empty	missing	-	baseline
-src/hir/mod.rs::method::Properties.minimum_len	missing	-	baseline
-src/hir/mod.rs::method::Repetition.with	missing	-	baseline
-src/hir/mod.rs::struct::Capture	missing	-	baseline
-src/hir/mod.rs::struct::ClassBytes	missing	-	baseline
-src/hir/mod.rs::struct::ClassBytesIter	missing	-	baseline
-src/hir/mod.rs::struct::ClassBytesRange	missing	-	baseline
-src/hir/mod.rs::struct::ClassUnicode	missing	-	baseline
-src/hir/mod.rs::struct::ClassUnicodeIter	missing	-	baseline
-src/hir/mod.rs::struct::ClassUnicodeRange	missing	-	baseline
-src/hir/mod.rs::struct::Error	missing	-	baseline
-src/hir/mod.rs::struct::Hir	missing	-	baseline
-src/hir/mod.rs::struct::Literal	missing	-	baseline
-src/hir/mod.rs::struct::LookSet	missing	-	baseline
-src/hir/mod.rs::struct::LookSetIter	missing	-	baseline
-src/hir/mod.rs::struct::Properties	missing	-	baseline
-src/hir/mod.rs::struct::Repetition	missing	-	baseline
-src/hir/print.rs::func::new	missing	-	baseline
-src/hir/print.rs::method::Printer.new	missing	-	baseline
-src/hir/print.rs::struct::Printer	missing	-	baseline
-src/hir/translate.rs::func::build	missing	-	baseline
-src/hir/translate.rs::func::case_insensitive	missing	-	baseline
-src/hir/translate.rs::func::crlf	missing	-	baseline
-src/hir/translate.rs::func::dot_matches_new_line	missing	-	baseline
-src/hir/translate.rs::func::line_terminator	missing	-	baseline
-src/hir/translate.rs::func::multi_line	missing	-	baseline
-src/hir/translate.rs::func::new	missing	-	baseline
-src/hir/translate.rs::func::swap_greed	missing	-	baseline
-src/hir/translate.rs::func::translate	missing	-	baseline
-src/hir/translate.rs::func::unicode	missing	-	baseline
-src/hir/translate.rs::func::utf8	missing	-	baseline
-src/hir/translate.rs::method::Translator.new	missing	-	baseline
-src/hir/translate.rs::method::TranslatorBuilder.new	missing	-	baseline
-src/hir/translate.rs::struct::Translator	missing	-	baseline
-src/hir/translate.rs::struct::TranslatorBuilder	missing	-	baseline
-src/hir/visitor.rs::trait::Visitor	missing	-	baseline
-src/lib.rs::func::escape	missing	-	baseline
-src/lib.rs::func::escape_into	missing	-	baseline
-src/lib.rs::func::is_escapeable_character	missing	-	baseline
-src/lib.rs::func::is_meta_character	missing	-	baseline
-src/lib.rs::func::is_word_byte	missing	-	baseline
-src/lib.rs::func::is_word_character	missing	-	baseline
-src/lib.rs::func::try_is_word_character	missing	-	baseline
-src/parser.rs::func::build	missing	-	baseline
-src/parser.rs::func::case_insensitive	missing	-	baseline
-src/parser.rs::func::crlf	missing	-	baseline
-src/parser.rs::func::dot_matches_new_line	missing	-	baseline
-src/parser.rs::func::ignore_whitespace	missing	-	baseline
-src/parser.rs::func::line_terminator	missing	-	baseline
-src/parser.rs::func::multi_line	missing	-	baseline
-src/parser.rs::func::nest_limit	missing	-	baseline
-src/parser.rs::func::new	missing	-	baseline
-src/parser.rs::func::octal	missing	-	baseline
-src/parser.rs::func::parse	missing	-	baseline
-src/parser.rs::func::swap_greed	missing	-	baseline
-src/parser.rs::func::unicode	missing	-	baseline
-src/parser.rs::func::utf8	missing	-	baseline
-src/parser.rs::method::Parser.new	missing	-	baseline
-src/parser.rs::method::ParserBuilder.new	missing	-	baseline
-src/parser.rs::struct::Parser	missing	-	baseline
-src/parser.rs::struct::ParserBuilder	missing	-	baseline
-src/unicode.rs::enum::ClassQuery	missing	-	baseline
-src/unicode.rs::enum::Error	missing	-	baseline
-src/unicode.rs::func::class	missing	-	baseline
-src/unicode.rs::func::hir_class	missing	-	baseline
-src/unicode.rs::func::is_word_character	missing	-	baseline
-src/unicode.rs::func::mapping	missing	-	baseline
-src/unicode.rs::func::new	missing	-	baseline
-src/unicode.rs::func::overlaps	missing	-	baseline
-src/unicode.rs::func::perl_digit	missing	-	baseline
-src/unicode.rs::func::perl_space	missing	-	baseline
-src/unicode.rs::func::perl_word	missing	-	baseline
-src/unicode.rs::method::SimpleCaseFolder.new	missing	-	baseline
-src/unicode.rs::struct::CaseFoldError	missing	-	baseline
-src/unicode.rs::struct::SimpleCaseFolder	missing	-	baseline
-src/unicode.rs::struct::UnicodeWordError	missing	-	baseline
-src/unicode_tables/age.rs::const::BY_NAME	missing	-	baseline
-src/unicode_tables/age.rs::const::V10_0	missing	-	baseline
-src/unicode_tables/age.rs::const::V11_0	missing	-	baseline
-src/unicode_tables/age.rs::const::V12_0	missing	-	baseline
-src/unicode_tables/age.rs::const::V12_1	missing	-	baseline
-src/unicode_tables/age.rs::const::V13_0	missing	-	baseline
-src/unicode_tables/age.rs::const::V14_0	missing	-	baseline
-src/unicode_tables/age.rs::const::V15_0	missing	-	baseline
-src/unicode_tables/age.rs::const::V15_1	missing	-	baseline
-src/unicode_tables/age.rs::const::V16_0	missing	-	baseline
-src/unicode_tables/age.rs::const::V1_1	missing	-	baseline
-src/unicode_tables/age.rs::const::V2_0	missing	-	baseline
-src/unicode_tables/age.rs::const::V2_1	missing	-	baseline
-src/unicode_tables/age.rs::const::V3_0	missing	-	baseline
-src/unicode_tables/age.rs::const::V3_1	missing	-	baseline
-src/unicode_tables/age.rs::const::V3_2	missing	-	baseline
-src/unicode_tables/age.rs::const::V4_0	missing	-	baseline
-src/unicode_tables/age.rs::const::V4_1	missing	-	baseline
-src/unicode_tables/age.rs::const::V5_0	missing	-	baseline
-src/unicode_tables/age.rs::const::V5_1	missing	-	baseline
-src/unicode_tables/age.rs::const::V5_2	missing	-	baseline
-src/unicode_tables/age.rs::const::V6_0	missing	-	baseline
-src/unicode_tables/age.rs::const::V6_1	missing	-	baseline
-src/unicode_tables/age.rs::const::V6_2	missing	-	baseline
-src/unicode_tables/age.rs::const::V6_3	missing	-	baseline
-src/unicode_tables/age.rs::const::V7_0	missing	-	baseline
-src/unicode_tables/age.rs::const::V8_0	missing	-	baseline
-src/unicode_tables/age.rs::const::V9_0	missing	-	baseline
-src/unicode_tables/case_folding_simple.rs::const::CASE_FOLDING_SIMPLE	missing	-	baseline
-src/unicode_tables/general_category.rs::const::BY_NAME	missing	-	baseline
-src/unicode_tables/general_category.rs::const::CASED_LETTER	missing	-	baseline
-src/unicode_tables/general_category.rs::const::CLOSE_PUNCTUATION	missing	-	baseline
-src/unicode_tables/general_category.rs::const::CONNECTOR_PUNCTUATION	missing	-	baseline
-src/unicode_tables/general_category.rs::const::CONTROL	missing	-	baseline
-src/unicode_tables/general_category.rs::const::CURRENCY_SYMBOL	missing	-	baseline
-src/unicode_tables/general_category.rs::const::DASH_PUNCTUATION	missing	-	baseline
-src/unicode_tables/general_category.rs::const::DECIMAL_NUMBER	missing	-	baseline
-src/unicode_tables/general_category.rs::const::ENCLOSING_MARK	missing	-	baseline
-src/unicode_tables/general_category.rs::const::FINAL_PUNCTUATION	missing	-	baseline
-src/unicode_tables/general_category.rs::const::FORMAT	missing	-	baseline
-src/unicode_tables/general_category.rs::const::INITIAL_PUNCTUATION	missing	-	baseline
-src/unicode_tables/general_category.rs::const::LETTER	missing	-	baseline
-src/unicode_tables/general_category.rs::const::LETTER_NUMBER	missing	-	baseline
-src/unicode_tables/general_category.rs::const::LINE_SEPARATOR	missing	-	baseline
-src/unicode_tables/general_category.rs::const::LOWERCASE_LETTER	missing	-	baseline
-src/unicode_tables/general_category.rs::const::MARK	missing	-	baseline
-src/unicode_tables/general_category.rs::const::MATH_SYMBOL	missing	-	baseline
-src/unicode_tables/general_category.rs::const::MODIFIER_LETTER	missing	-	baseline
-src/unicode_tables/general_category.rs::const::MODIFIER_SYMBOL	missing	-	baseline
-src/unicode_tables/general_category.rs::const::NONSPACING_MARK	missing	-	baseline
-src/unicode_tables/general_category.rs::const::NUMBER	missing	-	baseline
-src/unicode_tables/general_category.rs::const::OPEN_PUNCTUATION	missing	-	baseline
-src/unicode_tables/general_category.rs::const::OTHER	missing	-	baseline
-src/unicode_tables/general_category.rs::const::OTHER_LETTER	missing	-	baseline
-src/unicode_tables/general_category.rs::const::OTHER_NUMBER	missing	-	baseline
-src/unicode_tables/general_category.rs::const::OTHER_PUNCTUATION	missing	-	baseline
-src/unicode_tables/general_category.rs::const::OTHER_SYMBOL	missing	-	baseline
-src/unicode_tables/general_category.rs::const::PARAGRAPH_SEPARATOR	missing	-	baseline
-src/unicode_tables/general_category.rs::const::PRIVATE_USE	missing	-	baseline
-src/unicode_tables/general_category.rs::const::PUNCTUATION	missing	-	baseline
-src/unicode_tables/general_category.rs::const::SEPARATOR	missing	-	baseline
-src/unicode_tables/general_category.rs::const::SPACE_SEPARATOR	missing	-	baseline
-src/unicode_tables/general_category.rs::const::SPACING_MARK	missing	-	baseline
-src/unicode_tables/general_category.rs::const::SYMBOL	missing	-	baseline
-src/unicode_tables/general_category.rs::const::TITLECASE_LETTER	missing	-	baseline
-src/unicode_tables/general_category.rs::const::UNASSIGNED	missing	-	baseline
-src/unicode_tables/general_category.rs::const::UPPERCASE_LETTER	missing	-	baseline
-src/unicode_tables/grapheme_cluster_break.rs::const::BY_NAME	missing	-	baseline
-src/unicode_tables/grapheme_cluster_break.rs::const::CONTROL	missing	-	baseline
-src/unicode_tables/grapheme_cluster_break.rs::const::CR	missing	-	baseline
-src/unicode_tables/grapheme_cluster_break.rs::const::EXTEND	missing	-	baseline
-src/unicode_tables/grapheme_cluster_break.rs::const::L	missing	-	baseline
-src/unicode_tables/grapheme_cluster_break.rs::const::LF	missing	-	baseline
-src/unicode_tables/grapheme_cluster_break.rs::const::LV	missing	-	baseline
-src/unicode_tables/grapheme_cluster_break.rs::const::LVT	missing	-	baseline
-src/unicode_tables/grapheme_cluster_break.rs::const::PREPEND	missing	-	baseline
-src/unicode_tables/grapheme_cluster_break.rs::const::REGIONAL_INDICATOR	missing	-	baseline
-src/unicode_tables/grapheme_cluster_break.rs::const::SPACINGMARK	missing	-	baseline
-src/unicode_tables/grapheme_cluster_break.rs::const::T	missing	-	baseline
-src/unicode_tables/grapheme_cluster_break.rs::const::V	missing	-	baseline
-src/unicode_tables/grapheme_cluster_break.rs::const::ZWJ	missing	-	baseline
-src/unicode_tables/perl_decimal.rs::const::BY_NAME	missing	-	baseline
-src/unicode_tables/perl_decimal.rs::const::DECIMAL_NUMBER	missing	-	baseline
-src/unicode_tables/perl_space.rs::const::BY_NAME	missing	-	baseline
-src/unicode_tables/perl_space.rs::const::WHITE_SPACE	missing	-	baseline
-src/unicode_tables/perl_word.rs::const::PERL_WORD	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::ALPHABETIC	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::ASCII_HEX_DIGIT	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::BIDI_CONTROL	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::BIDI_MIRRORED	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::BY_NAME	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::CASED	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::CASE_IGNORABLE	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::CHANGES_WHEN_CASEFOLDED	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::CHANGES_WHEN_CASEMAPPED	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::CHANGES_WHEN_LOWERCASED	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::CHANGES_WHEN_TITLECASED	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::CHANGES_WHEN_UPPERCASED	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::DASH	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::DEFAULT_IGNORABLE_CODE_POINT	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::DEPRECATED	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::DIACRITIC	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::EMOJI	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::EMOJI_COMPONENT	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::EMOJI_MODIFIER	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::EMOJI_MODIFIER_BASE	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::EMOJI_PRESENTATION	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::EXTENDED_PICTOGRAPHIC	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::EXTENDER	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::GRAPHEME_BASE	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::GRAPHEME_EXTEND	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::GRAPHEME_LINK	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::HEX_DIGIT	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::HYPHEN	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::IDEOGRAPHIC	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::IDS_BINARY_OPERATOR	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::IDS_TRINARY_OPERATOR	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::IDS_UNARY_OPERATOR	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::ID_COMPAT_MATH_CONTINUE	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::ID_COMPAT_MATH_START	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::ID_CONTINUE	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::ID_START	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::INCB	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::JOIN_CONTROL	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::LOGICAL_ORDER_EXCEPTION	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::LOWERCASE	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::MATH	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::MODIFIER_COMBINING_MARK	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::NONCHARACTER_CODE_POINT	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::OTHER_ALPHABETIC	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::OTHER_DEFAULT_IGNORABLE_CODE_POINT	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::OTHER_GRAPHEME_EXTEND	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::OTHER_ID_CONTINUE	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::OTHER_ID_START	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::OTHER_LOWERCASE	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::OTHER_MATH	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::OTHER_UPPERCASE	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::PATTERN_SYNTAX	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::PATTERN_WHITE_SPACE	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::PREPENDED_CONCATENATION_MARK	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::QUOTATION_MARK	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::RADICAL	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::REGIONAL_INDICATOR	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::SENTENCE_TERMINAL	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::SOFT_DOTTED	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::TERMINAL_PUNCTUATION	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::UNIFIED_IDEOGRAPH	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::UPPERCASE	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::VARIATION_SELECTOR	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::WHITE_SPACE	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::XID_CONTINUE	missing	-	baseline
-src/unicode_tables/property_bool.rs::const::XID_START	missing	-	baseline
-src/unicode_tables/property_names.rs::const::PROPERTY_NAMES	missing	-	baseline
-src/unicode_tables/property_values.rs::const::PROPERTY_VALUES	missing	-	baseline
-src/unicode_tables/script.rs::const::ADLAM	missing	-	baseline
-src/unicode_tables/script.rs::const::AHOM	missing	-	baseline
-src/unicode_tables/script.rs::const::ANATOLIAN_HIEROGLYPHS	missing	-	baseline
-src/unicode_tables/script.rs::const::ARABIC	missing	-	baseline
-src/unicode_tables/script.rs::const::ARMENIAN	missing	-	baseline
-src/unicode_tables/script.rs::const::AVESTAN	missing	-	baseline
-src/unicode_tables/script.rs::const::BALINESE	missing	-	baseline
-src/unicode_tables/script.rs::const::BAMUM	missing	-	baseline
-src/unicode_tables/script.rs::const::BASSA_VAH	missing	-	baseline
-src/unicode_tables/script.rs::const::BATAK	missing	-	baseline
-src/unicode_tables/script.rs::const::BENGALI	missing	-	baseline
-src/unicode_tables/script.rs::const::BHAIKSUKI	missing	-	baseline
-src/unicode_tables/script.rs::const::BOPOMOFO	missing	-	baseline
-src/unicode_tables/script.rs::const::BRAHMI	missing	-	baseline
-src/unicode_tables/script.rs::const::BRAILLE	missing	-	baseline
-src/unicode_tables/script.rs::const::BUGINESE	missing	-	baseline
-src/unicode_tables/script.rs::const::BUHID	missing	-	baseline
-src/unicode_tables/script.rs::const::BY_NAME	missing	-	baseline
-src/unicode_tables/script.rs::const::CANADIAN_ABORIGINAL	missing	-	baseline
-src/unicode_tables/script.rs::const::CARIAN	missing	-	baseline
-src/unicode_tables/script.rs::const::CAUCASIAN_ALBANIAN	missing	-	baseline
-src/unicode_tables/script.rs::const::CHAKMA	missing	-	baseline
-src/unicode_tables/script.rs::const::CHAM	missing	-	baseline
-src/unicode_tables/script.rs::const::CHEROKEE	missing	-	baseline
-src/unicode_tables/script.rs::const::CHORASMIAN	missing	-	baseline
-src/unicode_tables/script.rs::const::COMMON	missing	-	baseline
-src/unicode_tables/script.rs::const::COPTIC	missing	-	baseline
-src/unicode_tables/script.rs::const::CUNEIFORM	missing	-	baseline
-src/unicode_tables/script.rs::const::CYPRIOT	missing	-	baseline
-src/unicode_tables/script.rs::const::CYPRO_MINOAN	missing	-	baseline
-src/unicode_tables/script.rs::const::CYRILLIC	missing	-	baseline
-src/unicode_tables/script.rs::const::DESERET	missing	-	baseline
-src/unicode_tables/script.rs::const::DEVANAGARI	missing	-	baseline
-src/unicode_tables/script.rs::const::DIVES_AKURU	missing	-	baseline
-src/unicode_tables/script.rs::const::DOGRA	missing	-	baseline
-src/unicode_tables/script.rs::const::DUPLOYAN	missing	-	baseline
-src/unicode_tables/script.rs::const::EGYPTIAN_HIEROGLYPHS	missing	-	baseline
-src/unicode_tables/script.rs::const::ELBASAN	missing	-	baseline
-src/unicode_tables/script.rs::const::ELYMAIC	missing	-	baseline
-src/unicode_tables/script.rs::const::ETHIOPIC	missing	-	baseline
-src/unicode_tables/script.rs::const::GARAY	missing	-	baseline
-src/unicode_tables/script.rs::const::GEORGIAN	missing	-	baseline
-src/unicode_tables/script.rs::const::GLAGOLITIC	missing	-	baseline
-src/unicode_tables/script.rs::const::GOTHIC	missing	-	baseline
-src/unicode_tables/script.rs::const::GRANTHA	missing	-	baseline
-src/unicode_tables/script.rs::const::GREEK	missing	-	baseline
-src/unicode_tables/script.rs::const::GUJARATI	missing	-	baseline
-src/unicode_tables/script.rs::const::GUNJALA_GONDI	missing	-	baseline
-src/unicode_tables/script.rs::const::GURMUKHI	missing	-	baseline
-src/unicode_tables/script.rs::const::GURUNG_KHEMA	missing	-	baseline
-src/unicode_tables/script.rs::const::HAN	missing	-	baseline
-src/unicode_tables/script.rs::const::HANGUL	missing	-	baseline
-src/unicode_tables/script.rs::const::HANIFI_ROHINGYA	missing	-	baseline
-src/unicode_tables/script.rs::const::HANUNOO	missing	-	baseline
-src/unicode_tables/script.rs::const::HATRAN	missing	-	baseline
-src/unicode_tables/script.rs::const::HEBREW	missing	-	baseline
-src/unicode_tables/script.rs::const::HIRAGANA	missing	-	baseline
-src/unicode_tables/script.rs::const::IMPERIAL_ARAMAIC	missing	-	baseline
-src/unicode_tables/script.rs::const::INHERITED	missing	-	baseline
-src/unicode_tables/script.rs::const::INSCRIPTIONAL_PAHLAVI	missing	-	baseline
-src/unicode_tables/script.rs::const::INSCRIPTIONAL_PARTHIAN	missing	-	baseline
-src/unicode_tables/script.rs::const::JAVANESE	missing	-	baseline
-src/unicode_tables/script.rs::const::KAITHI	missing	-	baseline
-src/unicode_tables/script.rs::const::KANNADA	missing	-	baseline
-src/unicode_tables/script.rs::const::KATAKANA	missing	-	baseline
-src/unicode_tables/script.rs::const::KAWI	missing	-	baseline
-src/unicode_tables/script.rs::const::KAYAH_LI	missing	-	baseline
-src/unicode_tables/script.rs::const::KHAROSHTHI	missing	-	baseline
-src/unicode_tables/script.rs::const::KHITAN_SMALL_SCRIPT	missing	-	baseline
-src/unicode_tables/script.rs::const::KHMER	missing	-	baseline
-src/unicode_tables/script.rs::const::KHOJKI	missing	-	baseline
-src/unicode_tables/script.rs::const::KHUDAWADI	missing	-	baseline
-src/unicode_tables/script.rs::const::KIRAT_RAI	missing	-	baseline
-src/unicode_tables/script.rs::const::LAO	missing	-	baseline
-src/unicode_tables/script.rs::const::LATIN	missing	-	baseline
-src/unicode_tables/script.rs::const::LEPCHA	missing	-	baseline
-src/unicode_tables/script.rs::const::LIMBU	missing	-	baseline
-src/unicode_tables/script.rs::const::LINEAR_A	missing	-	baseline
-src/unicode_tables/script.rs::const::LINEAR_B	missing	-	baseline
-src/unicode_tables/script.rs::const::LISU	missing	-	baseline
-src/unicode_tables/script.rs::const::LYCIAN	missing	-	baseline
-src/unicode_tables/script.rs::const::LYDIAN	missing	-	baseline
-src/unicode_tables/script.rs::const::MAHAJANI	missing	-	baseline
-src/unicode_tables/script.rs::const::MAKASAR	missing	-	baseline
-src/unicode_tables/script.rs::const::MALAYALAM	missing	-	baseline
-src/unicode_tables/script.rs::const::MANDAIC	missing	-	baseline
-src/unicode_tables/script.rs::const::MANICHAEAN	missing	-	baseline
-src/unicode_tables/script.rs::const::MARCHEN	missing	-	baseline
-src/unicode_tables/script.rs::const::MASARAM_GONDI	missing	-	baseline
-src/unicode_tables/script.rs::const::MEDEFAIDRIN	missing	-	baseline
-src/unicode_tables/script.rs::const::MEETEI_MAYEK	missing	-	baseline
-src/unicode_tables/script.rs::const::MENDE_KIKAKUI	missing	-	baseline
-src/unicode_tables/script.rs::const::MEROITIC_CURSIVE	missing	-	baseline
-src/unicode_tables/script.rs::const::MEROITIC_HIEROGLYPHS	missing	-	baseline
-src/unicode_tables/script.rs::const::MIAO	missing	-	baseline
-src/unicode_tables/script.rs::const::MODI	missing	-	baseline
-src/unicode_tables/script.rs::const::MONGOLIAN	missing	-	baseline
-src/unicode_tables/script.rs::const::MRO	missing	-	baseline
-src/unicode_tables/script.rs::const::MULTANI	missing	-	baseline
-src/unicode_tables/script.rs::const::MYANMAR	missing	-	baseline
-src/unicode_tables/script.rs::const::NABATAEAN	missing	-	baseline
-src/unicode_tables/script.rs::const::NAG_MUNDARI	missing	-	baseline
-src/unicode_tables/script.rs::const::NANDINAGARI	missing	-	baseline
-src/unicode_tables/script.rs::const::NEWA	missing	-	baseline
-src/unicode_tables/script.rs::const::NEW_TAI_LUE	missing	-	baseline
-src/unicode_tables/script.rs::const::NKO	missing	-	baseline
-src/unicode_tables/script.rs::const::NUSHU	missing	-	baseline
-src/unicode_tables/script.rs::const::NYIAKENG_PUACHUE_HMONG	missing	-	baseline
-src/unicode_tables/script.rs::const::OGHAM	missing	-	baseline
-src/unicode_tables/script.rs::const::OLD_HUNGARIAN	missing	-	baseline
-src/unicode_tables/script.rs::const::OLD_ITALIC	missing	-	baseline
-src/unicode_tables/script.rs::const::OLD_NORTH_ARABIAN	missing	-	baseline
-src/unicode_tables/script.rs::const::OLD_PERMIC	missing	-	baseline
-src/unicode_tables/script.rs::const::OLD_PERSIAN	missing	-	baseline
-src/unicode_tables/script.rs::const::OLD_SOGDIAN	missing	-	baseline
-src/unicode_tables/script.rs::const::OLD_SOUTH_ARABIAN	missing	-	baseline
-src/unicode_tables/script.rs::const::OLD_TURKIC	missing	-	baseline
-src/unicode_tables/script.rs::const::OLD_UYGHUR	missing	-	baseline
-src/unicode_tables/script.rs::const::OL_CHIKI	missing	-	baseline
-src/unicode_tables/script.rs::const::OL_ONAL	missing	-	baseline
-src/unicode_tables/script.rs::const::ORIYA	missing	-	baseline
-src/unicode_tables/script.rs::const::OSAGE	missing	-	baseline
-src/unicode_tables/script.rs::const::OSMANYA	missing	-	baseline
-src/unicode_tables/script.rs::const::PAHAWH_HMONG	missing	-	baseline
-src/unicode_tables/script.rs::const::PALMYRENE	missing	-	baseline
-src/unicode_tables/script.rs::const::PAU_CIN_HAU	missing	-	baseline
-src/unicode_tables/script.rs::const::PHAGS_PA	missing	-	baseline
-src/unicode_tables/script.rs::const::PHOENICIAN	missing	-	baseline
-src/unicode_tables/script.rs::const::PSALTER_PAHLAVI	missing	-	baseline
-src/unicode_tables/script.rs::const::REJANG	missing	-	baseline
-src/unicode_tables/script.rs::const::RUNIC	missing	-	baseline
-src/unicode_tables/script.rs::const::SAMARITAN	missing	-	baseline
-src/unicode_tables/script.rs::const::SAURASHTRA	missing	-	baseline
-src/unicode_tables/script.rs::const::SHARADA	missing	-	baseline
-src/unicode_tables/script.rs::const::SHAVIAN	missing	-	baseline
-src/unicode_tables/script.rs::const::SIDDHAM	missing	-	baseline
-src/unicode_tables/script.rs::const::SIGNWRITING	missing	-	baseline
-src/unicode_tables/script.rs::const::SINHALA	missing	-	baseline
-src/unicode_tables/script.rs::const::SOGDIAN	missing	-	baseline
-src/unicode_tables/script.rs::const::SORA_SOMPENG	missing	-	baseline
-src/unicode_tables/script.rs::const::SOYOMBO	missing	-	baseline
-src/unicode_tables/script.rs::const::SUNDANESE	missing	-	baseline
-src/unicode_tables/script.rs::const::SUNUWAR	missing	-	baseline
-src/unicode_tables/script.rs::const::SYLOTI_NAGRI	missing	-	baseline
-src/unicode_tables/script.rs::const::SYRIAC	missing	-	baseline
-src/unicode_tables/script.rs::const::TAGALOG	missing	-	baseline
-src/unicode_tables/script.rs::const::TAGBANWA	missing	-	baseline
-src/unicode_tables/script.rs::const::TAI_LE	missing	-	baseline
-src/unicode_tables/script.rs::const::TAI_THAM	missing	-	baseline
-src/unicode_tables/script.rs::const::TAI_VIET	missing	-	baseline
-src/unicode_tables/script.rs::const::TAKRI	missing	-	baseline
-src/unicode_tables/script.rs::const::TAMIL	missing	-	baseline
-src/unicode_tables/script.rs::const::TANGSA	missing	-	baseline
-src/unicode_tables/script.rs::const::TANGUT	missing	-	baseline
-src/unicode_tables/script.rs::const::TELUGU	missing	-	baseline
-src/unicode_tables/script.rs::const::THAANA	missing	-	baseline
-src/unicode_tables/script.rs::const::THAI	missing	-	baseline
-src/unicode_tables/script.rs::const::TIBETAN	missing	-	baseline
-src/unicode_tables/script.rs::const::TIFINAGH	missing	-	baseline
-src/unicode_tables/script.rs::const::TIRHUTA	missing	-	baseline
-src/unicode_tables/script.rs::const::TODHRI	missing	-	baseline
-src/unicode_tables/script.rs::const::TOTO	missing	-	baseline
-src/unicode_tables/script.rs::const::TULU_TIGALARI	missing	-	baseline
-src/unicode_tables/script.rs::const::UGARITIC	missing	-	baseline
-src/unicode_tables/script.rs::const::VAI	missing	-	baseline
-src/unicode_tables/script.rs::const::VITHKUQI	missing	-	baseline
-src/unicode_tables/script.rs::const::WANCHO	missing	-	baseline
-src/unicode_tables/script.rs::const::WARANG_CITI	missing	-	baseline
-src/unicode_tables/script.rs::const::YEZIDI	missing	-	baseline
-src/unicode_tables/script.rs::const::YI	missing	-	baseline
-src/unicode_tables/script.rs::const::ZANABAZAR_SQUARE	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::ADLAM	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::AHOM	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::ANATOLIAN_HIEROGLYPHS	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::ARABIC	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::ARMENIAN	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::AVESTAN	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::BALINESE	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::BAMUM	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::BASSA_VAH	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::BATAK	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::BENGALI	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::BHAIKSUKI	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::BOPOMOFO	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::BRAHMI	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::BRAILLE	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::BUGINESE	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::BUHID	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::BY_NAME	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::CANADIAN_ABORIGINAL	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::CARIAN	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::CAUCASIAN_ALBANIAN	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::CHAKMA	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::CHAM	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::CHEROKEE	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::CHORASMIAN	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::COMMON	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::COPTIC	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::CUNEIFORM	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::CYPRIOT	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::CYPRO_MINOAN	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::CYRILLIC	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::DESERET	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::DEVANAGARI	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::DIVES_AKURU	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::DOGRA	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::DUPLOYAN	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::EGYPTIAN_HIEROGLYPHS	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::ELBASAN	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::ELYMAIC	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::ETHIOPIC	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::GARAY	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::GEORGIAN	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::GLAGOLITIC	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::GOTHIC	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::GRANTHA	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::GREEK	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::GUJARATI	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::GUNJALA_GONDI	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::GURMUKHI	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::GURUNG_KHEMA	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::HAN	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::HANGUL	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::HANIFI_ROHINGYA	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::HANUNOO	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::HATRAN	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::HEBREW	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::HIRAGANA	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::IMPERIAL_ARAMAIC	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::INHERITED	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::INSCRIPTIONAL_PAHLAVI	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::INSCRIPTIONAL_PARTHIAN	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::JAVANESE	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::KAITHI	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::KANNADA	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::KATAKANA	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::KAWI	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::KAYAH_LI	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::KHAROSHTHI	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::KHITAN_SMALL_SCRIPT	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::KHMER	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::KHOJKI	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::KHUDAWADI	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::KIRAT_RAI	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::LAO	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::LATIN	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::LEPCHA	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::LIMBU	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::LINEAR_A	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::LINEAR_B	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::LISU	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::LYCIAN	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::LYDIAN	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::MAHAJANI	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::MAKASAR	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::MALAYALAM	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::MANDAIC	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::MANICHAEAN	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::MARCHEN	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::MASARAM_GONDI	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::MEDEFAIDRIN	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::MEETEI_MAYEK	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::MENDE_KIKAKUI	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::MEROITIC_CURSIVE	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::MEROITIC_HIEROGLYPHS	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::MIAO	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::MODI	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::MONGOLIAN	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::MRO	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::MULTANI	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::MYANMAR	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::NABATAEAN	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::NAG_MUNDARI	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::NANDINAGARI	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::NEWA	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::NEW_TAI_LUE	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::NKO	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::NUSHU	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::NYIAKENG_PUACHUE_HMONG	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::OGHAM	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::OLD_HUNGARIAN	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::OLD_ITALIC	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::OLD_NORTH_ARABIAN	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::OLD_PERMIC	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::OLD_PERSIAN	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::OLD_SOGDIAN	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::OLD_SOUTH_ARABIAN	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::OLD_TURKIC	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::OLD_UYGHUR	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::OL_CHIKI	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::OL_ONAL	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::ORIYA	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::OSAGE	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::OSMANYA	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::PAHAWH_HMONG	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::PALMYRENE	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::PAU_CIN_HAU	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::PHAGS_PA	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::PHOENICIAN	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::PSALTER_PAHLAVI	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::REJANG	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::RUNIC	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::SAMARITAN	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::SAURASHTRA	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::SHARADA	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::SHAVIAN	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::SIDDHAM	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::SIGNWRITING	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::SINHALA	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::SOGDIAN	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::SORA_SOMPENG	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::SOYOMBO	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::SUNDANESE	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::SUNUWAR	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::SYLOTI_NAGRI	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::SYRIAC	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::TAGALOG	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::TAGBANWA	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::TAI_LE	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::TAI_THAM	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::TAI_VIET	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::TAKRI	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::TAMIL	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::TANGSA	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::TANGUT	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::TELUGU	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::THAANA	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::THAI	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::TIBETAN	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::TIFINAGH	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::TIRHUTA	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::TODHRI	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::TOTO	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::TULU_TIGALARI	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::UGARITIC	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::VAI	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::VITHKUQI	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::WANCHO	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::WARANG_CITI	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::YEZIDI	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::YI	missing	-	baseline
-src/unicode_tables/script_extension.rs::const::ZANABAZAR_SQUARE	missing	-	baseline
-src/unicode_tables/sentence_break.rs::const::ATERM	missing	-	baseline
-src/unicode_tables/sentence_break.rs::const::BY_NAME	missing	-	baseline
-src/unicode_tables/sentence_break.rs::const::CLOSE	missing	-	baseline
-src/unicode_tables/sentence_break.rs::const::CR	missing	-	baseline
-src/unicode_tables/sentence_break.rs::const::EXTEND	missing	-	baseline
-src/unicode_tables/sentence_break.rs::const::FORMAT	missing	-	baseline
-src/unicode_tables/sentence_break.rs::const::LF	missing	-	baseline
-src/unicode_tables/sentence_break.rs::const::LOWER	missing	-	baseline
-src/unicode_tables/sentence_break.rs::const::NUMERIC	missing	-	baseline
-src/unicode_tables/sentence_break.rs::const::OLETTER	missing	-	baseline
-src/unicode_tables/sentence_break.rs::const::SCONTINUE	missing	-	baseline
-src/unicode_tables/sentence_break.rs::const::SEP	missing	-	baseline
-src/unicode_tables/sentence_break.rs::const::SP	missing	-	baseline
-src/unicode_tables/sentence_break.rs::const::STERM	missing	-	baseline
-src/unicode_tables/sentence_break.rs::const::UPPER	missing	-	baseline
-src/unicode_tables/word_break.rs::const::ALETTER	missing	-	baseline
-src/unicode_tables/word_break.rs::const::BY_NAME	missing	-	baseline
-src/unicode_tables/word_break.rs::const::CR	missing	-	baseline
-src/unicode_tables/word_break.rs::const::DOUBLE_QUOTE	missing	-	baseline
-src/unicode_tables/word_break.rs::const::EXTEND	missing	-	baseline
-src/unicode_tables/word_break.rs::const::EXTENDNUMLET	missing	-	baseline
-src/unicode_tables/word_break.rs::const::FORMAT	missing	-	baseline
-src/unicode_tables/word_break.rs::const::HEBREW_LETTER	missing	-	baseline
-src/unicode_tables/word_break.rs::const::KATAKANA	missing	-	baseline
-src/unicode_tables/word_break.rs::const::LF	missing	-	baseline
-src/unicode_tables/word_break.rs::const::MIDLETTER	missing	-	baseline
-src/unicode_tables/word_break.rs::const::MIDNUM	missing	-	baseline
-src/unicode_tables/word_break.rs::const::MIDNUMLET	missing	-	baseline
-src/unicode_tables/word_break.rs::const::NEWLINE	missing	-	baseline
-src/unicode_tables/word_break.rs::const::NUMERIC	missing	-	baseline
-src/unicode_tables/word_break.rs::const::REGIONAL_INDICATOR	missing	-	baseline
-src/unicode_tables/word_break.rs::const::SINGLE_QUOTE	missing	-	baseline
-src/unicode_tables/word_break.rs::const::WSEGSPACE	missing	-	baseline
-src/unicode_tables/word_break.rs::const::ZWJ	missing	-	baseline
-src/utf8.rs::enum::Utf8Sequence	missing	-	baseline
-src/utf8.rs::func::as_slice	missing	-	baseline
-src/utf8.rs::func::len	missing	-	baseline
-src/utf8.rs::func::matches	missing	-	baseline
-src/utf8.rs::func::new	missing	-	baseline
-src/utf8.rs::func::reset	missing	-	baseline
-src/utf8.rs::func::reverse	missing	-	baseline
-src/utf8.rs::method::Utf8Sequences.new	missing	-	baseline
-src/utf8.rs::struct::Utf8Range	missing	-	baseline
-src/utf8.rs::struct::Utf8Sequences	missing	-	baseline
+logos-codegen/src/error.rs::class::Errors	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/error.rs::class::SpannedError	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/error.rs::method::Errors.err	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/error.rs::method::Errors.render	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/error.rs::method::SpannedError.to_tokens	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/generator/fast_loop.rs::function::fast_loop_macro	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/generator/fast_loop.rs::method::Generator<'a>.impl_fast_loop	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/generator/fast_loop.rs::method::Generator<'a>.maybe_impl_fast_loop	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/generator/fork.rs::method::Generator<'a>.fork_eoi	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/generator/fork.rs::method::Generator<'a>.impl_fork	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/generator/fork.rs::method::Generator<'a>.impl_fork_match	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/generator/fork.rs::method::Generator<'a>.impl_fork_table	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/generator/leaf.rs::method::Generator<'_>.generate_callback	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/generator/leaf.rs::method::Generator<'_>.take_action_macro	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/generator/mod.rs::class::Config	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/generator/mod.rs::class::Generator	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/generator/mod.rs::function::byte_to_tokens	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/generator/mod.rs::method::Generator<'a>.add_test_to_lut	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/generator/mod.rs::method::Generator<'a>.generate	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/generator/mod.rs::method::Generator<'a>.generate_state	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/generator/mod.rs::method::Generator<'a>.get_ident	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/generator/mod.rs::method::Generator<'a>.make_token_fn	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/generator/mod.rs::method::Generator<'a>.new	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/generator/mod.rs::method::Generator<'a>.render_luts	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/generator/mod.rs::method::Generator<'a>.state_action	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/generator/mod.rs::method::Generator<'a>.state_transition	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/generator/mod.rs::method::Generator<'a>.state_value	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/generator/mod.rs::method::Generator<'a>.table_ident	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/dfa_util.rs::function::get_states	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/dfa_util.rs::function::iter_children	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/dfa_util.rs::function::iter_matches	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/export.rs::class::Dot	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/export.rs::class::Mermaid	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/export.rs::class::NodeColor	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/export.rs::class::NodeShape	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/export.rs::function::export_graphs	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/export.rs::function::fmt_range	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/export.rs::interface::ExportFormat	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/export.rs::method::Dot.escape	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/export.rs::method::Dot.write_footer	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/export.rs::method::Dot.write_header	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/export.rs::method::Dot.write_link	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/export.rs::method::Dot.write_node	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/export.rs::method::Graph.export_graph	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/export.rs::method::Graph.get_dot	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/export.rs::method::Graph.get_mermaid	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/export.rs::method::Mermaid.escape	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/export.rs::method::Mermaid.write_footer	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/export.rs::method::Mermaid.write_header	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/export.rs::method::Mermaid.write_link	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/export.rs::method::Mermaid.write_node	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/export.rs::method::NodeColor.fmt_dot	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/export.rs::method::NodeColor.fmt_mmd	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/mod.rs::class::ByteClass	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/mod.rs::class::Comparisons	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/mod.rs::class::Config	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/mod.rs::class::Graph	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/mod.rs::class::GraphError	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/mod.rs::class::State	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/mod.rs::class::StateData	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/mod.rs::class::StateType	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/mod.rs::method::ByteClass.add_byte	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/mod.rs::method::ByteClass.fmt	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/mod.rs::method::ByteClass.impl_with_cmp	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/mod.rs::method::ByteClass.merge	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/mod.rs::method::ByteClass.new	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/mod.rs::method::ByteClass.to_table	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/mod.rs::method::Comparisons.count_ops	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/mod.rs::method::Comparisons.new	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/mod.rs::method::Graph.dfa	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/mod.rs::method::Graph.errors	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/mod.rs::method::Graph.fmt	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/mod.rs::method::Graph.get_state	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/mod.rs::method::Graph.get_state_type	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/mod.rs::method::Graph.iter_states	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/mod.rs::method::Graph.leaves	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/mod.rs::method::Graph.new	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/mod.rs::method::Graph.retain_states	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/mod.rs::method::Graph.rewrite_states	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/mod.rs::method::Graph.root	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/mod.rs::method::State.fmt	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/mod.rs::method::State.pascal_case	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/mod.rs::method::State.snake_case	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/mod.rs::method::StateData.add_back_edge	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/mod.rs::method::StateData.can_error	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/mod.rs::method::StateData.fmt	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/mod.rs::method::StateData.iter_children	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/mod.rs::method::StateData.new	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/mod.rs::method::StateData.set_normal_edges	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/mod.rs::method::StateType.early_or_accept	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/leaf.rs::class::Callback	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/leaf.rs::class::InlineCallback	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/leaf.rs::class::Leaf	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/leaf.rs::class::LeafId	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/leaf.rs::class::VariantKind	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/leaf.rs::method::Callback.from	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/leaf.rs::method::Callback.span	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/leaf.rs::method::Leaf.callback	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/leaf.rs::method::Leaf.fmt	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/leaf.rs::method::Leaf.new	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/leaf.rs::method::Leaf.priority	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/leaf.rs::method::Leaf.variant_kind	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/leaf.rs::method::LeafId.from	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/leaf.rs::method::VariantKind.fmt	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/lib.rs::const::ERROR_ATTR	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/lib.rs::const::LOGOS_ATTR	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/lib.rs::const::REGEX_ATTR	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/lib.rs::const::TOKEN_ATTR	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/lib.rs::function::generate	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/lib.rs::function::generate_graphs	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/lib.rs::function::greedy_dotall_check	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/lib.rs::function::is_logos_attr	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/lib.rs::function::strip_attributes	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/lib.rs::function::strip_attrs_from_vec	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/definition.rs::class::Definition	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/definition.rs::class::Literal	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/definition.rs::method::Definition.named_attr	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/definition.rs::method::Definition.new	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/definition.rs::method::Literal.escape	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/definition.rs::method::Literal.parse	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/definition.rs::method::Literal.span	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/definition.rs::method::Literal.token	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/definition.rs::method::Literal.unicode	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/error_type.rs::class::ErrorType	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/error_type.rs::method::ErrorType.default	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/error_type.rs::method::ErrorType.named_attr	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/error_type.rs::method::ErrorType.new	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/error_type.rs::method::ErrorType.span	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/ignore_flags.rs::class::IgnoreFlags	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/ignore_flags.rs::method::IgnoreFlags.parse_group	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/ignore_flags.rs::method::IgnoreFlags.parse_ident	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/mod.rs::class::Parser	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/mod.rs::method::Parser.err	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/mod.rs::method::Parser.generics	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/mod.rs::method::Parser.get_type	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/mod.rs::method::Parser.parse_attr	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/mod.rs::method::Parser.parse_callback	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/mod.rs::method::Parser.parse_definition	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/mod.rs::method::Parser.parse_definition_attr	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/mod.rs::method::Parser.parse_generic	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/mod.rs::method::Parser.parse_literal	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/mod.rs::method::Parser.try_parse_logos	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/nested.rs::class::AttributeParser	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/nested.rs::class::Empty	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/nested.rs::class::Nested	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/nested.rs::class::NestedValue	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/nested.rs::method::AttributeParser.collect_tail	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/nested.rs::method::AttributeParser.new	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/nested.rs::method::AttributeParser.next	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/nested.rs::method::AttributeParser.next_tt	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/nested.rs::method::AttributeParser.parse_assign	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/nested.rs::method::AttributeParser.parse_group	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/nested.rs::method::AttributeParser.parse_keyword	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/nested.rs::method::AttributeParser.parse_literal	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/nested.rs::method::AttributeParser.parse_unnamed	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/nested.rs::method::AttributeParser.parsed	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/nested.rs::method::TokenStream.from	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/subpattern.rs::class::Subpattern	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/subpattern.rs::class::Subpatterns	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/subpattern.rs::method::Subpattern.new	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/subpattern.rs::method::Subpatterns.new	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/subpattern.rs::method::Subpatterns.subst_subpatterns	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/type_params.rs::class::TypeParams	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/type_params.rs::function::replace_lifetime	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/type_params.rs::function::replace_lifetimes	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/type_params.rs::function::traverse_path	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/type_params.rs::function::traverse_type	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/type_params.rs::method::TypeParams.add	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/type_params.rs::method::TypeParams.explicit_lifetime	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/type_params.rs::method::TypeParams.find	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/type_params.rs::method::TypeParams.generics	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/type_params.rs::method::TypeParams.set	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/pattern.rs::class::Pattern	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/pattern.rs::method::Pattern.check_for_greedy_all	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/pattern.rs::method::Pattern.compile	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/pattern.rs::method::Pattern.compile_lit	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/pattern.rs::method::Pattern.complexity	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/pattern.rs::method::Pattern.fmt	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/pattern.rs::method::Pattern.has_greedy_all	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/pattern.rs::method::Pattern.hir	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/pattern.rs::method::Pattern.priority	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/pattern.rs::method::Pattern.source	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/util.rs::class::MaybeVoid	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/util.rs::function::expect_punct	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/util.rs::function::is_punct	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/util.rs::interface::ToIdent	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/util.rs::method::MaybeVoid.into_token_stream	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/util.rs::method::MaybeVoid.replace	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/util.rs::method::MaybeVoid.take	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/util.rs::method::MaybeVoid.to_token_stream	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/util.rs::method::MaybeVoid.to_tokens	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/util.rs::method::str.to_ident	in_progress	-	Discovered; contract review pending.
+logos-derive/src/lib.rs::function::logos	in_progress	-	Discovered; contract review pending.
+src/internal.rs::class::CallbackResult	in_progress	-	Discovered; contract review pending.
+src/internal.rs::class::SkipResult	in_progress	-	Discovered; contract review pending.
+src/internal.rs::interface::CallbackRetVal	in_progress	-	Discovered; contract review pending.
+src/internal.rs::interface::LexerInternal	in_progress	-	Discovered; contract review pending.
+src/internal.rs::interface::SkipRetVal	in_progress	-	Discovered; contract review pending.
+src/internal.rs::method::().construct	in_progress	-	Discovered; contract review pending.
+src/internal.rs::method::CallbackResult<'a, L>.from	in_progress	-	Discovered; contract review pending.
+src/internal.rs::method::Filter<L>.construct	in_progress	-	Discovered; contract review pending.
+src/internal.rs::method::Filter<T>.construct	in_progress	-	Discovered; contract review pending.
+src/internal.rs::method::FilterResult<L, E>.construct	in_progress	-	Discovered; contract review pending.
+src/internal.rs::method::FilterResult<T, E>.construct	in_progress	-	Discovered; contract review pending.
+src/internal.rs::method::L.construct	in_progress	-	Discovered; contract review pending.
+src/internal.rs::method::Option<T>.construct	in_progress	-	Discovered; contract review pending.
+src/internal.rs::method::Result<(), E>.construct	in_progress	-	Discovered; contract review pending.
+src/internal.rs::method::Result<L, E>.construct	in_progress	-	Discovered; contract review pending.
+src/internal.rs::method::Result<Skip, E>.construct	in_progress	-	Discovered; contract review pending.
+src/internal.rs::method::Result<T, E>.construct	in_progress	-	Discovered; contract review pending.
+src/internal.rs::method::Skip.construct	in_progress	-	Discovered; contract review pending.
+src/internal.rs::method::T.construct	in_progress	-	Discovered; contract review pending.
+src/internal.rs::method::bool.construct	in_progress	-	Discovered; contract review pending.
+src/lexer.rs::class::Lexer	in_progress	-	Discovered; contract review pending.
+src/lexer.rs::class::SpannedIter	in_progress	-	Discovered; contract review pending.
+src/lexer.rs::method::Lexer<'source, Token>.bump	in_progress	-	Discovered; contract review pending.
+src/lexer.rs::method::Lexer<'source, Token>.clone	in_progress	-	Discovered; contract review pending.
+src/lexer.rs::method::Lexer<'source, Token>.end	in_progress	-	Discovered; contract review pending.
+src/lexer.rs::method::Lexer<'source, Token>.end_to_boundary	in_progress	-	Discovered; contract review pending.
+src/lexer.rs::method::Lexer<'source, Token>.fmt	in_progress	-	Discovered; contract review pending.
+src/lexer.rs::method::Lexer<'source, Token>.morph	in_progress	-	Discovered; contract review pending.
+src/lexer.rs::method::Lexer<'source, Token>.new	in_progress	-	Discovered; contract review pending.
+src/lexer.rs::method::Lexer<'source, Token>.next	in_progress	-	Discovered; contract review pending.
+src/lexer.rs::method::Lexer<'source, Token>.offset	in_progress	-	Discovered; contract review pending.
+src/lexer.rs::method::Lexer<'source, Token>.range	in_progress	-	Discovered; contract review pending.
+src/lexer.rs::method::Lexer<'source, Token>.read	in_progress	-	Discovered; contract review pending.
+src/lexer.rs::method::Lexer<'source, Token>.remainder	in_progress	-	Discovered; contract review pending.
+src/lexer.rs::method::Lexer<'source, Token>.slice	in_progress	-	Discovered; contract review pending.
+src/lexer.rs::method::Lexer<'source, Token>.source	in_progress	-	Discovered; contract review pending.
+src/lexer.rs::method::Lexer<'source, Token>.span	in_progress	-	Discovered; contract review pending.
+src/lexer.rs::method::Lexer<'source, Token>.spanned	in_progress	-	Discovered; contract review pending.
+src/lexer.rs::method::Lexer<'source, Token>.trivia	in_progress	-	Discovered; contract review pending.
+src/lexer.rs::method::Lexer<'source, Token>.with_extras	in_progress	-	Discovered; contract review pending.
+src/lexer.rs::method::SpannedIter<'source, Token>.clone	in_progress	-	Discovered; contract review pending.
+src/lexer.rs::method::SpannedIter<'source, Token>.deref	in_progress	-	Discovered; contract review pending.
+src/lexer.rs::method::SpannedIter<'source, Token>.deref_mut	in_progress	-	Discovered; contract review pending.
+src/lexer.rs::method::SpannedIter<'source, Token>.next	in_progress	-	Discovered; contract review pending.
+src/lib.rs::class::Filter	in_progress	-	Discovered; contract review pending.
+src/lib.rs::class::FilterResult	in_progress	-	Discovered; contract review pending.
+src/lib.rs::class::Skip	in_progress	-	Discovered; contract review pending.
+src/lib.rs::function::lexer	in_progress	-	Discovered; contract review pending.
+src/lib.rs::function::lexer_with_extras	in_progress	-	Discovered; contract review pending.
+src/lib.rs::function::skip	missing	src/logos.cr	Confirmed compile error: Logos.skip restricts Lexer to one generic argument; Lexer has four.
+src/lib.rs::interface::Logos	in_progress	-	Discovered; contract review pending.
+src/source.rs::const::SIZE	intentional_divergence	src/logos/source.cr, spec/logos/source_spec.cr	Crystal reads UInt8 and bounded Bytes directly; Rust's fixed-size Chunk conversions and SIZE are internal to Rust.
+src/source.rs::function::find_boundary	ported	src/logos/source.cr, spec/logos/source_spec.cr	boundary? and find_boundary match the Rust contract on valid source indices.
+src/source.rs::interface::Chunk	intentional_divergence	src/logos/source.cr, spec/logos/source_spec.cr	Crystal reads UInt8 and bounded Bytes directly; Rust's fixed-size Chunk conversions and SIZE are internal to Rust.
+src/source.rs::interface::Source	partial	src/logos/source.cr, spec/logos/source_spec.cr	String and Bytes byte lengths, slices, reads and boundaries covered. Custom source integration awaits the runtime API audit.
+src/source.rs::method::&'source [u8; N].from_ptr	intentional_divergence	src/logos/source.cr, spec/logos/source_spec.cr	Crystal reads UInt8 and bounded Bytes directly; Rust's fixed-size Chunk conversions and SIZE are internal to Rust.
+src/source.rs::method::&'source [u8; N].from_slice	intentional_divergence	src/logos/source.cr, spec/logos/source_spec.cr	Crystal reads UInt8 and bounded Bytes directly; Rust's fixed-size Chunk conversions and SIZE are internal to Rust.
+src/source.rs::method::T.find_boundary	intentional_divergence	src/logos/source.cr	Rust's blanket Deref forwarding implementation is expressed through explicit Crystal Source implementations.
+src/source.rs::method::T.is_boundary	intentional_divergence	src/logos/source.cr	Rust's blanket Deref forwarding implementation is expressed through explicit Crystal Source implementations.
+src/source.rs::method::T.len	intentional_divergence	src/logos/source.cr	Rust's blanket Deref forwarding implementation is expressed through explicit Crystal Source implementations.
+src/source.rs::method::T.read	intentional_divergence	src/logos/source.cr	Rust's blanket Deref forwarding implementation is expressed through explicit Crystal Source implementations.
+src/source.rs::method::T.slice	intentional_divergence	src/logos/source.cr	Rust's blanket Deref forwarding implementation is expressed through explicit Crystal Source implementations.
+src/source.rs::method::T.slice_unchecked	intentional_divergence	src/logos/source.cr	Rust's blanket Deref forwarding implementation is expressed through explicit Crystal Source implementations.
+src/source.rs::method::[u8].is_boundary	ported	src/logos/source.cr, spec/logos/source_spec.cr	boundary? and find_boundary match the Rust contract on valid source indices.
+src/source.rs::method::[u8].len	ported	src/logos/source.cr, spec/logos/source_spec.cr	Source length is a byte count for strings and byte slices.
+src/source.rs::method::[u8].read	ported	src/logos/source.cr, spec/logos/source_spec.cr	Bounded single-byte and byte-view reads return nil when any requested byte is outside the source.
+src/source.rs::method::[u8].slice	ported	src/logos/source.cr, spec/logos/source_spec.cr	Valid byte ranges produce views and reversed or out-of-bounds ranges return nil.
+src/source.rs::method::[u8].slice_unchecked	intentional_divergence	src/logos/source.cr, spec/logos/source_spec.cr	Crystal checks source bounds and returns a Crystal String or Slice; no unchecked Rust borrowing API.
+src/source.rs::method::str.find_boundary	ported	src/logos/source.cr, spec/logos/source_spec.cr	boundary? and find_boundary match the Rust contract on valid source indices.
+src/source.rs::method::str.is_boundary	ported	src/logos/source.cr, spec/logos/source_spec.cr	boundary? and find_boundary match the Rust contract on valid source indices.
+src/source.rs::method::str.len	ported	src/logos/source.cr, spec/logos/source_spec.cr	Source length is a byte count for strings and byte slices.
+src/source.rs::method::str.read	ported	src/logos/source.cr, spec/logos/source_spec.cr	Bounded single-byte and byte-view reads return nil when any requested byte is outside the source.
+src/source.rs::method::str.slice	ported	src/logos/source.cr, spec/logos/source_spec.cr	Checked byte ranges require UTF-8 boundaries at both ends; empty end-of-input range is valid.
+src/source.rs::method::str.slice_unchecked	intentional_divergence	src/logos/source.cr, spec/logos/source_spec.cr	Crystal checks source bounds and returns a Crystal String or Slice; no unchecked Rust borrowing API.
+src/source.rs::method::u8.from_ptr	intentional_divergence	src/logos/source.cr, spec/logos/source_spec.cr	Crystal reads UInt8 and bounded Bytes directly; Rust's fixed-size Chunk conversions and SIZE are internal to Rust.
+src/source.rs::method::u8.from_slice	intentional_divergence	src/logos/source.cr, spec/logos/source_spec.cr	Crystal reads UInt8 and bounded Bytes directly; Rust's fixed-size Chunk conversions and SIZE are internal to Rust.

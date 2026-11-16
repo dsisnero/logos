@@ -9,7 +9,7 @@ module Logos
   # implementation of the `length` and `find_boundary` functions so generated code does not request
   # out-of-bounds access.
   module Source(T)
-    # Length of the source
+    # Byte length of the source
     abstract def length : Int32
 
     # Read a single byte at `offset`. Returns `nil` when reading
@@ -76,17 +76,17 @@ class String
   end
 
   def read_bytes(bytes : Int32, offset : Int32) : Bytes?
-    return if offset < 0 || offset + bytes > bytesize
+    return if offset < 0 || bytes < 0 || offset > bytesize - bytes
     to_slice[offset, bytes]
   end
 
   def slice(range : Range(Int32, Int32)) : String?
-    # Crystal ranges can be inclusive (..) or exclusive (...)
-    # We treat both as exclusive to match Rust's Range<usize>
     start = range.begin
-    exclusive_end = range.exclusive? ? range.end : range.end + 1
-    return if start < 0 || exclusive_end < start || exclusive_end > bytesize
-    byte_slice(start, exclusive_end - start)
+    exclusive_end = range.end.to_i64 + (range.exclusive? ? 0 : 1)
+    return if exclusive_end < start || exclusive_end > bytesize
+    return unless boundary?(start) && boundary?(exclusive_end.to_i32)
+
+    byte_slice(start, exclusive_end.to_i32 - start)
   end
 
   def slice_unchecked(range : Range(Int32, Int32)) : String
@@ -136,15 +136,16 @@ struct Slice(T)
   end
 
   def read_bytes(bytes : Int32, offset : Int32) : Slice(UInt8)?
-    return if offset < 0 || offset + bytes > size
+    return if offset < 0 || bytes < 0 || offset > size - bytes
     self[offset, bytes]
   end
 
   def slice(range : Range(Int32, Int32)) : Slice(T)?
     start = range.begin
-    exclusive_end = range.exclusive? ? range.end : range.end + 1
-    return if start < 0 || exclusive_end > size
-    self[start, exclusive_end - start]
+    exclusive_end = range.end.to_i64 + (range.exclusive? ? 0 : 1)
+    return if start < 0 || exclusive_end < start || exclusive_end > size
+
+    self[start, exclusive_end.to_i32 - start]
   end
 
   def slice_unchecked(range : Range(Int32, Int32)) : Slice(T)

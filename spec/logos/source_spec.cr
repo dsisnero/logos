@@ -6,6 +6,8 @@ module Logos
       it "returns correct length" do
         "hello".length.should eq(5)
         "hello".bytesize.should eq(5)
+        "é🎉".length.should eq(6)
+        "é🎉".size.should eq(2)
       end
 
       it "reads single bytes" do
@@ -32,6 +34,25 @@ module Logos
         str.slice(0...5).should eq("hello")  # exclusive range
         str.slice(6...11).should eq("world") # exclusive range
         str.slice(0...100).should be_nil
+      end
+
+      it "rejects checked slices that split UTF-8 codepoints" do
+        str = "aé🎉"
+        str.slice(1...3).should eq("é")
+        str.slice(3..6).should eq("🎉")
+        str.slice(1...2).should be_nil
+        str.slice(2...3).should be_nil
+        str.slice(5...5).should be_nil
+        str.slice(7...7).should eq("")
+        str.slice(0..Int32::MAX).should be_nil
+      end
+
+      it "rejects invalid byte reads without overflowing" do
+        str = "é"
+        str.read_bytes(0, 2).should eq(Bytes.empty)
+        str.read_bytes(1, 1).should eq(Bytes[0xa9])
+        str.read_bytes(-1, 1).should be_nil
+        str.read_bytes(1, Int32::MAX).should be_nil
       end
 
       it "checks boundaries correctly" do
@@ -89,6 +110,16 @@ module Logos
         slice = Slice[1_u8, 2_u8, 3_u8, 4_u8, 5_u8]
         slice.slice(1...4).should eq(Slice[2_u8, 3_u8, 4_u8]) # exclusive range
         slice.slice(0...100).should be_nil
+      end
+
+      it "rejects invalid binary ranges and allows the empty end slice" do
+        slice = Bytes[1, 2, 3]
+        slice.read_bytes(0, 3).should eq(Bytes.empty)
+        slice.read_bytes(-1, 1).should be_nil
+        slice.read_bytes(1, Int32::MAX).should be_nil
+        slice.slice(3...3).should eq(Bytes.empty)
+        slice.slice(2...1).should be_nil
+        slice.slice(0..Int32::MAX).should be_nil
       end
 
       it "checks boundaries correctly" do

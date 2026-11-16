@@ -1,159 +1,250 @@
 # source_test_id	status	crystal_refs	notes
-src/ast/mod.rs::test::ast_size	partial	spec/ast_hir_stack_safety_spec.cr	Rust size_of::<Ast>() guard is not meaningful for Crystal object layout; replaced with stack-safety smoke coverage
-src/ast/mod.rs::test::no_stack_overflow_on_drop	partial	spec/ast_hir_stack_safety_spec.cr	Rust thread-stack destructor test maps to Crystal GC smoke coverage for deep AST release
-src/ast/parse.rs::test::maybe_parse_ascii_class	ported	spec/ast_parse_parity_spec.cr	ASCII class probe, backtracking, and bracketed fallback coverage ported
-src/ast/parse.rs::test::parse_alternate	ported	spec/ast_parse_parity_spec.cr	Alternation parsing and child ordering coverage ported
-src/ast/parse.rs::test::parse_capture_name	ported	spec/ast_parse_parity_spec.cr	Named capture parsing and duplicate-name diagnostics ported
-src/ast/parse.rs::test::parse_comments	ported	spec/ast_parse_parity_spec.cr	Verbose-mode comment capture coverage ported
-src/ast/parse.rs::test::parse_counted_repetition	ported	spec/ast_parse_parity_spec.cr	Counted repetition parsing, greediness, and validation coverage ported
-src/ast/parse.rs::test::parse_decimal	ported	spec/ast_parse_parity_spec.cr	Decimal repetition-count parsing and error coverage ported
-src/ast/parse.rs::test::parse_escape	ported	spec/ast_parse_parity_spec.cr	Escape parsing across literals, hex forms, and invalid digits ported
-src/ast/parse.rs::test::parse_flag	ported	spec/ast_parse_parity_spec.cr	Flag parsing and duplicate-negation diagnostics ported through group/flag cases
-src/ast/parse.rs::test::parse_flags	ported	spec/ast_parse_parity_spec.cr	Global and scoped flag-set parsing coverage ported
-src/ast/parse.rs::test::parse_group	ported	spec/ast_parse_parity_spec.cr	Capturing, non-capturing, and flag-group parsing coverage ported
-src/ast/parse.rs::test::parse_hex_brace	ported	spec/ast_parse_parity_spec.cr	Brace-form hex escape parsing and empty-escape diagnostics ported
-src/ast/parse.rs::test::parse_hex_eight	ported	spec/ast_parse_parity_spec.cr	Eight-digit Unicode escape parsing coverage ported
-src/ast/parse.rs::test::parse_hex_four	ported	spec/ast_parse_parity_spec.cr	Four-digit Unicode escape parsing coverage ported
-src/ast/parse.rs::test::parse_hex_two	ported	spec/ast_parse_parity_spec.cr	Two-digit hex escape parsing coverage ported
-src/ast/parse.rs::test::parse_holistic	ported	spec/ast_parse_parity_spec.cr	Holistic escaped-meta parsing coverage ported
-src/ast/parse.rs::test::parse_ignore_whitespace	ported	spec/ast_parse_parity_spec.cr	Whitespace-mode toggling and preserved literal-space coverage ported
-src/ast/parse.rs::test::parse_nest_limit	ported	spec/ast_parse_parity_spec.cr	Nest-limit parsing and regression-454 coverage ported
-src/ast/parse.rs::test::parse_newlines	ported	spec/ast_parse_parity_spec.cr	Newline literal-versus-dot parsing coverage ported
-src/ast/parse.rs::test::parse_octal	ported	spec/ast_parse_parity_spec.cr	Octal parsing and unsupported-backreference diagnostics ported
-src/ast/parse.rs::test::parse_perl_class	ported	spec/ast_parse_parity_spec.cr	Perl class parsing coverage ported
-src/ast/parse.rs::test::parse_primitive_non_escape	ported	spec/ast_parse_parity_spec.cr	Standalone primitive literal coverage ported
-src/ast/parse.rs::test::parse_set_class	ported	spec/ast_parse_parity_spec.cr	Set class parsing, invalid class escapes, and range diagnostics ported
-src/ast/parse.rs::test::parse_set_class_open	ported	spec/ast_parse_parity_spec.cr	Class-open parsing behavior covered via bracketed class edge cases
-src/ast/parse.rs::test::parse_uncounted_repetition	ported	spec/ast_parse_parity_spec.cr	Uncounted repetition parsing and greedy/reluctant coverage ported
-src/ast/parse.rs::test::parse_unicode_class	ported	spec/ast_parse_parity_spec.cr	Unicode class parsing for short and braced forms ported
-src/ast/parse.rs::test::parse_unsupported_backreference	ported	spec/ast_parse_parity_spec.cr	Unsupported backreference diagnostics ported
-src/ast/parse.rs::test::parse_unsupported_lookaround	ported	spec/ast_parse_parity_spec.cr	Unsupported lookaround diagnostics ported
-src/ast/parse.rs::test::regression_454_nest_too_big	ported	spec/ast_parse_parity_spec.cr	Deep-pattern nest-limit regression ported
-src/ast/parse.rs::test::regression_455_trailing_dash_ignore_whitespace	ported	spec/ast_parse_parity_spec.cr	Trailing-dash-in-class verbose-mode regression ported
-src/ast/print.rs::test::print_alternation	ported	spec/ast_print_spec.cr	Alternation printer round-trips ported
-src/ast/print.rs::test::print_assertion	ported	spec/ast_print_spec.cr	Assertion printer round-trips ported
-src/ast/print.rs::test::print_class	ported	spec/ast_print_spec.cr	Class printer round-trips including Unicode property forms ported
-src/ast/print.rs::test::print_concat	ported	spec/ast_print_spec.cr	Concatenation printer round-trips ported
-src/ast/print.rs::test::print_dot	ported	spec/ast_print_spec.cr	Dot printer round-trip ported
-src/ast/print.rs::test::print_flags	ported	spec/ast_print_spec.cr	Flag printer round-trips ported
-src/ast/print.rs::test::print_group	ported	spec/ast_print_spec.cr	Group printer round-trips ported
-src/ast/print.rs::test::print_literal	ported	spec/ast_print_spec.cr	Literal and escape printer round-trips ported
-src/ast/print.rs::test::print_repetition	ported	spec/ast_print_spec.cr	Repetition printer round-trips ported
-src/error.rs::test::regression_464	ported	spec/error_spec.cr	Direct multiline formatter regression port
-src/error.rs::test::repetition_quantifier_expects_a_valid_decimal	ported	spec/error_spec.cr	Exact formatter message and caret placement ported
-src/hir/literal.rs::test::alternation	ported	spec/hir_literal_spec.cr	Alternation extraction ordering and exactness coverage ported
-src/hir/literal.rs::test::anything	ported	spec/hir_literal_spec.cr	Infinite-sequence marker behavior for dot and large classes ported
-src/hir/literal.rs::test::anything_small_limits	ported	spec/hir_literal_spec.cr	Small limit_total abort behavior and finite/infinite transitions ported
-src/hir/literal.rs::test::class	ported	spec/hir_literal_spec.cr	Finite class expansion and case-folded Unicode class extraction ported
-src/hir/literal.rs::test::concat	ported	spec/hir_literal_spec.cr	Concatenation extraction with empty groups and impossible classes ported
-src/hir/literal.rs::test::crazy_repeats	ported	spec/hir_literal_spec.cr	Pathological repeat extraction regression coverage ported
-src/hir/literal.rs::test::empty	ported	spec/hir_literal_spec.cr	Empty and assertion-only extraction semantics ported
-src/hir/literal.rs::test::holmes	ported	spec/hir_literal_spec.cr	Holmes heuristic prefix and suffix minimization coverage ported
-src/hir/literal.rs::test::holmes_alt	ported	spec/hir_literal_spec.cr	Case-insensitive alternation optimization regression coverage ported
-src/hir/literal.rs::test::huge	ported	spec/hir_literal_spec.cr	Large vendored extractor shape and prefix-count regression ported
-src/hir/literal.rs::test::impossible	ported	spec/hir_literal_spec.cr	Impossible-class extraction fallback behavior ported
-src/hir/literal.rs::test::literal	ported	spec/hir_literal_spec.cr	Exact literal extraction across ASCII, bytes, and Unicode case-folding ported
-src/hir/literal.rs::test::look	ported	spec/hir_literal_spec.cr	Look-around extraction-as-empty semantics ported
-src/hir/literal.rs::test::odds_and_ends	ported	spec/hir_literal_spec.cr	Miscellaneous extractor regressions and mixed finite/infinite cases ported
-src/hir/literal.rs::test::optimize	ported	spec/hir_literal_spec.cr	Preference optimization and poisonous-sequence heuristics ported
-src/hir/literal.rs::test::repetition	ported	spec/hir_literal_spec.cr	Repetition extraction exactness and preference ordering ported
-src/hir/mod.rs::test::class_canonicalize_bytes	ported	spec/hir_core_parity_spec.cr	Byte-class canonicalization and interval merging ported
-src/hir/mod.rs::test::class_canonicalize_unicode	ported	spec/hir_core_parity_spec.cr	Unicode-class canonicalization and interval merging ported
-src/hir/mod.rs::test::class_case_fold_bytes	ported	spec/hir_core_parity_spec.cr	ASCII byte-class simple case folding ported
-src/hir/mod.rs::test::class_case_fold_unicode	ported	spec/hir_core_parity_spec.cr	Unicode simple case folding and Kelvin-sign coverage ported
-src/hir/mod.rs::test::class_case_fold_unicode_disabled	partial	spec/hir_core_parity_spec.cr	Rust disabled-feature branch maps to always-on Unicode case-fold coverage in Crystal
-src/hir/mod.rs::test::class_case_fold_unicode_disabled_panics	partial	spec/hir_core_parity_spec.cr	Rust panic-on-disabled-feature contract is not meaningful because Crystal always ships Unicode case folding
-src/hir/mod.rs::test::class_difference_bytes	ported	spec/hir_core_parity_spec.cr	Byte-class difference algebra ported
-src/hir/mod.rs::test::class_difference_unicode	ported	spec/hir_core_parity_spec.cr	Unicode-class difference algebra ported
-src/hir/mod.rs::test::class_intersect_bytes	ported	spec/hir_core_parity_spec.cr	Byte-class intersection algebra ported
-src/hir/mod.rs::test::class_intersect_unicode	ported	spec/hir_core_parity_spec.cr	Unicode-class intersection algebra ported
-src/hir/mod.rs::test::class_negate_bytes	ported	spec/hir_core_parity_spec.cr	Byte-class negation semantics ported
-src/hir/mod.rs::test::class_negate_unicode	ported	spec/hir_core_parity_spec.cr	Unicode-class negation semantics around surrogate gap ported
-src/hir/mod.rs::test::class_range_canonical_bytes	ported	spec/hir_core_parity_spec.cr	Byte range canonicalization helpers ported
-src/hir/mod.rs::test::class_range_canonical_unicode	ported	spec/hir_core_parity_spec.cr	Unicode range canonicalization helpers ported
-src/hir/mod.rs::test::class_symmetric_difference_bytes	ported	spec/hir_core_parity_spec.cr	Byte-class symmetric-difference algebra ported
-src/hir/mod.rs::test::class_symmetric_difference_unicode	ported	spec/hir_core_parity_spec.cr	Unicode-class symmetric-difference algebra ported
-src/hir/mod.rs::test::class_union_bytes	ported	spec/hir_core_parity_spec.cr	Byte-class union algebra ported
-src/hir/mod.rs::test::class_union_unicode	ported	spec/hir_core_parity_spec.cr	Unicode-class union algebra ported
-src/hir/mod.rs::test::look_set_debug	ported	spec/hir_core_parity_spec.cr	LookSet debug repr coverage ported
-src/hir/mod.rs::test::look_set_iter	ported	spec/hir_core_parity_spec.cr	LookSet iteration ordering coverage ported
-src/hir/mod.rs::test::no_stack_overflow_on_drop	partial	spec/ast_hir_stack_safety_spec.cr	Rust thread-stack destructor test maps to Crystal GC smoke coverage for deep HIR release
-src/hir/print.rs::test::print_alternation	ported	spec/hir_print_spec.cr	Alternation printer coverage, including explicit empty branches, ported
-src/hir/print.rs::test::print_anchor	ported	spec/hir_print_spec.cr	Anchor printer coverage ported
-src/hir/print.rs::test::print_class	ported	spec/hir_print_spec.cr	Byte and Unicode class printer coverage ported
-src/hir/print.rs::test::print_group	ported	spec/hir_print_spec.cr	Capture and non-capturing group printer coverage ported
-src/hir/print.rs::test::print_literal	ported	spec/hir_print_spec.cr	Literal printer coverage across Unicode and byte mode ported
-src/hir/print.rs::test::print_repetition	ported	spec/hir_print_spec.cr	Repetition printer coverage ported
-src/hir/print.rs::test::print_word_boundary	ported	spec/hir_print_spec.cr	Word-boundary printer coverage for Unicode and ASCII modes ported
-src/hir/print.rs::test::regression_alternation_concat	ported	spec/hir_print_spec.cr	Alternation-inside-concat printer regression ported
-src/hir/print.rs::test::regression_repetition_alternation	ported	spec/hir_print_spec.cr	Repetition-over-alternation printer regression ported
-src/hir/print.rs::test::regression_repetition_concat	ported	spec/hir_print_spec.cr	Repetition-over-concat printer regression ported
-src/hir/translate.rs::test::analysis_can_empty	ported	spec/hir_translate_parity_spec.cr	Empty-match analysis matrix ported
-src/hir/translate.rs::test::analysis_captures_len	ported	spec/hir_translate_parity_spec.cr	Explicit capture-count analysis matrix ported
-src/hir/translate.rs::test::analysis_is_all_assertions	ported	spec/hir_translate_parity_spec.cr	All-assertion analysis matrix ported
-src/hir/translate.rs::test::analysis_is_alternation_literal	ported	spec/hir_translate_parity_spec.cr	Alternation-literal analysis matrix ported
-src/hir/translate.rs::test::analysis_is_anchored	ported	spec/hir_translate_parity_spec.cr	Start/end anchoring analysis matrix ported
-src/hir/translate.rs::test::analysis_is_any_anchored	ported	spec/hir_translate_parity_spec.cr	Any-anchor detection matrix ported
-src/hir/translate.rs::test::analysis_is_literal	ported	spec/hir_translate_parity_spec.cr	Literal analysis matrix ported
-src/hir/translate.rs::test::analysis_is_utf8	ported	spec/hir_translate_parity_spec.cr	UTF-8 validity analysis matrix ported
-src/hir/translate.rs::test::analysis_look_set_prefix_any	ported	spec/hir_translate_parity_spec.cr	Prefix-any look-set analysis ported
-src/hir/translate.rs::test::analysis_static_captures_len	ported	spec/hir_translate_parity_spec.cr	Static capture-count analysis matrix ported
-src/hir/translate.rs::test::assertions	ported	spec/hir_translate_parity_spec.cr	Assertion translation across text, line, and word boundaries ported
-src/hir/translate.rs::test::cat_alt	ported	spec/hir_translate_parity_spec.cr	Alternation-versus-concat assertion translation matrix ported
-src/hir/translate.rs::test::cat_class_flattened	ported	spec/hir_translate_parity_spec.cr	Class-alternation flattening and byte/unicode split behavior ported
-src/hir/translate.rs::test::class_ascii	ported	spec/hir_translate_parity_spec.cr	ASCII class translation, folding, and invalid-UTF8 error coverage ported
-src/hir/translate.rs::test::class_ascii_multiple	ported	spec/hir_translate_parity_spec.cr	Multiple ASCII class union coverage ported
-src/hir/translate.rs::test::class_bracketed	ported	spec/hir_translate_parity_spec.cr	Bracketed class literals, negation, escapes, and folding coverage ported
-src/hir/translate.rs::test::class_bracketed_difference	ported	spec/hir_translate_parity_spec.cr	Bracketed class difference operator coverage ported
-src/hir/translate.rs::test::class_bracketed_intersect	ported	spec/hir_translate_parity_spec.cr	Bracketed class intersection operator coverage ported
-src/hir/translate.rs::test::class_bracketed_intersect_negate	ported	spec/hir_translate_parity_spec.cr	Bracketed class negated-intersection coverage ported
-src/hir/translate.rs::test::class_bracketed_nested	ported	spec/hir_translate_parity_spec.cr	Nested bracketed class operator coverage ported
-src/hir/translate.rs::test::class_bracketed_symmetric_difference	ported	spec/hir_translate_parity_spec.cr	Bracketed class symmetric-difference coverage ported
-src/hir/translate.rs::test::class_bracketed_union	ported	spec/hir_translate_parity_spec.cr	Bracketed class union coverage ported
-src/hir/translate.rs::test::class_perl_ascii	ported	spec/hir_translate_parity_spec.cr	ASCII Perl-class translation and invalid-UTF8 negation coverage ported
-src/hir/translate.rs::test::class_perl_digit_disabled	partial	spec/hir_translate_parity_spec.cr	Rust disabled-feature branch is not meaningful because this Crystal port always ships Unicode digit tables
-src/hir/translate.rs::test::class_perl_space_disabled	partial	spec/hir_translate_parity_spec.cr	Rust disabled-feature branch is not meaningful because this Crystal port always ships Unicode space tables
-src/hir/translate.rs::test::class_perl_unicode	ported	spec/hir_translate_parity_spec.cr	Unicode Perl-class translation and negation coverage ported
-src/hir/translate.rs::test::class_perl_word_disabled	partial	spec/hir_translate_parity_spec.cr	Rust disabled-feature branch is not meaningful because this Crystal port always ships Unicode word tables
-src/hir/translate.rs::test::class_unicode_age	ported	spec/hir_translate_parity_spec.cr	Unicode age-property error handling coverage ported
-src/hir/translate.rs::test::class_unicode_age_disabled	partial	spec/hir_translate_parity_spec.cr	Rust disabled-feature branch is not meaningful because this Crystal port always ships Unicode age tables
-src/hir/translate.rs::test::class_unicode_any_empty	ported	spec/hir_translate_parity_spec.cr	Negated-any Unicode property empty-class behavior ported
-src/hir/translate.rs::test::class_unicode_gencat	ported	spec/hir_translate_parity_spec.cr	General-category property translation and error coverage ported
-src/hir/translate.rs::test::class_unicode_gencat_disabled	partial	spec/hir_translate_parity_spec.cr	Rust disabled-feature branch is not meaningful because this Crystal port always ships Unicode general-category tables
-src/hir/translate.rs::test::class_unicode_script	ported	spec/hir_translate_parity_spec.cr	Unicode script and script-extension translation/error coverage ported
-src/hir/translate.rs::test::class_unicode_script_disabled	partial	spec/hir_translate_parity_spec.cr	Rust disabled-feature branch is not meaningful because this Crystal port always ships Unicode script tables
-src/hir/translate.rs::test::dot	ported	spec/hir_translate_parity_spec.cr	Dot translation across Unicode, CRLF, and byte modes ported
-src/hir/translate.rs::test::empty	ported	spec/hir_translate_parity_spec.cr	Empty translation coverage ported
-src/hir/translate.rs::test::escape	ported	spec/hir_translate_parity_spec.cr	Escaped-metacharacter literal translation ported
-src/hir/translate.rs::test::flags	ported	spec/hir_translate_parity_spec.cr	Scoped and inherited flag translation semantics ported
-src/hir/translate.rs::test::group	ported	spec/hir_translate_parity_spec.cr	Capturing, non-capturing, and named-group translation coverage ported
-src/hir/translate.rs::test::ignore_whitespace	ported	spec/hir_translate_parity_spec.cr	Verbose-mode escape, property, and counted-repeat translation coverage ported
-src/hir/translate.rs::test::line_anchors	ported	spec/hir_translate_parity_spec.cr	Text, multi-line, and CRLF line-anchor translation coverage ported
-src/hir/translate.rs::test::literal	ported	spec/hir_translate_parity_spec.cr	Literal translation across bytes and Unicode ported
-src/hir/translate.rs::test::literal_case_insensitive	ported	spec/hir_translate_parity_spec.cr	Case-insensitive literal translation across ASCII and Unicode ported
-src/hir/translate.rs::test::regression_alt_empty_concat	ported	spec/hir_translate_parity_spec.cr	Empty-concat-inside-alternation regression ported
-src/hir/translate.rs::test::regression_empty_alt	ported	spec/hir_translate_parity_spec.cr	Empty-alternation-inside-concat regression ported
-src/hir/translate.rs::test::regression_fuzz_char_decrement1	ported	spec/hir_translate_parity_spec.cr	Fuzz regression no-panic coverage for decrement edge cases ported
-src/hir/translate.rs::test::regression_fuzz_difference1	ported	spec/hir_translate_parity_spec.cr	Fuzz regression no-panic coverage for class-difference edge cases ported
-src/hir/translate.rs::test::regression_fuzz_match	ported	spec/hir_translate_parity_spec.cr	Fuzz regression match-shape coverage ported
-src/hir/translate.rs::test::regression_singleton_alt	ported	spec/hir_translate_parity_spec.cr	Singleton-alternation-in-concat regression ported
-src/hir/translate.rs::test::repetition	ported	spec/hir_translate_parity_spec.cr	Repetition translation and greedy/reluctant coverage ported
-src/hir/translate.rs::test::smart_alternation	ported	spec/hir_translate_parity_spec.cr	Smart alternation simplification coverage ported
-src/hir/translate.rs::test::smart_concat	ported	spec/hir_translate_parity_spec.cr	Smart concat simplification coverage ported
-src/hir/translate.rs::test::smart_repetition	ported	spec/hir_translate_parity_spec.cr	Smart repetition simplification coverage ported
-src/lib.rs::test::escape_meta	ported	spec/lib_spec.cr	Exact vendored escape_meta example ported
-src/lib.rs::test::word_byte	ported	spec/lib_spec.cr	Exact vendored ASCII word-byte assertions ported
-src/lib.rs::test::word_char	ported	spec/lib_spec.cr	Exact vendored Unicode word-character samples ported
-src/lib.rs::test::word_char_disabled_error	partial	spec/lib_spec.cr	Crystal shard always ships Unicode Perl word tables, so only the enabled behavior is covered and the disabled-feature branch is unreachable
-src/lib.rs::test::word_char_disabled_panic	partial	spec/lib_spec.cr	Crystal shard always ships Unicode Perl word tables, so only the enabled behavior is covered and the disabled-feature branch is unreachable
-src/unicode.rs::test::range_contains	ported	spec/unicode_spec.cr	Exact overlap assertions ported
-src/unicode.rs::test::regression_466	ported	spec/unicode_spec.cr	One-letter general-category regression ported
-src/unicode.rs::test::simple_fold_a	ported	spec/unicode_spec.cr	ASCII simple-fold mapping ported
-src/unicode.rs::test::simple_fold_disabled	partial	spec/unicode_spec.cr	Crystal shard always ships Unicode case-fold tables, so only the enabled behavior is covered and the disabled-feature branch is unreachable
-src/unicode.rs::test::simple_fold_k	ported	spec/unicode_spec.cr	Kelvin-sign simple-fold mapping ported
-src/unicode.rs::test::sym_normalize	ported	spec/unicode_spec.cr	Exact symbolic-name normalization cases ported
-src/unicode.rs::test::valid_utf8_symbolic	ported	spec/unicode_spec.cr	Normalized symbolic bytes stay valid UTF-8 as upstream expects
-src/utf8.rs::test::bmp	ported	spec/utf8_spec.cr	Exact BMP sequence decomposition ported
-src/utf8.rs::test::codepoints_no_surrogates	ported	spec/utf8_spec.cr	Surrogate exclusion sweep ported
-src/utf8.rs::test::reverse	ported	spec/utf8_spec.cr	Exact sequence reversal cases ported
-src/utf8.rs::test::single_codepoint_one_sequence	ported	spec/utf8_spec.cr	Single scalar to one sequence invariant ported
+tests/tests/advanced.rs::class::Token	in_progress	-	Discovered; contract review pending.
+tests/tests/advanced.rs::test::advanced::cyrillic	in_progress	-	Discovered; contract review pending.
+tests/tests/advanced.rs::test::advanced::float	in_progress	-	Discovered; contract review pending.
+tests/tests/advanced.rs::test::advanced::hex	in_progress	-	Discovered; contract review pending.
+tests/tests/advanced.rs::test::advanced::integer	in_progress	-	Discovered; contract review pending.
+tests/tests/advanced.rs::test::advanced::keywords	in_progress	-	Discovered; contract review pending.
+tests/tests/advanced.rs::test::advanced::polish	in_progress	-	Discovered; contract review pending.
+tests/tests/advanced.rs::test::advanced::rustaceans	in_progress	-	Discovered; contract review pending.
+tests/tests/advanced.rs::test::advanced::sigs	in_progress	-	Discovered; contract review pending.
+tests/tests/advanced.rs::test::advanced::string	in_progress	-	Discovered; contract review pending.
+tests/tests/advanced.rs::test::advanced::subpatterns	in_progress	-	Discovered; contract review pending.
+tests/tests/advanced.rs::test::advanced::subquotes	in_progress	-	Discovered; contract review pending.
+tests/tests/advanced.rs::test::advanced::what_the_heck	in_progress	-	Discovered; contract review pending.
+tests/tests/binary.rs::class::Token	ported	spec/logos/binary_spec.cr	AdvancedByteToken defines the upstream byte patterns and is exercised by the exact token stream test.
+tests/tests/binary.rs::test::handles_non_utf8	ported	spec/logos/binary_spec.cr	Exact upstream byte input, token variants, slices, error positions and EOF.
+tests/tests/callbacks.rs::class::Extras	in_progress	-	Discovered; contract review pending.
+tests/tests/callbacks.rs::class::LexerError	in_progress	-	Discovered; contract review pending.
+tests/tests/callbacks.rs::class::LexingError	in_progress	-	Discovered; contract review pending.
+tests/tests/callbacks.rs::class::Token	in_progress	-	Discovered; contract review pending.
+tests/tests/callbacks.rs::function::labelled_callback	in_progress	-	Discovered; contract review pending.
+tests/tests/callbacks.rs::function::labelled_result_callback	in_progress	-	Discovered; contract review pending.
+tests/tests/callbacks.rs::function::labelled_skip_callback	in_progress	-	Discovered; contract review pending.
+tests/tests/callbacks.rs::function::labelled_skip_result_callback	in_progress	-	Discovered; contract review pending.
+tests/tests/callbacks.rs::function::parse_raw_string	in_progress	-	Discovered; contract review pending.
+tests/tests/callbacks.rs::function::skip_comment	in_progress	-	Discovered; contract review pending.
+tests/tests/callbacks.rs::method::LexingError.from	in_progress	-	Discovered; contract review pending.
+tests/tests/callbacks.rs::test::any_token_callback::any_token_callback	in_progress	-	Discovered; contract review pending.
+tests/tests/callbacks.rs::test::data::numbers	in_progress	-	Discovered; contract review pending.
+tests/tests/callbacks.rs::test::nested_lifetime::supplement_lifetime_in_types	in_progress	-	Discovered; contract review pending.
+tests/tests/callbacks.rs::test::return_result_skip::return_result_skip	in_progress	-	Discovered; contract review pending.
+tests/tests/callbacks.rs::test::rust::raw_strings	in_progress	-	Discovered; contract review pending.
+tests/tests/callbacks.rs::test::skip_all_callback_types::skip_all_callback_types	in_progress	-	Discovered; contract review pending.
+tests/tests/callbacks.rs::test::skip_callback_closure::skip_callback_closure	in_progress	-	Discovered; contract review pending.
+tests/tests/callbacks.rs::test::skip_callback_function::skip_callback_function	in_progress	-	Discovered; contract review pending.
+tests/tests/callbacks.rs::test::skip_equal_priorities::skip_equal_priorities	in_progress	-	Discovered; contract review pending.
+tests/tests/clone.rs::class::Evil	in_progress	-	Discovered; contract review pending.
+tests/tests/clone.rs::class::Token	in_progress	-	Discovered; contract review pending.
+tests/tests/clone.rs::method::Evil.clone	in_progress	-	Discovered; contract review pending.
+tests/tests/clone.rs::test::test_clone_leak	in_progress	-	Discovered; contract review pending.
+tests/tests/clone.rs::test::test_clone_ub	in_progress	-	Discovered; contract review pending.
+tests/tests/clone.rs::test::test_it_works_without_cloning	in_progress	-	Discovered; contract review pending.
+tests/tests/crate_.rs::class::Token	in_progress	-	Discovered; contract review pending.
+tests/tests/crate_.rs::test::simple	in_progress	-	Discovered; contract review pending.
+tests/tests/css.rs::class::Token	in_progress	-	Discovered; contract review pending.
+tests/tests/css.rs::test::css::test_letter_spacing	in_progress	-	Discovered; contract review pending.
+tests/tests/css.rs::test::css::test_line_height	in_progress	-	Discovered; contract review pending.
+tests/tests/css.rs::test::css::test_word_spacing	in_progress	-	Discovered; contract review pending.
+tests/tests/custom_error.rs::class::LexingError	in_progress	-	Discovered; contract review pending.
+tests/tests/custom_error.rs::class::Token	in_progress	-	Discovered; contract review pending.
+tests/tests/custom_error.rs::class::TokenA	in_progress	-	Discovered; contract review pending.
+tests/tests/custom_error.rs::class::TokenB	in_progress	-	Discovered; contract review pending.
+tests/tests/custom_error.rs::function::callback_b	in_progress	-	Discovered; contract review pending.
+tests/tests/custom_error.rs::function::parse_number	in_progress	-	Discovered; contract review pending.
+tests/tests/custom_error.rs::method::LexingError.from	in_progress	-	Discovered; contract review pending.
+tests/tests/custom_error.rs::method::LexingError.unrecognised_character	in_progress	-	Discovered; contract review pending.
+tests/tests/custom_error.rs::test::error_callback_test	in_progress	-	Discovered; contract review pending.
+tests/tests/custom_error.rs::test::test	in_progress	-	Discovered; contract review pending.
+tests/tests/derive.rs::test::test_derive	in_progress	-	Discovered; contract review pending.
+tests/tests/edgecase.rs::class::Lexer	in_progress	-	Discovered; contract review pending.
+tests/tests/edgecase.rs::class::LexingError	in_progress	-	Discovered; contract review pending.
+tests/tests/edgecase.rs::class::Logos	in_progress	-	Discovered; contract review pending.
+tests/tests/edgecase.rs::class::Nested	in_progress	-	Discovered; contract review pending.
+tests/tests/edgecase.rs::class::Option	in_progress	-	Discovered; contract review pending.
+tests/tests/edgecase.rs::class::Result	in_progress	-	Discovered; contract review pending.
+tests/tests/edgecase.rs::class::Test	in_progress	-	Discovered; contract review pending.
+tests/tests/edgecase.rs::class::Token	in_progress	-	Discovered; contract review pending.
+tests/tests/edgecase.rs::class::Token2	in_progress	-	Discovered; contract review pending.
+tests/tests/edgecase.rs::class::Token3	in_progress	-	Discovered; contract review pending.
+tests/tests/edgecase.rs::class::Token4	in_progress	-	Discovered; contract review pending.
+tests/tests/edgecase.rs::method::LexingError.from	in_progress	-	Discovered; contract review pending.
+tests/tests/edgecase.rs::test::benches::idents	in_progress	-	Discovered; contract review pending.
+tests/tests/edgecase.rs::test::benches::keywords_and_punctators	in_progress	-	Discovered; contract review pending.
+tests/tests/edgecase.rs::test::benches::strings	in_progress	-	Discovered; contract review pending.
+tests/tests/edgecase.rs::test::colors::match_colors	in_progress	-	Discovered; contract review pending.
+tests/tests/edgecase.rs::test::crunch::crunch	in_progress	-	Discovered; contract review pending.
+tests/tests/edgecase.rs::test::error_variant::must_compile	in_progress	-	Discovered; contract review pending.
+tests/tests/edgecase.rs::test::loop_in_loop::test_a_loop_in_a_loop	in_progress	-	Discovered; contract review pending.
+tests/tests/edgecase.rs::test::maybe::maybe_at_the_end	in_progress	-	Discovered; contract review pending.
+tests/tests/edgecase.rs::test::maybe_in_loop::test_maybe_in_a_loop	in_progress	-	Discovered; contract review pending.
+tests/tests/edgecase.rs::test::merging_asymmetric_loops::must_compile	in_progress	-	Discovered; contract review pending.
+tests/tests/edgecase.rs::test::naming_collision::must_compile	in_progress	-	Discovered; contract review pending.
+tests/tests/edgecase.rs::test::numbers::numbers	in_progress	-	Discovered; contract review pending.
+tests/tests/edgecase.rs::test::priority_disambiguate_1::priority_abc	in_progress	-	Discovered; contract review pending.
+tests/tests/edgecase.rs::test::priority_disambiguate_2::priority_cbd	in_progress	-	Discovered; contract review pending.
+tests/tests/edgecase.rs::test::trivia::abcdef_trivia	in_progress	-	Discovered; contract review pending.
+tests/tests/edgecase.rs::test::type_params::substitute_type_params	in_progress	-	Discovered; contract review pending.
+tests/tests/edgecase.rs::test::unicode_error_split::test	in_progress	-	Discovered; contract review pending.
+tests/tests/edgecase.rs::test::unicode_whitespace::abcdef_trivia	in_progress	-	Discovered; contract review pending.
+tests/tests/ignore_case.rs::class::Letters	in_progress	-	Discovered; contract review pending.
+tests/tests/ignore_case.rs::class::Sink	in_progress	-	Discovered; contract review pending.
+tests/tests/ignore_case.rs::class::Words	in_progress	-	Discovered; contract review pending.
+tests/tests/ignore_case.rs::test::ignore_ascii_case::regex_nonascii	in_progress	-	Discovered; contract review pending.
+tests/tests/ignore_case.rs::test::ignore_ascii_case::regex_simple	in_progress	-	Discovered; contract review pending.
+tests/tests/ignore_case.rs::test::ignore_ascii_case::tokens_nonascii	in_progress	-	Discovered; contract review pending.
+tests/tests/ignore_case.rs::test::ignore_ascii_case::tokens_simple	in_progress	-	Discovered; contract review pending.
+tests/tests/ignore_case.rs::test::ignore_case::regex	in_progress	-	Discovered; contract review pending.
+tests/tests/ignore_case.rs::test::ignore_case::tokens	in_progress	-	Discovered; contract review pending.
+tests/tests/ignore_case.rs::test::ignore_case::tokens_regex_escaped	in_progress	-	Discovered; contract review pending.
+tests/tests/lexer_modes.rs::class::Inner	in_progress	-	Discovered; contract review pending.
+tests/tests/lexer_modes.rs::class::ModeBridge	in_progress	-	Discovered; contract review pending.
+tests/tests/lexer_modes.rs::class::Modes	in_progress	-	Discovered; contract review pending.
+tests/tests/lexer_modes.rs::class::Outer	in_progress	-	Discovered; contract review pending.
+tests/tests/lexer_modes.rs::class::Tokens	in_progress	-	Discovered; contract review pending.
+tests/tests/lexer_modes.rs::method::ModeBridge<'source>.next	in_progress	-	Discovered; contract review pending.
+tests/tests/lexer_modes.rs::method::Modes<'source>.new	in_progress	-	Discovered; contract review pending.
+tests/tests/lexer_modes.rs::test::iterating_modes	in_progress	-	Discovered; contract review pending.
+tests/tests/lexer_modes.rs::test::main	in_progress	-	Discovered; contract review pending.
+tests/tests/nostd.rs::class::_Token	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::class::LuaBrackets	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::class::SyntaxKind	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::class::Token	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::class::Token160	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::class::Token173	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::class::Token179	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::class::Token180	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::class::Token181	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::class::Token185	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::class::Token187	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::class::Token190	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::class::Token200	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::class::Token213	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::class::Token220	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::class::Token227	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::class::Token242	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::class::Token246	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::class::Token251	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::class::Token256	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::class::Token259	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::class::Token265	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::class::Token269	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::class::Token272	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::class::Token384	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::class::Token394_1	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::class::Token394_2	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::class::Token420	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::class::Token424	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::class::Token456	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::class::Token461	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::class::_Token185	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::class::_Token240_1	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::class::_Token240_2	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::class::_Token252	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::class::_Token258	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::class::_Token259_2	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::class::_Token261	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::class::_Token336_1	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::class::_Token336_2	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::class::_Token336_3	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::function::find_close_bracket	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::function::parse_brackets	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::test::issue_160::test	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::test::issue_173::test	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::test::issue_179::test_smile	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::test::issue_179::test_x	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::test::issue_180::test	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::test::issue_181::test	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::test::issue_185::test	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::test::issue_187::test	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::test::issue_190::test	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::test::issue_200::test_200	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::test::issue_201::test	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::test::issue_202::test	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::test::issue_203::test	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::test::issue_213::test	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::test::issue_220::test	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::test::issue_227::test	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::test::issue_242::test	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::test::issue_246::test	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::test::issue_251::test	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::test::issue_256::it_works	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::test::issue_259::test	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::test::issue_265::test_1	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::test::issue_265::test_2	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::test::issue_265::test_3	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::test::issue_265::test_4	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::test::issue_269::test	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::test::issue_272::test	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::test::issue_384::test	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::test::issue_394::test_1	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::test::issue_394::test_2	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::test::issue_420::test	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::test::issue_424::test	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::test::issue_456::test	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::test::issue_461::test	in_progress	-	Discovered; contract review pending.
+tests/tests/properties.rs::class::Token	in_progress	-	Discovered; contract review pending.
+tests/tests/properties.rs::test::cyrillic	in_progress	-	Discovered; contract review pending.
+tests/tests/properties.rs::test::greek	in_progress	-	Discovered; contract review pending.
+tests/tests/simple.rs::class::MockExtras	in_progress	-	Discovered; contract review pending.
+tests/tests/simple.rs::class::Token	in_progress	-	Discovered; contract review pending.
+tests/tests/simple.rs::function::byte_size_2	in_progress	-	Discovered; contract review pending.
+tests/tests/simple.rs::function::byte_size_4	in_progress	-	Discovered; contract review pending.
+tests/tests/simple.rs::test::abcs	in_progress	-	Discovered; contract review pending.
+tests/tests/simple.rs::test::bytes	in_progress	-	Discovered; contract review pending.
+tests/tests/simple.rs::test::empty	in_progress	-	Discovered; contract review pending.
+tests/tests/simple.rs::test::extras_and_callbacks	in_progress	-	Discovered; contract review pending.
+tests/tests/simple.rs::test::hex_and_binary	in_progress	-	Discovered; contract review pending.
+tests/tests/simple.rs::test::identifiers	in_progress	-	Discovered; contract review pending.
+tests/tests/simple.rs::test::ints	in_progress	-	Discovered; contract review pending.
+tests/tests/simple.rs::test::invalid_abcs	in_progress	-	Discovered; contract review pending.
+tests/tests/simple.rs::test::invalid_hex_and_binary	in_progress	-	Discovered; contract review pending.
+tests/tests/simple.rs::test::invalid_tokens	in_progress	-	Discovered; contract review pending.
+tests/tests/simple.rs::test::iterator	in_progress	-	Discovered; contract review pending.
+tests/tests/simple.rs::test::keywords	in_progress	-	Discovered; contract review pending.
+tests/tests/simple.rs::test::keywords_mix_identifiers	in_progress	-	Discovered; contract review pending.
+tests/tests/simple.rs::test::numbers	in_progress	-	Discovered; contract review pending.
+tests/tests/simple.rs::test::operators	in_progress	-	Discovered; contract review pending.
+tests/tests/simple.rs::test::punctuation	in_progress	-	Discovered; contract review pending.
+tests/tests/simple.rs::test::spanned_iterator	in_progress	-	Discovered; contract review pending.
+tests/tests/simple.rs::test::uints	in_progress	-	Discovered; contract review pending.
+tests/tests/simple.rs::test::whitespace	in_progress	-	Discovered; contract review pending.
+tests/tests/source.rs::class::RefSource	skipped	spec/logos/source_spec.cr	The pinned custom-source fixture is disabled by unconditional cfg(any()); built-in Source behavior has separate Crystal specs.
+tests/tests/source.rs::class::Token	skipped	spec/logos/source_spec.cr	The pinned custom-source fixture is disabled by unconditional cfg(any()); built-in Source behavior has separate Crystal specs.
+tests/tests/source.rs::method::RefSource<'s, S>.is_boundary	skipped	spec/logos/source_spec.cr	The pinned custom-source fixture is disabled by unconditional cfg(any()); built-in Source behavior has separate Crystal specs.
+tests/tests/source.rs::method::RefSource<'s, S>.len	skipped	spec/logos/source_spec.cr	The pinned custom-source fixture is disabled by unconditional cfg(any()); built-in Source behavior has separate Crystal specs.
+tests/tests/source.rs::method::RefSource<'s, S>.read	skipped	spec/logos/source_spec.cr	The pinned custom-source fixture is disabled by unconditional cfg(any()); built-in Source behavior has separate Crystal specs.
+tests/tests/source.rs::method::RefSource<'s, S>.read_byte	skipped	spec/logos/source_spec.cr	The pinned custom-source fixture is disabled by unconditional cfg(any()); built-in Source behavior has separate Crystal specs.
+tests/tests/source.rs::method::RefSource<'s, S>.read_byte_unchecked	skipped	spec/logos/source_spec.cr	The pinned custom-source fixture is disabled by unconditional cfg(any()); built-in Source behavior has separate Crystal specs.
+tests/tests/source.rs::method::RefSource<'s, S>.slice	skipped	spec/logos/source_spec.cr	The pinned custom-source fixture is disabled by unconditional cfg(any()); built-in Source behavior has separate Crystal specs.
+tests/tests/source.rs::method::RefSource<'s, S>.slice_unchecked	skipped	spec/logos/source_spec.cr	The pinned custom-source fixture is disabled by unconditional cfg(any()); built-in Source behavior has separate Crystal specs.
+tests/tests/source.rs::test::custom_source	skipped	spec/logos/source_spec.cr	The pinned custom-source fixture is disabled by unconditional cfg(any()); built-in Source behavior has separate Crystal specs.
+tests/tests/string.rs::class::Token	in_progress	-	Discovered; contract review pending.
+tests/tests/string.rs::function::lex_single_line_string	in_progress	-	Discovered; contract review pending.
+tests/tests/string.rs::test::test_it_works_with_cloning	in_progress	-	Discovered; contract review pending.
+tests/tests/string.rs::test::test_it_works_without_cloning	in_progress	-	Discovered; contract review pending.
+tests/tests/ui/err/greedy-without-config.rs::class::GreedySkip	in_progress	-	Discovered; contract review pending.
+tests/tests/ui/err/greedy-without-config.rs::class::GreedyToken	in_progress	-	Discovered; contract review pending.
+tests/tests/ui/err/greedy-without-config.rs::function::main	in_progress	-	Discovered; contract review pending.
+tests/tests/ui/err/multiple-export-dirs.rs::class::Token	in_progress	-	Discovered; contract review pending.
+tests/tests/ui/err/multiple-export-dirs.rs::function::main	in_progress	-	Discovered; contract review pending.
+tests/tests/ui/err/priority-conflict.rs::class::Tokens	in_progress	-	Discovered; contract review pending.
+tests/tests/ui/err/priority-conflict.rs::function::main	in_progress	-	Discovered; contract review pending.
+tests/tests/ui/err/regex-non-utf8.rs::class::TokenWithX00Plus	in_progress	-	Discovered; contract review pending.
+tests/tests/ui/err/regex-non-utf8.rs::class::TokenWithX00Star	in_progress	-	Discovered; contract review pending.
+tests/tests/ui/err/regex-non-utf8.rs::class::TokenWithXFF	in_progress	-	Discovered; contract review pending.
+tests/tests/ui/err/regex-non-utf8.rs::function::main	in_progress	-	Discovered; contract review pending.
+tests/tests/ui/err/subpattern-match-empty.rs::class::Example1	in_progress	-	Discovered; contract review pending.
+tests/tests/ui/err/subpattern-match-empty.rs::class::Example2	in_progress	-	Discovered; contract review pending.
+tests/tests/ui/err/subpattern-match-empty.rs::function::main	in_progress	-	Discovered; contract review pending.
+tests/tests/ui/err/token-non-utf8.rs::class::Token	in_progress	-	Discovered; contract review pending.
+tests/tests/ui/err/token-non-utf8.rs::function::main	in_progress	-	Discovered; contract review pending.
+tests/tests/ui/ok/greedy.rs::class::Token	in_progress	-	Discovered; contract review pending.
+tests/tests/ui/ok/greedy.rs::function::main	in_progress	-	Discovered; contract review pending.
+tests/tests/unicode_dot.rs::class::TestUnicodeDot	in_progress	-	Discovered; contract review pending.
+tests/tests/unicode_dot.rs::class::TestUnicodeDotBytes	in_progress	-	Discovered; contract review pending.
+tests/tests/unicode_dot.rs::test::test_unicode_dot_bytes_ascii	in_progress	-	Discovered; contract review pending.
+tests/tests/unicode_dot.rs::test::test_unicode_dot_bytes_invalid_utf8	in_progress	-	Discovered; contract review pending.
+tests/tests/unicode_dot.rs::test::test_unicode_dot_bytes_unicode	in_progress	-	Discovered; contract review pending.
+tests/tests/unicode_dot.rs::test::test_unicode_dot_str_ascii	in_progress	-	Discovered; contract review pending.
+tests/tests/unicode_dot.rs::test::test_unicode_dot_str_unicode	in_progress	-	Discovered; contract review pending.

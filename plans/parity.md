@@ -3,30 +3,35 @@
 ## Where we are
 
 - **Current focus** — [Phase 2, Logos parity inventory and coverage](#phase-2-logos-parity-inventory-and-coverage).
-  The payload-driven examples and installed-dependency qualification are
-  complete.
+  The ledgers now target pinned Logos, and checked source reads and slicing
+  have vendored Rust evidence and Crystal regressions.
 - **Next up**
-  1. Curate the source and test inventories for pinned Logos. The discovery
-     run found 269 source items, 122 Rust test functions, and 127 supporting
-     or UI fixture items in the test tree.
-  2. Verify and close the behavior gaps identified by that audit.
-- **Status by area** — Core lexer behavior, the upstream test-file sweep,
-  payload examples, and dependency qualification are complete. The Logos
-  inventory audit is open.
-- **Gates** — Format and lint pass. All 253 specs pass with installed
-  `regex-automata` 0.2.1, including after a clean frozen install. The
-  standalone DFA regression and ASCII and Unicode generated matcher
-  comparisons pass. See the [DFA follow-up](../docs/dfa-parity-fix.md).
-- **Last feature commit** — `chore: qualify regex-automata 0.2.1 for Logos`.
+  1. **Callback dispatch and errors.** Start with the confirmed
+     `Logos.skip(lexer)` compile failure. Audit the upstream
+     `CallbackRetVal` and `SkipRetVal` cases through both Crystal macro
+     entry points. Verify token payloads, skipped input, error spans, and
+     payload isolation across callbacks.
+  2. **Lexer navigation and iteration.** Verify clone, morph, source access,
+     and spanned iteration against the remaining runtime contracts.
+  3. **Derive diagnostics and matcher behavior.** Audit the UI fixtures,
+     option and priority handling, and codegen against the pinned Rust
+     behavior. Record equivalent Crystal APIs and intentional divergences.
+- **Status by area** — Payload examples and dependency qualification are
+  complete. The Phase 2 source-range slice is complete. The rest of the
+  behavior audit remains open in the [Logos inventory](inventory/README.md).
+- **Gates** — Format, lint, and 256 specs pass with installed
+  `regex-automata` 0.2.1. All three inventory drift checks and the standalone
+  driver against vendored Rust `source.rs` pass.
+- **Last feature commit** — `fix: preserve checked Logos source boundaries`.
 
 ## Scope and verification
 
 - Logos parity targets `maciejhirsz/logos` v0.16.1 (`c7d40fa`) under
   `logos_rust/`, including the runtime, derive and codegen behavior,
   `tests/tests/*.rs`, and examples.
-- Until Phase 2 is complete, the TSVs under `plans/inventory/` describe the
-  historical `regex-syntax` port. The beads export is a stale Phase 1–7
-  snapshot. Keep per-symbol and per-test decisions in the inventory.
+- The [inventory](inventory/README.md) tracks pinned Logos. Items marked
+  `in_progress` still require a contract review. The beads export is a stale
+  Phase 1–7 snapshot. Keep per-symbol and per-test decisions in the inventory.
 - The installed lock selects `regex-automata` 0.2.1 and `regex-syntax` 0.5.0
   at `1623e24`. Verify the resolved shard sources before reporting a gate
   result. The tracked `lib/` snapshots can contain local upgrades.
@@ -67,13 +72,14 @@ recorded shard revision.
 
 ### Phase 2. Logos parity inventory and coverage
 
-**In progress.** The test-file sweep established corresponding Crystal files.
-Tree-sitter discovery and all three structural drift checks passed on fresh
-scratch manifests. The committed TSVs remain historical until the behavior
-audit assigns evidence to the discovered Logos items.
+**In progress.** The ledgers cover 269 discovered source items, 122 Rust
+test functions, and 127 supporting or UI fixture items from the test tree.
+Checked source ranges and the exact non-UTF-8 lexer test have dispositions.
+The callback dispatch and error slice is next. See the ordered work in
+**Where we are** and the [inventory verification instructions](inventory/README.md).
 
-- Regenerate the source and test manifests against pinned Logos runtime,
-  derive and codegen sources and the upstream test suite. Map each in-scope
+- Use the generated source and test IDs for pinned Logos runtime, derive and
+  codegen sources and the upstream test suite. Map each in-scope
   test or API contract to its Crystal implementation and behavioral evidence,
   or record a specific divergence or exclusion.
 - Check that upstream token, skip, error, and span assertions have Crystal
