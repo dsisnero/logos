@@ -37,9 +37,9 @@ tests/tests/callbacks.rs::test::skip_equal_priorities::skip_equal_priorities	in_
 tests/tests/clone.rs::class::Evil	in_progress	-	Discovered; contract review pending.
 tests/tests/clone.rs::class::Token	in_progress	-	Discovered; contract review pending.
 tests/tests/clone.rs::method::Evil.clone	in_progress	-	Discovered; contract review pending.
-tests/tests/clone.rs::test::test_clone_leak	in_progress	-	Discovered; contract review pending.
-tests/tests/clone.rs::test::test_clone_ub	in_progress	-	Discovered; contract review pending.
-tests/tests/clone.rs::test::test_it_works_without_cloning	in_progress	-	Discovered; contract review pending.
+tests/tests/clone.rs::test::test_clone_leak	ported	spec/logos/clone_spec.cr	Verifies cloning a lexer does not call clone on its last payload; explicitly cloning the payload invokes its clone hook.
+tests/tests/clone.rs::test::test_clone_ub	intentional_divergence	spec/logos/clone_spec.cr	Checks safe continuation of both lexer cursors after a reference payload; Rust Miri-specific memory checks do not apply to Crystal GC objects.
+tests/tests/clone.rs::test::test_it_works_without_cloning	ported	spec/logos/clone_spec.cr	Returns separate payloads for all three matches without running their clone hooks.
 tests/tests/crate_.rs::class::Token	in_progress	-	Discovered; contract review pending.
 tests/tests/crate_.rs::test::simple	in_progress	-	Discovered; contract review pending.
 tests/tests/css.rs::class::Token	in_progress	-	Discovered; contract review pending.
@@ -104,8 +104,8 @@ tests/tests/lexer_modes.rs::class::Outer	in_progress	-	Discovered; contract revi
 tests/tests/lexer_modes.rs::class::Tokens	in_progress	-	Discovered; contract review pending.
 tests/tests/lexer_modes.rs::method::ModeBridge<'source>.next	in_progress	-	Discovered; contract review pending.
 tests/tests/lexer_modes.rs::method::Modes<'source>.new	in_progress	-	Discovered; contract review pending.
-tests/tests/lexer_modes.rs::test::iterating_modes	in_progress	-	Discovered; contract review pending.
-tests/tests/lexer_modes.rs::test::main	in_progress	-	Discovered; contract review pending.
+tests/tests/lexer_modes.rs::test::iterating_modes	ported	spec/logos/lexer_modes_spec.cr, spec/logos/navigation_spec.cr	Checks upstream escaped-codepoint, octal, newline, and closing-quote sequence across modes.
+tests/tests/lexer_modes.rs::test::main	ported	spec/logos/lexer_modes_spec.cr, spec/logos/navigation_spec.cr	Checks the exact upstream string-mode sequence and return to the outer lexer.
 tests/tests/nostd.rs::class::_Token	in_progress	-	Discovered; contract review pending.
 tests/tests/old_logos_bugs.rs::class::LuaBrackets	in_progress	-	Discovered; contract review pending.
 tests/tests/old_logos_bugs.rs::class::SyntaxKind	in_progress	-	Discovered; contract review pending.
@@ -200,13 +200,13 @@ tests/tests/simple.rs::test::ints	in_progress	-	Discovered; contract review pend
 tests/tests/simple.rs::test::invalid_abcs	in_progress	-	Discovered; contract review pending.
 tests/tests/simple.rs::test::invalid_hex_and_binary	in_progress	-	Discovered; contract review pending.
 tests/tests/simple.rs::test::invalid_tokens	in_progress	-	Discovered; contract review pending.
-tests/tests/simple.rs::test::iterator	in_progress	-	Discovered; contract review pending.
+tests/tests/simple.rs::test::iterator	ported	spec/logos/simple_spec.cr	Exact upstream keyword and identifier iteration sequence.
 tests/tests/simple.rs::test::keywords	in_progress	-	Discovered; contract review pending.
 tests/tests/simple.rs::test::keywords_mix_identifiers	in_progress	-	Discovered; contract review pending.
 tests/tests/simple.rs::test::numbers	in_progress	-	Discovered; contract review pending.
 tests/tests/simple.rs::test::operators	in_progress	-	Discovered; contract review pending.
 tests/tests/simple.rs::test::punctuation	in_progress	-	Discovered; contract review pending.
-tests/tests/simple.rs::test::spanned_iterator	in_progress	-	Discovered; contract review pending.
+tests/tests/simple.rs::test::spanned_iterator	ported	spec/logos/simple_spec.cr, spec/logos/navigation_spec.cr	Exact upstream token and byte-span sequence; navigation adds Unicode, errors and skipped trivia.
 tests/tests/simple.rs::test::uints	in_progress	-	Discovered; contract review pending.
 tests/tests/simple.rs::test::whitespace	in_progress	-	Discovered; contract review pending.
 tests/tests/source.rs::class::RefSource	skipped	spec/logos/source_spec.cr	The pinned custom-source fixture is disabled by unconditional cfg(any()); built-in Source behavior has separate Crystal specs.

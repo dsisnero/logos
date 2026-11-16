@@ -80,12 +80,8 @@ module Logos
       @source_bytes
     end
 
-    # Wrap the `Lexer` in an `Iterator` that produces tuples of `(Token, Span)`.
-    #
-    # ```
-    # tokens = Token.lexer("42 3.14 -5 f").spanned.to_a
-    # # => [{Token::Integer(42), 0..2}, {Token::Float(3.14), 3..7}, ...]
-    # ```
+    # Wrap this lexer in an iterator of token results and their byte spans.
+    # Advancing the iterator also advances this lexer.
     def spanned : SpannedIter(Token, Source, Extras, Error)
       SpannedIter(Token, Source, Extras, Error).new(self)
     end
@@ -120,38 +116,53 @@ module Logos
 
     # Bumps the end of currently lexed token by `n` bytes.
     #
-    # **Panics** if adding `n` to current offset would place the `Lexer` beyond the last byte,
-    # or in the middle of an UTF-8 code point (does not apply when lexing raw `Slice(UInt8)`).
+    # Raises if the new end precedes the current token, exceeds the source,
+    # or splits a UTF-8 code point. Invalid bumps leave the span intact.
     def bump(n : Int32) : Nil
-      @token_end += n
-      raise "Invalid Lexer bump" unless @source.boundary?(@token_end)
+      position = source_position(n)
+      unless position && position >= @token_start && @source.boundary?(position)
+        raise "Invalid Lexer bump"
+      end
+      @token_end = position
     end
 
     # Read a single byte at current position of the `Lexer` plus `offset`.
     # If end of the `Source` has been reached, this will return `nil`.
     def read_u8(offset : Int32 = 0) : UInt8?
-      @source.read_u8(@token_end + offset)
+      if position = source_position(offset)
+        @source.read_u8(position)
+      end
     end
 
     # Read `bytes` bytes starting at current position of the `Lexer` plus `offset`.
     # If end of the `Source` has been reached, this will return `nil`.
     def read_bytes(bytes : Int32, offset : Int32 = 0) : Slice(UInt8)?
-      @source.read_bytes(bytes, @token_end + offset)
+      if position = source_position(offset)
+        @source.read_bytes(bytes, position)
+      end
+    end
+
+    private def source_position(offset : Int32) : Int32?
+      position = @token_end.to_i64 + offset
+      return if position < 0 || position > @source_bytes.size
+      position.to_i32
     end
 
     # Turn this lexer into a lexer for a new token type.
     #
-    # The new lexer continues to point at the same span as the current lexer,
-    # and the current token becomes the error token of the new token type.
-    def morph(token_type : Token2.class) : Lexer(Token2, Source, Extras, Error) forall Token2
-      lexer = Lexer(Token2, Source, Extras, Error).new(@source, @extras)
-      lexer.set_span(@token_start, @token_end)
-      lexer
+    # The new lexer keeps the source and span and uses the destination token's
+    # error type. Use the block overload to convert extras between modes.
+    def morph(token_type : Token2.class) : Lexer forall Token2
+      morph(token_type) { |extras| extras }
     end
 
-    def morph(token_type : Token2.class, & : Extras -> Extras2) : Lexer(Token2, Source, Extras2, Error) forall Token2, Extras2
+    def morph(token_type : Token2.class, & : Extras -> Extras2) : Lexer forall Token2, Extras2
       converted_extras = yield @extras
-      lexer = Lexer(Token2, Source, Extras2, Error).new(@source, converted_extras)
+      lexer = {% if Token2.class.has_method?(:lexer_with_extras) %}
+                token_type.lexer_with_extras(@source, converted_extras)
+              {% else %}
+                Lexer(Token2, Source, Extras2, Error).new(@source, converted_extras)
+              {% end %}
       lexer.set_span(@token_start, @token_end)
       lexer
     end
@@ -189,8 +200,12 @@ module Logos
       @token_end = end_pos
     end
 
+    # Copy the cursor and clone extras that implement `clone`.
+    # Opaque extras and the last callback payload retain their references.
     def clone : self
-      lexer = Lexer(Token, Source, Extras, Error).new(@source, @extras)
+      extras = @extras
+      extras = extras.clone if extras.responds_to?(:clone)
+      lexer = Lexer(Token, Source, Extras, Error).new(@source, extras)
       lexer.set_span(@token_start, @token_end)
       lexer.callback_value = @callback_value
       lexer
@@ -203,7 +218,15 @@ module Logos
   class SpannedIter(Token, Source, Extras, Error)
     include Iterator({Result(Token, Error), Span})
 
+    # The lexer supplying this iterator's tokens and spans.
+    getter lexer : Lexer(Token, Source, Extras, Error)
+
     def initialize(@lexer : Lexer(Token, Source, Extras, Error))
+    end
+
+    # Copy the lexer at its current position for independent iteration.
+    def clone : self
+      self.class.new(@lexer.clone)
     end
 
     def next : Iterator::Stop | {Result(Token, Error), Span}

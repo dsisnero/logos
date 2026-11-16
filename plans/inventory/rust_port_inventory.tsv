@@ -195,7 +195,7 @@ logos-derive/src/lib.rs::function::logos	function	in_progress	-	Discovered; cont
 src/internal.rs::class::CallbackResult	class	intentional_divergence	src/logos/define_macro.cr, src/logos/macros.cr, spec/logos/callback_dispatch_spec.cr	Generated Crystal code emits a Result, skips via nil, or builds the default error at the matched span.
 src/internal.rs::class::SkipResult	class	intentional_divergence	src/logos/define_macro.cr, src/logos/macros.cr, spec/logos/callback_dispatch_spec.cr	Generated Crystal code handles a successful skip and typed error directly.
 src/internal.rs::interface::CallbackRetVal	interface	intentional_divergence	src/logos/define_macro.cr, src/logos/macros.cr, spec/logos/callback_dispatch_spec.cr	Crystal macros dispatch from explicit payload and control return types without Rust trait coherence.
-src/internal.rs::interface::LexerInternal	interface	in_progress	-	Discovered; contract review pending.
+src/internal.rs::interface::LexerInternal	interface	intentional_divergence	src/logos/lexer.cr, src/logos/macros.cr, src/logos/define_macro.cr	The Crystal generated matcher uses byte offsets and checked movement; Rust's internal trait is backend-specific.
 src/internal.rs::interface::SkipRetVal	interface	intentional_divergence	src/logos/define_macro.cr, src/logos/macros.cr, spec/logos/callback_dispatch_spec.cr	Skip rules dispatch callback results in generated code; Result(Nil, E) and Result(Skip, E) are checked in both APIs.
 src/internal.rs::method::().construct	method	ported	src/logos/define_macro.cr, src/logos/macros.cr, spec/logos/callback_dispatch_spec.cr, spec/logos/callbacks_spec.cr	A Nil return on a skip rule discards the match. See matching and unterminated comment cases.
 src/internal.rs::method::CallbackResult<'a, L>.from	method	intentional_divergence	src/logos/define_macro.cr, src/logos/macros.cr, spec/logos/callback_dispatch_spec.cr	Skip and error are applied directly by generated Crystal code.
@@ -212,35 +212,35 @@ src/internal.rs::method::Result<T, E>.construct	method	intentional_divergence	sr
 src/internal.rs::method::Skip.construct	method	ported	src/logos/define_macro.cr, src/logos/macros.cr, spec/logos/callback_dispatch_spec.cr	Skip suppresses the matched token on ordinary or declared skip rules.
 src/internal.rs::method::T.construct	method	intentional_divergence	src/logos/define_macro.cr, src/logos/macros.cr, spec/logos/callback_dispatch_spec.cr	Crystal declares payload intent using an explicit wrapper; bare Bool and token values keep their control semantics.
 src/internal.rs::method::bool.construct	method	ported	src/logos/define_macro.cr, src/logos/macros.cr, spec/logos/callback_dispatch_spec.cr	Bare true emits; bare false invokes the configured default error at the matched span.
-src/lexer.rs::class::Lexer	class	in_progress	-	Discovered; contract review pending.
-src/lexer.rs::class::SpannedIter	class	in_progress	-	Discovered; contract review pending.
-src/lexer.rs::method::Lexer<'source, Token>.bump	method	in_progress	-	Discovered; contract review pending.
-src/lexer.rs::method::Lexer<'source, Token>.clone	method	in_progress	-	Discovered; contract review pending.
-src/lexer.rs::method::Lexer<'source, Token>.end	method	in_progress	-	Discovered; contract review pending.
-src/lexer.rs::method::Lexer<'source, Token>.end_to_boundary	method	in_progress	-	Discovered; contract review pending.
-src/lexer.rs::method::Lexer<'source, Token>.fmt	method	in_progress	-	Discovered; contract review pending.
-src/lexer.rs::method::Lexer<'source, Token>.morph	method	in_progress	-	Discovered; contract review pending.
-src/lexer.rs::method::Lexer<'source, Token>.new	method	in_progress	-	Discovered; contract review pending.
-src/lexer.rs::method::Lexer<'source, Token>.next	method	in_progress	-	Discovered; contract review pending.
-src/lexer.rs::method::Lexer<'source, Token>.offset	method	in_progress	-	Discovered; contract review pending.
-src/lexer.rs::method::Lexer<'source, Token>.range	method	in_progress	-	Discovered; contract review pending.
-src/lexer.rs::method::Lexer<'source, Token>.read	method	in_progress	-	Discovered; contract review pending.
-src/lexer.rs::method::Lexer<'source, Token>.remainder	method	in_progress	-	Discovered; contract review pending.
-src/lexer.rs::method::Lexer<'source, Token>.slice	method	in_progress	-	Discovered; contract review pending.
-src/lexer.rs::method::Lexer<'source, Token>.source	method	in_progress	-	Discovered; contract review pending.
-src/lexer.rs::method::Lexer<'source, Token>.span	method	in_progress	-	Discovered; contract review pending.
-src/lexer.rs::method::Lexer<'source, Token>.spanned	method	in_progress	-	Discovered; contract review pending.
-src/lexer.rs::method::Lexer<'source, Token>.trivia	method	in_progress	-	Discovered; contract review pending.
-src/lexer.rs::method::Lexer<'source, Token>.with_extras	method	in_progress	-	Discovered; contract review pending.
-src/lexer.rs::method::SpannedIter<'source, Token>.clone	method	missing	src/logos/lexer.cr	Confirmed compile failure after creating a spanned iterator: clone is undefined. Rust clones the inner lexer.
-src/lexer.rs::method::SpannedIter<'source, Token>.deref	method	in_progress	-	Discovered; contract review pending.
-src/lexer.rs::method::SpannedIter<'source, Token>.deref_mut	method	in_progress	-	Discovered; contract review pending.
-src/lexer.rs::method::SpannedIter<'source, Token>.next	method	in_progress	-	Discovered; contract review pending.
+src/lexer.rs::class::Lexer	class	ported	src/logos/lexer.cr, spec/logos/navigation_spec.cr	Tracks original source, extras, and half-open byte ranges.
+src/lexer.rs::class::SpannedIter	class	ported	src/logos/lexer.cr, spec/logos/navigation_spec.cr	Pairs results and byte spans with independent cloning.
+src/lexer.rs::method::Lexer<'source, Token>.bump	method	intentional_divergence	src/logos/lexer.cr, spec/logos/navigation_spec.cr	Checks byte bounds and UTF-8 boundaries before committing cursor changes; uses signed offsets and leaves the span intact on failure.
+src/lexer.rs::method::Lexer<'source, Token>.clone	method	intentional_divergence	src/logos/lexer.cr, spec/logos/navigation_spec.cr, spec/logos/clone_spec.cr	Clones cursor and cloneable extras; opaque extras and the legacy current-payload box are shared.
+src/lexer.rs::method::Lexer<'source, Token>.end	method	intentional_divergence	src/logos/lexer.cr	Crystal's matcher advances from the token end via checked bump rather than exposing Rust's internal absolute setter.
+src/lexer.rs::method::Lexer<'source, Token>.end_to_boundary	method	intentional_divergence	src/logos/macros.cr, src/logos/define_macro.cr, spec/logos/navigation_spec.cr	Crystal computes an invalid byte span before bumping; it does not expose Rust's generated-lexer primitive.
+src/lexer.rs::method::Lexer<'source, Token>.fmt	method	intentional_divergence	src/logos/lexer.cr	Crystal uses native object inspection for Lexer; Rust implements fmt::Debug.
+src/lexer.rs::method::Lexer<'source, Token>.morph	method	intentional_divergence	src/logos/lexer.cr, spec/logos/navigation_spec.cr, spec/logos/lexer_modes_spec.cr	Keeps source and span and selects the destination error type. Crystal uses a block for extras conversion and retains the originating lexer reference.
+src/lexer.rs::method::Lexer<'source, Token>.new	method	ported	src/logos/lexer.cr, spec/logos/lexer_spec.cr	Constructs at offset zero with default extras.
+src/lexer.rs::method::Lexer<'source, Token>.next	method	ported	src/logos/lexer.cr, spec/logos/navigation_spec.cr, spec/logos/simple_spec.cr	Yields results and advances through matched tokens, skips, errors and EOF.
+src/lexer.rs::method::Lexer<'source, Token>.offset	method	intentional_divergence	src/logos/lexer.cr, spec/logos/navigation_spec.cr	Crystal's generated matcher offset is the matched end; Rust's internal scanner offset uses token_start.
+src/lexer.rs::method::Lexer<'source, Token>.range	method	intentional_divergence	src/logos/lexer.cr	Crystal exposes span; Rust range is a deprecated alias.
+src/lexer.rs::method::Lexer<'source, Token>.read	method	intentional_divergence	src/logos/lexer.cr, spec/logos/navigation_spec.cr	Crystal uses bounds-checked reads relative to the matched end. Rust's internal read takes an absolute byte offset and a fixed-size Chunk.
+src/lexer.rs::method::Lexer<'source, Token>.remainder	method	ported	src/logos/lexer.cr, spec/logos/navigation_spec.cr	Slices from the matched end through source EOF, including across morph and a spanned clone.
+src/lexer.rs::method::Lexer<'source, Token>.slice	method	ported	src/logos/lexer.cr, spec/logos/navigation_spec.cr	Returns the current matched span as a source slice, including error matches.
+src/lexer.rs::method::Lexer<'source, Token>.source	method	ported	src/logos/lexer.cr, spec/logos/navigation_spec.cr	Retains the original source across clone, ordinary iteration and mode changes.
+src/lexer.rs::method::Lexer<'source, Token>.span	method	ported	src/logos/lexer.cr, spec/logos/navigation_spec.cr, spec/logos/simple_spec.cr	Returns the half-open byte range of the current token, including errors.
+src/lexer.rs::method::Lexer<'source, Token>.spanned	method	intentional_divergence	src/logos/lexer.cr, spec/logos/navigation_spec.cr, spec/logos/simple_spec.cr	Pairs each result with its byte span. Wrapping a Crystal lexer aliases its state; Rust moves the lexer into the iterator.
+src/lexer.rs::method::Lexer<'source, Token>.trivia	method	intentional_divergence	src/logos/lexer.cr, spec/logos/navigation_spec.cr	The Crystal iterator advances past skipped input and updates token_start in its internal loop.
+src/lexer.rs::method::Lexer<'source, Token>.with_extras	method	ported	src/logos/lexer.cr, spec/logos/navigation_spec.cr, spec/logos/ergonomics_spec.cr	Constructs with the supplied extras without copying them.
+src/lexer.rs::method::SpannedIter<'source, Token>.clone	method	ported	src/logos/lexer.cr, spec/logos/navigation_spec.cr	Creates an independent inner lexer cursor and clones cloneable extras.
+src/lexer.rs::method::SpannedIter<'source, Token>.deref	method	intentional_divergence	src/logos/lexer.cr, spec/logos/navigation_spec.cr	SpannedIter#lexer supplies explicit read access to the inner lexer.
+src/lexer.rs::method::SpannedIter<'source, Token>.deref_mut	method	intentional_divergence	src/logos/lexer.cr, spec/logos/navigation_spec.cr	SpannedIter#lexer supplies explicit mutable access through the existing lexer object.
+src/lexer.rs::method::SpannedIter<'source, Token>.next	method	ported	src/logos/lexer.cr, spec/logos/navigation_spec.cr, spec/logos/simple_spec.cr	Yields each result with its matching byte span and stops at EOF.
 src/lib.rs::class::Filter	class	intentional_divergence	src/logos/result.cr, spec/logos/callback_dispatch_spec.cr	Crystal represents the Rust enum with Emit(T) and Skip structs.
 src/lib.rs::class::FilterResult	class	intentional_divergence	src/logos/result.cr, spec/logos/callback_dispatch_spec.cr	Crystal represents the Rust enum with Emit(T), Skip and Error(E) structs.
 src/lib.rs::class::Skip	class	ported	src/logos/result.cr, spec/logos/callback_dispatch_spec.cr	Skip marks matched input as trivia in both macro APIs.
-src/lib.rs::function::lexer	function	in_progress	-	Discovered; contract review pending.
-src/lib.rs::function::lexer_with_extras	function	in_progress	-	Discovered; contract review pending.
+src/lib.rs::function::lexer	function	ported	src/logos/macros.cr, src/logos/define_macro.cr, spec/logos/ergonomics_spec.cr	Both macro APIs generate a constructor with default extras.
+src/lib.rs::function::lexer_with_extras	function	ported	src/logos/macros.cr, src/logos/define_macro.cr, spec/logos/ergonomics_spec.cr	Both macro APIs generate a constructor with supplied extras.
 src/lib.rs::function::skip	function	ported	src/logos.cr, spec/logos/callback_dispatch_spec.cr	Callable with any Lexer instantiation. Both macro APIs skip the matched token.
 src/lib.rs::interface::Logos	interface	in_progress	-	Discovered; contract review pending.
 src/source.rs::const::SIZE	const	intentional_divergence	src/logos/source.cr, spec/logos/source_spec.cr	Crystal reads UInt8 and bounded Bytes directly; Rust's fixed-size Chunk conversions and SIZE are internal to Rust.

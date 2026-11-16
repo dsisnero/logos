@@ -49,3 +49,11 @@ the same input and expected variants, payloads, error spans, and extras as a
 Rust driver built against pinned `logos_rust`. Its reference implementations
 are `logos_rust/src/internal.rs` and
 `logos_rust/logos-codegen/src/generator/leaf.rs`.
+
+The [navigation specs](../../spec/logos/navigation_spec.cr) check the same
+clone, extras, morph, error, and byte-span behavior as a Rust driver linked
+against pinned `logos_rust`. The driver observed the original and cloned
+iterators independently through a Unicode token, skipped input, an error,
+and EOF. Crystal additionally tests that failed navigation leaves a usable
+cursor, and uses an explicit `SpannedIter#lexer` getter for Rust's dereference
+access.
