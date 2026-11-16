@@ -802,6 +802,7 @@ module Logos
           __lexer.bump(end_pos)
 
           # Call callback if any
+          __payload = nil.as(::Logos::CallbackValueBase?)
           {% if has_callbacks %}
             case pattern_id.to_i
             {% for i in 0...all_defs.size %}
@@ -885,12 +886,12 @@ module Logos
                      if emitted_value.is_a?(self)
                        emitted_variant = emitted_value
                      else
-                       __lexer.callback_value = ::Logos::CallbackValue.new(emitted_value)
+                       __lexer.callback_value = __payload = ::Logos::CallbackValue.new(emitted_value)
                      end
                    elsif ok_value.is_a?(self)
                      emitted_variant = ok_value
                    elsif !ok_value.nil?
-                     __lexer.callback_value = ::Logos::CallbackValue.new(ok_value)
+                     __lexer.callback_value = __payload = ::Logos::CallbackValue.new(ok_value)
                    end
                  else
                    return ::Logos::Result(self, {{ error_type }}).error(__callback_result.unwrap_error)
@@ -910,7 +911,7 @@ module Logos
                  elsif option_value.is_a?(self)
                    emitted_variant = option_value
                  else
-                   __lexer.callback_value = ::Logos::CallbackValue.new(option_value)
+                   __lexer.callback_value = __payload = ::Logos::CallbackValue.new(option_value)
                  end
                end
 
@@ -925,7 +926,7 @@ module Logos
                       emitted_variant = emitted_value
                     else
                       # Store emitted value in lexer for later access
-                      __lexer.callback_value = ::Logos::CallbackValue.new(emitted_value)
+                      __lexer.callback_value = __payload = ::Logos::CallbackValue.new(emitted_value)
                     end
                   end
               {% end %}
@@ -935,7 +936,7 @@ module Logos
 
           # Return token unless it's a skip variant
           unless is_skip
-            return ::Logos::Result(self, {{ error_type }}).ok(emitted_variant)
+            return ::Logos::Result(self, {{ error_type }}).ok(emitted_variant, __payload)
           else
             # Skip variant - return nil to continue lexing
             return nil

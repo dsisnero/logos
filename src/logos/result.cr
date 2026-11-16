@@ -6,8 +6,12 @@ module Logos
   struct Result(T, E)
     @value : T | E
     @is_ok : Bool
+    @payload : CallbackValueBase? = nil
 
-    def initialize(value : T, @is_ok = true)
+    # Preserve value and error comparison for existing Result callers.
+    def_equals_and_hash @value, @is_ok
+
+    def initialize(value : T, @is_ok = true, @payload : CallbackValueBase? = nil)
       @value = value
     end
 
@@ -31,6 +35,23 @@ module Logos
       @is_ok && @value.as(T) == expected
     end
 
+    # Read the saved payload when this result holds the expected token and type.
+    def payload_for(expected : T, type : P.class) : P? forall P
+      return unless matches?(expected)
+      @payload.as?(CallbackValue(P)).try(&.value)
+    end
+
+    # Read the saved payload or raise if the token or payload type does not match.
+    def payload_for!(expected : T, type : P.class) : P forall P
+      unless matches?(expected)
+        raise "Expected token #{expected}, got #{value?.inspect}"
+      end
+
+      payload = @payload.as?(CallbackValue(P))
+      raise "Expected payload #{P} for token #{expected}, got nil" unless payload
+      payload.value
+    end
+
     def unwrap : T
       if @is_ok
         @value.as(T)
@@ -47,8 +68,8 @@ module Logos
       end
     end
 
-    def self.ok(value : T) : self
-      new(value, true)
+    def self.ok(value : T, payload : CallbackValueBase? = nil) : self
+      new(value, true, payload)
     end
 
     def self.error(error : E) : self

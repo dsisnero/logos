@@ -2,24 +2,19 @@
 
 ## Where we are
 
-- **Current focus:** finish validating the upgrade to `regex-automata` 0.2.0
-  and restore a green Logos suite on the installed dependency.
+- **Current focus:** `logos-pk9`, port the Rust payload-oriented examples to
+  the result-owned payload API.
 - **Next up:**
-  1. The DFA fix is committed locally as `e27d6a9`. Use the local checkout
-     for verification until a released shard includes the fix. The installed
-     0.2.0 baseline remains open.
-  2. `logos-15n`: attach typed callback payloads to the returned
-     `Logos::Result`. Both macro entry points must preserve a result's payload
-     after the lexer advances, including consecutive tokens of the same
-     variant. Keep the existing lexer accessors compatible.
-  3. `logos-pk9`: port the Rust payload-oriented examples using that API.
-  4. Refresh `plans/inventory/*.tsv` against Rust `logos` sources and tests.
+  1. `logos-pk9`: port Rust payload-oriented examples and verify their output.
+  2. Refresh `plans/inventory/*.tsv` against Rust `logos` sources and tests.
+  3. Revalidate the installed dependency when a released shard includes the
+     DFA fix. Use local shard commit `e27d6a9` for verification meanwhile.
 - **Status by area:**
   - The upstream Logos test sweep is complete. Test inventory refresh remains
     open, and the existing TSVs cover the historical `regex-syntax` port.
-  - Enum payload parity is in progress. `Lexer#payload_for` checks the variant
-    but reads mutable lexer state, so an older result can see a newer token's
-    payload. `logos-15n` and `logos-pk9` remain open.
+  - `logos-15n` is complete. Both macro entry points attach callback payloads
+    to the emitted `Result`. The lexer accessors remain available.
+    `logos-pk9` remains open. See [enum payload parity](../docs/enum_payload_parity.md).
   - The installed lock selects `regex-automata` 0.2.0 and `regex-syntax` 0.5.0
     at `1623e24`. The shard release records its own signoff against Rust
     `regex-automata` 0.4.18. Logos' release integration check is still open.
@@ -36,10 +31,10 @@
   - The installed shard snapshots under `lib/` are tracked and have local
     upgrade changes. Verify which revision a gate exercises.
   - `.beads/issues.jsonl` is a stale Phase 1–7 snapshot.
-- **Last commit:** `test: check Logos against regex-automata 0.2.0` records
-  the upgrade checks. See [DFA follow-up](../docs/dfa-parity-fix.md).
-- **Gates:** Logos format and lint pass. The installed 0.2.0 release has
-  one error in 240 specs. All 240 pass with local shard fix `e27d6a9`.
+- **Last commit:** `feat: bind typed callback payloads to lexer results`.
+- **Gates:** Logos format and lint pass. All 244 specs pass with local shard
+  fix `e27d6a9`. The installed 0.2.0 release has a known error in the
+  dead-state removal spec. See [DFA follow-up](../docs/dfa-parity-fix.md).
 
 Upstream source root: `logos_rust`
 
@@ -122,9 +117,10 @@ Mark a feature `[x]` only after the whole slice is green, the relevant specs use
 
 ## Intentional divergences
 
-- **Enum payloads:** Rust `logos` attaches data to enum variants; Crystal enums
-  cannot, so payloads travel through `Lexer#callback_value_as(T)` until the
-  `logos-15n` typed extraction API lands.
+- **Enum payloads:** Rust `logos` attaches data to enum variants. Crystal
+  keeps the enum tag and a boxed callback value in `Logos::Result`.
+  Typed access uses the variant and expected type. Result equality and hashing
+  retain the existing variant/error semantics.
 - **Annotation placement:** Crystal cannot introspect per-variant annotations,
   so `Logos::Token` / `Logos::Regex` mappings are declared at the enum type
   level instead of on individual variants.

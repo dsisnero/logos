@@ -695,6 +695,7 @@ macro logos_derive(type)
 
         lexer.bump(end_pos)
 
+        __payload = nil.as(::Logos::CallbackValueBase?)
         {% if has_callbacks %}
           case pattern_id.to_i
           {% for i in 0...all_defs.size %}
@@ -751,12 +752,12 @@ macro logos_derive(type)
                     if emitted_value.is_a?(self)
                       emitted_variant = emitted_value
                     else
-                      lexer.callback_value = ::Logos::CallbackValue.new(emitted_value)
+                      lexer.callback_value = __payload = ::Logos::CallbackValue.new(emitted_value)
                     end
                   elsif ok_value.is_a?(self)
                     emitted_variant = ok_value
                   elsif !ok_value.nil?
-                    lexer.callback_value = ::Logos::CallbackValue.new(ok_value)
+                    lexer.callback_value = __payload = ::Logos::CallbackValue.new(ok_value)
                   end
                 else
                   return ::Logos::Result(self, {{ error_type }}).error(__callback_result.unwrap_error)
@@ -775,7 +776,7 @@ macro logos_derive(type)
                 elsif option_value.is_a?(self)
                   emitted_variant = option_value
                 else
-                  lexer.callback_value = ::Logos::CallbackValue.new(option_value)
+                  lexer.callback_value = __payload = ::Logos::CallbackValue.new(option_value)
                 end
               end
 
@@ -785,7 +786,7 @@ macro logos_derive(type)
                 if emitted_value.is_a?(self)
                   emitted_variant = emitted_value
                 else
-                  lexer.callback_value = ::Logos::CallbackValue.new(emitted_value)
+                  lexer.callback_value = __payload = ::Logos::CallbackValue.new(emitted_value)
                 end
               end
             {% end %}
@@ -794,7 +795,7 @@ macro logos_derive(type)
         {% end %}
 
         return nil if is_skip
-        return ::Logos::Result(self, {{ error_type }}).ok(emitted_variant)
+        return ::Logos::Result(self, {{ error_type }}).ok(emitted_variant, __payload)
       elsif error_variant = compiled[:error_variant]
         {% if utf8_flag %}
           if char = lexer.remainder[0]?

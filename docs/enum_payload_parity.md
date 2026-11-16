@@ -1,41 +1,28 @@
-# Enum Payload Parity Plan (Rust Logos -> Crystal Logos)
+# Enum payload parity
 
-## Current state
+Rust Logos attaches callback values directly to enum variants. Crystal Logos
+stores the enum variant and its boxed callback value together in a
+`Logos::Result`. Both `Logos.define` and `logos_derive` support this API.
 
-Rust Logos supports associated data directly on enum variants (for example `Number(i64)`).
-Crystal enums do not support per-variant payloads, so this port currently stores callback output in `Lexer#callback_value` and returns only the enum variant from `lexer.next`.
+```crystal
+number = Token::Number
+results = Token.lex_all("42 7")
+results.map { |result| result.payload_for!(number, Int32) } # => [42, 7]
+```
 
-Current Crystal usage pattern:
+`Result#payload_for` returns the value when the result holds the requested
+variant and the callback emitted the requested type. It returns `nil` for an
+error, a different variant, or a missing or mismatched payload.
+`Result#payload_for!` raises on those cases. The result retains its payload
+after the lexer advances. Result equality and hashing still use the variant or
+error and its success status.
 
-1. Read token variant from `lexer.next`.
-2. Read parsed value from `lexer.callback_value_as(T)`.
-
-This is functional but less ergonomic than Rust examples and easy to misuse if callback value and token handling drift.
-
-## Parity target
-
-Match Rust ease-of-use as closely as Crystal allows:
-
-1. Keep token dispatch explicit and fast.
-2. Provide typed payload extraction that is structurally tied to the token variant.
-3. Preserve advanced functionality (extras, callbacks, custom errors, annotation + define APIs).
-4. Maintain backward compatibility for `callback_value_as` during migration.
-
-## Proposed direction
-
-1. Introduce generated payload union aliases per token enum (or equivalent generated wrapper type).
-2. Add generated typed helpers on lexer/result to extract payload for a specific token variant.
-3. Keep `callback_value` as compatibility layer, then deprecate when ergonomic API is stable.
-4. Port Rust payload-heavy examples to prove the final API is concise in real usage.
+Existing `Lexer#payload_for` and `Lexer#payload_for!` calls read the supplied
+result. `Lexer#callback_value_as` remains available for reading the lexer’s
+current callback value.
 
 ## Work breakdown
 
-- `logos-nxw`: Design token-payload API with Crystal union-backed values.
-- `logos-15n`: Implement typed payload extraction helpers on Lexer/Result.
-- `logos-pk9`: Port Rust enum-payload examples to Crystal ergonomic equivalents.
-
-## Known constraints
-
-- Crystal enum model differs from Rust associated-data enums; parity is API-level, not syntax-level.
-- Generated unions must avoid runaway compile-time complexity.
-- The API must remain consistent across annotation and `Logos.define` macro entry points.
+- `logos-nxw`: Design token-payload API. Complete.
+- `logos-15n`: Bind typed payload extraction to each result. Complete.
+- `logos-pk9`: Port Rust payload-oriented examples to the result API. Open.
