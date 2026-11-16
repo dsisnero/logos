@@ -25,15 +25,15 @@ tests/tests/callbacks.rs::function::labelled_skip_result_callback	in_progress	-	
 tests/tests/callbacks.rs::function::parse_raw_string	in_progress	-	Discovered; contract review pending.
 tests/tests/callbacks.rs::function::skip_comment	in_progress	-	Discovered; contract review pending.
 tests/tests/callbacks.rs::method::LexingError.from	in_progress	-	Discovered; contract review pending.
-tests/tests/callbacks.rs::test::any_token_callback::any_token_callback	in_progress	-	Discovered; contract review pending.
-tests/tests/callbacks.rs::test::data::numbers	in_progress	-	Discovered; contract review pending.
-tests/tests/callbacks.rs::test::nested_lifetime::supplement_lifetime_in_types	in_progress	-	Discovered; contract review pending.
-tests/tests/callbacks.rs::test::return_result_skip::return_result_skip	in_progress	-	Discovered; contract review pending.
-tests/tests/callbacks.rs::test::rust::raw_strings	in_progress	-	Discovered; contract review pending.
-tests/tests/callbacks.rs::test::skip_all_callback_types::skip_all_callback_types	in_progress	-	Discovered; contract review pending.
-tests/tests/callbacks.rs::test::skip_callback_closure::skip_callback_closure	in_progress	-	Discovered; contract review pending.
-tests/tests/callbacks.rs::test::skip_callback_function::skip_callback_function	in_progress	-	Discovered; contract review pending.
-tests/tests/callbacks.rs::test::skip_equal_priorities::skip_equal_priorities	in_progress	-	Discovered; contract review pending.
+tests/tests/callbacks.rs::test::any_token_callback::any_token_callback	ported	spec/logos/callbacks_spec.cr	Exact upstream text, integer and float variant overrides and byte spans.
+tests/tests/callbacks.rs::test::data::numbers	ported	spec/logos/callbacks_spec.cr	Exact mixed signed-number and text input with typed payloads preserved after collection.
+tests/tests/callbacks.rs::test::nested_lifetime::supplement_lifetime_in_types	ported	spec/logos/callbacks_spec.cr	Exact four-token stream of tuple and text payloads, checked after collection.
+tests/tests/callbacks.rs::test::return_result_skip::return_result_skip	ported	spec/logos/callbacks_spec.cr	Exact tag values and spans, skipped closed comment, typed error on the unterminated comment start, and EOF for the successful stream.
+tests/tests/callbacks.rs::test::rust::raw_strings	ported	spec/logos/callbacks_spec.cr	Checks the exact raw-string slices, accepted variants, errors and spans; this Crystal fixture uses the default Nil error.
+tests/tests/callbacks.rs::test::skip_all_callback_types::skip_all_callback_types	ported	spec/logos/callbacks_spec.cr, spec/logos/callback_dispatch_spec.cr	Checks upstream callback order and error sequence; the cross-API matrix verifies typed skip results and error spans.
+tests/tests/callbacks.rs::test::skip_callback_closure::skip_callback_closure	ported	spec/logos/callbacks_spec.cr	Exact letters and numbers sequence and error line numbers from the upstream fixture.
+tests/tests/callbacks.rs::test::skip_callback_function::skip_callback_function	ported	spec/logos/callbacks_spec.cr	Exact tag values and spans; a unit-returning skip callback consumes an unterminated comment through EOF.
+tests/tests/callbacks.rs::test::skip_equal_priorities::skip_equal_priorities	in_progress	-	Review the equal-priority and greedy fallback behavior with the derive and matcher audit.
 tests/tests/clone.rs::class::Evil	in_progress	-	Discovered; contract review pending.
 tests/tests/clone.rs::class::Token	in_progress	-	Discovered; contract review pending.
 tests/tests/clone.rs::method::Evil.clone	in_progress	-	Discovered; contract review pending.
@@ -54,8 +54,8 @@ tests/tests/custom_error.rs::function::callback_b	in_progress	-	Discovered; cont
 tests/tests/custom_error.rs::function::parse_number	in_progress	-	Discovered; contract review pending.
 tests/tests/custom_error.rs::method::LexingError.from	in_progress	-	Discovered; contract review pending.
 tests/tests/custom_error.rs::method::LexingError.unrecognised_character	in_progress	-	Discovered; contract review pending.
-tests/tests/custom_error.rs::test::error_callback_test	in_progress	-	Discovered; contract review pending.
-tests/tests/custom_error.rs::test::test	in_progress	-	Discovered; contract review pending.
+tests/tests/custom_error.rs::test::error_callback_test	partial	spec/logos/custom_error_spec.cr	Checks token-specific error callbacks and extras; audit the full cross-lexer extras stream with navigation.
+tests/tests/custom_error.rs::test::test	partial	spec/logos/custom_error_spec.cr, spec/logos/callback_dispatch_spec.cr	Typed numeric errors and default error callbacks are covered; the full upstream overflow and identifier stream remains to audit.
 tests/tests/derive.rs::test::test_derive	in_progress	-	Discovered; contract review pending.
 tests/tests/edgecase.rs::class::Lexer	in_progress	-	Discovered; contract review pending.
 tests/tests/edgecase.rs::class::LexingError	in_progress	-	Discovered; contract review pending.

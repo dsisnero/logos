@@ -15,7 +15,7 @@ module Logos
   VERSION = "0.1.0"
 
   # Predefined callback that will inform the `Lexer` to skip a definition.
-  def self.skip(lexer : Lexer(T)) : Skip forall T
+  def self.skip(lexer : Lexer) : Skip
     Skip.new
   end
 end

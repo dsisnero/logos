@@ -3,26 +3,23 @@
 ## Where we are
 
 - **Current focus** — [Phase 2, Logos parity inventory and coverage](#phase-2-logos-parity-inventory-and-coverage).
-  The ledgers now target pinned Logos, and checked source reads and slicing
-  have vendored Rust evidence and Crystal regressions.
+  Source boundaries and callback dispatch are verified against pinned
+  Rust. The lexer navigation and iteration slice is next.
 - **Next up**
-  1. **Callback dispatch and errors.** Start with the confirmed
-     `Logos.skip(lexer)` compile failure. Audit the upstream
-     `CallbackRetVal` and `SkipRetVal` cases through both Crystal macro
-     entry points. Verify token payloads, skipped input, error spans, and
-     payload isolation across callbacks.
-  2. **Lexer navigation and iteration.** Verify clone, morph, source access,
-     and spanned iteration against the remaining runtime contracts.
-  3. **Derive diagnostics and matcher behavior.** Audit the UI fixtures,
-     option and priority handling, and codegen against the pinned Rust
-     behavior. Record equivalent Crystal APIs and intentional divergences.
-- **Status by area** — Payload examples and dependency qualification are
-  complete. The Phase 2 source-range slice is complete. The rest of the
-  behavior audit remains open in the [Logos inventory](inventory/README.md).
-- **Gates** — Format, lint, and 256 specs pass with installed
-  `regex-automata` 0.2.1. All three inventory drift checks and the standalone
-  driver against vendored Rust `source.rs` pass.
-- **Last feature commit** — `fix: preserve checked Logos source boundaries`.
+  1. **Lexer navigation and iteration.** Start with the confirmed missing
+     `SpannedIter#clone`. Compare mutable extras cloning and cursor
+     independence with Rust `Lexer::clone`, then check morph, remainder,
+     and byte spans after skips and errors.
+  2. **Derive diagnostics and matcher behavior.** Audit the UI fixtures,
+     option and priority handling, and codegen against pinned Rust.
+     Include the callback fixture for skip priority and greedy fallback.
+- **Status by area** — Payload examples, dependency qualification, source
+  boundaries, and callback dispatch are verified. The remaining behavior
+  and fixture reviews are tracked in the [Logos inventory](inventory/README.md).
+- **Gates** — Format, lint, and 260 specs pass with installed
+  `regex-automata` 0.2.1. All three inventory drift checks and the executable
+  callback matrix against pinned Rust Logos pass.
+- **Last feature commit** — `fix: align callback dispatch and default errors`.
 
 ## Scope and verification
 
@@ -74,9 +71,10 @@ recorded shard revision.
 
 **In progress.** The ledgers cover 269 discovered source items, 122 Rust
 test functions, and 127 supporting or UI fixture items from the test tree.
-Checked source ranges and the exact non-UTF-8 lexer test have dispositions.
-The callback dispatch and error slice is next. See the ordered work in
-**Where we are** and the [inventory verification instructions](inventory/README.md).
+Checked source ranges, the non-UTF-8 lexer stream, and callback dispatch have
+evidence-backed dispositions. The next slice covers lexer navigation and
+iteration. See the ordered work in **Where we are** and the
+[inventory verification instructions](inventory/README.md).
 
 - Use the generated source and test IDs for pinned Logos runtime, derive and
   codegen sources and the upstream test suite. Map each in-scope

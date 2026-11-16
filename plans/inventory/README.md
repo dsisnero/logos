@@ -43,3 +43,9 @@ The driver checked byte length, UTF-8 boundaries, empty EOF slices, invalid
 binary ranges, and out-of-bounds reads. Crystal's signed invalid arguments
 also have explicit regression coverage in
 [the source specs](../../spec/logos/source_spec.cr).
+
+The cross-API [callback specs](../../spec/logos/callback_dispatch_spec.cr) use
+the same input and expected variants, payloads, error spans, and extras as a
+Rust driver built against pinned `logos_rust`. Its reference implementations
+are `logos_rust/src/internal.rs` and
+`logos_rust/logos-codegen/src/generator/leaf.rs`.

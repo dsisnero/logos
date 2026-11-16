@@ -18,11 +18,11 @@ module Logos::Spec::Callbacks
       end
 
       regex "<[a-zA-Z0-9-]+>", :Tag do |lex|
-        lex.slice[1..-2]
+        Logos::Filter::Emit.new(lex.slice[1..-2])
       end
 
       token "<!--", :Comment do |lex|
-        if offset = lex.remainder.index("-->")
+        if offset = lex.remainder.byte_index("-->")
           lex.bump(offset + 3)
           Logos::Result(Logos::Skip, LexerError).ok(Logos::Skip.new)
         else
@@ -42,16 +42,13 @@ module Logos::Spec::Callbacks
       end
 
       regex "<[a-zA-Z0-9-]+>", :Tag do |lex|
-        lex.slice[1..-2]
+        Logos::Filter::Emit.new(lex.slice[1..-2])
       end
 
-      token "<!--", :Comment do |lex|
-        if offset = lex.remainder.index("-->")
-          lex.bump(offset + 3)
-          Logos::Skip.new
-        else
-          false
-        end
+      skip_token "<!--", :Comment do |lex|
+        remainder = lex.remainder
+        offset = remainder.byte_index("-->")
+        lex.bump(offset ? offset + 3 : remainder.bytesize)
       end
     end
   end
@@ -62,26 +59,33 @@ module Logos::Spec::Callbacks
       result = lexer.next
       result = result.as(Logos::Result(ReturnResultSkip::Token, ReturnResultSkip::LexerError))
       result.unwrap.should eq(ReturnResultSkip::Token::Tag)
+      result.payload_for!(result.unwrap, String).should eq("foo")
+      lexer.span.should eq(0...5)
       lexer.slice.should eq("<foo>")
 
       result = lexer.next
       result = result.as(Logos::Result(ReturnResultSkip::Token, ReturnResultSkip::LexerError))
       result.unwrap.should eq(ReturnResultSkip::Token::Tag)
+      result.payload_for!(result.unwrap, String).should eq("bar")
+      lexer.span.should eq(23...28)
       lexer.slice.should eq("<bar>")
 
       lexer.next.should eq(Iterator::Stop::INSTANCE)
     end
 
     it "errors on unterminated comment" do
-      lexer = Logos::Lexer(ReturnResultSkip::Token, String, Logos::NoExtras, ReturnResultSkip::LexerError).new("<foo> <!-- unterminated")
+      lexer = Logos::Lexer(ReturnResultSkip::Token, String, Logos::NoExtras, ReturnResultSkip::LexerError).new("<foo> <!-- unterminated comment")
       result = lexer.next
       result = result.as(Logos::Result(ReturnResultSkip::Token, ReturnResultSkip::LexerError))
       result.unwrap.should eq(ReturnResultSkip::Token::Tag)
+      result.payload_for!(result.unwrap, String).should eq("foo")
+      lexer.span.should eq(0...5)
       lexer.slice.should eq("<foo>")
 
       result = lexer.next
       result = result.as(Logos::Result(ReturnResultSkip::Token, ReturnResultSkip::LexerError))
-      result.error?.should be_true
+      result.unwrap_error.should eq(ReturnResultSkip::LexerError.new)
+      lexer.span.should eq(6...10)
     end
   end
 
@@ -91,26 +95,30 @@ module Logos::Spec::Callbacks
       result = lexer.next
       result = result.as(Logos::Result(SkipCallbackFunction::Token, Nil))
       result.unwrap.should eq(SkipCallbackFunction::Token::Tag)
+      result.payload_for!(result.unwrap, String).should eq("foo")
+      lexer.span.should eq(0...5)
       lexer.slice.should eq("<foo>")
 
       result = lexer.next
       result = result.as(Logos::Result(SkipCallbackFunction::Token, Nil))
       result.unwrap.should eq(SkipCallbackFunction::Token::Tag)
+      result.payload_for!(result.unwrap, String).should eq("bar")
+      lexer.span.should eq(23...28)
       lexer.slice.should eq("<bar>")
 
       lexer.next.should eq(Iterator::Stop::INSTANCE)
     end
 
-    it "returns default error for unterminated comment" do
-      lexer = Logos::Lexer(SkipCallbackFunction::Token, String, Logos::NoExtras, Nil).new("<foo> <!-- unterminated")
+    it "skips an unterminated comment through EOF" do
+      lexer = Logos::Lexer(SkipCallbackFunction::Token, String, Logos::NoExtras, Nil).new("<foo> <!-- unterminated comment")
       result = lexer.next
       result = result.as(Logos::Result(SkipCallbackFunction::Token, Nil))
       result.unwrap.should eq(SkipCallbackFunction::Token::Tag)
+      result.payload_for!(result.unwrap, String).should eq("foo")
+      lexer.span.should eq(0...5)
       lexer.slice.should eq("<foo>")
 
-      result = lexer.next
-      result = result.as(Logos::Result(SkipCallbackFunction::Token, Nil))
-      result.error?.should be_true
+      lexer.next.should eq(Iterator::Stop::INSTANCE)
     end
   end
 
@@ -215,12 +223,16 @@ module Logos::Spec::Callbacks
         Logos::Skip.new
       end
 
-      regex "[0-9]+", :Integer do |lex|
+      regex "[a-zA-Z]+", :Text do |lex|
+        Logos::Filter::Emit.new(lex.slice)
+      end
+
+      regex "-?[0-9]+", :Integer do |lex|
         value = lex.slice.to_i64
         Logos::Filter::Emit.new(value)
       end
 
-      regex "[0-9]+\\.[0-9]+", :Float do |lex|
+      regex "-?[0-9]+\\.[0-9]+", :Float do |lex|
         value = lex.slice.to_f64
         Logos::Filter::Emit.new(value)
       end
@@ -246,6 +258,25 @@ module Logos::Spec::Callbacks
   end
 
   describe "callback returning values (token variants with associated data)" do
+    it "retains the upstream mixed signed numbers and text payloads after collection" do
+      type = CallbackValues::Token
+      results = type.lex_all("Hello 1 42 -100 pi 3.14 -77.77")
+      results.map(&.unwrap).should eq([
+        CallbackValues::Token::Text, CallbackValues::Token::Integer, CallbackValues::Token::Integer,
+        CallbackValues::Token::Integer, CallbackValues::Token::Text, CallbackValues::Token::Float,
+        CallbackValues::Token::Float,
+      ])
+      payloads = results.map do |result|
+        case variant = result.unwrap
+        when CallbackValues::Token::Text    then result.payload_for!(variant, String)
+        when CallbackValues::Token::Integer then result.payload_for!(variant, Int64)
+        when CallbackValues::Token::Float   then result.payload_for!(variant, Float64)
+        else                                     raise "unexpected variant: #{variant}"
+        end
+      end
+      payloads.should eq(["Hello", 1_i64, 42_i64, -100_i64, "pi", 3.14, -77.77])
+    end
+
     it "parses numbers with callbacks returning values" do
       lexer = Logos::Lexer(CallbackValues::Token, String, Logos::NoExtras, Nil).new("42 3.14 +")
 
@@ -522,18 +553,48 @@ module Logos::Spec::Callbacks
   end
 
   describe "callback with lifetime annotations" do
-    it "supports callbacks with nested tuple and string values" do
-      lexer = Logos::Lexer(LifetimeCallbacks::Token, String, Logos::NoExtras, Nil).new("123 abc")
+    it "retains all of the upstream tuple and string payloads" do
+      results = LifetimeCallbacks::Token.lex_all("123 hello 42 world")
+      results.size.should eq(4)
+      first, second, third, fourth = results
+      integer = LifetimeCallbacks::Token::Integer
+      text = LifetimeCallbacks::Token::Text
 
-      result = lexer.next
-      result = result.as(Logos::Result(LifetimeCallbacks::Token, Nil))
-      result.unwrap.should eq(LifetimeCallbacks::Token::Integer)
-      lexer.callback_value_as(Tuple(String, UInt64)).should eq({"123", 123_u64})
+      first.payload_for!(integer, Tuple(String, UInt64)).should eq({"123", 123_u64})
+      second.payload_for!(text, String).should eq("hello")
+      third.payload_for!(integer, Tuple(String, UInt64)).should eq({"42", 42_u64})
+      fourth.payload_for!(text, String).should eq("world")
+    end
+  end
 
-      result = lexer.next
-      result = result.as(Logos::Result(LifetimeCallbacks::Token, Nil))
-      result.unwrap.should eq(LifetimeCallbacks::Token::Text)
-      lexer.callback_value_as(String).should eq("abc")
+  module SkipCallbackClosure
+    Logos.define Token do
+      extras Int32
+
+      skip_regex "[ \r]", :Whitespace
+      skip_token "\n", :Newline do |lex|
+        lex.extras += 1
+        nil
+      end
+      regex "[a-z]+", :Letters
+      regex "[0-9]+", :Numbers
+    end
+  end
+
+  describe "skip callback with extras" do
+    it "records the Rust fixture's error lines and emits the remaining tokens" do
+      lexer = SkipCallbackClosure::Token.lexer_with_extras("abc 123\nab( |23\nAbc 123\n", 0)
+      tokens = [] of SkipCallbackClosure::Token
+      error_lines = [] of Int32
+      lexer.each do |result|
+        if result.ok?
+          tokens << result.unwrap
+        else
+          error_lines << lexer.extras
+        end
+      end
+      tokens.should eq([SkipCallbackClosure::Token::Letters, SkipCallbackClosure::Token::Numbers] * 3)
+      error_lines.should eq([1, 1, 2])
     end
   end
 

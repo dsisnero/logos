@@ -21,6 +21,20 @@ Existing `Lexer#payload_for` and `Lexer#payload_for!` calls read the supplied
 result. `Lexer#callback_value_as` remains available for reading the lexer’s
 current callback value.
 
+## Callback returns
+
+Use `Logos::Filter::Emit.new(value)`, `Logos::FilterResult::Emit.new(value)`,
+or a successful `Logos::Result` or `Logos::Option` to attach a payload.
+Rust can infer a bare payload from an enum variant's declared field type.
+Crystal uses wrappers to distinguish payloads such as `false` from control
+returns.
+
+A bare `false` or an empty `Logos::Option` runs the configured default error
+callback on the matched slice. Explicit errors carry the object returned by
+the callback. Convert it to the configured error type in the callback when
+needed. Return `Logos.skip(lexer)` to discard a match, or use a declared skip
+rule with a unit return or successful skip result.
+
 ## Work breakdown
 
 - `logos-nxw`: Design token-payload API. Complete.

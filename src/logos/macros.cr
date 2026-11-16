@@ -664,6 +664,16 @@ macro logos_derive(type)
       results
     end
 
+    private def self.default_lex_error(lexer : ::Logos::Lexer(self, {{ source_type }}, {{ extras_type }}, {{ error_type }})) : {{ error_type }}
+      {% if error_callback %}
+        {{ error_callback }}.call(lexer)
+      {% elsif error_type.id == Nil.id %}
+        nil
+      {% else %}
+        {{ error_type }}.new
+      {% end %}
+    end
+
     def self.lex(lexer : Lexer(self, {{ source_type }}, {{ extras_type }}, {{ error_type }})) : Result(self, {{ error_type }})?
       compiled = self.compiled
       dfa = compiled[:dfa]
@@ -703,7 +713,7 @@ macro logos_derive(type)
             {% if item[:callback] %}
               {% cb = item[:callback] %}
             when {{ i }}
-              {% if cb.args.size == 1 %}
+              {% if cb.args.size == 1 && cb.args[0].id.stringify != "lexer" %}
                 {{ cb.args[0].id }} = lexer
               {% end %}
               __callback_result = begin
@@ -723,14 +733,7 @@ macro logos_derive(type)
 
               if __callback_result.is_a?(Bool)
                 unless __callback_result
-                  {% if error_callback %}
-                    error_value = {{ error_callback }}.call(lexer)
-                  {% elsif error_type.id == Nil.id %}
-                    error_value = nil
-                  {% else %}
-                    error_value = {{ error_type }}.new
-                  {% end %}
-                  return ::Logos::Result(self, {{ error_type }}).error(error_value)
+                  return ::Logos::Result(self, {{ error_type }}).error(default_lex_error(lexer))
                 end
               end
 
@@ -767,12 +770,7 @@ macro logos_derive(type)
               if __callback_result.is_a?(::Logos::Option)
                 option_value = __callback_result.value
                 if option_value.nil?
-                  {% if error_type.id == Nil.id %}
-                    error_value = nil
-                  {% else %}
-                    error_value = {{ error_type }}.new
-                  {% end %}
-                  return ::Logos::Result(self, {{ error_type }}).error(error_value)
+                  return ::Logos::Result(self, {{ error_type }}).error(default_lex_error(lexer))
                 elsif option_value.is_a?(self)
                   emitted_variant = option_value
                 else
@@ -816,28 +814,14 @@ macro logos_derive(type)
         {% if utf8_flag %}
           if lexer.remainder.length > 0
             lexer.bump(self.invalid_span_length(pattern_prefix_dfas, lexer.remainder))
-            {% if error_callback %}
-              error_value = {{ error_callback }}.call(lexer)
-            {% elsif error_type.id == Nil.id %}
-              error_value = nil
-            {% else %}
-              error_value = {{ error_type }}.new
-            {% end %}
-            return ::Logos::Result(self, {{ error_type }}).error(error_value)
+            return ::Logos::Result(self, {{ error_type }}).error(default_lex_error(lexer))
           else
             return nil
           end
         {% else %}
           if lexer.remainder.length > 0
             lexer.bump(1)
-            {% if error_callback %}
-              error_value = {{ error_callback }}.call(lexer)
-            {% elsif error_type.id == Nil.id %}
-              error_value = nil
-            {% else %}
-              error_value = {{ error_type }}.new
-            {% end %}
-            return ::Logos::Result(self, {{ error_type }}).error(error_value)
+            return ::Logos::Result(self, {{ error_type }}).error(default_lex_error(lexer))
           else
             return nil
           end

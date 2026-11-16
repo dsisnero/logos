@@ -676,6 +676,19 @@ module Logos
         results
       end
 
+      private def self.default_lex_error(__lexer : ::Logos::Lexer(self, {{ source_type }}, {{ extras_type }}, {{ error_type }})) : {{ error_type }}
+        {% if error_callback %}
+          {% if error_callback.args.size == 1 && error_callback.args[0].id.stringify != "__lexer" %}
+            {{ error_callback.args[0].id }} = __lexer
+          {% end %}
+          {{ error_callback.body }}
+        {% elsif error_type.id == Nil.id %}
+          nil
+        {% else %}
+          {{ error_type }}.new
+        {% end %}
+      end
+
       def self.lex(__lexer : ::Logos::Lexer(self, {{ source_type }}, {{ extras_type }}, {{ error_type }})) : ::Logos::Result(self, {{ error_type }})?
         generated_matcher = ::Logos.generated_matcher?("{{ name }}")
         if generated_matcher
@@ -851,19 +864,7 @@ module Logos
                    if @@debug_enabled
                      puts "DEBUG: Callback returned false, returning default error"
                    end
-                   {% if error_callback %}
-                     {% if error_callback.args.size == 1 %}
-                       {{ error_callback.args[0].id }} = __lexer
-                     {% end %}
-                     error_value = begin
-                       {{ error_callback.body }}
-                     end
-                   {% elsif error_type.id == Nil.id %}
-                     error_value = nil
-                   {% else %}
-                     error_value = {{ error_type }}.new
-                   {% end %}
-                   return ::Logos::Result(self, {{ error_type }}).error(error_value)
+                   return ::Logos::Result(self, {{ error_type }}).error(default_lex_error(__lexer))
                  end
                end
 
@@ -902,12 +903,7 @@ module Logos
                if __callback_result.is_a?(::Logos::Option)
                  option_value = __callback_result.value
                  if option_value.nil?
-                   {% if error_type.id == Nil.id %}
-                     error_value = nil
-                   {% else %}
-                     error_value = {{ error_type }}.new
-                   {% end %}
-                   return ::Logos::Result(self, {{ error_type }}).error(error_value)
+                   return ::Logos::Result(self, {{ error_type }}).error(default_lex_error(__lexer))
                  elsif option_value.is_a?(self)
                    emitted_variant = option_value
                  else
@@ -969,20 +965,7 @@ module Logos
               if __lexer.remainder.length > 0
                 __lexer.bump(self.invalid_span_length(pattern_prefix_dfas, __lexer.remainder))
                 # Create error value based on error_type
-                {% if error_callback %}
-                  {% if error_callback.args.size == 1 %}
-                    {{ error_callback.args[0].id }} = __lexer
-                  {% end %}
-                  error_value = begin
-                    {{ error_callback.body }}
-                  end
-                {% elsif error_type.id == Nil.id %}
-                  error_value = nil
-                {% else %}
-                  # Try to construct error value - default to .new without arguments
-                  error_value = {{ error_type }}.new
-                {% end %}
-                return ::Logos::Result(self, {{ error_type }}).error(error_value)
+                return ::Logos::Result(self, {{ error_type }}).error(default_lex_error(__lexer))
               else
                 # End of input
                 return nil
@@ -992,20 +975,7 @@ module Logos
               if __lexer.remainder.length > 0
                 __lexer.bump(1)
                 # Create error value based on error_type
-                {% if error_callback %}
-                  {% if error_callback.args.size == 1 %}
-                    {{ error_callback.args[0].id }} = __lexer
-                  {% end %}
-                  error_value = begin
-                    {{ error_callback.body }}
-                  end
-                {% elsif error_type.id == Nil.id %}
-                  error_value = nil
-                {% else %}
-                  # Try to construct error value - default to .new without arguments
-                  error_value = {{ error_type }}.new
-                {% end %}
-                return ::Logos::Result(self, {{ error_type }}).error(error_value)
+                return ::Logos::Result(self, {{ error_type }}).error(default_lex_error(__lexer))
               else
                 # End of input
                 return nil

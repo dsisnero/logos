@@ -11,8 +11,8 @@ logos-codegen/src/generator/fork.rs::method::Generator<'a>.fork_eoi	method	in_pr
 logos-codegen/src/generator/fork.rs::method::Generator<'a>.impl_fork	method	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/generator/fork.rs::method::Generator<'a>.impl_fork_match	method	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/generator/fork.rs::method::Generator<'a>.impl_fork_table	method	in_progress	-	Discovered; contract review pending.
-logos-codegen/src/generator/leaf.rs::method::Generator<'_>.generate_callback	method	in_progress	-	Discovered; contract review pending.
-logos-codegen/src/generator/leaf.rs::method::Generator<'_>.take_action_macro	method	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/generator/leaf.rs::method::Generator<'_>.generate_callback	method	intentional_divergence	src/logos/define_macro.cr, src/logos/macros.cr, spec/logos/callback_dispatch_spec.cr	Generated macros handle callback payloads, variant overrides, and skip and error results; Crystal uses explicit payload wrappers.
+logos-codegen/src/generator/leaf.rs::method::Generator<'_>.take_action_macro	method	intentional_divergence	src/logos/define_macro.cr, src/logos/macros.cr, spec/logos/callback_dispatch_spec.cr	Crystal restarts after skips in Lexer#next and creates default errors from the current match.
 logos-codegen/src/generator/mod.rs::class::Config	class	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/generator/mod.rs::class::Generator	class	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/generator/mod.rs::function::byte_to_tokens	function	in_progress	-	Discovered; contract review pending.
@@ -192,26 +192,26 @@ logos-codegen/src/util.rs::method::MaybeVoid.to_token_stream	method	in_progress	
 logos-codegen/src/util.rs::method::MaybeVoid.to_tokens	method	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/util.rs::method::str.to_ident	method	in_progress	-	Discovered; contract review pending.
 logos-derive/src/lib.rs::function::logos	function	in_progress	-	Discovered; contract review pending.
-src/internal.rs::class::CallbackResult	class	in_progress	-	Discovered; contract review pending.
-src/internal.rs::class::SkipResult	class	in_progress	-	Discovered; contract review pending.
-src/internal.rs::interface::CallbackRetVal	interface	in_progress	-	Discovered; contract review pending.
+src/internal.rs::class::CallbackResult	class	intentional_divergence	src/logos/define_macro.cr, src/logos/macros.cr, spec/logos/callback_dispatch_spec.cr	Generated Crystal code emits a Result, skips via nil, or builds the default error at the matched span.
+src/internal.rs::class::SkipResult	class	intentional_divergence	src/logos/define_macro.cr, src/logos/macros.cr, spec/logos/callback_dispatch_spec.cr	Generated Crystal code handles a successful skip and typed error directly.
+src/internal.rs::interface::CallbackRetVal	interface	intentional_divergence	src/logos/define_macro.cr, src/logos/macros.cr, spec/logos/callback_dispatch_spec.cr	Crystal macros dispatch from explicit payload and control return types without Rust trait coherence.
 src/internal.rs::interface::LexerInternal	interface	in_progress	-	Discovered; contract review pending.
-src/internal.rs::interface::SkipRetVal	interface	in_progress	-	Discovered; contract review pending.
-src/internal.rs::method::().construct	method	in_progress	-	Discovered; contract review pending.
-src/internal.rs::method::CallbackResult<'a, L>.from	method	in_progress	-	Discovered; contract review pending.
-src/internal.rs::method::Filter<L>.construct	method	in_progress	-	Discovered; contract review pending.
-src/internal.rs::method::Filter<T>.construct	method	in_progress	-	Discovered; contract review pending.
-src/internal.rs::method::FilterResult<L, E>.construct	method	in_progress	-	Discovered; contract review pending.
-src/internal.rs::method::FilterResult<T, E>.construct	method	in_progress	-	Discovered; contract review pending.
-src/internal.rs::method::L.construct	method	in_progress	-	Discovered; contract review pending.
-src/internal.rs::method::Option<T>.construct	method	in_progress	-	Discovered; contract review pending.
-src/internal.rs::method::Result<(), E>.construct	method	in_progress	-	Discovered; contract review pending.
-src/internal.rs::method::Result<L, E>.construct	method	in_progress	-	Discovered; contract review pending.
-src/internal.rs::method::Result<Skip, E>.construct	method	in_progress	-	Discovered; contract review pending.
-src/internal.rs::method::Result<T, E>.construct	method	in_progress	-	Discovered; contract review pending.
-src/internal.rs::method::Skip.construct	method	in_progress	-	Discovered; contract review pending.
-src/internal.rs::method::T.construct	method	in_progress	-	Discovered; contract review pending.
-src/internal.rs::method::bool.construct	method	in_progress	-	Discovered; contract review pending.
+src/internal.rs::interface::SkipRetVal	interface	intentional_divergence	src/logos/define_macro.cr, src/logos/macros.cr, spec/logos/callback_dispatch_spec.cr	Skip rules dispatch callback results in generated code; Result(Nil, E) and Result(Skip, E) are checked in both APIs.
+src/internal.rs::method::().construct	method	ported	src/logos/define_macro.cr, src/logos/macros.cr, spec/logos/callback_dispatch_spec.cr, spec/logos/callbacks_spec.cr	A Nil return on a skip rule discards the match. See matching and unterminated comment cases.
+src/internal.rs::method::CallbackResult<'a, L>.from	method	intentional_divergence	src/logos/define_macro.cr, src/logos/macros.cr, spec/logos/callback_dispatch_spec.cr	Skip and error are applied directly by generated Crystal code.
+src/internal.rs::method::Filter<L>.construct	method	ported	src/logos/define_macro.cr, src/logos/macros.cr, spec/logos/callback_dispatch_spec.cr	An emitted token variant overrides the matched rule; Filter::Skip discards it.
+src/internal.rs::method::Filter<T>.construct	method	ported	src/logos/define_macro.cr, src/logos/macros.cr, spec/logos/callback_dispatch_spec.cr	Explicit Emit wraps a typed token payload; Filter::Skip discards the match.
+src/internal.rs::method::FilterResult<L, E>.construct	method	intentional_divergence	src/logos/define_macro.cr, src/logos/macros.cr, spec/logos/callback_dispatch_spec.cr	Crystal requires an error compatible with the configured error type; callbacks perform any explicit conversion.
+src/internal.rs::method::FilterResult<T, E>.construct	method	intentional_divergence	src/logos/define_macro.cr, src/logos/macros.cr, spec/logos/callback_dispatch_spec.cr	Emit(false) is a payload and explicit errors retain the matched span. Crystal requires an error compatible with the configured error type; callbacks perform any explicit conversion.
+src/internal.rs::method::L.construct	method	ported	src/logos/define_macro.cr, src/logos/macros.cr, spec/logos/callback_dispatch_spec.cr	A returned token variant overrides the matched rule in both APIs.
+src/internal.rs::method::Option<T>.construct	method	ported	src/logos/define_macro.cr, src/logos/macros.cr, spec/logos/callback_dispatch_spec.cr	Some attaches a typed payload; None invokes the configured default error with the matched span.
+src/internal.rs::method::Result<(), E>.construct	method	intentional_divergence	src/logos/define_macro.cr, src/logos/macros.cr, spec/logos/callback_dispatch_spec.cr	Result(Nil, E) success skips on skip rules. Crystal requires an error compatible with the configured error type; callbacks perform any explicit conversion.
+src/internal.rs::method::Result<L, E>.construct	method	intentional_divergence	src/logos/define_macro.cr, src/logos/macros.cr, spec/logos/callback_dispatch_spec.cr	Returning Ok(token) selects the variant. Crystal requires an error compatible with the configured error type; callbacks perform any explicit conversion.
+src/internal.rs::method::Result<Skip, E>.construct	method	intentional_divergence	src/logos/define_macro.cr, src/logos/macros.cr, spec/logos/callback_dispatch_spec.cr	Ok(Skip) skips and Err is emitted at the matched span. Crystal requires an error compatible with the configured error type; callbacks perform any explicit conversion.
+src/internal.rs::method::Result<T, E>.construct	method	intentional_divergence	src/logos/define_macro.cr, src/logos/macros.cr, spec/logos/callback_dispatch_spec.cr	Ok(value) attaches the payload and Err is emitted at the matched span. Crystal requires an error compatible with the configured error type; callbacks perform any explicit conversion.
+src/internal.rs::method::Skip.construct	method	ported	src/logos/define_macro.cr, src/logos/macros.cr, spec/logos/callback_dispatch_spec.cr	Skip suppresses the matched token on ordinary or declared skip rules.
+src/internal.rs::method::T.construct	method	intentional_divergence	src/logos/define_macro.cr, src/logos/macros.cr, spec/logos/callback_dispatch_spec.cr	Crystal declares payload intent using an explicit wrapper; bare Bool and token values keep their control semantics.
+src/internal.rs::method::bool.construct	method	ported	src/logos/define_macro.cr, src/logos/macros.cr, spec/logos/callback_dispatch_spec.cr	Bare true emits; bare false invokes the configured default error at the matched span.
 src/lexer.rs::class::Lexer	class	in_progress	-	Discovered; contract review pending.
 src/lexer.rs::class::SpannedIter	class	in_progress	-	Discovered; contract review pending.
 src/lexer.rs::method::Lexer<'source, Token>.bump	method	in_progress	-	Discovered; contract review pending.
@@ -232,16 +232,16 @@ src/lexer.rs::method::Lexer<'source, Token>.span	method	in_progress	-	Discovered
 src/lexer.rs::method::Lexer<'source, Token>.spanned	method	in_progress	-	Discovered; contract review pending.
 src/lexer.rs::method::Lexer<'source, Token>.trivia	method	in_progress	-	Discovered; contract review pending.
 src/lexer.rs::method::Lexer<'source, Token>.with_extras	method	in_progress	-	Discovered; contract review pending.
-src/lexer.rs::method::SpannedIter<'source, Token>.clone	method	in_progress	-	Discovered; contract review pending.
+src/lexer.rs::method::SpannedIter<'source, Token>.clone	method	missing	src/logos/lexer.cr	Confirmed compile failure after creating a spanned iterator: clone is undefined. Rust clones the inner lexer.
 src/lexer.rs::method::SpannedIter<'source, Token>.deref	method	in_progress	-	Discovered; contract review pending.
 src/lexer.rs::method::SpannedIter<'source, Token>.deref_mut	method	in_progress	-	Discovered; contract review pending.
 src/lexer.rs::method::SpannedIter<'source, Token>.next	method	in_progress	-	Discovered; contract review pending.
-src/lib.rs::class::Filter	class	in_progress	-	Discovered; contract review pending.
-src/lib.rs::class::FilterResult	class	in_progress	-	Discovered; contract review pending.
-src/lib.rs::class::Skip	class	in_progress	-	Discovered; contract review pending.
+src/lib.rs::class::Filter	class	intentional_divergence	src/logos/result.cr, spec/logos/callback_dispatch_spec.cr	Crystal represents the Rust enum with Emit(T) and Skip structs.
+src/lib.rs::class::FilterResult	class	intentional_divergence	src/logos/result.cr, spec/logos/callback_dispatch_spec.cr	Crystal represents the Rust enum with Emit(T), Skip and Error(E) structs.
+src/lib.rs::class::Skip	class	ported	src/logos/result.cr, spec/logos/callback_dispatch_spec.cr	Skip marks matched input as trivia in both macro APIs.
 src/lib.rs::function::lexer	function	in_progress	-	Discovered; contract review pending.
 src/lib.rs::function::lexer_with_extras	function	in_progress	-	Discovered; contract review pending.
-src/lib.rs::function::skip	function	missing	src/logos.cr	Confirmed compile error: Logos.skip restricts Lexer to one generic argument; Lexer has four.
+src/lib.rs::function::skip	function	ported	src/logos.cr, spec/logos/callback_dispatch_spec.cr	Callable with any Lexer instantiation. Both macro APIs skip the matched token.
 src/lib.rs::interface::Logos	interface	in_progress	-	Discovered; contract review pending.
 src/source.rs::const::SIZE	const	intentional_divergence	src/logos/source.cr, spec/logos/source_spec.cr	Crystal reads UInt8 and bounded Bytes directly; Rust's fixed-size Chunk conversions and SIZE are internal to Rust.
 src/source.rs::function::find_boundary	function	ported	src/logos/source.cr, spec/logos/source_spec.cr	boundary? and find_boundary match the Rust contract on valid source indices.
