@@ -19,6 +19,8 @@ Logos.define OracleToken do
   regex "[0-9]+", :Integer
 end
 
+raise "strict benchmark binding missing" unless Logos.generated_matcher_binding?("BenchmarkToken")
+
 ["let variable = 12345;\n", "letter let let1 _a 0;", "é = ? 99", "", " \n\t"].each do |source|
   generated = BenchmarkToken.lexer(source)
   oracle = OracleToken.lexer(source)

@@ -2,10 +2,11 @@
   "name": "Token",
   "utf8": true,
   "subpatterns": {},
+  "validate_binding": true,
   "patterns": [
-    {"kind": "regex", "pattern": "[ \\t]+"},
-    {"kind": "regex", "pattern": "[a-zA-Z]+"},
-    {"kind": "regex", "pattern": "[0-9]+"},
-    {"kind": "regex", "pattern": "[^\\x00-\\x7F]"}
+    {"kind": "regex", "pattern": "[ \t]+", "variant": "Whitespace", "skip": true},
+    {"kind": "regex", "pattern": "[a-zA-Z]+", "variant": "Word", "skip": false},
+    {"kind": "regex", "pattern": "[0-9]+", "variant": "Integer", "skip": false},
+    {"kind": "regex", "pattern": "[^\u0000-\u007f]", "variant": "NonAscii", "skip": false}
   ]
 }

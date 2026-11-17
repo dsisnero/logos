@@ -2,26 +2,25 @@
 
 ## Where we are
 
-- **Current focus** — [Phase 5, Prebuild manifest binding validation](#phase-5-prebuild-manifest-binding-validation)
-  is complete. Strict manifests carry rule binding metadata, checked before
-  matching and after registration replacement. Existing manifests keep
-  their opt-in behavior.
+- **Current focus** — [Phase 6, Shipped prebuild manifest qualification](#phase-6-shipped-prebuild-manifest-qualification)
+  is complete. The three example manifests and benchmark manifest enable
+  strict binding with exact pattern strings and declared variant and skip
+  actions.
 - **Next up**
-  1. **Shipped prebuild manifest qualification.** Enable strict binding on
-     the shipped example and benchmark manifests. Align their evaluated
-     pattern text and action metadata with the macros, then verify callback
-     payloads, extras, skips, errors, and spans through generated builds.
-- **Status by area** — All 269 source items and 249 test-tree items retain
-  dispositions. Binding coverage includes rule order, kind, source and
-  rule encoding, options, declared skip and variant actions, subpatterns,
-  and registration replacement. Generic and resolved fixtures preserve
-  the same callback payload and span streams as runtime matching.
+  1. **Package and documentation qualification.** Verify the locked package
+     and CLI from an isolated checkout, run the strict shipped contracts
+     through the installed entry point, and reconcile the public usage and
+     status documentation with the completed parity phases.
+- **Status by area** — All 269 source and 249 test-tree items retain their
+  dispositions. Generated and runtime examples agree on callback payloads,
+  extras, skip actions, error spans, and output. The benchmark token-and-span
+  contract checks that strict metadata is present.
 - **Gates** — Format, lint, and 299 specs pass with `regex-automata` 0.2.1.
-  All 32 flagged backend specs, the compile and Markdown checks, three
-  inventory drift checks, the strict CLI matcher, and the regenerated
-  legacy benchmark contract pass. The binding design follows pinned Rust
-  leaf-ID to callback/action generation.
-- **Last feature commit** — `feat: validate prebuild rule bindings`.
+  `make test-prebuilt` passes all 15 generator and shipped-program specs.
+  Markdown and all three inventory drift checks pass. The pinned Rust
+  extras, custom-error, and brainfuck example executables pass their
+  corresponding output or assertion checks.
+- **Last feature commit** — `test: qualify shipped strict prebuild manifests`.
 
 ## Scope and verification
 
@@ -165,7 +164,10 @@ their behavior.
 
 ### Phase 6. Shipped prebuild manifest qualification
 
-**Next.** The example and benchmark manifests use the legacy binding mode.
+**Complete.** All four shipped manifests enable strict binding. Their
+patterns match the evaluated macro strings, every rule declares its variant
+and skip action, and brainfuck's fallback carries its explicit zero priority.
+The generated benchmark retains its resolved priority policy.
 
 - Adopt strict binding with exact pattern strings, skip flags, and variant
   identities in the shipped manifests.
@@ -174,6 +176,18 @@ their behavior.
 
 **Exit criteria.** Every shipped manifest passes strict binding and its
 executable generated/runtime contract on the recorded dependencies.
+
+### Phase 7. Package and documentation qualification
+
+**Next.** The strict contracts have been verified in the development checkout.
+
+- Verify a locked install and built CLI in an isolated checkout under `temp/`.
+- Exercise the strict shipped manifests using the built entry point and check
+  the public build and usage commands against the qualified package.
+- Reconcile README status and user documentation with the completed phases.
+
+**Exit criteria.** The installed package and documented commands reproduce
+the strict example and benchmark contracts with the pinned dependencies.
 
 ## Completed feature phases
 

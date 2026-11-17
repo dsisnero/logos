@@ -88,4 +88,9 @@ check duplicate and explicit ties, shadowed rules, and legacy declarations
 against emitted matchers. The [binding fixture](../../spec/fixtures/generated_binding.cr)
 checks strict manifest metadata before actions run and compares generic and
 resolved callback payload streams with the runtime lexer. Shipped manifest
-qualification is next in [the parity plan](../parity.md).
+qualification passes through
+[the shipped-program specs](../../spec/logos/prebuilt_examples_spec.cr) and
+`make test-prebuilt`. All four shipped manifests enable strict binding.
+The Rust extras, custom-error, and brainfuck executables were run against
+the pinned crate. Crystal's one-based extras line numbers remain documented
+in [the parity plan](../parity.md).

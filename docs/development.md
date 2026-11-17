@@ -147,10 +147,20 @@ and manually registered matchers retain their current behavior. The
 `emit_matcher` API exposes the same option as `validate_binding: true`.
 A binding replacement is checked on the next lexing operation.
 
-Verify the benchmark's generated/runtime token and span contract with
-`crystal run benchmarks/prebuild_contract.cr` after generating its matcher.
-Run generator priority specs with
-`crystal spec -Dcodegen_library spec/logos/codegen_priority_spec.cr`; the flag
+Run `make test-prebuilt` to compile the shipped manifests with strict binding
+and compare generated and runtime behavior. The gate checks the three example
+programs and the benchmark token-and-span contract. It asserts custom-error
+payloads and spans, word positions and newline extras, interpreter output,
+and skipped non-operator characters. Scratch drivers and executables are
+written under `temp/`.
+
+All four shipped manifests enable strict binding and declare the variant and
+skip action for every rule. Their pattern strings use the evaluated Crystal
+text, including control characters represented through JSON escapes. The
+benchmark retains its resolved priorities.
+
+Run the focused generator specs with
+`crystal spec -Dcodegen_library spec/logos/codegen_priority_spec.cr`. The flag
 suppresses the generator command-line entry point when importing it for tests.
 
 ### Porting from Rust
