@@ -113,18 +113,24 @@ not use Crystal macros to run external code. Regenerate the output whenever a
 manifest, token definition, or regex-automata version changes; `make clean`
 removes all generated files.
 
-With a generic prebuilt matcher, the generator infers fallback priorities
-from the manifest's compiled patterns. `Logos.define` applies its explicitly
-declared priorities when choosing between several matching rules. Use
-`"utf8": false` for a byte-oriented manifest.
+A generic manifest infers priority from each rule. A rule may supply an integer
+`priority` as its fallback, and `Logos.define` still applies any priority
+explicitly declared in the macro. Use `"utf8": false` for a byte-oriented
+manifest.
 
-When every pattern supplies an integer `resolved_priority`, the generator
-chooses the winner during prebuild. These values must match the priorities
-used by the consuming lexer. Set `priority_explicit: true` on rules with
-explicit priorities so the generator can reject tied explicit winners.
-The benchmark supplies zero priorities intentionally to preserve its
-existing first-match policy. Variant, skip, callbacks, and error handling
-still use `Logos.define`.
+Include the `variant` string on every rule to check generic manifest conflicts
+before emitting source. Use the exact macro variant name, including the name
+of a skip rule. Mirror any explicit macro priorities in the manifest. A
+`priority` value marks a rule explicit by default. Set `priority_explicit` to
+record explicitness directly.
+
+When every rule supplies an integer `resolved_priority`, those values govern
+selection. Prebuild removes lower-priority candidates and reports conflicts
+it can identify from the metadata. Remaining highest-priority ties reach the
+lexer with their effective priorities so it can check the actual macro
+variants. This preserves the declaration-order fallback for distinct legacy
+rules. Macro declarations still supply the actions, callbacks, and error
+handling. Regenerate existing matcher files to include deferred tie data.
 
 Verify the benchmark's generated/runtime token and span contract with
 `crystal run benchmarks/prebuild_contract.cr` after generating its matcher.

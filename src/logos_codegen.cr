@@ -11,12 +11,32 @@ module Logos::Codegen
 
   def self.resolve_accept(ids : Array(Int32), patterns : Array(JSON::Any)) : Int32?
     return nil if ids.empty?
-    highest = ids.max_of { |id| patterns[id]["resolved_priority"].as_i }
-    winners = ids.select { |id| patterns[id]["resolved_priority"].as_i == highest }
-    if winners.count { |id| patterns[id]["priority_explicit"]?.try(&.as_bool) || false } > 1
-      raise "Patterns with priority #{highest} can match simultaneously."
+
+    candidates = ids.map { |id| ::Regex::Automata::PatternID.new(id) }
+    priorities = Array.new(patterns.size, 0)
+    ids.each { |id| priorities[id] = patterns[id]["resolved_priority"].as_i }
+    explicit = patterns.map { |entry| priority_explicit?(entry) }
+    variants = patterns.map { |entry| entry["variant"]?.try(&.as_s?) }
+    resolved_winners(candidates, priorities, explicit, variants).first.to_i
+  end
+
+  private def self.resolved_winners(matches : Array(::Regex::Automata::PatternID), priorities : Array(Int32), explicit : Array(Bool), variants : Array(String?)) : Array(::Regex::Automata::PatternID)
+    winners = Logos::Pattern.highest_priority_winners(matches, priorities)
+    if Logos::Pattern.ambiguous_winners?(winners, explicit, variants)
+      labels = winners.map { |id| variants[id.to_i] || "rule #{id.to_i}" }
+      raise "Patterns #{labels.join(", ")} can match simultaneously at priority #{priorities[winners.first.to_i]}."
     end
-    winners.first
+    winners
+  end
+
+  private def self.optional_integer(entry : JSON::Any, key : String) : Int32?
+    value = entry[key]?
+    value.as_i if value && !value.raw.nil?
+  end
+
+  private def self.priority_explicit?(entry : JSON::Any) : Bool
+    flag = entry["priority_explicit"]?.try(&.as_bool?)
+    flag.nil? ? !optional_integer(entry, "priority").nil? : flag
   end
 
   def self.compile_dfa(patterns : Array(JSON::Any), subpatterns : ManifestSubpatterns, utf8 : Bool) : ::Regex::Automata::DFA::DFA
@@ -99,12 +119,32 @@ module Logos::Codegen
     end
   end
 
+  private def self.compile_priorities(dfa : ::Regex::Automata::DFA::DFA, patterns : Array(JSON::Any), inferred : Array(Int32))
+    resolved_values = patterns.map { |entry| optional_integer(entry, "resolved_priority") }
+    resolved = resolved_values.all? { |value| !value.nil? }
+    priorities = if resolved
+                   resolved_values.compact
+                 else
+                   patterns.map_with_index { |entry, index| optional_integer(entry, "priority") || inferred[index] }
+                 end
+    explicit = patterns.map { |entry| priority_explicit?(entry) }
+    variants = patterns.map { |entry| entry["variant"]?.try(&.as_s?) }
+    if !resolved && variants.all? { |variant| !variant.nil? }
+      labels = patterns.map(&.["pattern"].inspect)
+      Logos::Pattern.validate_priorities(dfa, priorities, explicit, labels, variants.compact)
+    end
+
+    {priorities, explicit, variants, resolved}
+  end
+
   # Emit a source-level matcher using compact table lookups. The DFA is built
   # and byte-class reduced by this program; the consuming application merely
   # indexes generated constants.
   def self.emit_matcher(patterns : Array(JSON::Any), subpatterns : ManifestSubpatterns, utf8 : Bool, name : String) : String
     compiled_patterns = compile_patterns(patterns, subpatterns, utf8)
     dfa = build_dfa(compiled_patterns.map(&.[0]), utf8)
+    priorities, explicit, variants, resolved = compile_priorities(dfa, patterns, compiled_patterns.map(&.[1]))
+
     module_name = "Generated_#{name.gsub(/[^A-Za-z0-9_]/, "_")}"
     transition_table = dfa.tt || raise "DFA has no transition table"
     start = transition_table.to_index(Logos::Pattern.universal_start(dfa))
@@ -113,6 +153,7 @@ module Logos::Codegen
     eoi = [] of Int32
     match_offsets = [0]
     match_ids = [] of Int32
+    single_winner_table = resolved
     dfa.size.times do |state_index|
       state_id = transition_table.to_state_id(state_index)
       state = dfa[state_id]
@@ -121,13 +162,17 @@ module Logos::Codegen
         transitions << transition_table.to_index(dfa.next_state(state_id, byte))
       end
       eoi << transition_table.to_index(dfa.next_eoi_state(state_id))
-      state.match.each { |pattern_id| match_ids << pattern_id.to_i }
+      matches = resolved ? resolved_winners(state.match, priorities, explicit, variants) : state.match
+      single_winner_table = false if matches.size > 1
+      matches.each { |pattern_id| match_ids << pattern_id.to_i }
       match_offsets << match_ids.size
     end
-    resolved = patterns.all? { |entry| !entry["resolved_priority"]?.nil? }
-    winners = dfa.size.times.map do |state_index|
-      resolved ? (resolve_accept(match_ids[match_offsets[state_index]...match_offsets[state_index + 1]], patterns) || -1) : -1
-    end.to_a
+    winners = if single_winner_table
+                Array.new(dfa.size) do |index|
+                  offset = match_offsets[index]
+                  offset < match_offsets[index + 1] ? match_ids[offset] : -1
+                end
+              end
 
     String.build do |io|
       io << "module Logos::GeneratedMatchers::#{module_name}\n"
@@ -136,12 +181,12 @@ module Logos::Codegen
       io << "  EOI_TRANSITIONS = #{static_array(eoi, "_i32")}\n"
       io << "  MATCH_OFFSETS = #{static_array(match_offsets, "_i32")}\n"
       io << "  MATCH_IDS = #{static_array(match_ids, "_i32")}\n"
-      io << "  WINNERS = #{static_array(winners, "_i32")}\n" if resolved
+      io << "  WINNERS = #{static_array(winners, "_i32")}\n" if winners
       io << "  START_STATE = #{start}\n  BYTE_CLASS_COUNT = #{class_count}\n\n"
       io << "  def self.match(input : ::Bytes, start_index : Int32) : ::Logos::GeneratedMatch\n"
       io << "    return if start_index >= input.size\n    state = START_STATE\n    end_pos = -1\n    pattern_ids = nil.as(::Logos::GeneratedPatternIDs?)\n    pattern_id = nil.as(::Regex::Automata::PatternID?)\n    index = start_index\n"
       io << "    loop do\n      eof = index == input.size\n      next_state = eof ? EOI_TRANSITIONS[state] : TRANSITIONS[state * BYTE_CLASS_COUNT + BYTE_CLASSES[input[index]]]\n"
-      if resolved
+      if winners
         io << "      winner = WINNERS[next_state]\n      if winner >= 0\n        end_pos = index - start_index\n        pattern_id = ::Regex::Automata::PatternID.new(winner)\n      end\n"
       else
         io << "      match_start = MATCH_OFFSETS[next_state]\n      match_finish = MATCH_OFFSETS[next_state + 1]\n"
@@ -150,7 +195,11 @@ module Logos::Codegen
       io << "      break if eof || next_state == 0 || (state != START_STATE && next_state == START_STATE)\n      state = next_state\n      index += 1\n    end\n"
       io << "    if end_pos >= 0\n      {end_pos, pattern_id || pattern_ids.not_nil!}\n    elsif index > start_index\n      ::Logos::GeneratedMiss.new(index - start_index)\n    end\n  end\nend\n"
       io << "Logos.register_generated_matcher(#{name.inspect}, ->(input : ::Bytes, start_index : Int32) { Logos::GeneratedMatchers::#{module_name}.match(input, start_index) }"
-      io << ", #{compiled_patterns.map(&.[1]).inspect} of Int32" unless resolved
+      unless winners
+        io << ", #{priorities.inspect} of Int32"
+        io << ", explicit_priorities: #{explicit.inspect} of Bool" if explicit.any?
+        io << ", resolved_priorities: true" if resolved
+      end
       io << ")"
     end
   end

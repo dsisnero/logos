@@ -297,13 +297,21 @@ module Logos
         matches = state.match
         next if matches.size < 2
 
-        best = matches.max_of { |id| priorities[id.to_i] }
-        winners = matches.select { |id| priorities[id.to_i] == best }
+        winners = highest_priority_winners(matches, priorities)
         next unless ambiguous_winners?(winners, explicit, variants)
 
+        best = priorities[winners.first.to_i]
         labels = winners.map { |id| "#{patterns[id.to_i]} (#{variants[id.to_i]})" }
         raise "Patterns #{labels.join(", ")} can match simultaneously at priority #{best}."
       end
+    end
+
+    # Preserve candidate order while removing rules shadowed by a higher priority.
+    def self.highest_priority_winners(matches : Array(::Regex::Automata::PatternID), priorities : Array(Int32)) : Array(::Regex::Automata::PatternID)
+      return matches if matches.size < 2
+
+      best = matches.max_of { |id| priorities[id.to_i] }
+      matches.select { |id| priorities[id.to_i] == best }
     end
 
     # Keep declaration-order fallback for legacy implicit ties between
@@ -312,7 +320,9 @@ module Logos
       return false if winners.size < 2
       return true if winners.count { |id| explicit[id.to_i] } > 1
 
-      winners.map { |id| variants[id.to_i] }.uniq!.size < winners.size
+      known_variants = winners.compact_map { |id| variants[id.to_i] }
+      count = known_variants.size
+      known_variants.uniq!.size < count
     end
 
     # Check for problematic patterns like greedy .* or .+

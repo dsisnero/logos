@@ -43,11 +43,15 @@ require "../spec_helper"
       dfa.find_longest_match_at_start(String.new(Bytes[0xFF, 0x41])).should eq({2, [Regex::Automata::PatternID.new(2)]})
     end
 
-    it "preserves failed prefixes and input boundaries in emitted matchers" do
+    it "preserves matching boundaries and priorities in emitted matchers" do
       text = JSON.parse(%([{"kind":"token","pattern":"!"},{"kind":"token","pattern":"aéx"},{"kind":"token","pattern":"abc"}])).as_a
       bytes = JSON.parse(%([{"kind":"token","pattern":"!","resolved_priority":2},{"kind":"token","pattern":"abc","resolved_priority":6}])).as_a
       text_end = JSON.parse(%([{"kind":"token","pattern":"b"},{"kind":"regex","pattern":"a$"}])).as_a
       line_end = JSON.parse(%([{"kind":"token","pattern":"\\n","resolved_priority":2},{"kind":"regex","pattern":"(?m)a$","resolved_priority":2}])).as_a
+      legacy = JSON.parse(%([{"kind":"regex","pattern":"a","resolved_priority":0},{"kind":"regex","pattern":"[a]","resolved_priority":0}])).as_a
+      generic = JSON.parse(%([{"kind":"regex","pattern":".","variant":"Ignored","priority":1},{"kind":"regex","pattern":"a","variant":"A","priority":4}])).as_a
+      shadowed = JSON.parse(%([{"kind":"regex","pattern":"a","variant":"Low","resolved_priority":2},{"kind":"regex","pattern":"[a]","variant":"Low","resolved_priority":2},{"kind":"regex","pattern":"[a-a]","variant":"High","resolved_priority":4}])).as_a
+      deferred = JSON.parse(%([{"kind":"regex","pattern":"a","priority":2},{"kind":"regex","pattern":"[a]","priority":2}])).as_a
       root = File.expand_path("../..", __DIR__)
       directory = File.join(root, "temp")
       FileUtils.mkdir_p(directory)
@@ -59,7 +63,13 @@ require "../spec_helper"
           io.puts Logos::Codegen.emit_matcher(bytes, {} of String => String, false, "BytePrefixToken")
           io.puts Logos::Codegen.emit_matcher(text_end, {} of String => String, true, "GeneratedTextEndToken")
           io.puts Logos::Codegen.emit_matcher(line_end, {} of String => String, true, "GeneratedLineEndToken")
+          io.puts Logos::Codegen.emit_matcher(legacy, {} of String => String, true, "LegacyResolvedDuplicateToken")
+          io.puts Logos::Codegen.emit_matcher(legacy, {} of String => String, true, "LegacyResolvedDistinctToken")
+          io.puts Logos::Codegen.emit_matcher(generic, {} of String => String, true, "GenericManifestPriorityToken")
+          io.puts Logos::Codegen.emit_matcher(shadowed, {} of String => String, true, "ResolvedShadowedToken")
+          io.puts Logos::Codegen.emit_matcher(deferred, {} of String => String, true, "DeferredSkipTieToken")
           io << File.read(File.join(root, "spec/fixtures/generated_error_prefix.cr"))
+          io << File.read(File.join(root, "spec/fixtures/generated_priorities.cr"))
         end
         error = IO::Memory.new
         status = Process.run("crystal", ["run", file.path], chdir: root, error: error)
@@ -88,6 +98,30 @@ require "../spec_helper"
       end
       patterns = JSON.parse(%([{"kind":"regex","pattern":"^a"}])).as_a
       expect_raises(Exception, /missing a universal start state/) { Logos::Codegen.compile_dfa(patterns, subpatterns, true) }
+    end
+
+    it "rejects duplicate variants before emission in either manifest form" do
+      [nil, 2].each do |resolved|
+        patterns = JSON.parse([
+          {kind: "regex", pattern: "a", variant: "A", resolved_priority: resolved},
+          {kind: "regex", pattern: "[a]", variant: "A", resolved_priority: resolved},
+        ].to_json).as_a
+        expect_raises(Exception, /can match simultaneously.*priority 2/) do
+          Logos::Codegen.emit_matcher(patterns, {} of String => String, true, "Duplicate")
+        end
+      end
+    end
+
+    it "rejects explicit skip ties and accepts them when shadowed in generic manifests" do
+      patterns = JSON.parse(%([
+        {"kind":"regex","pattern":"a","variant":"Ignored","priority":2},
+        {"kind":"regex","pattern":"[a]","variant":"A","priority":2}
+      ])).as_a
+      expect_raises(Exception, /can match simultaneously.*priority 2/) do
+        Logos::Codegen.emit_matcher(patterns, {} of String => String, true, "SkipTie")
+      end
+      patterns << JSON.parse(%({"kind":"regex","pattern":"a","variant":"Top","priority":3}))
+      Logos::Codegen.emit_matcher(patterns, {} of String => String, true, "Shadowed").should contain("Generated_Shadowed")
     end
 
     it "preserves first-match ties and rejects explicit ambiguity" do

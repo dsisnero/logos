@@ -83,5 +83,7 @@ check EOF and newline context, rejection of nullable rules, and the
 universal-start constraint. The same boundary cases ran against the pinned
 Rust crate. The other supporting fixture rows point to their parent Crystal
 behavior specs, including the alternate compile-only rules from issues 185
-and 259. The remaining distinction for resolved prebuild priority metadata
-is tracked in [the parity plan](../parity.md).
+and 259. The [prebuild priority specs](../../spec/logos/codegen_priority_spec.cr)
+check duplicate and explicit ties, shadowed rules, and legacy declarations
+against emitted matchers. The next manifest binding review is tracked in
+[the parity plan](../parity.md).

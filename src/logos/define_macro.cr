@@ -534,21 +534,32 @@ module Logos
                   {{ item[:skip] }},
                 {% end %}
               ]
-              default_priorities = ::Logos.generated_matcher_priorities?("{{ name }}")
-              pattern_priority = [
-                {% for item, index in all_defs %}
-                  {% if item[:priority] %}
-                    {{ item[:priority] }},
-                  {% else %}
-                    default_priorities.try(&.[{{ index }}]?) || 0,
+              priority_info = ::Logos.generated_matcher_priority_info?("{{ name }}")
+              manifest_explicit = priority_info.try(&.explicit)
+              if priority_info && priority_info.resolved
+                pattern_priority = priority_info.values
+                pattern_priority_explicit = manifest_explicit || Array.new({{ all_defs.size }}, false)
+              else
+                default_priorities = priority_info.try(&.values)
+                pattern_priority = [
+                  {% for item, index in all_defs %}
+                    {% if item[:priority] %}
+                      {{ item[:priority] }},
+                    {% else %}
+                      default_priorities.try(&.[{{ index }}]?) || 0,
+                    {% end %}
                   {% end %}
-                {% end %}
-              ] of Int32
-              pattern_priority_explicit = [
-                {% for item in all_defs %}
-                  {{ !item[:priority].nil? }},
-                {% end %}
-              ]
+                ] of Int32
+                pattern_priority_explicit = [
+                  {% for item, index in all_defs %}
+                    {% if item[:priority].nil? %}
+                      manifest_explicit.try(&.[{{ index }}]?) || false,
+                    {% else %}
+                      true,
+                    {% end %}
+                  {% end %}
+                ]
+              end
             end
             # Allocate a list of tied rules only when there is more than one winner.
             pattern_id = if pattern_ids.is_a?(::Regex::Automata::PatternID)

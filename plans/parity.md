@@ -2,23 +2,24 @@
 
 ## Where we are
 
-- **Current focus** — [Phase 2, Logos parity inventory and coverage](#phase-2-logos-parity-inventory-and-coverage)
-  is signed off for the pinned release and recorded Crystal differences.
+- **Current focus** — [Phase 4, Prebuild rule identity and priority parity](#phase-4-prebuild-rule-identity-and-priority-parity)
+  is complete. Generic manifests can carry explicit priority and variant
+  metadata. Resolved matchers retain tied highest-priority candidates for
+  variant checks against the consuming macro.
 - **Next up**
-  1. **Prebuild rule identity and priority parity.** Carry enough identity and
-     explicit priority metadata to make prebuild and runtime diagnose the same
-     declared rule conflicts. Cover generic and resolved manifests, same-variant
-     ties, shadowed ties, and backward compatibility with existing manifests.
+  1. **Prebuild manifest binding validation.** Verify that generated pattern
+     IDs attach to the intended macro rules. Cover declaration order, token
+     versus regex rules, skip actions, and source encoding. Keep older
+     manifests and manual matcher registrations usable.
 - **Status by area** — All 269 source items and 249 test-tree items have
-  dispositions in the [Logos inventory](inventory/README.md). Runtime and
-  prebuild reject zero-width rules and context-dependent starts. End-of-text
-  and end-of-line assertions use the actual next byte or EOF.
-- **Gates** — Format, lint, and 299 specs pass with the tracked
-  `regex-automata` 0.2.1 snapshot. All eight flagged codegen specs, the compile
-  check, Markdown check, and three inventory drift checks pass. Vendored
-  Rust confirms the assertion spans, zero-width and universal-start
-  diagnostics, and two compile-only legacy rule characterizations.
-- **Last feature commit** — `fix: match Logos compiler graph contracts`.
+  dispositions. Generic and resolved generation check declared conflicts,
+  with the legacy declaration-order fallback for distinct tied variants.
+- **Gates** — Format, lint, and 299 specs pass with `regex-automata` 0.2.1.
+  All 31 flagged backend specs, the compile and Markdown checks, three
+  inventory drift checks, and the regenerated benchmark token-and-span
+  contract pass. Vendored Rust rejects the duplicate and skip ties and
+  accepts the higher rule that shadows a tied pair.
+- **Last feature commit** — `fix: preserve rule identity in prebuild priority ties`.
 
 ## Scope and verification
 
@@ -131,9 +132,10 @@ reproduction.
 
 ### Phase 4. Prebuild rule identity and priority parity
 
-**Next.** Generic manifests infer priorities and let the lexer resolve ties.
-Resolved manifests can select a winner during generation, where the manifest
-may lack the token variant identity known to the runtime macro.
+**Complete.** Generic manifests can declare priorities and variant names for
+build-time conflict checks. Resolved matchers retain the highest tied rules
+and pass the priority metadata to the lexer. Both forms preserve compatibility
+with distinct legacy ties and manual matcher registrations.
 
 - Verify diagnostics and winners for explicit ties, duplicate variants,
   tied skip rules, and shadowed candidates in both manifest forms.
@@ -142,6 +144,19 @@ may lack the token variant identity known to the runtime macro.
 
 **Exit criteria.** Runtime and emitted matchers agree for the specified rule
 metadata, with legacy manifest behavior covered by executable specs.
+
+### Phase 5. Prebuild manifest binding validation
+
+**Next.** The manifest order still determines emitted pattern IDs, while
+macro declarations determine the action attached to each ID.
+
+- Detect mismatches in declared rule order, pattern kind, source encoding,
+  and skipped actions using validation metadata from the generated matcher.
+- Verify the same token, callback payload, and span streams in generated and
+  runtime mode, including legacy manifests and manual registration.
+
+**Exit criteria.** A mismatched manifest yields a diagnostic that identifies
+its rule or option. Existing valid manifests and registrations still work.
 
 ## Completed feature phases
 
@@ -178,8 +193,8 @@ metadata, with legacy manifest behavior covered by executable specs.
   derive. Crystal reports ambiguous explicit rules and duplicate winners
   for the same variant when initializing a runtime matcher. Its legacy
   first-match fallback remains for different variants when fewer than two
-  winners declare their priorities. Resolved prebuild manifests can choose a
-  winner without the variant identity available to the runtime macro.
+  winners declare their priorities. Resolved prebuild matchers defer tied
+  candidates to the macro variant check whenever the manifest permits the tie.
 - **Source types:** Generated Crystal constructors select `String` or `Bytes`.
   Rust exposes a generic associated `Source` and borrowed slices.
 - **Graph code generation:** Rust emits per-state functions or state-machine
