@@ -30,16 +30,39 @@ module Logos
     end
   end
 
-  @@generated_matchers = {} of String => {GeneratedMatcher, GeneratedPriorities?, GeneratedBinding?}
+  # A snapshot keeps the matcher, binding, and priorities from one registration.
+  # :nodoc:
+  class GeneratedMatcherRegistration
+    getter matcher : GeneratedMatcher
+    getter priorities : GeneratedPriorities?
+    getter binding : GeneratedBinding?
+
+    def initialize(@matcher : GeneratedMatcher, @priorities : GeneratedPriorities?, @binding : GeneratedBinding?)
+    end
+  end
+
+  # Held by the token enum so lexing can observe replacements without looking
+  # up its name on each token.
+  # :nodoc:
+  class GeneratedMatcherSlot
+    property registration : GeneratedMatcherRegistration?
+  end
+
+  @@generated_matchers = {} of String => GeneratedMatcherSlot
+
+  # :nodoc:
+  def self.generated_matcher_slot(name : String) : GeneratedMatcherSlot
+    @@generated_matchers.put_if_absent(name) { GeneratedMatcherSlot.new }
+  end
 
   def self.register_generated_matcher(name : String, matcher : GeneratedMatcher, priorities : Array(Int32)? = nil,
                                       *, explicit_priorities : Array(Bool)? = nil, resolved_priorities : Bool = false, binding : GeneratedBinding? = nil) : Nil
     metadata = GeneratedPriorities.new(priorities, explicit_priorities, resolved_priorities) if priorities
-    @@generated_matchers[name] = {matcher, metadata, binding}
+    generated_matcher_slot(name).registration = GeneratedMatcherRegistration.new(matcher, metadata, binding)
   end
 
   def self.generated_matcher?(name : String) : GeneratedMatcher?
-    @@generated_matchers[name]?.try(&.[0])
+    @@generated_matchers[name]?.try(&.registration).try(&.matcher)
   end
 
   # Default or resolved priorities supplied by the generated matcher.
@@ -49,10 +72,10 @@ module Logos
 
   # Priority metadata available when the matcher returns multiple candidates.
   def self.generated_matcher_priority_info?(name : String) : GeneratedPriorities?
-    @@generated_matchers[name]?.try(&.[1])
+    @@generated_matchers[name]?.try(&.registration).try(&.priorities)
   end
 
   def self.generated_matcher_binding?(name : String) : GeneratedBinding?
-    @@generated_matchers[name]?.try(&.[2])
+    @@generated_matchers[name]?.try(&.registration).try(&.binding)
   end
 end

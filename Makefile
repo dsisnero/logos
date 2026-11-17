@@ -33,8 +33,9 @@ benchmark-release:
 	crystal run src/logos_codegen.cr -- --manifest temp/benchmark_token.json --out temp/generated_benchmark_token.cr
 	crystal build --release benchmarks/prebuild_contract.cr -o temp/benchmark-contract
 	crystal build --release -Dprecompiled benchmarks/lexer_compare.cr -o temp/benchmark-crystal
+	crystal build --release benchmarks/matcher_only.cr -o temp/benchmark-matcher-only
 	CARGO_TARGET_DIR="$(CURDIR)/temp/benchmark-rust" cargo build --locked --release --manifest-path benchmarks/rust/Cargo.toml
-	bash benchmarks/verify_release.sh temp/benchmark-contract temp/benchmark-crystal temp/benchmark-rust/release/logos-rust-baseline
+	bash benchmarks/verify_release.sh temp/benchmark-contract temp/benchmark-crystal temp/benchmark-rust/release/logos-rust-baseline temp/benchmark-matcher-only
 
 # Generate an ordinary Crystal matcher from a JSON manifest before compiling
 # an application. Example:

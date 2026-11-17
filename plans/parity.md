@@ -2,22 +2,23 @@
 
 ## Where we are
 
-- **Current focus** — Phase 8 is complete. Release Crystal and pinned Rust
-  agree on the token, byte-span and EOF contract. Crystal took 9.6–11.0×
-  as long across the two timing orders. The full results and commands are
-  in [the performance ledger](performance_experiments.md).
+- **Current focus** — Phase 12 is complete. Generated result dispatch
+  reads a stable registration slot and observes replacement on the next
+  lexing operation. The longer paired release comparison measured a 34.2%
+  median wall-time reduction. See [the performance ledger](performance_experiments.md).
 - **Next up**
-  1. **Phase 12. Generated result dispatch.** Reproduce the scanner versus
-     public lexer split and reduce the largest measured cost between a
-     resolved match and its public result.
+  1. **Phase 13. Resolved scanner throughput.** Use the matcher-only
+     control to measure the remaining cost of the resolved DFA scan.
+     Verify the chosen loop optimization with the release stream and
+     a paired comparison against the current public lexer.
 - **Status by area** — All 269 source and 249 test-tree items retain their
   dispositions. All shipped strict manifests and the package entry point
   have executable coverage. Documentation describes lazy runtime matcher
   construction, source prebuild, and diagnostic timing.
-- **Gates** — Format, lint, and 305 specs pass. `make test-prebuilt` passes
+- **Gates** — Format, lint, and 306 specs pass. `make test-prebuilt` passes
   17 specs. `make benchmark-release`, Markdown and all inventory drift
   checks pass. Phase 11 package qualification passed four specs.
-- **Last feature commit** — `test: establish a pinned Rust release benchmark baseline`.
+- **Last feature commit** — `perf: read generated matcher registrations through stable slots`.
 
 ## Scope and verification
 
@@ -217,8 +218,11 @@ references, red–green sequences, and completion criteria.
 
 ### Phase 12. Generated result dispatch
 
-**Next.** Establish a reusable matcher-only control for the resolved
-benchmark. Compare it with the public prebuilt lexer and identify the
+**Complete.** A reusable matcher-only control and a diagnostic lookup run
+identified registry reads as a target. Stable slots passed the release
+contract, and the longer paired timing confirmed a win.
+
+Establish a reusable matcher-only control for the resolved benchmark. Compare it with the public prebuilt lexer and identify the
 largest cost between a generated match and the returned result. Reduce
 that cost in one focused change and keep the generic matcher path
 compatible.
@@ -229,6 +233,15 @@ compatible.
   confirm any improvement in forward and reverse run order.
 - Preserve the current baseline and record the measured disposition in
   the performance ledger.
+
+### Phase 13. Resolved scanner throughput
+
+**Next.** Compare the matcher-only control, public lexer and pinned Rust
+on the shared workload. Use the measured gap to select one change in the
+resolved scan loop. Keep deferred ties in the general generated path and
+preserve failed prefixes, UTF-8 boundaries and delayed acceptance.
+Confirm exact release streams and a repeatable timing improvement before
+keeping the change.
 
 ## Completed feature phases
 

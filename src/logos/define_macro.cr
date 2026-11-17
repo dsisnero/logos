@@ -448,11 +448,11 @@ module Logos
         ::Logos::Lexer(self, {{ source_type }}, {{ extras_type }}, {{ error_type }}).new(source, extras)
       end
 
-      # Whether a generated source matcher was registered before this lexer
-      # definition. Source generation is an explicit pre-build step; macros
-      # do not execute external programs during compilation.
+      @@generated_matcher_slot = ::Logos.generated_matcher_slot("{{ name }}")
+
+      # Whether a generated source matcher is currently registered.
       def self.precompiled_dfa? : Bool
-        !::Logos.generated_matcher?("{{ name }}").nil?
+        !@@generated_matcher_slot.registration.nil?
       end
 
       def self.lex_all(source : {{ source_type }}, extras : {{ extras_type }} = {{ extras_type }}.new) : Array(::Logos::Result(self, {{ error_type }}))
@@ -513,22 +513,20 @@ module Logos
 
       @@validated_generated_binding = nil.as(::Logos::GeneratedBinding?)
 
-      private def self.validate_generated_binding : Nil
-        binding = ::Logos.generated_matcher_binding?("{{ name }}")
-        return unless binding
-        return if binding.same?(@@validated_generated_binding)
-
+      private def self.validate_generated_binding(binding : ::Logos::GeneratedBinding) : Nil
         binding.validate("{{ name }}", {{ utf8_flag }}, prebuild_rules, prebuild_subpatterns)
         @@validated_generated_binding = binding
       end
 
       def self.lex(__lexer : ::Logos::Lexer(self, {{ source_type }}, {{ extras_type }}, {{ error_type }})) : ::Logos::Result(self, {{ error_type }})?
-        generated_matcher = ::Logos.generated_matcher?("{{ name }}")
+        registration = @@generated_matcher_slot.registration
         generated_prefix = nil
-        if generated_matcher
-          validate_generated_binding
+        if registration
+          if (binding = registration.binding) && !binding.same?(@@validated_generated_binding)
+            validate_generated_binding(binding)
+          end
           pattern_prefix_dfas = @@empty_pattern_prefix_dfas
-          generated_result = generated_matcher.call(
+          generated_result = registration.matcher.call(
             {% if utf8_flag %}
               __lexer.source_bytes,
             {% else %}
@@ -575,7 +573,7 @@ module Logos
             end
           end
 
-          if generated_matcher && pattern_ids.is_a?(::Regex::Automata::PatternID)
+          if registration && pattern_ids.is_a?(::Regex::Automata::PatternID)
             # The external generator returns one accepted pattern for the
             # common case. Emit the action mapping directly: unlike the
             # runtime-DFA path, no metadata arrays or priority scan are needed.
@@ -591,7 +589,7 @@ module Logos
               raise "generated matcher returned an unknown pattern ID"
             end
           else
-            if generated_matcher
+            if registration
               pattern_to_variant = [
                 {% for item in all_defs %}
                   {{ item[:variant] }},
@@ -602,7 +600,7 @@ module Logos
                   {{ item[:skip] }},
                 {% end %}
               ]
-              priority_info = ::Logos.generated_matcher_priority_info?("{{ name }}")
+              priority_info = registration.priorities
               manifest_explicit = priority_info.try(&.explicit)
               if priority_info && priority_info.resolved
                 pattern_priority = priority_info.values

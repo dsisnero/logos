@@ -180,7 +180,8 @@ exports the strict benchmark manifest, builds the Crystal release lexer,
 and builds Rust Logos from the pinned `logos_rust/` checkout. It compares
 the exact token, byte-span and EOF streams with the Crystal runtime and
 prebuilt lexers and checks that both timed binaries emit 5,000 tokens per
-round. Build outputs and stream reports live under `temp/`.
+round. The target also builds a matcher-only control and checks its count.
+Build outputs and stream reports live under `temp/`.
 
 Both timed programs repeat the same checked-in input line 1,000 times per
 round. See [the performance ledger](../plans/performance_experiments.md) for

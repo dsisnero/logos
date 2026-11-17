@@ -67,6 +67,55 @@ timing isolates the scan and minimal counting loop. Next, reproduce this
 breakdown and reduce the work between a resolved match and the public
 result using the release contract as the gate.
 
+## Generated result dispatch (Phase 12)
+
+**Kept.** The baseline is the Phase 8 release binary built at `9ac4390`.
+The token enum now holds a stable registration slot. Each lex operation
+reads one registration containing the generated procedure, binding and
+priorities. A late registration or replacement takes effect on the next
+operation, including when the caller keeps the same lexer.
+
+The reusable matcher-only control and the public baseline both emitted
+5,000 tokens per round. A diagnostic control that added the old
+per-token matcher and binding lookups to the scanner loop raised the
+2,000-round mean from 654 ± 155 ms to 1,087 ± 184 ms. The public baseline
+in that run took 1,170 ± 229 ms. This isolated the registry lookup as a
+candidate cost. The initial release A/B runs varied by order:
+
+| 2,000 rounds, 7 runs per binary | Baseline mean ± SD | Candidate mean ± SD |
+| --- | ---: | ---: |
+| Baseline first | 521.0 ± 86.9 ms | 585.0 ± 133.4 ms |
+| Candidate before baseline | 791.1 ± 135.1 ms | 539.6 ± 78.8 ms |
+
+The longer confirmation used the same machine and compilers as Phase 8.
+After two warmups per binary it alternated 16 adjacent pairs at 6,000
+rounds, 132 MB and 30,000,000 tokens per process:
+
+| Metric | Baseline mean ± SD | Candidate mean ± SD | Median paired reduction | Candidate wins |
+| --- | ---: | ---: | ---: | ---: |
+| Wall time | 2.038 ± 0.624 s | 1.408 ± 0.354 s | 34.2% | 13/16 |
+| CPU time | 1.900 ± 0.405 s | 1.333 ± 0.269 s | 34.6% | 14/16 |
+
+Save the Phase 8 binary as `temp/phase12/baseline` before building the
+candidate. Run the release contract before timing.
+
+```sh
+make benchmark-release
+export LOGOS_BENCH_ROUNDS=2000
+hyperfine --shell=none --warmup 2 --runs 7 \
+  temp/phase12/baseline temp/benchmark-crystal temp/benchmark-rust/release/logos-rust-baseline
+hyperfine --shell=none --warmup 2 --runs 7 \
+  temp/benchmark-rust/release/logos-rust-baseline temp/benchmark-crystal temp/phase12/baseline
+python3 benchmarks/compare_pairs.py temp/phase12/baseline temp/benchmark-crystal \
+  --rounds 6000 --pairs 16 --output temp/phase12/paired.json
+```
+
+The red probe lacked a stable slot. The green test verifies late
+registration and replacement priorities on an active lexer, including
+callback payloads, skipped input, spans and EOF. The release contract
+also matches the pinned Rust token stream. The scanner control is now
+`temp/benchmark-matcher-only` and its count is part of the release gate.
+
 ## Historical baselines
 
 | Item | Branch | Commit | Status |
@@ -159,11 +208,10 @@ No active experiment. The next experiment must start from the documented baselin
 
 ## Queue
 
-1. **Measure and reduce generated result dispatch.** Reproduce the split
-   between the matcher-only scan and the public lexer. Pick the largest
-   demonstrated cost in the resolved path, then compare its replacement
-   with the current release baseline. Keep token, span, callback, skip,
-   and error behavior under the prebuild specs and release contract.
+1. **Resolved scanner throughput.** Compare the current public lexer
+   with the matcher-only control. Isolate the remaining scanner cost
+   and measure a focused improvement to the resolved DFA loop against
+   the paired baseline, with the release stream contract as a gate.
 2. **Generated direct leaf dispatch (candidate after measurement):** extend the manifest
    with variants, skip flags, priorities, and callback eligibility; generate a
    matcher that returns the token/skip action directly, bypassing pattern-ID
