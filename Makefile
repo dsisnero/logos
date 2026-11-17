@@ -1,5 +1,9 @@
 .PHONY: install update format lint test markdown markdown-check prebuild clean
 
+# Only docs that are currently clean under rumdl are gated; add files here once
+# their existing formatting issues are fixed.
+DOCS = docs/development.md docs/resuming.md
+
 install:
 	BEADS_DIR=$$(pwd)/.beads shards install
 
@@ -26,10 +30,10 @@ prebuild:
 	CRYSTAL_PATH=$$(if [ -d ../regex-automata/src ]; then printf "../regex-automata/src:%s" "$${CRYSTAL_PATH:-$$(crystal env CRYSTAL_PATH)}"; else printf "%s" "$${CRYSTAL_PATH:-$$(crystal env CRYSTAL_PATH)}"; fi) crystal run src/logos_codegen.cr -- --manifest "$(MANIFEST)" --out "$(OUT)"
 
 markdown:
-	rumdl fmt docs/development.md
+	rumdl fmt $(DOCS)
 
 markdown-check:
-	rumdl check docs/development.md --check
+	rumdl check $(DOCS) --check
 
 clean:
 	rm -rf ./temp

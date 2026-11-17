@@ -4,7 +4,7 @@
 
 ### Prerequisites
 
-- Crystal 1.11+ (check with `crystal --version`)
+- Crystal 1.19.1+ (check with `crystal --version`)
 - Git
 - Make
 
@@ -134,13 +134,14 @@ suppresses the generator command-line entry point when importing it for tests.
 
 ### Porting from Rust
 
-When porting code from Rust (`vendor/regex-syntax/`):
+The primary upstream is Rust `logos` (`logos_rust/`); regex-sensitive behavior
+also comes from `vendor/regex-syntax/`.
 
 1. **Examine Rust source first**:
 
    ```bash
    # Find relevant Rust code
-   grep -r "function_name" vendor/regex-syntax/
+   grep -rn "function_name" logos_rust/ vendor/regex-syntax/
    ```
 
 2. **Understand the algorithm**:
@@ -160,12 +161,13 @@ When porting code from Rust (`vendor/regex-syntax/`):
 
 ### Porting from Go
 
-When porting code from Go (`vendor/go-colorful/`):
+This port currently has no Go upstream: `vendor/` only holds `regex-syntax`.
+Keep the following guidance for any future Go-derived shard.
 
 1. **Examine Go source**:
 
    ```bash
-   grep -r "functionName" vendor/go-colorful/
+   grep -r "functionName" <go-upstream>/
    ```
 
 2. **Handle type differences**:
@@ -177,6 +179,71 @@ When porting code from Go (`vendor/go-colorful/`):
    - Convert Go test tables to Crystal specs
    - Maintain exact assertions
    - Handle floating-point precision differences
+
+## Porting status and parity index
+
+Current state, roadmap, and gate results live in
+[`plans/parity.md`](../plans/parity.md) — read its **Where we are** block first.
+
+Upstream pins:
+
+- Rust `logos` — `logos_rust`, release `v0.16.1`, commit `c7d40fa`
+- Rust `regex-syntax` — `vendor/regex-syntax`, release `rure-0.2.5`
+
+The regex layer itself comes from the `regex-syntax` and `regex-automata`
+shards (tracked checkouts under `lib/`). Fix behavior there through the shard
+workflow, never by editing `lib/` in place.
+
+### Rust handbook parity index
+
+Reference mapping from Rust handbook topics to Crystal docs/spec coverage:
+
+- Getting started: [README](../README.md) (Quick Start) and
+  `spec/logos/simple_spec.cr`
+- Attributes / derive: [README](../README.md) (Annotation-based API) and
+  `spec/logos/derive_spec.cr`
+- Callbacks: `spec/logos/callbacks_spec.cr`
+- Extras: `examples/extras.cr` and `spec/logos/custom_error_spec.cr`
+- Common regex patterns: `spec/logos/advanced_spec.cr`,
+  `spec/logos/properties_spec.cr`
+- Context-dependent lexing: [README](../README.md) (Context-Dependent Lexing)
+  and `spec/logos/lexer_modes_spec.cr`
+- Token disambiguation: [README](../README.md) (Token Disambiguation and
+  Priority) and `spec/logos/old_logos_bugs_spec.cr`
+- Unicode support: `spec/logos/unicode_dot_spec.cr`,
+  `spec/logos/ignore_case_spec.cr`
+- Source and spans: `spec/logos/source_spec.cr`, `spec/logos/lexer_spec.cr`
+
+### Rust UI error parity (`tests/ui/err`)
+
+| Rust case | Crystal status | Crystal coverage |
+| --- | --- | --- |
+| `greedy-without-config.rs` | Supported | `spec/logos/greedy_spec.cr`, `spec/logos/diagnostics_spec.cr` |
+| `priority-conflict.rs` | Supported | `spec/logos/diagnostics_spec.cr` |
+| `subpattern-match-empty.rs` | Supported | `spec/logos/diagnostics_spec.cr` |
+| `regex-non-utf8.rs` | Supported | `spec/logos/diagnostics_spec.cr` (use `bytes: true` to mark byte-oriented patterns) |
+| `token-non-utf8.rs` | Supported | `spec/logos/diagnostics_spec.cr` |
+| `multiple-export-dirs.rs` | Not applicable | Rust-only `export_dir` derive option is not implemented in Crystal annotations |
+
+### Completed port milestones
+
+- [x] Source abstraction (`String` and `Slice(UInt8)`)
+- [x] Basic lexer structure and state machine
+- [x] Pattern AST and parsing
+- [x] Result types and error handling
+- [x] Regex pattern compilation
+- [x] NFA/DFA construction
+- [x] Code generation
+- [x] Full test suite
+
+### Hybrid automaton status
+
+- `Regex::Automata::Hybrid::LazyDFA` performs lazy determinization and caches
+  transitions on demand.
+- It supports anchored/unanchored start states and reuses the same look-around
+  semantics as the DFA builder.
+- This hybrid path suits large regex sets where eager DFA construction has a
+  higher startup cost.
 
 ## Debugging
 
