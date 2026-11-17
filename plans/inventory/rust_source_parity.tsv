@@ -69,10 +69,10 @@ logos-codegen/src/graph/mod.rs::method::ByteClass.to_table	in_progress	-	Discove
 logos-codegen/src/graph/mod.rs::method::Comparisons.count_ops	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/graph/mod.rs::method::Comparisons.new	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/graph/mod.rs::method::Graph.dfa	in_progress	-	Discovered; contract review pending.
-logos-codegen/src/graph/mod.rs::method::Graph.errors	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/mod.rs::method::Graph.errors	partial	src/logos/macros.cr, src/logos/define_macro.cr, spec/logos/diagnostics_spec.cr	Reviewed greedy, empty subpattern, UTF-8, and priority errors. Crystal reports runtime lexer initialization exceptions instead of derive-time compiler diagnostics.
 logos-codegen/src/graph/mod.rs::method::Graph.fmt	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/graph/mod.rs::method::Graph.get_state	in_progress	-	Discovered; contract review pending.
-logos-codegen/src/graph/mod.rs::method::Graph.get_state_type	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/graph/mod.rs::method::Graph.get_state_type	intentional_divergence	src/logos/pattern.cr, spec/logos/diagnostics_spec.cr, spec/logos/generated_matcher_spec.cr	Checks highest accepting priorities only. Crystal retains first-match fallback for cross-variant implicit ties.
 logos-codegen/src/graph/mod.rs::method::Graph.iter_states	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/graph/mod.rs::method::Graph.leaves	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/graph/mod.rs::method::Graph.new	in_progress	-	Discovered; contract review pending.
@@ -108,7 +108,7 @@ logos-codegen/src/lib.rs::const::LOGOS_ATTR	in_progress	-	Discovered; contract r
 logos-codegen/src/lib.rs::const::REGEX_ATTR	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/lib.rs::const::TOKEN_ATTR	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/lib.rs::function::generate	in_progress	-	Discovered; contract review pending.
-logos-codegen/src/lib.rs::function::generate_graphs	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/lib.rs::function::generate_graphs	intentional_divergence	src/logos_codegen.cr, docs/development.md	Crystal generates a matcher with the separate manifest command; Rust graph export is not part of the macros.
 logos-codegen/src/lib.rs::function::greedy_dotall_check	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/lib.rs::function::is_logos_attr	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/lib.rs::function::strip_attributes	in_progress	-	Discovered; contract review pending.
@@ -172,14 +172,14 @@ logos-codegen/src/parser/type_params.rs::method::TypeParams.find	in_progress	-	D
 logos-codegen/src/parser/type_params.rs::method::TypeParams.generics	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/parser/type_params.rs::method::TypeParams.set	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/pattern.rs::class::Pattern	in_progress	-	Discovered; contract review pending.
-logos-codegen/src/pattern.rs::method::Pattern.check_for_greedy_all	in_progress	-	Discovered; contract review pending.
-logos-codegen/src/pattern.rs::method::Pattern.compile	in_progress	-	Discovered; contract review pending.
-logos-codegen/src/pattern.rs::method::Pattern.compile_lit	in_progress	-	Discovered; contract review pending.
-logos-codegen/src/pattern.rs::method::Pattern.complexity	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/pattern.rs::method::Pattern.check_for_greedy_all	ported	src/logos/macros.cr, src/logos/define_macro.cr, spec/logos/greedy_spec.cr	Pinned grouped greedy allow-and-reject cases pass for both macro APIs.
+logos-codegen/src/pattern.rs::method::Pattern.compile	partial	src/logos/pattern.cr, spec/logos/diagnostics_spec.cr	Regex parsing and UTF-8 checks delegate to regex-syntax; remaining option normalization awaits fixture coverage.
+logos-codegen/src/pattern.rs::method::Pattern.compile_lit	ported	src/logos/pattern.cr, spec/logos/pattern_spec.cr	Builds literal HIR from source bytes and weights it by byte length.
+logos-codegen/src/pattern.rs::method::Pattern.complexity	ported	src/logos/pattern.cr, spec/logos/pattern_spec.cr	Counts scalars for valid UTF-8 regex literals and bytes for invalid UTF-8, preserving repetition and alternation weights.
 logos-codegen/src/pattern.rs::method::Pattern.fmt	in_progress	-	Discovered; contract review pending.
-logos-codegen/src/pattern.rs::method::Pattern.has_greedy_all	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/pattern.rs::method::Pattern.has_greedy_all	ported	src/logos/macros.cr, src/logos/define_macro.cr, spec/logos/greedy_spec.cr	Greedy recognition uses the syntax shard HIR walker and checks nested disjunction cases.
 logos-codegen/src/pattern.rs::method::Pattern.hir	in_progress	-	Discovered; contract review pending.
-logos-codegen/src/pattern.rs::method::Pattern.priority	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/pattern.rs::method::Pattern.priority	ported	src/logos/pattern.cr, spec/logos/matcher_priority_spec.cr	Tests inferred Unicode regex priorities and explicit priority overrides.
 logos-codegen/src/pattern.rs::method::Pattern.source	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/util.rs::class::MaybeVoid	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/util.rs::function::expect_punct	in_progress	-	Discovered; contract review pending.

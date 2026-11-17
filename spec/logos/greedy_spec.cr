@@ -21,6 +21,20 @@ module Logos::Spec::Greedy
     error_type Nil
     regex "(a|b.*)", :All, allow_greedy: true
   end
+
+  @[Logos::Regex(:All, "(a|b.*)")]
+  enum AnnotatedRejected
+    All
+  end
+
+  logos_derive(AnnotatedRejected)
+
+  @[Logos::Regex(:All, "(a|b.*)", allow_greedy: true)]
+  enum AnnotatedAllowed
+    All
+  end
+
+  logos_derive(AnnotatedAllowed)
 end
 
 describe "greedy dot repetition" do
@@ -36,6 +50,17 @@ describe "greedy dot repetition" do
     expect_raises(Exception, /allow_greedy/) do
       lexer.next
     end
+  end
+
+  it "rejects and accepts the pinned grouped greedy pattern through annotations" do
+    expect_raises(Exception, /allow_greedy/) do
+      Logos::Spec::Greedy::AnnotatedRejected.lexer("b123").next
+    end
+    lexer = Logos::Spec::Greedy::AnnotatedAllowed.lexer("b123")
+    results = lexer.spanned.to_a
+    results.map { |result, span| {result.unwrap, span} }.should eq(
+      [{Logos::Spec::Greedy::AnnotatedAllowed::All, 0...4}]
+    )
   end
 
   it "allows allow_greedy" do

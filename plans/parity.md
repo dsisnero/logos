@@ -3,24 +3,25 @@
 ## Where we are
 
 - **Current focus** — [Phase 2, Logos parity inventory and coverage](#phase-2-logos-parity-inventory-and-coverage).
-  Checked source ranges, callback dispatch, and lexer navigation have
-  vendored Rust evidence. Derive diagnostics and matcher behavior are next.
+  The derive UI fixtures and generated/runtime priority checks have
+  evidence. The remaining tokenization and legacy regression audit is next.
 - **Next up**
-  1. **Derive diagnostics and matcher behavior.** Use the seven pinned UI
-     fixtures and the `skip_equal_priorities` callback fixture to drive
-     red-green checks of annotations, pattern priorities, and greedy
-     fallback. Compare both Crystal declaration APIs and their generated
-     and runtime matcher behavior where applicable.
-  2. **Remaining behavior audit.** Review the outstanding source and fixture
-     items against pinned Rust, closing exact token, skip, span, or error
-     coverage gaps before phase signoff.
+  1. **Tokenization and legacy regression coverage.** Compare the
+     `advanced.rs`, `simple.rs`, `edgecase.rs`, and `old_logos_bugs.rs`
+     fixtures with Crystal token, payload, skip, error, and byte-span
+     assertions. Port missing behavior in groups around the matcher or lexer
+     contract it exercises.
+  2. **Remaining source and fixture review.** Finish outstanding option,
+     Unicode and binary matching, and backend dispositions, then run the
+     inventory drift and full Logos gates for phase signoff.
 - **Status by area** — Payload examples, dependency qualification, source
-  boundaries, callback dispatch, and lexer navigation are verified. Pending
-  reviews are tracked in the [Logos inventory](inventory/README.md).
-- **Gates** — Format, lint, and 265 specs pass with installed
-  `regex-automata` 0.2.1. All three inventory drift checks and the executable
-  navigation fixture against pinned Rust Logos pass.
-- **Last feature commit** — `fix: preserve lexer navigation across cloned and morphed streams`.
+  boundaries, callbacks, lexer navigation, and the derive UI and matching
+  slice are verified. The [Logos inventory](inventory/README.md) records
+  pending reviews and intentional differences.
+- **Gates** — Format, lint, and 273 specs pass with installed
+  `regex-automata` 0.2.1. The flagged codegen specs, all three inventory
+  drift checks, and the vendored and prebuilt matcher checks pass.
+- **Last feature commit** — `fix: align derive diagnostics and matcher priorities`.
 
 ## Scope and verification
 
@@ -72,9 +73,10 @@ recorded shard revision.
 
 **In progress.** The ledgers cover 269 discovered source items, 122 Rust
 test functions, and 127 supporting or UI fixture items from the test tree.
-Checked source ranges, the non-UTF-8 lexer stream, callback dispatch, and
-lexer navigation have evidence-backed dispositions. The next slice covers
-derive diagnostics and matcher behavior. See the ordered work in **Where we are** and the
+Checked source ranges, the non-UTF-8 stream, callback dispatch, lexer
+navigation, and the seven derive UI fixtures have evidence-backed
+dispositions. Tokenization and legacy regression coverage are next. See
+the ordered work in **Where we are** and the
 [inventory verification instructions](inventory/README.md).
 
 - Use the generated source and test IDs for pinned Logos runtime, derive and
@@ -142,6 +144,11 @@ reproduction.
 - **Annotation placement:** Crystal cannot introspect per-variant annotations,
   so `Logos::Token` / `Logos::Regex` mappings are declared at the enum type
   level instead of on individual variants.
+- **Priority diagnostics:** Rust rejects all highest-priority ties during
+  derive. Crystal reports ambiguous explicit rules and duplicate winners
+  for the same variant when initializing a runtime matcher. Its legacy
+  first-match fallback remains for different variants when fewer than two
+  winners declare their priorities.
 - **Byte-oriented patterns:** Rust infers non-UTF-8 patterns and rejects them in
   the `regex-non-utf8` UI test; the Crystal port requires the explicit
   `bytes: true` flag.

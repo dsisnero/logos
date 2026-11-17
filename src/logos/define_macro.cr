@@ -217,46 +217,6 @@ module Logos
         "This pattern contains an unbounded greedy dot repetition, i.e. `.*` or `.+` (or an equivalent class). This can consume the entire input for each token. Prefer a non-greedy repetition or a more specific class. If intentional, set allow_greedy: true."
       end
 
-      private def self.patterns_overlap?(left_hir : ::Regex::Syntax::Hir::Hir, right_hir : ::Regex::Syntax::Hir::Hir) : Bool
-        left_nfa = ::Regex::Automata::HirCompiler.new(::Regex::Automata::HirCompilerConfig.new(utf8: {{ utf8_flag }})).compile(left_hir)
-        right_nfa = ::Regex::Automata::HirCompiler.new(::Regex::Automata::HirCompilerConfig.new(utf8: {{ utf8_flag }})).compile(right_hir)
-        dfa_config = ::Regex::Automata::Config.new
-          .start_kind(::Regex::Automata::StartKind::Anchored)
-          .prefilter(nil)
-          .accelerate(false)
-          .specialize_start_states(false)
-        left_dfa = ::Regex::Automata::DFA::Builder.from_nfa(left_nfa, dfa_config).build
-        right_dfa = ::Regex::Automata::DFA::Builder.from_nfa(right_nfa, dfa_config.dup).build
-
-        queue = [{left_dfa.start_anchored, right_dfa.start_anchored}]
-        visited = Set(Tuple(::Regex::Automata::StateID, ::Regex::Automata::StateID)).new
-
-        until queue.empty?
-          left_id, right_id = queue.shift
-          pair = {left_id, right_id}
-          next if visited.includes?(pair)
-          visited.add(pair)
-
-          left_accepting = left_dfa.is_match_state?(left_dfa.next_eoi_state(left_id))
-          right_accepting = right_dfa.is_match_state?(right_dfa.next_eoi_state(right_id))
-          return true if left_accepting && right_accepting
-
-          left_state = left_dfa[left_id]
-          right_state = right_dfa[right_id]
-
-          256.times do |byte|
-            byte_u8 = byte.to_u8
-            left_next = left_state.next[left_dfa.byte_classifier[byte_u8]]
-            right_next = right_state.next[right_dfa.byte_classifier[byte_u8]]
-            next if left_next == ::Regex::Automata::DFA::DEAD_STATE_ID ||
-                    right_next == ::Regex::Automata::DFA::DEAD_STATE_ID
-            queue << {left_next, right_next}
-          end
-        end
-
-        false
-      end
-
       private def self.hir_matches_invalid_utf8?(hir : ::Regex::Syntax::Hir::Hir) : Bool
         node_matches_invalid_utf8?(hir.node)
       end
@@ -525,7 +485,7 @@ module Logos
             pattern_priority << {{ item[:priority] }}
             pattern_priority_explicit << true
           {% else %}
-            pattern_priority << hir.complexity
+            pattern_priority << pattern_source.bytesize * 2
             pattern_priority_explicit << false
           {% end %}
         {% end %}
@@ -578,7 +538,7 @@ module Logos
             pattern_priority << {{ item[:priority] }}
             pattern_priority_explicit << true
           {% else %}
-            pattern_priority << hir.complexity
+            pattern_priority << ::Logos::Pattern.regex_priority(hir.node)
             pattern_priority_explicit << false
           {% end %}
         {% end %}
@@ -602,16 +562,6 @@ module Logos
           return {dfa: dfa, pattern_dfas: pattern_dfas, pattern_prefix_dfas: pattern_prefix_dfas, pattern_to_variant: pattern_to_variant, pattern_is_skip: pattern_is_skip, pattern_priority: pattern_priority, pattern_priority_explicit: pattern_priority_explicit, error_variant: error_variant}
         end
 
-        hirs.size.times do |i|
-          (i + 1...hirs.size).each do |j|
-            next unless pattern_priority_explicit[i] && pattern_priority_explicit[j]
-            next unless pattern_priority[i] == pattern_priority[j]
-            if self.patterns_overlap?(hirs[i], hirs[j])
-              raise "The pattern #{pattern_text[i]} (#{pattern_variant_name[i]}) can match simultaneously with #{pattern_text[j]} (#{pattern_variant_name[j]}) at priority #{pattern_priority[i]}."
-            end
-          end
-        end
-
         dfa_config = ::Regex::Automata::Config.new
           .match_kind(::Regex::Automata::MatchKind::All)
           .start_kind(::Regex::Automata::StartKind::Anchored)
@@ -622,6 +572,7 @@ module Logos
         hir_compiler = ::Regex::Automata::HirCompiler.new(::Regex::Automata::HirCompilerConfig.new(utf8: {{ utf8_flag }}))
         nfa = hir_compiler.compile_multi(hirs)
         dfa = ::Regex::Automata::DFA::Builder.from_nfa(nfa, dfa_config).build
+        ::Logos::Pattern.validate_priorities(dfa, pattern_priority, pattern_priority_explicit, pattern_text, pattern_variant_name)
         hirs.each do |hir|
           pattern_nfa = ::Regex::Automata::HirCompiler
             .new(::Regex::Automata::HirCompilerConfig.new(utf8: {{ utf8_flag }}))
@@ -761,12 +712,13 @@ module Logos
                   {{ item[:skip] }},
                 {% end %}
               ]
+              default_priorities = ::Logos.generated_matcher_priorities?("{{ name }}")
               pattern_priority = [
-                {% for item in all_defs %}
+                {% for item, index in all_defs %}
                   {% if item[:priority] %}
                     {{ item[:priority] }},
                   {% else %}
-                    0,
+                    default_priorities.try(&.[{{ index }}]?) || 0,
                   {% end %}
                 {% end %}
               ] of Int32
@@ -776,35 +728,34 @@ module Logos
                 {% end %}
               ]
             end
-            # Determine the highest-priority variant without allocating an
-            # intermediate array for every successful token.
+            # Allocate a list of tied rules only when there is more than one winner.
             pattern_id = if pattern_ids.is_a?(::Regex::Automata::PatternID)
                            pattern_ids
                          else
-                         highest_priority = pattern_priority.not_nil![pattern_ids[0].to_i]
-                         selected = pattern_ids[0]
-                         highest_priority_count = 1
-                         highest_priority_all_explicit = pattern_priority_explicit.not_nil![selected.to_i]
-                         index = 1
-                         while index < pattern_ids.size
-                           candidate = pattern_ids[index]
-                           candidate_index = candidate.to_i
-                           candidate_priority = pattern_priority.not_nil![candidate_index]
-                           if candidate_priority > highest_priority
-                             selected = candidate
-                             highest_priority = candidate_priority
-                             highest_priority_count = 1
-                             highest_priority_all_explicit = pattern_priority_explicit.not_nil![candidate_index]
-                           elsif candidate_priority == highest_priority
-                             highest_priority_count += 1
-                             highest_priority_all_explicit &&= pattern_priority_explicit.not_nil![candidate_index]
+                           priorities = pattern_priority.not_nil!
+                           highest_priority = priorities[pattern_ids[0].to_i]
+                           selected = pattern_ids[0]
+                           highest_priority_count = 1
+                           index = 1
+                           while index < pattern_ids.size
+                             candidate = pattern_ids[index]
+                             candidate_priority = priorities[candidate.to_i]
+                             if candidate_priority > highest_priority
+                               selected = candidate
+                               highest_priority = candidate_priority
+                               highest_priority_count = 1
+                             elsif candidate_priority == highest_priority
+                               highest_priority_count += 1
+                             end
+                             index += 1
                            end
-                           index += 1
-                         end
-                         if highest_priority_count > 1 && highest_priority_all_explicit
-                           raise "Patterns with priority #{highest_priority} can match simultaneously."
-                         end
-                         selected
+                           if highest_priority_count > 1
+                             winners = pattern_ids.select { |id| priorities[id.to_i] == highest_priority }
+                             if ::Logos::Pattern.ambiguous_winners?(winners, pattern_priority_explicit.not_nil!, pattern_to_variant.not_nil!)
+                               raise "Patterns with priority #{highest_priority} can match simultaneously."
+                             end
+                           end
+                           selected
                          end
             variant = pattern_to_variant.not_nil![pattern_id.to_i]
             is_skip = pattern_is_skip.not_nil![pattern_id.to_i]

@@ -10,6 +10,12 @@ require "../spec_helper"
       Logos::Codegen.resolve_accept([] of Int32, patterns).should be_nil
     end
 
+    it "emits inferred literal and regexp priorities for generic matchers" do
+      patterns = JSON.parse(%([{"kind":"token","pattern":"é"},{"kind":"regex","pattern":"é"}])).as_a
+      source = Logos::Codegen.emit_matcher(patterns, {} of String => String, true, "UnicodePriority")
+      source.should end_with(", [4, 2] of Int32)")
+    end
+
     it "preserves first-match ties and rejects explicit ambiguity" do
       patterns = JSON.parse(%([{"resolved_priority":3},{"resolved_priority":3}])).as_a
       Logos::Codegen.resolve_accept([1, 0], patterns).should eq(1)

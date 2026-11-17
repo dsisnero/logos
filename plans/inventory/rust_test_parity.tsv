@@ -33,7 +33,7 @@ tests/tests/callbacks.rs::test::rust::raw_strings	ported	spec/logos/callbacks_sp
 tests/tests/callbacks.rs::test::skip_all_callback_types::skip_all_callback_types	ported	spec/logos/callbacks_spec.cr, spec/logos/callback_dispatch_spec.cr	Checks upstream callback order and error sequence; the cross-API matrix verifies typed skip results and error spans.
 tests/tests/callbacks.rs::test::skip_callback_closure::skip_callback_closure	ported	spec/logos/callbacks_spec.cr	Exact letters and numbers sequence and error line numbers from the upstream fixture.
 tests/tests/callbacks.rs::test::skip_callback_function::skip_callback_function	ported	spec/logos/callbacks_spec.cr	Exact tag values and spans; a unit-returning skip callback consumes an unterminated comment through EOF.
-tests/tests/callbacks.rs::test::skip_equal_priorities::skip_equal_priorities	in_progress	-	Review the equal-priority and greedy fallback behavior with the derive and matcher audit.
+tests/tests/callbacks.rs::test::skip_equal_priorities::skip_equal_priorities	ported	spec/logos/matcher_priority_spec.cr	Exact upstream payload sequence and byte spans through low-priority fallback skips in both macro APIs.
 tests/tests/clone.rs::class::Evil	in_progress	-	Discovered; contract review pending.
 tests/tests/clone.rs::class::Token	in_progress	-	Discovered; contract review pending.
 tests/tests/clone.rs::method::Evil.clone	in_progress	-	Discovered; contract review pending.
@@ -223,24 +223,24 @@ tests/tests/string.rs::class::Token	in_progress	-	Discovered; contract review pe
 tests/tests/string.rs::function::lex_single_line_string	in_progress	-	Discovered; contract review pending.
 tests/tests/string.rs::test::test_it_works_with_cloning	in_progress	-	Discovered; contract review pending.
 tests/tests/string.rs::test::test_it_works_without_cloning	in_progress	-	Discovered; contract review pending.
-tests/tests/ui/err/greedy-without-config.rs::class::GreedySkip	in_progress	-	Discovered; contract review pending.
-tests/tests/ui/err/greedy-without-config.rs::class::GreedyToken	in_progress	-	Discovered; contract review pending.
-tests/tests/ui/err/greedy-without-config.rs::function::main	in_progress	-	Discovered; contract review pending.
-tests/tests/ui/err/multiple-export-dirs.rs::class::Token	in_progress	-	Discovered; contract review pending.
-tests/tests/ui/err/multiple-export-dirs.rs::function::main	in_progress	-	Discovered; contract review pending.
-tests/tests/ui/err/priority-conflict.rs::class::Tokens	in_progress	-	Discovered; contract review pending.
-tests/tests/ui/err/priority-conflict.rs::function::main	in_progress	-	Discovered; contract review pending.
-tests/tests/ui/err/regex-non-utf8.rs::class::TokenWithX00Plus	in_progress	-	Discovered; contract review pending.
-tests/tests/ui/err/regex-non-utf8.rs::class::TokenWithX00Star	in_progress	-	Discovered; contract review pending.
-tests/tests/ui/err/regex-non-utf8.rs::class::TokenWithXFF	in_progress	-	Discovered; contract review pending.
-tests/tests/ui/err/regex-non-utf8.rs::function::main	in_progress	-	Discovered; contract review pending.
-tests/tests/ui/err/subpattern-match-empty.rs::class::Example1	in_progress	-	Discovered; contract review pending.
-tests/tests/ui/err/subpattern-match-empty.rs::class::Example2	in_progress	-	Discovered; contract review pending.
-tests/tests/ui/err/subpattern-match-empty.rs::function::main	in_progress	-	Discovered; contract review pending.
-tests/tests/ui/err/token-non-utf8.rs::class::Token	in_progress	-	Discovered; contract review pending.
-tests/tests/ui/err/token-non-utf8.rs::function::main	in_progress	-	Discovered; contract review pending.
-tests/tests/ui/ok/greedy.rs::class::Token	in_progress	-	Discovered; contract review pending.
-tests/tests/ui/ok/greedy.rs::function::main	in_progress	-	Discovered; contract review pending.
+tests/tests/ui/err/greedy-without-config.rs::class::GreedySkip	intentional_divergence	spec/logos/greedy_spec.cr, spec/logos/diagnostics_spec.cr	Rejects the grouped greedy pattern and greedy skip at Crystal lexer initialization.
+tests/tests/ui/err/greedy-without-config.rs::class::GreedyToken	intentional_divergence	spec/logos/greedy_spec.cr, spec/logos/diagnostics_spec.cr	Rejects the grouped greedy pattern and greedy skip at Crystal lexer initialization.
+tests/tests/ui/err/greedy-without-config.rs::function::main	skipped	-	Empty executable entry point; the fixture's derive declarations carry the UI contract.
+tests/tests/ui/err/multiple-export-dirs.rs::class::Token	intentional_divergence	docs/development.md	The separate Crystal prebuild command accepts one output path; Rust export_dir is not a Crystal derive attribute.
+tests/tests/ui/err/multiple-export-dirs.rs::function::main	skipped	-	Empty executable entry point; the fixture's derive declarations carry the UI contract.
+tests/tests/ui/err/priority-conflict.rs::class::Tokens	intentional_divergence	spec/logos/diagnostics_spec.cr	Both APIs reject the exact same-variant highest-priority overlap at lexer initialization.
+tests/tests/ui/err/priority-conflict.rs::function::main	skipped	-	Empty executable entry point; the fixture's derive declarations carry the UI contract.
+tests/tests/ui/err/regex-non-utf8.rs::class::TokenWithX00Plus	intentional_divergence	spec/logos/diagnostics_spec.cr	Checks invalid UTF-8 and byte-oriented regexes at lexer initialization; null-prefix byte patterns use explicit bytes: true.
+tests/tests/ui/err/regex-non-utf8.rs::class::TokenWithX00Star	intentional_divergence	spec/logos/diagnostics_spec.cr	Checks invalid UTF-8 and byte-oriented regexes at lexer initialization; null-prefix byte patterns use explicit bytes: true.
+tests/tests/ui/err/regex-non-utf8.rs::class::TokenWithXFF	intentional_divergence	spec/logos/diagnostics_spec.cr	Checks invalid UTF-8 and byte-oriented regexes at lexer initialization; null-prefix byte patterns use explicit bytes: true.
+tests/tests/ui/err/regex-non-utf8.rs::function::main	skipped	-	Empty executable entry point; the fixture's derive declarations carry the UI contract.
+tests/tests/ui/err/subpattern-match-empty.rs::class::Example1	intentional_divergence	spec/logos/diagnostics_spec.cr	Both empty-subpattern inputs fail when initializing the Crystal lexer.
+tests/tests/ui/err/subpattern-match-empty.rs::class::Example2	intentional_divergence	spec/logos/diagnostics_spec.cr	Both empty-subpattern inputs fail when initializing the Crystal lexer.
+tests/tests/ui/err/subpattern-match-empty.rs::function::main	skipped	-	Empty executable entry point; the fixture's derive declarations carry the UI contract.
+tests/tests/ui/err/token-non-utf8.rs::class::Token	intentional_divergence	spec/logos/diagnostics_spec.cr	Rejects the invalid UTF-8 literal token at Crystal lexer initialization.
+tests/tests/ui/err/token-non-utf8.rs::function::main	skipped	-	Empty executable entry point; the fixture's derive declarations carry the UI contract.
+tests/tests/ui/ok/greedy.rs::class::Token	ported	spec/logos/greedy_spec.cr	Accepted grouped greedy pattern emits the expected token and byte span when allowed.
+tests/tests/ui/ok/greedy.rs::function::main	skipped	-	Empty executable entry point; the fixture's derive declarations carry the UI contract.
 tests/tests/unicode_dot.rs::class::TestUnicodeDot	in_progress	-	Discovered; contract review pending.
 tests/tests/unicode_dot.rs::class::TestUnicodeDotBytes	in_progress	-	Discovered; contract review pending.
 tests/tests/unicode_dot.rs::test::test_unicode_dot_bytes_ascii	in_progress	-	Discovered; contract review pending.

@@ -11,26 +11,34 @@ module Logos::Codegen
     return nil if ids.empty?
     highest = ids.max_of { |id| patterns[id]["resolved_priority"].as_i }
     winners = ids.select { |id| patterns[id]["resolved_priority"].as_i == highest }
-    if winners.size > 1 && winners.all? { |id| patterns[id]["priority_explicit"]?.try(&.as_bool) || false }
+    if winners.count { |id| patterns[id]["priority_explicit"]?.try(&.as_bool) || false } > 1
       raise "Patterns with priority #{highest} can match simultaneously."
     end
     winners.first
   end
 
   def self.compile_dfa(patterns : Array(JSON::Any), subpatterns : Hash(String, String), utf8 : Bool) : ::Regex::Automata::DFA::DFA
-    hirs = patterns.map do |entry|
+    build_dfa(compile_patterns(patterns, subpatterns, utf8).map(&.[0]), utf8)
+  end
+
+  private def self.compile_patterns(patterns : Array(JSON::Any), subpatterns : Hash(String, String), utf8 : Bool) : Array({::Regex::Syntax::Hir::Hir, Int32})
+    patterns.map do |entry|
       kind = entry["kind"].as_s
       pattern = entry["pattern"].as_s
       subpatterns.each { |name, value| pattern = pattern.gsub("(?&#{name})", value) }
       case kind
       when "token"
-        ::Regex::Syntax::Hir::Hir.literal(pattern.to_slice)
+        {::Regex::Syntax::Hir::Hir.literal(pattern.to_slice), pattern.bytesize * 2}
       when "regex"
-        ::Regex::Syntax.parse(pattern, unicode: utf8, utf8: utf8)
+        hir = ::Regex::Syntax.parse(pattern, unicode: utf8, utf8: utf8)
+        {hir, Logos::Pattern.regex_priority(hir.node)}
       else
         raise "unknown Logos pattern kind: #{kind}"
       end
     end
+  end
+
+  private def self.build_dfa(hirs : Array(::Regex::Syntax::Hir::Hir), utf8 : Bool) : ::Regex::Automata::DFA::DFA
     nfa = ::Regex::Automata::HirCompiler.new(
       ::Regex::Automata::HirCompilerConfig.new(utf8: utf8)
     ).compile_multi(hirs)
@@ -59,7 +67,8 @@ module Logos::Codegen
   # and byte-class reduced by this program; the consuming application merely
   # indexes generated constants.
   def self.emit_matcher(patterns : Array(JSON::Any), subpatterns : Hash(String, String), utf8 : Bool, name : String) : String
-    dfa = compile_dfa(patterns, subpatterns, utf8)
+    compiled_patterns = compile_patterns(patterns, subpatterns, utf8)
+    dfa = build_dfa(compiled_patterns.map(&.[0]), utf8)
     module_name = "Generated_#{name.gsub(/[^A-Za-z0-9_]/, "_")}"
     transition_table = dfa.tt || raise "DFA has no transition table"
     start = transition_table.to_index(dfa.start_anchored)
@@ -104,7 +113,9 @@ module Logos::Codegen
         io << "      if match_start < match_finish\n        end_pos = index - start_index + 1\n        if match_finish == match_start + 1\n          pattern_id = ::Regex::Automata::PatternID.new(MATCH_IDS[match_start])\n        elsif match_finish == match_start + 2\n          pattern_id = nil\n          pattern_ids = StaticArray[::Regex::Automata::PatternID.new(MATCH_IDS[match_start]), ::Regex::Automata::PatternID.new(MATCH_IDS[match_start + 1])]\n        else\n          pattern_id = nil\n          ids = pattern_ids.is_a?(Array) ? pattern_ids : [] of ::Regex::Automata::PatternID\n          ids.clear\n          while match_start < match_finish\n            ids << ::Regex::Automata::PatternID.new(MATCH_IDS[match_start])\n            match_start += 1\n          end\n          pattern_ids = ids\n        end\n      end\n      index += 1\n    end\n"
       end
       io << "    end_pos < 0 ? nil : {end_pos, pattern_id || pattern_ids.not_nil!}\n  end\nend\n"
-      io << "Logos.register_generated_matcher(#{name.inspect}, ->(input : ::Bytes, start_index : Int32) { Logos::GeneratedMatchers::#{module_name}.match(input, start_index) })"
+      io << "Logos.register_generated_matcher(#{name.inspect}, ->(input : ::Bytes, start_index : Int32) { Logos::GeneratedMatchers::#{module_name}.match(input, start_index) }"
+      io << ", #{compiled_patterns.map(&.[1]).inspect} of Int32" unless resolved
+      io << ")"
     end
   end
 end
@@ -114,7 +125,7 @@ end
     manifest_path = ARGV[1]? || raise "usage: logos-codegen --manifest MANIFEST [--out OUTPUT]"
     manifest = JSON.parse(File.read(manifest_path))
     patterns = manifest["patterns"].as_a
-    utf8 = manifest["utf8"]?.try(&.as_bool) || true
+    utf8 = manifest["utf8"]?.try(&.as_bool) != false
     subpatterns = manifest["subpatterns"]?.try { |value| Hash(String, String).from_json(value.to_json) } || {} of String => String
     name = manifest["name"].as_s
     output = Logos::Codegen.emit_matcher(patterns, subpatterns, utf8, name)

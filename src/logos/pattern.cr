@@ -1,5 +1,6 @@
 require "./pattern/parser"
 require "regex-syntax"
+require "regex-automata"
 
 module Logos
   # Abstract syntax tree for regex patterns (deprecated, use Regex::Syntax::Hir instead)
@@ -161,7 +162,52 @@ module Logos
 
     # Calculate priority/complexity for disambiguation
     def priority : Int32
-      @hir.try(&.complexity) || 0
+      return @source.bytesize * 2 if literal?
+      @hir.try { |hir| self.class.regex_priority(hir.node) } || 0
+    end
+
+    # Weight regex literals by Unicode scalars if valid UTF-8, or by bytes.
+    def self.regex_priority(node : ::Regex::Syntax::Hir::Node) : Int32
+      case node
+      when ::Regex::Syntax::Hir::Literal
+        text = String.new(node.bytes)
+        (text.valid_encoding? ? text.size : node.bytes.size) * 2
+      when ::Regex::Syntax::Hir::Capture
+        regex_priority(node.sub)
+      when ::Regex::Syntax::Hir::Repetition
+        {Int32::MAX.to_i64, node.min.to_i64 * regex_priority(node.sub)}.min.to_i32
+      when ::Regex::Syntax::Hir::Concat
+        {Int32::MAX.to_i64, node.children.sum { |child| regex_priority(child).to_i64 }}.min.to_i32
+      when ::Regex::Syntax::Hir::Alternation
+        node.children.min_of? { |child| regex_priority(child) } || 0
+      else
+        node.complexity
+      end
+    end
+
+    # Check the winners at each accepting state, after higher priorities
+    # have masked any lower-priority overlaps.
+    def self.validate_priorities(dfa : ::Regex::Automata::DFA::DFA, priorities : Array(Int32), explicit : Array(Bool), patterns : Array(String), variants : Array(String)) : Nil
+      dfa.states.each do |state|
+        matches = state.match
+        next if matches.size < 2
+
+        best = matches.max_of { |id| priorities[id.to_i] }
+        winners = matches.select { |id| priorities[id.to_i] == best }
+        next unless ambiguous_winners?(winners, explicit, variants)
+
+        labels = winners.map { |id| "#{patterns[id.to_i]} (#{variants[id.to_i]})" }
+        raise "Patterns #{labels.join(", ")} can match simultaneously at priority #{best}."
+      end
+    end
+
+    # Keep declaration-order fallback for legacy implicit ties between
+    # distinct variants. Duplicate rules for one variant are ambiguous.
+    def self.ambiguous_winners?(winners : Array(::Regex::Automata::PatternID), explicit : Array(Bool), variants : Array(T)) : Bool forall T
+      return false if winners.size < 2
+      return true if winners.count { |id| explicit[id.to_i] } > 1
+
+      winners.map { |id| variants[id.to_i] }.uniq!.size < winners.size
     end
 
     # Check for problematic patterns like greedy .* or .+

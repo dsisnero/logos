@@ -57,3 +57,14 @@ iterators independently through a Unicode token, skipped input, an error,
 and EOF. Crystal additionally tests that failed navigation leaves a usable
 cursor, and uses an explicit `SpannedIter#lexer` getter for Rust's dereference
 access.
+
+All seven Rust UI fixtures under `logos_rust/tests/tests/ui/` were built
+individually against the pinned crate. The six error fixtures failed with
+their expected diagnostic categories and `ok/greedy.rs` built. An
+executable Rust driver also passed the exact skip-priority fixture and
+checked shadowed ties and Unicode regex weights. The Crystal counterparts
+are in [diagnostics](../../spec/logos/diagnostics_spec.cr),
+[greedy](../../spec/logos/greedy_spec.cr), and
+[matcher priority](../../spec/logos/matcher_priority_spec.cr) specs.
+The prebuild check compared the same skip stream with the runtime matcher
+and verified that a byte manifest matches `0xff` at `0...1`.

@@ -113,15 +113,18 @@ not use Crystal macros to run external code. Regenerate the output whenever a
 manifest, token definition, or regex-automata version changes; `make clean`
 removes all generated files.
 
-To resolve accepting-state priority during prebuild, every manifest pattern
-may supply an integer `resolved_priority`. This is an opt-in contract: values
-must match the priority used by the consuming lexer. The existing generated
-path uses zero for omitted priorities, so the benchmark manifest records zero
-for all six rules. Ties retain the first DFA-reported pattern, matching that
-path. Set `priority_explicit: true` for explicitly specified priorities; tied
-explicit winners produce a generation error. If any pattern omits
-`resolved_priority`, generation retains the generic multi-pattern result.
-Variant, skip, callbacks, and error handling still use `Logos.define`.
+With a generic prebuilt matcher, the generator infers fallback priorities
+from the manifest's compiled patterns. `Logos.define` applies its explicitly
+declared priorities when choosing between several matching rules. Use
+`"utf8": false` for a byte-oriented manifest.
+
+When every pattern supplies an integer `resolved_priority`, the generator
+chooses the winner during prebuild. These values must match the priorities
+used by the consuming lexer. Set `priority_explicit: true` on rules with
+explicit priorities so the generator can reject tied explicit winners.
+The benchmark supplies zero priorities intentionally to preserve its
+existing first-match policy. Variant, skip, callbacks, and error handling
+still use `Logos.define`.
 
 Verify the benchmark's generated/runtime token and span contract with
 `crystal run benchmarks/prebuild_contract.cr` after generating its matcher.

@@ -231,46 +231,6 @@ macro logos_derive(type)
       "This pattern contains an unbounded greedy dot repetition, i.e. `.*` or `.+` (or an equivalent class). This can consume the entire input for each token. Prefer a non-greedy repetition or a more specific class. If intentional, set allow_greedy: true."
     end
 
-    private def self.patterns_overlap?(left_hir : ::Regex::Syntax::Hir::Hir, right_hir : ::Regex::Syntax::Hir::Hir) : Bool
-      left_nfa = ::Regex::Automata::HirCompiler.new(::Regex::Automata::HirCompilerConfig.new(utf8: {{ utf8_flag }})).compile(left_hir)
-      right_nfa = ::Regex::Automata::HirCompiler.new(::Regex::Automata::HirCompilerConfig.new(utf8: {{ utf8_flag }})).compile(right_hir)
-      dfa_config = ::Regex::Automata::Config.new
-        .start_kind(::Regex::Automata::StartKind::Anchored)
-        .prefilter(nil)
-        .accelerate(false)
-        .specialize_start_states(false)
-      left_dfa = ::Regex::Automata::DFA::Builder.from_nfa(left_nfa, dfa_config).build
-      right_dfa = ::Regex::Automata::DFA::Builder.from_nfa(right_nfa, dfa_config.dup).build
-
-      queue = [{left_dfa.start_anchored, right_dfa.start_anchored}]
-      visited = Set(Tuple(::Regex::Automata::StateID, ::Regex::Automata::StateID)).new
-
-      until queue.empty?
-        left_id, right_id = queue.shift
-        pair = {left_id, right_id}
-        next if visited.includes?(pair)
-        visited.add(pair)
-
-        left_accepting = left_dfa.is_match_state?(left_dfa.next_eoi_state(left_id))
-        right_accepting = right_dfa.is_match_state?(right_dfa.next_eoi_state(right_id))
-        return true if left_accepting && right_accepting
-
-        left_state = left_dfa[left_id]
-        right_state = right_dfa[right_id]
-
-        256.times do |byte|
-          byte_u8 = byte.to_u8
-          left_next = left_state.next[left_dfa.byte_classifier[byte_u8]]
-          right_next = right_state.next[right_dfa.byte_classifier[byte_u8]]
-          next if left_next == ::Regex::Automata::DFA::DEAD_STATE_ID ||
-                  right_next == ::Regex::Automata::DFA::DEAD_STATE_ID
-          queue << {left_next, right_next}
-        end
-      end
-
-      false
-    end
-
     private def self.hir_matches_invalid_utf8?(hir : ::Regex::Syntax::Hir::Hir) : Bool
       node_matches_invalid_utf8?(hir.node)
     end
@@ -533,7 +493,7 @@ macro logos_derive(type)
           pattern_priority << {{ item[:priority] }}
           pattern_priority_explicit << true
         {% else %}
-          pattern_priority << hir.complexity
+          pattern_priority << pattern_source.bytesize * 2
           pattern_priority_explicit << false
         {% end %}
       {% end %}
@@ -584,7 +544,7 @@ macro logos_derive(type)
           pattern_priority << {{ item[:priority] }}
           pattern_priority_explicit << true
         {% else %}
-          pattern_priority << hir.complexity
+          pattern_priority << ::Logos::Pattern.regex_priority(hir.node)
           pattern_priority_explicit << false
         {% end %}
       {% end %}
@@ -598,19 +558,8 @@ macro logos_derive(type)
         return {dfa: dfa, pattern_dfas: pattern_dfas, pattern_prefix_dfas: pattern_prefix_dfas, pattern_to_variant: pattern_to_variant, pattern_is_skip: pattern_is_skip, pattern_priority: pattern_priority, pattern_priority_explicit: pattern_priority_explicit, error_variant: error_variant}
       end
 
-      hirs.size.times do |i|
-        (i + 1...hirs.size).each do |j|
-          next unless pattern_priority_explicit[i] && pattern_priority_explicit[j]
-          next unless pattern_priority[i] == pattern_priority[j]
-          if self.patterns_overlap?(hirs[i], hirs[j])
-            raise "The pattern #{pattern_text[i]} (#{pattern_variant_name[i]}) can match simultaneously with #{pattern_text[j]} (#{pattern_variant_name[j]}) at priority #{pattern_priority[i]}."
-          end
-        end
-      end
-
       hir_compiler = ::Regex::Automata::HirCompiler.new(::Regex::Automata::HirCompilerConfig.new(utf8: {{ utf8_flag }}))
       nfa = hir_compiler.compile_multi(hirs)
-
       dfa_config = ::Regex::Automata::Config.new
         .match_kind(::Regex::Automata::MatchKind::All)
         .start_kind(::Regex::Automata::StartKind::Anchored)
@@ -619,6 +568,7 @@ macro logos_derive(type)
         .starts_for_each_pattern(false)
         .specialize_start_states(false)
       dfa = ::Regex::Automata::DFA::Builder.from_nfa(nfa, dfa_config).build
+      ::Logos::Pattern.validate_priorities(dfa, pattern_priority, pattern_priority_explicit, pattern_text, pattern_variant_name)
         hirs.each do |hir|
           pattern_nfa = ::Regex::Automata::HirCompiler
             .new(::Regex::Automata::HirCompilerConfig.new(utf8: {{ utf8_flag }}))
@@ -690,15 +640,10 @@ macro logos_derive(type)
         end_pos, pattern_ids = match
         highest_priority = pattern_ids.max_of { |id| pattern_priority[id.to_i] }
         highest_priority_ids = pattern_ids.select { |id| pattern_priority[id.to_i] == highest_priority }
-        if highest_priority_ids.size > 1 &&
-           highest_priority_ids.all? { |id| pattern_priority_explicit[id.to_i] }
+        if ::Logos::Pattern.ambiguous_winners?(highest_priority_ids, pattern_priority_explicit, pattern_to_variant)
           raise "Patterns with priority #{highest_priority} can match simultaneously."
         end
-        pattern_id = if highest_priority_ids.size == 1
-                       highest_priority_ids[0]
-                     else
-                       pattern_ids.max_by { |id| pattern_priority[id.to_i] }
-                     end
+        pattern_id = highest_priority_ids.first
         variant = pattern_to_variant[pattern_id.to_i]
         is_skip = pattern_is_skip[pattern_id.to_i]
         emitted_variant = variant

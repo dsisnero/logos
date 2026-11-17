@@ -6,6 +6,25 @@ module Logos::Spec::Diagnostics
     regex "[a]", :RegexA, priority: 10
   end
 
+  Logos.define ImplicitPriorityConflict do
+    regex %q{'(?:'?(?:[[:ascii:][^\\']]|\\[[:ascii:]]))*'}, :Problem
+    regex %q{'(?:"?(?:[[:ascii:][^\\"]]|\\[[:ascii:]]))*'}, :Problem
+  end
+
+  @[Logos::Regex(:Problem, %q{'(?:'?(?:[[:ascii:][^\\']]|\\[[:ascii:]]))*'})]
+  @[Logos::Regex(:Problem, %q{'(?:"?(?:[[:ascii:][^\\"]]|\\[[:ascii:]]))*'})]
+  enum AnnotatedPriorityConflict
+    Problem
+  end
+
+  logos_derive(AnnotatedPriorityConflict)
+
+  Logos.define ShadowedPriorityTie do
+    regex "a", :Low, priority: 2
+    regex "[a]", :AlsoLow, priority: 2
+    token "a", :High, priority: 9
+  end
+
   @[Logos::Subpattern("example", "(a|)+")]
   @[Logos::Regex("(?&example)", variant: :Subpattern)]
   enum EmptySubpatternToken
@@ -52,6 +71,20 @@ module Logos::Spec::Diagnostics
 end
 
 describe "logos diagnostics" do
+  it "rejects the upstream implicit overlap even when both rules emit the same variant" do
+    expect_raises(Exception, /can match simultaneously.*priority 4/) do
+      Logos::Spec::Diagnostics::ImplicitPriorityConflict.lexer("").next
+    end
+    expect_raises(Exception, /can match simultaneously.*priority 4/) do
+      Logos::Spec::Diagnostics::AnnotatedPriorityConflict.lexer("").next
+    end
+  end
+
+  it "accepts a unique highest-priority rule over tied lower-priority rules" do
+    results = Logos::Spec::Diagnostics::ShadowedPriorityTie.lex_all("a")
+    results.map(&.unwrap).should eq([Logos::Spec::Diagnostics::ShadowedPriorityTie::High])
+  end
+
   it "rejects ambiguous same-priority overlaps" do
     lexer = Logos::Spec::Diagnostics::PriorityConflictToken.lexer("a")
     expect_raises(Exception, /can match simultaneously/) do

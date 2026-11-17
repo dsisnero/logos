@@ -60,6 +60,12 @@ describe Logos::Pattern do
       pattern.priority.should eq(6) # 3 bytes * 2
     end
 
+    it "keeps literal-token byte priority and counts Unicode scalars in regex literals" do
+      Logos::Pattern.compile_literal("é🎉").priority.should eq(12)
+      Logos::Pattern.compile_regex("(é){2}🎉").priority.should eq(6)
+      Logos::Pattern.compile_regex(%q(\xFF), unicode: false).priority.should eq(2)
+    end
+
     it "calculates complexity for char class" do
       hir = Regex::Syntax::Hir::Hir.dot(Regex::Syntax::Hir::Dot::AnyChar)
       pattern = Logos::Pattern.new(false, "test", hir)

@@ -3,13 +3,18 @@ module Logos
   alias GeneratedMatch = Tuple(Int32, GeneratedPatternIDs)?
   alias GeneratedMatcher = Proc(::Bytes, Int32, GeneratedMatch)
 
-  @@generated_matchers = {} of String => GeneratedMatcher
+  @@generated_matchers = {} of String => {GeneratedMatcher, Array(Int32)?}
 
-  def self.register_generated_matcher(name : String, matcher : GeneratedMatcher) : Nil
-    @@generated_matchers[name] = matcher
+  def self.register_generated_matcher(name : String, matcher : GeneratedMatcher, priorities : Array(Int32)? = nil) : Nil
+    @@generated_matchers[name] = {matcher, priorities}
   end
 
   def self.generated_matcher?(name : String) : GeneratedMatcher?
-    @@generated_matchers[name]?
+    @@generated_matchers[name]?.try(&.[0])
+  end
+
+  # Default priorities inferred from the manifest's compiled patterns.
+  def self.generated_matcher_priorities?(name : String) : Array(Int32)?
+    @@generated_matchers[name]?.try(&.[1])
   end
 end
