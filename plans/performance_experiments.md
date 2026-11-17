@@ -116,6 +116,46 @@ callback payloads, skipped input, spans and EOF. The release contract
 also matches the pinned Rust token stream. The scanner control is now
 `temp/benchmark-matcher-only` and its count is part of the release gate.
 
+## Resolved scanner table reads (Phase 13)
+
+**Kept.** At baseline `60b1543`, the 2,000-round control measured
+204.9 ± 10.8 ms for the Crystal matcher alone, 264.6 ± 39.6 ms for the
+public Crystal lexer and 29.9 ± 3.1 ms for pinned Rust. Each result is the
+mean ± SD of seven runs after two warmups on the Phase 8 machine.
+
+The candidate validates byte classes and state indices during generation.
+For a resolved single-winner DFA, it then emits unchecked reads of the
+validated constant tables. Input byte access stays checked. Manifests
+with deferred ties keep the general checked scanner. The red test failed
+on the missing specialized emission. The green test compares both generated
+scanners across all 256 byte values, every fixture offset, delayed
+newline acceptance, UTF-8 prefixes and EOF.
+
+Save `temp/benchmark-matcher-only` and `temp/benchmark-crystal` built from
+`60b1543` as `temp/phase13/scanner-before` and
+`temp/phase13/public-before`. Run the candidate's release contract, then
+compare 12 alternating pairs at 6,000 rounds. Each process scans 132 MB
+and reports 30 million tokens. Two warmups per binary precede each run set.
+
+```sh
+make benchmark-release
+python3 benchmarks/compare_pairs.py temp/phase13/scanner-before temp/benchmark-matcher-only \
+  --rounds 6000 --pairs 12 --output temp/phase13/scanner.json
+python3 benchmarks/compare_pairs.py temp/phase13/public-before temp/benchmark-crystal \
+  --rounds 6000 --pairs 12 --output temp/phase13/public.json
+```
+
+| Path and metric | Baseline mean ± SD | Candidate mean ± SD | Median paired reduction | Candidate wins |
+| --- | ---: | ---: | ---: | ---: |
+| Matcher wall time | 0.945 ± 0.022 s | 0.788 ± 0.031 s | 16.8% | 12/12 |
+| Matcher CPU time | 0.886 ± 0.020 s | 0.740 ± 0.025 s | 16.4% | 12/12 |
+| Public wall time | 1.394 ± 0.344 s | 1.149 ± 0.151 s | 15.5% | 10/12 |
+| Public CPU time | 1.277 ± 0.260 s | 1.072 ± 0.129 s | 15.0% | 10/12 |
+
+The pinned release stream and count contract passed. The next phase
+measures the cost of recording acceptance on long tokens and tests
+deferring pattern ID construction until a match is returned.
+
 ## Historical baselines
 
 | Item | Branch | Commit | Status |
@@ -208,10 +248,10 @@ No active experiment. The next experiment must start from the documented baselin
 
 ## Queue
 
-1. **Resolved scanner throughput.** Compare the current public lexer
-   with the matcher-only control. Isolate the remaining scanner cost
-   and measure a focused improvement to the resolved DFA loop against
-   the paired baseline, with the release stream contract as a gate.
+1. **Resolved acceptance bookkeeping.** Compare long accepted runs and
+   the shared lexer workload. Measure whether keeping an integer winner
+   through the loop and constructing its pattern ID only on return helps.
+   Confirm delayed acceptance, failed prefixes and public lexer throughput.
 2. **Generated direct leaf dispatch (candidate after measurement):** extend the manifest
    with variants, skip flags, priorities, and callback eligibility; generate a
    matcher that returns the token/skip action directly, bypassing pattern-ID

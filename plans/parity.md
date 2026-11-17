@@ -2,23 +2,22 @@
 
 ## Where we are
 
-- **Current focus** — Phase 12 is complete. Generated result dispatch
-  reads a stable registration slot and observes replacement on the next
-  lexing operation. The longer paired release comparison measured a 34.2%
-  median wall-time reduction. See [the performance ledger](performance_experiments.md).
+- **Current focus** — Phase 13 is complete. Resolved scanners validate
+  table indices during generation and skip those bounds checks while scanning.
+  Median paired wall time fell 16.8% for the matcher and 15.5% for the public
+  lexer. See [the performance ledger](performance_experiments.md).
 - **Next up**
-  1. **Phase 13. Resolved scanner throughput.** Use the matcher-only
-     control to measure the remaining cost of the resolved DFA scan.
-     Verify the chosen loop optimization with the release stream and
-     a paired comparison against the current public lexer.
+  1. **Phase 14. Resolved acceptance bookkeeping.** Measure the cost of
+     recording acceptance on long runs. Test constructing the pattern ID
+     only on return and retain a change that improves the public lexer.
 - **Status by area** — All 269 source and 249 test-tree items retain their
   dispositions. All shipped strict manifests and the package entry point
   have executable coverage. Documentation describes lazy runtime matcher
   construction, source prebuild, and diagnostic timing.
 - **Gates** — Format, lint, and 306 specs pass. `make test-prebuilt` passes
-  17 specs. `make benchmark-release`, Markdown and all inventory drift
-  checks pass. Phase 11 package qualification passed four specs.
-- **Last feature commit** — `perf: read generated matcher registrations through stable slots`.
+  18 specs. `make test-package` passes four specs. The release benchmark
+  contract, Markdown and all inventory drift checks pass.
+- **Last feature commit** — `perf: specialize resolved DFA table reads`.
 
 ## Scope and verification
 
@@ -236,12 +235,20 @@ compatible.
 
 ### Phase 13. Resolved scanner throughput
 
-**Next.** Compare the matcher-only control, public lexer and pinned Rust
-on the shared workload. Use the measured gap to select one change in the
-resolved scan loop. Keep deferred ties in the general generated path and
-preserve failed prefixes, UTF-8 boundaries and delayed acceptance.
-Confirm exact release streams and a repeatable timing improvement before
-keeping the change.
+**Complete.** The matcher-only control accounted for most of the public
+lexer time in the initial comparison. Table validation and specialized
+reads improved both paths in paired runs. The checked scanner comparison
+and release contract preserve deferred ties, failed prefixes, UTF-8
+boundaries and delayed acceptance.
+
+### Phase 14. Resolved acceptance bookkeeping
+
+**Next.** Compare acceptance-heavy inputs with the shared workload.
+Test keeping the winner index as an integer during the resolved scan
+and constructing the pattern ID when returning it. Preserve the previous
+winner across nonaccepting continuations and report the same longest
+match, error prefix and EOF outcome. Keep a change only after the release
+stream contract and a repeatable public-lexer timing improvement.
 
 ## Completed feature phases
 

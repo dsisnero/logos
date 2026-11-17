@@ -180,6 +180,18 @@ module Logos::Codegen
     "::Logos::GeneratedBinding.new(#{utf8}, #{rules.inspect} of Hash(String, String), #{definitions.inspect} of {String, String, Bool})"
   end
 
+  private def self.validate_resolved_tables(start : Int32, state_count : Int32, class_count : Int32,
+                                            byte_classes : Array(Int32), transitions : Array(Int32), eoi : Array(Int32)) : Nil
+    # The resolved loop indexes only these validated tables and the input
+    # slice. The slice keeps its own bounds check.
+    states = 0...state_count
+    classes = 0...class_count
+    unless states.includes?(start) && transitions.all? { |state| states.includes?(state) } &&
+           eoi.all? { |state| states.includes?(state) } && byte_classes.all? { |id| classes.includes?(id) }
+      raise "resolved matcher tables contain an invalid index"
+    end
+  end
+
   # Emit a source-level matcher using compact table lookups. The DFA is built
   # and byte-class reduced by this program; the consuming application merely
   # indexes generated constants.
@@ -210,7 +222,9 @@ module Logos::Codegen
       matches.each { |pattern_id| match_ids << pattern_id.to_i }
       match_offsets << match_ids.size
     end
+    byte_classes = (0...256).map { |byte| dfa.byte_classifier[byte] }
     winners = if single_winner_table
+                validate_resolved_tables(start, dfa.size, class_count, byte_classes, transitions, eoi)
                 Array.new(dfa.size) do |index|
                   offset = match_offsets[index]
                   offset < match_offsets[index + 1] ? match_ids[offset] : -1
@@ -219,7 +233,7 @@ module Logos::Codegen
 
     String.build do |io|
       io << "module Logos::GeneratedMatchers::#{module_name}\n"
-      io << "  BYTE_CLASSES = #{static_array((0...256).map { |byte| dfa.byte_classifier[byte] }, "_u8")}\n"
+      io << "  BYTE_CLASSES = #{static_array(byte_classes, "_u8")}\n"
       io << "  TRANSITIONS = #{static_array(transitions, "_i32")}\n"
       io << "  EOI_TRANSITIONS = #{static_array(eoi, "_i32")}\n"
       io << "  MATCH_OFFSETS = #{static_array(match_offsets, "_i32")}\n"
@@ -228,10 +242,12 @@ module Logos::Codegen
       io << "  START_STATE = #{start}\n  BYTE_CLASS_COUNT = #{class_count}\n\n"
       io << "  def self.match(input : ::Bytes, start_index : Int32) : ::Logos::GeneratedMatch\n"
       io << "    return if start_index >= input.size\n    state = START_STATE\n    end_pos = -1\n    pattern_ids = nil.as(::Logos::GeneratedPatternIDs?)\n    pattern_id = nil.as(::Regex::Automata::PatternID?)\n    index = start_index\n"
-      io << "    loop do\n      eof = index == input.size\n      next_state = eof ? EOI_TRANSITIONS[state] : TRANSITIONS[state * BYTE_CLASS_COUNT + BYTE_CLASSES[input[index]]]\n"
+      io << "    loop do\n      eof = index == input.size\n"
       if winners
-        io << "      winner = WINNERS[next_state]\n      if winner >= 0\n        end_pos = index - start_index\n        pattern_id = ::Regex::Automata::PatternID.new(winner)\n      end\n"
+        io << "      next_state = eof ? EOI_TRANSITIONS.unsafe_fetch(state) : TRANSITIONS.unsafe_fetch(state * BYTE_CLASS_COUNT + BYTE_CLASSES.unsafe_fetch(input[index]))\n"
+        io << "      winner = WINNERS.unsafe_fetch(next_state)\n      if winner >= 0\n        end_pos = index - start_index\n        pattern_id = ::Regex::Automata::PatternID.new(winner)\n      end\n"
       else
+        io << "      next_state = eof ? EOI_TRANSITIONS[state] : TRANSITIONS[state * BYTE_CLASS_COUNT + BYTE_CLASSES[input[index]]]\n"
         io << "      match_start = MATCH_OFFSETS[next_state]\n      match_finish = MATCH_OFFSETS[next_state + 1]\n"
         io << "      if match_start < match_finish\n        end_pos = index - start_index\n        if match_finish == match_start + 1\n          pattern_id = ::Regex::Automata::PatternID.new(MATCH_IDS[match_start])\n        elsif match_finish == match_start + 2\n          pattern_id = nil\n          pattern_ids = StaticArray[::Regex::Automata::PatternID.new(MATCH_IDS[match_start]), ::Regex::Automata::PatternID.new(MATCH_IDS[match_start + 1])]\n        else\n          pattern_id = nil\n          ids = pattern_ids.is_a?(Array) ? pattern_ids : [] of ::Regex::Automata::PatternID\n          ids.clear\n          while match_start < match_finish\n            ids << ::Regex::Automata::PatternID.new(MATCH_IDS[match_start])\n            match_start += 1\n          end\n          pattern_ids = ids\n        end\n      end\n"
       end

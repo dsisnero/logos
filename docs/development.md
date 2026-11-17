@@ -62,6 +62,10 @@ Generated matchers scan the original source bytes at the lexer's current byte
 offset. They do not create a new `String` for the remaining source on every
 token, which is important for large inputs with many short tokens.
 
+For resolved DFAs with one winner per accepting state, the generator checks
+the constant table indices once and emits direct table reads. The scanner
+still checks the input slice. Deferred ties use the general checked scanner.
+
 A hand-authored manifest uses the enum name as `name` and follows the
 matcher rule order. List `token` and `skip_token` literals first, followed by
 `regex` and `skip_regex` patterns.

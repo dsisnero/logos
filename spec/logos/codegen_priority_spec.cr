@@ -43,6 +43,51 @@ require "../spec_helper"
       dfa.find_longest_match_at_start(String.new(Bytes[0xFF, 0x41])).should eq({2, [Regex::Automata::PatternID.new(2)]})
     end
 
+    it "specializes resolved tables while matching the checked scanner for every byte" do
+      patterns = JSON.parse(<<-'JSON').as_a
+        [
+          {"kind":"regex","pattern":"(?m)a$","variant":"LineEnd"},
+          {"kind":"token","pattern":"\n","variant":"Newline"},
+          {"kind":"token","pattern":"éx","variant":"Word"}
+        ]
+        JSON
+      subpatterns = {} of String => String
+      resolved = Logos::Codegen.emit_matcher(patterns, subpatterns, true, "ResolvedByteCheck", resolve_priorities: true)
+      checked = Logos::Codegen.emit_matcher(patterns, subpatterns, true, "CheckedByteCheck")
+      resolved.should contain("WINNERS.unsafe_fetch")
+      checked.should_not contain("unsafe_fetch")
+
+      root = File.expand_path("../..", __DIR__)
+      directory = File.join(root, "temp")
+      FileUtils.mkdir_p(directory)
+      file = File.tempfile("resolved-byte-check", ".cr", dir: directory)
+      begin
+        file.puts %q(require "../src/logos")
+        file.puts resolved
+        file.puts checked
+        file.puts <<-'CRYSTAL'
+          resolved = Logos.generated_matcher?("ResolvedByteCheck") || raise "missing resolved matcher"
+          checked = Logos.generated_matcher?("CheckedByteCheck") || raise "missing checked matcher"
+          256.times do |byte|
+            ["a", "é", "a\n", "éx"].each do |prefix|
+              input = (prefix + String.new(Bytes[byte.to_u8])).to_slice
+              (0..input.size).each do |offset|
+                expected = checked.call(input, offset)
+                actual = resolved.call(input, offset)
+                raise "match differs at byte #{byte}, offset #{offset}: #{actual.inspect} != #{expected.inspect}" unless actual == expected
+              end
+            end
+          end
+          CRYSTAL
+        file.close
+        error = IO::Memory.new
+        status = Process.run("crystal", ["run", file.path], chdir: root, error: error)
+        raise error.to_s unless status.success?
+      ensure
+        file.delete
+      end
+    end
+
     it "preserves matching boundaries and priorities in emitted matchers" do
       text = JSON.parse(%([{"kind":"token","pattern":"!"},{"kind":"token","pattern":"aéx"},{"kind":"token","pattern":"abc"}])).as_a
       bytes = JSON.parse(%([{"kind":"token","pattern":"!","resolved_priority":2},{"kind":"token","pattern":"abc","resolved_priority":6}])).as_a
