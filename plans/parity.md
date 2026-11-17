@@ -12,6 +12,10 @@
      manifest. Verify the token-and-span contract first and record the
      measurements in [the performance ledger](performance_experiments.md)
      before selecting an optimization feature.
+  2. **Lexer authoring ergonomics (Phases 9–11).** Start the authoring track
+     with anonymous skips, declaration diagnostics, and the simpler Quick Start.
+     Then add typed payload declarations and declaration-driven prebuilds.
+     See [the implementation steps and acceptance tests](lexer_ergonomics.md).
 - **Status by area** — All 269 source and 249 test-tree items retain their
   dispositions. All shipped strict manifests and the package entry point
   have executable coverage. Documentation describes lazy runtime matcher
@@ -209,6 +213,12 @@ strict binding qualification.
 
 **Exit criteria.** Reproducible release measurements establish the next
 performance target without leaving an unmeasured experiment active.
+
+### Phases 9–11. Lexer authoring ergonomics
+
+**Planned.** [The lexer authoring roadmap](lexer_ergonomics.md) gives each
+phase its vendor reference, red–green sequence, compatibility checks, and
+completion criteria. Phase 9 is the next authoring feature.
 
 ## Completed feature phases
 
