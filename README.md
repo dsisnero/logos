@@ -4,7 +4,7 @@ A fast lexer generator for Crystal, ported from Rust's [Logos](https://github.co
 
 ## Overview
 
-Logos allows you to create fast lexers by defining tokens in a `Logos.define` block. The library generates an optimized lexer at compile time with zero runtime overhead.
+Define tokens in a `Logos.define` block or with enum annotations. The macros generate the lexer API, and the runtime builds its matcher on first use. The optional `logos-codegen` target emits a matcher before application compilation.
 
 This is a Crystal port of the Rust Logos library, aiming to provide similar functionality and performance characteristics while following Crystal idioms.
 
@@ -14,8 +14,8 @@ This is a Crystal port of the Rust Logos library, aiming to provide similar func
 - **Built-in error recovery** - Skip invalid tokens and continue parsing
 - **Token disambiguation** - Automatic priority resolution for overlapping patterns
 - **UTF-8 safe** - Proper handling of Unicode boundaries
-- **No runtime dependencies** - Pure Crystal implementation
-- **Fast compile times** - Minimal macro overhead
+- **Crystal implementation** - Uses the `regex-automata` and `regex-syntax` shards
+- **Source prebuild** - Generate a matcher before compiling the application
 
 ## Installation
 
@@ -49,6 +49,7 @@ Logos.define Token do
 
   token "+", :Plus
   token "-", :Minus
+  token "=", :Assign
 
   skip_regex "\\s+", :Whitespace
 end
@@ -108,7 +109,8 @@ When multiple patterns can match at the same position:
 
 - Logos prefers the longest match.
 - If multiple matches have the same length, higher `priority` wins.
-- If same-length and same-priority patterns overlap, Logos raises a compile-time diagnostic.
+- Ambiguous explicit priorities and duplicate winning rules for one variant raise a matcher initialization or prebuild error.
+- Distinct variants with implicit tied priorities retain declaration-order selection. See the [parity plan](plans/parity.md#intentional-divergences) for the exact policy.
 
 Example:
 
@@ -174,6 +176,24 @@ Logos.define Token do
 end
 ```
 
+## Prebuilt matchers
+
+In a Logos checkout, build the generator and emit a shipped strict manifest:
+
+```bash
+shards install --frozen
+shards build logos-codegen
+mkdir -p temp
+bin/logos-codegen --manifest examples/extras.logos.json --out temp/generated_token.cr
+CRYSTAL_PATH="$PWD/temp:$(crystal env CRYSTAL_PATH)" \
+  crystal build -Dprecompiled examples/extras.cr -o temp/extras
+```
+
+Run `temp/extras` with a file path to report word positions. Shipped manifests
+validate their rule bindings against the matching macro definitions. See the
+[development guide](docs/development.md#prebuilding-lexer-matchers) for manifest
+options and the generated/runtime verification gates.
+
 ## Examples
 
 Crystal ports of the Rust Logos examples are available in `examples/`:
@@ -189,8 +209,11 @@ Crystal ports of the Rust Logos examples are available in `examples/`:
 
 ## Porting Status
 
-This is a Crystal port, so parity with Rust `logos` is tracked separately from
-the user-facing API:
+Parity targets Rust `logos` v0.16.1 (`c7d40fa`). The source and test inventories
+record the verified behavior and intentional Crystal differences. Runtime,
+prebuild, and shipped strict manifest checks have dedicated gates.
+
+The detailed records are available here:
 
 - Current parity state and roadmap: [plans/parity.md](plans/parity.md)
 - Handbook topic → spec mapping, Rust UI error parity table, and dependency
@@ -227,6 +250,12 @@ make lint
 
 # Run tests
 make test
+
+# Verify shipped generated matchers
+make test-prebuilt
+
+# Qualify a frozen package and its built CLI from cached dependencies
+make test-package
 
 # Format markdown
 make markdown

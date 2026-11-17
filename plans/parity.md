@@ -2,25 +2,25 @@
 
 ## Where we are
 
-- **Current focus** — [Phase 6, Shipped prebuild manifest qualification](#phase-6-shipped-prebuild-manifest-qualification)
-  is complete. The three example manifests and benchmark manifest enable
-  strict binding with exact pattern strings and declared variant and skip
-  actions.
+- **Current focus** — [Phase 7, Package and documentation qualification](#phase-7-package-and-documentation-qualification)
+  is complete. A frozen install in an isolated snapshot builds the generator,
+  serves a separate consumer, and runs the shipped strict contracts through
+  the built CLI. The README Quick Start and annotation examples execute.
 - **Next up**
-  1. **Package and documentation qualification.** Verify the locked package
-     and CLI from an isolated checkout, run the strict shipped contracts
-     through the installed entry point, and reconcile the public usage and
-     status documentation with the completed parity phases.
+  1. **Generated matcher performance baseline.** Refresh the same-machine
+     release comparison with pinned Rust Logos using the strict benchmark
+     manifest. Verify the token-and-span contract first and record the
+     measurements in [the performance ledger](performance_experiments.md)
+     before selecting an optimization feature.
 - **Status by area** — All 269 source and 249 test-tree items retain their
-  dispositions. Generated and runtime examples agree on callback payloads,
-  extras, skip actions, error spans, and output. The benchmark token-and-span
-  contract checks that strict metadata is present.
-- **Gates** — Format, lint, and 299 specs pass with `regex-automata` 0.2.1.
-  `make test-prebuilt` passes all 15 generator and shipped-program specs.
-  Markdown and all three inventory drift checks pass. The pinned Rust
-  extras, custom-error, and brainfuck example executables pass their
-  corresponding output or assertion checks.
-- **Last feature commit** — `test: qualify shipped strict prebuild manifests`.
+  dispositions. All shipped strict manifests and the package entry point
+  have executable coverage. Documentation describes lazy runtime matcher
+  construction, source prebuild, and diagnostic timing.
+- **Gates** — Format, lint, and 299 specs pass. `make test-prebuilt` passes
+  15 specs. `make test-package` passes three package specs, including four
+  shipped contracts executed through the built CLI. The cached frozen install
+  keeps the lockfile unchanged. Markdown and all inventory drift checks pass.
+- **Last feature commit** — `test: qualify installed package and documented commands`.
 
 ## Scope and verification
 
@@ -179,7 +179,14 @@ executable generated/runtime contract on the recorded dependencies.
 
 ### Phase 7. Package and documentation qualification
 
-**Next.** The strict contracts have been verified in the development checkout.
+**Complete.** A snapshot installs the locked dependencies from a copied
+local cache and builds the generator. A separate path-dependent consumer
+executes the README examples. The installed CLI passes the four strict
+shipped contracts. The corrected Quick Start defines its assignment token.
+The consumer check first failed on `unwrap` at the unrecognized `=`, then
+passed after the README added that token. Qualification used Crystal 1.22.3
+(LLVM 23.1.5, aarch64 macOS), Shards 0.20.0, and cached locked dependency
+sources; it does not exercise a fresh network download.
 
 - Verify a locked install and built CLI in an isolated checkout under `temp/`.
 - Exercise the strict shipped manifests using the built entry point and check
@@ -188,6 +195,20 @@ executable generated/runtime contract on the recorded dependencies.
 
 **Exit criteria.** The installed package and documented commands reproduce
 the strict example and benchmark contracts with the pinned dependencies.
+
+### Phase 8. Generated matcher performance baseline
+
+**Next.** Refresh the historical measurements after the parity fixes and
+strict binding qualification.
+
+- Verify the benchmark token and span contract in release builds.
+- Compare the same source and rules on Crystal and pinned Rust Logos using
+  the measurement contract in the performance ledger.
+- Record the compiler versions, runs, variance, and result before choosing
+  an optimization feature.
+
+**Exit criteria.** Reproducible release measurements establish the next
+performance target without leaving an unmeasured experiment active.
 
 ## Completed feature phases
 

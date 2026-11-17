@@ -163,6 +163,21 @@ Run the focused generator specs with
 `crystal spec -Dcodegen_library spec/logos/codegen_priority_spec.cr`. The flag
 suppresses the generator command-line entry point when importing it for tests.
 
+### Package qualification
+
+Run `make test-package` to verify a working-tree snapshot under `temp/`.
+The gate copies the cached repositories selected by `SHARDS_CACHE_PATH`
+(or the default Shards cache) into the snapshot, then installs dependencies
+with `shards install --frozen --local`. It checks that the lockfile is
+unchanged and builds the `logos-codegen` target against those installed
+sources.
+
+A separate consumer installs Logos by path and executes the Quick Start
+and annotation examples extracted from the README. The package's built
+CLI then generates all four strict manifests for the shipped-program
+contracts. This gate requires the locked repositories to be present in the
+local Shards cache. Its generated files and compiler cache stay under `temp/`.
+
 ### Porting from Rust
 
 The primary upstream is Rust `logos` (`logos_rust/`); regex-sensitive behavior

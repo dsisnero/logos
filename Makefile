@@ -1,4 +1,4 @@
-.PHONY: install update format lint test test-prebuilt markdown markdown-check prebuild clean
+.PHONY: install update format lint test test-prebuilt test-package markdown markdown-check prebuild clean
 
 # Only docs that are currently clean under rumdl are gated; add files here once
 # their existing formatting issues are fixed.
@@ -22,6 +22,9 @@ test:
 
 test-prebuilt:
 	crystal spec -Dcodegen_library spec/logos/codegen_priority_spec.cr spec/logos/prebuilt_examples_spec.cr
+
+test-package:
+	crystal spec -Dpackage_qualification spec/logos/package_spec.cr
 
 # Generate an ordinary Crystal matcher from a JSON manifest before compiling
 # an application. Example:

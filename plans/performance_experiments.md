@@ -24,6 +24,11 @@ into `main` before the next experiment starts.
 
 ## Baseline
 
+The table records historical experiment baselines. The next baseline is the
+completed parity branch described in [the parity plan](parity.md), after
+package qualification. Its release measurements have not yet been recorded;
+do not reuse the historical Rust ratio as a current result.
+
 | Item | Branch | Commit | Status |
 | --- | --- | --- | --- |
 | Current runtime baseline for new experiments | `main` | `da2ab30a68d2ec275490151e07e90337188a2611` | Includes all winners below and opt-in pre-resolved accept priorities. New experiments start from current main, including subsequent ledger-only commits. |
@@ -33,7 +38,7 @@ into `main` before the next experiment starts.
 ## Rust comparison and diagnosis (2026-08-15)
 
 The current target is **within 4x Rust runtime** for the identical benchmark
-token set and source, measured on this machine in release mode. The baseline is
+token set and source, measured on this machine in release mode. The baseline
 was about **69x slower** in that historical comparison, so representation-only micro-optimizations are
 not enough.
 
@@ -114,17 +119,23 @@ No active experiment. The next experiment must start from the documented baselin
 
 ## Queue
 
-1. **Generated direct leaf dispatch (highest priority):** extend the manifest
+1. **Refresh the qualified baseline:** complete Phase 8 in the parity plan.
+   Regenerate the strict benchmark manifest, verify release token and span
+   contracts, and measure Crystal against pinned Rust on the same machine.
+   Record compiler versions, repeated runs, variance, and the exact baseline
+   commit before choosing an optimization. Existing resolved actions and
+   strict binding coverage must be retained.
+2. **Generated direct leaf dispatch (candidate after measurement):** extend the manifest
    with variants, skip flags, priorities, and callback eligibility; generate a
    matcher that returns the token/skip action directly, bypassing pattern-ID
    arrays, priority scans, and per-token metadata arrays. First prove plain
    token/regex/skip parity, then callbacks and errors.
-2. **Generated state-specialized control flow:** emit range-compressed `case`
+3. **Generated state-specialized control flow:** emit range-compressed `case`
    dispatch or direct state functions for the manifest DFA, retaining compact
    tables only when they benchmark faster. Add a self-loop bulk scan for common
    identifier, whitespace, and integer states, modeled on Rust's unrolled loop.
-3. **Separate iterator/result overhead:** add an internal token-count benchmark
+4. **Separate iterator/result overhead:** add an internal token-count benchmark
    that drives the generated matcher directly and compare it with `Lexer#next`.
    This quantifies the remaining Crystal abstraction cost after direct dispatch.
-4. Re-profile the long-workload binary after each material winner and retain
+5. Re-profile the long-workload binary after each material winner and retain
    only improvements confirmed with a longer workload.

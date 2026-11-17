@@ -94,3 +94,11 @@ qualification passes through
 The Rust extras, custom-error, and brainfuck executables were run against
 the pinned crate. Crystal's one-based extras line numbers remain documented
 in [the parity plan](../parity.md).
+
+The [package specs](../../spec/logos/package_spec.cr) copy a working-tree
+snapshot, perform a frozen install from cached Git repositories, check the
+lockfile, and build the generator. A separate consumer executes README
+examples through the installed library. The shipped contracts also run
+through the package's compiled CLI with installed dependencies. This
+qualification uses cached locked sources and records the current toolchain
+in the parity plan.

@@ -7,13 +7,25 @@ require "../spec_helper"
   module Logos::Spec::PrebuiltExamples
     ROOT = File.expand_path("../..", __DIR__)
 
+    def self.generate(manifest_path : String, output : String) : JSON::Any
+      manifest = JSON.parse(File.read(manifest_path))
+      if binary = ENV["LOGOS_CODEGEN_BIN"]?
+        error = IO::Memory.new
+        status = Process.run(binary, ["--manifest", manifest_path, "--out", output],
+          chdir: ROOT, error: error)
+        raise "built generator failed: #{error}" unless status.success?
+      else
+        source = Logos::Codegen.emit_matcher(manifest["patterns"].as_a, manifest["subpatterns"].as_h,
+          manifest["utf8"].as_bool, manifest["name"].as_s, validate_binding: true)
+        File.write(output, source)
+      end
+      manifest
+    end
+
     def self.check(example : String, matcher_name : String, args : Array(String), expected : String, contract : String) : Nil
       directory = File.join(ROOT, "temp", "prebuilt-#{example}")
       FileUtils.mkdir_p(directory)
-      manifest = JSON.parse(File.read(File.join(ROOT, "examples/#{example}.logos.json")))
-      source = Logos::Codegen.emit_matcher(manifest["patterns"].as_a, manifest["subpatterns"].as_h,
-        manifest["utf8"].as_bool, manifest["name"].as_s, validate_binding: true)
-      File.write(File.join(directory, "#{matcher_name}.cr"), source)
+      manifest = generate(File.join(ROOT, "examples/#{example}.logos.json"), File.join(directory, "#{matcher_name}.cr"))
       driver = File.join(directory, "driver.cr")
 
       path = IO::Memory.new
@@ -48,12 +60,9 @@ require "../spec_helper"
   describe "shipped strict prebuilds" do
     it "preserves the benchmark token and span contract with strict binding" do
       root = Logos::Spec::PrebuiltExamples::ROOT
-      manifest = JSON.parse(File.read(File.join(root, "benchmarks/benchmark_token.logos.json")))
       FileUtils.mkdir_p(File.join(root, "temp"))
       generated = File.join(root, "temp/strict_benchmark_token.cr")
-      source = Logos::Codegen.emit_matcher(manifest["patterns"].as_a, {} of String => String,
-        true, manifest["name"].as_s, validate_binding: true)
-      File.write(generated, source)
+      manifest = Logos::Spec::PrebuiltExamples.generate(File.join(root, "benchmarks/benchmark_token.logos.json"), generated)
       driver = File.join(root, "temp/strict_benchmark_contract.cr")
       contract = File.read(File.join(root, "benchmarks/prebuild_contract.cr"))
         .sub(%q(require "../temp/generated_benchmark_token"), %q(require "./strict_benchmark_token"))
