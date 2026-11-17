@@ -2,16 +2,11 @@ require "../spec_helper"
 require "regex-automata"
 
 module Logos::Spec::Properties
-  module GreekTest
-    Logos.define Token do
-      regex "\\p{Greek}+", :Greek
-    end
-  end
-
-  module CyrillicTest
-    Logos.define Token do
-      regex "\\p{Cyrillic}+", :Cyrillic
-    end
+  Logos.define ScriptToken do
+    skip_regex "[ \\t\\n\\f]+", :Whitespace
+    regex "[a-zA-Z]+", :Ascii
+    regex %q(\p{Greek}+), :Greek
+    regex %q(\p{Cyrillic}+), :Cyrillic
   end
 
   module LatinTest
@@ -33,22 +28,29 @@ module Logos::Spec::Properties
   end
 
   describe "Unicode property classes" do
-    it "matches Greek script with \\p{Greek}" do
-      lexer = Logos::Lexer(GreekTest::Token, String, Logos::NoExtras, Nil).new("λόγος")
-      result = lexer.next
-      result.should_not be_nil
-      result = result.as(Logos::Result(GreekTest::Token, Nil))
-      result.unwrap.should eq GreekTest::Token::Greek
-      lexer.slice.should eq "λόγος"
+    it "reports exact Greek and ASCII word spans" do
+      lexer = ScriptToken.lexer("λόγος can do unicode")
+      stream = lexer.spanned
+      [
+        {ScriptToken::Greek, "λόγος", 0...10},
+        {ScriptToken::Ascii, "can", 11...14},
+        {ScriptToken::Ascii, "do", 15...17},
+        {ScriptToken::Ascii, "unicode", 18...25},
+      ].each do |variant, slice, span|
+        stream.next.should eq({Logos::Result(ScriptToken, Nil).ok(variant), span})
+        lexer.slice.should eq(slice)
+      end
+      stream.next.should eq(Iterator::Stop::INSTANCE)
     end
 
-    it "matches Cyrillic script with \\p{Cyrillic}" do
-      lexer = Logos::Lexer(CyrillicTest::Token, String, Logos::NoExtras, Nil).new("До свидания")
-      result = lexer.next
-      result.should_not be_nil
-      result = result.as(Logos::Result(CyrillicTest::Token, Nil))
-      result.unwrap.should eq CyrillicTest::Token::Cyrillic
-      lexer.slice.should eq "До"
+    it "reports exact Cyrillic word spans" do
+      lexer = ScriptToken.lexer("До свидания")
+      stream = lexer.spanned
+      [{0...4, "До"}, {5...21, "свидания"}].each do |span, slice|
+        stream.next.should eq({Logos::Result(ScriptToken, Nil).ok(ScriptToken::Cyrillic), span})
+        lexer.slice.should eq(slice)
+      end
+      stream.next.should eq(Iterator::Stop::INSTANCE)
     end
 
     it "matches Latin script with \\p{Latin}" do

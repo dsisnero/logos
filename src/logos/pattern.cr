@@ -150,33 +150,74 @@ module Logos
     # Create pattern from regex string
     def self.compile_regex(source : String, unicode : Bool = true, ignore_case : Bool = false) : self
       hir = ::Regex::Syntax.parse(source, unicode: unicode, utf8: unicode, ignore_case: ignore_case)
-      if ignore_case
-        hir = if unicode
-                ::Regex::Syntax::Hir.case_fold_unicode(hir)
-              else
-                ::Regex::Syntax::Hir.case_fold_ascii(hir)
-              end
-      end
       Pattern.new(false, source, hir)
     end
 
-    # Expand declared subpatterns in order. Each can refer to earlier entries.
-    def self.expand_subpatterns(definitions : Enumerable({String, String})) : Hash(String, String)
+    # Apply folding while preserving token metacharacters as literal text.
+    def self.literal_hir(source : String, unicode : Bool, ignore_case : Bool) : ::Regex::Syntax::Hir::Hir
+      return ::Regex::Syntax::Hir::Hir.literal(source.to_slice) unless ignore_case
+      if unicode
+        escaped = ::Regex::Syntax.escape(regex_source(source, unicode: true))
+        regex_hir(escaped, unicode: true, ignore_case: true)
+      else
+        hir = ::Regex::Syntax::Hir::Hir.literal(source.to_slice)
+        ::Regex::Syntax::Hir.case_fold_ascii(hir)
+      end
+    end
+
+    # Parse case flags in context. UTF-8 acceptance is checked on the completed HIR.
+    def self.regex_hir(source : String, unicode : Bool, ignore_case : Bool = false,
+                       subpatterns : Hash(String, String)? = nil) : ::Regex::Syntax::Hir::Hir
+      source = regex_source(source, unicode)
+      source = substitute_subpatterns(source, subpatterns) if subpatterns
+      ::Regex::Syntax.parse(source, unicode: unicode, utf8: false, ignore_case: ignore_case)
+    end
+
+    # Match Rust's handling of a byte string used as a regular expression.
+    private def self.regex_source(source : String, unicode : Bool) : String
+      return source if source.valid_encoding?
+      raise "UTF-8 regex #{source.inspect} contains byte-oriented text" if unicode
+
+      String.build do |io|
+        source.each_byte do |byte|
+          if byte < 0x80
+            io.write_byte(byte)
+          else
+            io << "\\x" << byte.to_s(16).rjust(2, '0')
+          end
+        end
+      end
+    end
+
+    # Validate a rule against the lexer's source type, independently of its syntax.
+    def self.validate_utf8(hir : ::Regex::Syntax::Hir::Hir, source : String) : Nil
+      unless hir.utf8?
+        raise "UTF-8 mode is enabled, but byte-oriented pattern #{source.inspect} can match invalid UTF-8. Set utf8: false to allow byte-oriented matching."
+      end
+    end
+
+    # Expand and validate definitions in order, retaining each definition's encoding.
+    def self.expand_subpatterns(definitions : Enumerable({String, String, Bool}), utf8 : Bool) : Hash(String, String)
       expanded = {} of String => String
-      definitions.each do |name, pattern|
+      definitions.each do |name, pattern, unicode|
         raise "Subpattern #{name.inspect} already exists" if expanded.has_key?(name)
-        expanded[name] = substitute_subpatterns(pattern, expanded)
+        flags = unicode ? "u" : "-u"
+        source = substitute_subpatterns(regex_source(pattern, unicode), expanded)
+        wrapped = "(?#{flags}:#{source})"
+        hir = regex_hir(wrapped, unicode: unicode)
+        validate_utf8(hir, pattern) if utf8
+        expanded[name] = wrapped
       end
       expanded
     end
 
-    # Keep an expanded subpattern in its own group so that quantifiers and
-    # alternations keep the same scope as the reference.
+    # Replace complete named references with their already-expanded groups.
     def self.substitute_subpatterns(pattern : String, expanded : Hash(String, String)) : String
+      return pattern unless pattern.includes?("(?&")
+
       pattern.gsub(/\(\?&([a-zA-Z0-9_]+)\)/) do |_, match|
         name = match[1]
-        replacement = expanded[name]? || raise "unknown subpattern reference: #{name}"
-        "(?:#{replacement})"
+        expanded[name]? || raise "unknown subpattern reference: #{name}"
       end
     end
 

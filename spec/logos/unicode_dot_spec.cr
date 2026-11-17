@@ -38,17 +38,15 @@ module Logos::Spec::UnicodeDot
         tokens.should eq([DotToken::A])
       end
 
-      it "matches single Unicode character with dot" do
-        lexer = Logos::Lexer(DotOnlyToken, String, Logos::NoExtras, Nil).new("🎉")
-        tokens = [] of DotOnlyToken
-        while token = lexer.next
-          break if token.is_a?(Iterator::Stop)
-          result = token.as(Logos::Result(DotOnlyToken, Nil))
-          if result.ok?
-            tokens << result.unwrap
-          end
+      it "consumes a full ASCII or Unicode code point" do
+        ["a", "\u{E853}"].each do |source|
+          lexer = DotOnlyToken.lexer(source)
+          stream = lexer.spanned
+          stream.next.should eq({Logos::Result(DotOnlyToken, Nil).ok(DotOnlyToken::Dot), 0...source.bytesize})
+          lexer.slice.should eq(source)
+          lexer.remainder.should be_empty
+          stream.next.should eq(Iterator::Stop::INSTANCE)
         end
-        tokens.should eq([DotOnlyToken::Dot])
       end
 
       it "matches each character in sequence with dot only" do
@@ -118,6 +116,42 @@ module Logos::Spec::UnicodeDot
         end
         tokens.should eq([BinaryDotToken::Dot])
       end
+    end
+  end
+end
+
+module Logos::Spec::UnicodeDot::Mixed
+  Logos.define Defined do
+    utf8 false
+    regex ".", :Dot, bytes: false, priority: 100
+    regex ".", :InvalidUtf8, bytes: true, priority: 0
+  end
+
+  @[Logos::Options(utf8: false)]
+  @[Logos::Regex(:Dot, ".", bytes: false, priority: 100)]
+  @[Logos::Regex(:InvalidUtf8, ".", bytes: true, priority: 0)]
+  enum Annotated
+    Dot
+    InvalidUtf8
+  end
+
+  logos_derive(Annotated)
+
+  describe "mixed Unicode and byte dot rules" do
+    it "preserves Unicode code points and matches invalid bytes with a separate rule" do
+      {% for type in [Defined, Annotated] %}
+        input = Bytes[0x61, 0xEE, 0xA1, 0x93, 0xFF]
+        lexer = {{ type }}.lexer(input)
+        stream = lexer.spanned
+        stream.next.should eq({Logos::Result({{ type }}, Nil).ok({{ type }}::Dot), 0...1})
+        lexer.slice.should eq(input[0, 1])
+        stream.next.should eq({Logos::Result({{ type }}, Nil).ok({{ type }}::Dot), 1...4})
+        lexer.slice.should eq(input[1, 3])
+        stream.next.should eq({Logos::Result({{ type }}, Nil).ok({{ type }}::InvalidUtf8), 4...5})
+        lexer.slice.should eq(input[4, 1])
+        lexer.remainder.should be_empty
+        stream.next.should eq(Iterator::Stop::INSTANCE)
+      {% end %}
     end
   end
 end

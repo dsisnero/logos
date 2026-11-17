@@ -3,31 +3,25 @@
 ## Where we are
 
 - **Current focus** — [Phase 2, Logos parity inventory and coverage](#phase-2-logos-parity-inventory-and-coverage).
-  The tokenization and legacy regression slice is complete. Both runtime macro
-  APIs and prebuilt matchers preserve escaped, grouped subpatterns and literal
-  token text.
+  Unicode and binary matcher options are verified for both macro APIs and
+  prebuilt matchers. Backend and inventory signoff is next.
 - **Next up**
-  1. **Unicode and binary matcher options.** Compare case folding, byte
-     literals, and per-subpattern Unicode scope with the vendored Rust parser.
-     Cover both macro APIs and generated matchers with token, error, and
-     byte-span checks. Record the disposition of unsupported byte or Unicode
-     option combinations.
-  2. **Backend and inventory signoff.** Reconcile runtime and generated
-     diagnostics and matching behavior. Finish pending fixture and source
-     dispositions, including the remaining custom-error stream. Run the
-     inventory and full Logos gates.
+  1. **Backend and inventory signoff.** Align generated and runtime error
+     spans after partial prefixes and reconcile matcher diagnostics. Finish
+     outstanding fixture and source dispositions, including the custom-error
+     streams. Run the inventory and full Logos gates.
 - **Status by area** — Payload examples, dependency qualification, source
-  boundaries, callbacks, lexer navigation, derive UI, and the tokenization
-  fixtures are verified for the recorded cases. The
+  boundaries, callbacks, lexer navigation, derive UI, the tokenization
+  fixtures, and Unicode and binary options have verified cases. The
   [Logos inventory](inventory/README.md) records pending reviews and
   intentional differences.
-- **Gates** — Format, lint, and 282 specs pass with installed
-  `regex-automata` 0.2.1 snapshot. The four flagged codegen specs, prebuilt
-  subpattern matcher, compile check, and all three inventory drift checks
-  pass. The
-  four vendored fixture files pass all 83 tests on Rust, with two additional
-  characterizations for subpattern scope and asymmetric loops.
-- **Last feature commit** — `fix: preserve subpattern scope and literal tokens`.
+- **Gates** — Format, lint, and 291 specs pass with the installed
+  `regex-automata` 0.2.1 snapshot. Five flagged codegen specs, the mixed-mode
+  prebuild execution, the compile check, and all three inventory drift checks
+  pass. The vendored binary, case-folding, script-property, and Unicode dot
+  suites pass, as do three added Rust characterizations and the invalid
+  subpattern compile check.
+- **Last feature commit** — `fix: align Unicode and byte matcher options`.
 
 ## Scope and verification
 
@@ -85,8 +79,10 @@ dispositions. The tokenization and legacy review mapped 83 test functions
 across `advanced.rs`, `simple.rs`, `edgecase.rs`, and
 `old_logos_bugs.rs`. It added generated matcher and macro coverage for
 subpattern expansion and name collisions, plus exact byte-span fixtures for
-escaped strings, Unicode trivia, Cyrillic, and long quoted input. See the
-ordered work in **Where we are** and the
+escaped strings, Unicode trivia, Cyrillic, and long quoted input. Unicode
+and binary coverage adds exact upstream case-folding, script-property and
+mixed-dot streams. Pattern options and subpatterns are shared across runtime
+and codegen. See the ordered work in **Where we are** and the
 [inventory verification instructions](inventory/README.md).
 
 - Use the generated source and test IDs for pinned Logos runtime, derive and
@@ -161,8 +157,16 @@ reproduction.
   for the same variant when initializing a runtime matcher. Its legacy
   first-match fallback remains for different variants when fewer than two
   winners declare their priorities.
-- **Byte-oriented patterns:** Rust infers non-UTF-8 patterns and rejects them in
-  the `regex-non-utf8` UI test; the Crystal port requires the explicit
-  `bytes: true` flag.
+- **Pattern encoding:** Rust uses each literal's type. Crystal defaults each
+  pattern and subpattern to the lexer's `utf8` mode for compatibility. Set
+  `bytes: true` for byte regex syntax or `bytes: false` for Unicode syntax in
+  either lexer mode. A string lexer accepts byte rules whose HIR can only
+  match valid UTF-8. The Crystal `ignore_ascii_case: true` option selects
+  ASCII folding for tokens and starts regex parsing in byte mode. Rust uses
+  `ignore(case)` with byte literals or scoped regex flags for ASCII folding.
+- **Manifest encoding:** Each pattern can specify `bytes`, `ignore_case`, or
+  `ignore_ascii_case`. An array of octets in `pattern` defaults to byte mode.
+  Subpatterns can use a string value or an object with `pattern` and `bytes`.
+  Definitions may refer to earlier entries in declaration order.
 - **`export_dir`:** the Rust-only `export_dir` derive option is not implemented;
   the Crystal equivalent is `make prebuild MANIFEST=... OUT=...`.

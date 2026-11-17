@@ -87,16 +87,16 @@ tests/tests/edgecase.rs::test::trivia::abcdef_trivia	ported	spec/logos/edgecase_
 tests/tests/edgecase.rs::test::type_params::substitute_type_params	intentional_divergence	spec/logos/callbacks_spec.cr, docs/enum_payload_parity.md	Rust derives over type parameters on enum variants. Crystal uses a non-generic enum and typed result payloads.
 tests/tests/edgecase.rs::test::unicode_error_split::test	ported	spec/logos/edgecase_spec.cr	Checks that an unmatched emoji produces one four-byte error.
 tests/tests/edgecase.rs::test::unicode_whitespace::abcdef_trivia	ported	spec/logos/edgecase_spec.cr	Exact upstream numbers separated by Unicode whitespace, trailing error, and EOF.
-tests/tests/ignore_case.rs::class::Letters	in_progress	-	Discovered; contract review pending.
-tests/tests/ignore_case.rs::class::Sink	in_progress	-	Discovered; contract review pending.
-tests/tests/ignore_case.rs::class::Words	in_progress	-	Discovered; contract review pending.
-tests/tests/ignore_case.rs::test::ignore_ascii_case::regex_nonascii	in_progress	-	Discovered; contract review pending.
-tests/tests/ignore_case.rs::test::ignore_ascii_case::regex_simple	in_progress	-	Discovered; contract review pending.
-tests/tests/ignore_case.rs::test::ignore_ascii_case::tokens_nonascii	in_progress	-	Discovered; contract review pending.
-tests/tests/ignore_case.rs::test::ignore_ascii_case::tokens_simple	in_progress	-	Discovered; contract review pending.
-tests/tests/ignore_case.rs::test::ignore_case::regex	in_progress	-	Discovered; contract review pending.
-tests/tests/ignore_case.rs::test::ignore_case::tokens	in_progress	-	Discovered; contract review pending.
-tests/tests/ignore_case.rs::test::ignore_case::tokens_regex_escaped	in_progress	-	Discovered; contract review pending.
+tests/tests/ignore_case.rs::class::Letters	ported	spec/logos/ignore_case_spec.cr	BinaryLetters mirrors the mix of Unicode, byte, and scoped case flags.
+tests/tests/ignore_case.rs::class::Sink	ported	spec/logos/ignore_case_spec.cr	Sink uses the upstream folded class, number, and sequence rules.
+tests/tests/ignore_case.rs::class::Words	ported	spec/logos/ignore_case_spec.cr	BinaryWords and Words cover the byte and Unicode literal enums.
+tests/tests/ignore_case.rs::test::ignore_ascii_case::regex_nonascii	ported	spec/logos/ignore_case_spec.cr	Exact mixed byte and Unicode regex stream, including unmatched byte slices and spans.
+tests/tests/ignore_case.rs::test::ignore_ascii_case::regex_simple	ported	spec/logos/ignore_case_spec.cr	Exact ASCII stream through byte and Unicode regex rules on a byte source.
+tests/tests/ignore_case.rs::test::ignore_ascii_case::tokens_nonascii	ported	spec/logos/ignore_case_spec.cr	Exact byte literal stream with ASCII folding, accented case mismatches, and invalid prefix spans.
+tests/tests/ignore_case.rs::test::ignore_ascii_case::tokens_simple	ported	spec/logos/ignore_case_spec.cr	Exact mixed-case ASCII byte literal stream, slices, and spans.
+tests/tests/ignore_case.rs::test::ignore_case::regex	ported	spec/logos/ignore_case_spec.cr	Exact folded Unicode regex stream, including classes and sequences.
+tests/tests/ignore_case.rs::test::ignore_case::tokens	ported	spec/logos/ignore_case_spec.cr	Exact accented literal stream with Unicode folding and a final ASCII error.
+tests/tests/ignore_case.rs::test::ignore_case::tokens_regex_escaped	ported	spec/logos/ignore_case_spec.cr	Exact folded literal metacharacters and per-letter errors.
 tests/tests/lexer_modes.rs::class::Inner	in_progress	-	Discovered; contract review pending.
 tests/tests/lexer_modes.rs::class::ModeBridge	in_progress	-	Discovered; contract review pending.
 tests/tests/lexer_modes.rs::class::Modes	in_progress	-	Discovered; contract review pending.
@@ -183,9 +183,9 @@ tests/tests/old_logos_bugs.rs::test::issue_420::test	ported	spec/logos/old_logos
 tests/tests/old_logos_bugs.rs::test::issue_424::test	ported	spec/logos/old_logos_bugs_spec.cr	Checks that the exact upstream input terminates with a one-byte error.
 tests/tests/old_logos_bugs.rs::test::issue_456::test	ported	spec/logos/old_logos_bugs_spec.cr	Checks two consecutive single-character matches in alternation.
 tests/tests/old_logos_bugs.rs::test::issue_461::test	ported	spec/logos/old_logos_bugs_spec.cr	Checks the binary-mode short integer and suffix error with byte slices and spans.
-tests/tests/properties.rs::class::Token	in_progress	-	Discovered; contract review pending.
-tests/tests/properties.rs::test::cyrillic	in_progress	-	Discovered; contract review pending.
-tests/tests/properties.rs::test::greek	in_progress	-	Discovered; contract review pending.
+tests/tests/properties.rs::class::Token	ported	spec/logos/properties_spec.cr	ScriptToken uses the upstream ASCII, Greek, Cyrillic, and whitespace rules.
+tests/tests/properties.rs::test::cyrillic	ported	spec/logos/properties_spec.cr	Exact Cyrillic words, slices and UTF-8 byte spans.
+tests/tests/properties.rs::test::greek	ported	spec/logos/properties_spec.cr	Exact Greek and ASCII sentence with slices and byte spans.
 tests/tests/simple.rs::class::MockExtras	in_progress	-	Discovered; contract review pending.
 tests/tests/simple.rs::class::Token	in_progress	-	Discovered; contract review pending.
 tests/tests/simple.rs::function::byte_size_2	in_progress	-	Discovered; contract review pending.
@@ -241,10 +241,10 @@ tests/tests/ui/err/token-non-utf8.rs::class::Token	intentional_divergence	spec/l
 tests/tests/ui/err/token-non-utf8.rs::function::main	skipped	-	Empty executable entry point; the fixture's derive declarations carry the UI contract.
 tests/tests/ui/ok/greedy.rs::class::Token	ported	spec/logos/greedy_spec.cr	Accepted grouped greedy pattern emits the expected token and byte span when allowed.
 tests/tests/ui/ok/greedy.rs::function::main	skipped	-	Empty executable entry point; the fixture's derive declarations carry the UI contract.
-tests/tests/unicode_dot.rs::class::TestUnicodeDot	in_progress	-	Discovered; contract review pending.
-tests/tests/unicode_dot.rs::class::TestUnicodeDotBytes	in_progress	-	Discovered; contract review pending.
-tests/tests/unicode_dot.rs::test::test_unicode_dot_bytes_ascii	in_progress	-	Discovered; contract review pending.
-tests/tests/unicode_dot.rs::test::test_unicode_dot_bytes_invalid_utf8	in_progress	-	Discovered; contract review pending.
-tests/tests/unicode_dot.rs::test::test_unicode_dot_bytes_unicode	in_progress	-	Discovered; contract review pending.
-tests/tests/unicode_dot.rs::test::test_unicode_dot_str_ascii	in_progress	-	Discovered; contract review pending.
-tests/tests/unicode_dot.rs::test::test_unicode_dot_str_unicode	in_progress	-	Discovered; contract review pending.
+tests/tests/unicode_dot.rs::class::TestUnicodeDot	ported	spec/logos/unicode_dot_spec.cr	DotOnlyToken matches a full UTF-8 code point.
+tests/tests/unicode_dot.rs::class::TestUnicodeDotBytes	ported	spec/logos/unicode_dot_spec.cr	Both macros define a higher-priority Unicode dot and a byte fallback.
+tests/tests/unicode_dot.rs::test::test_unicode_dot_bytes_ascii	ported	spec/logos/unicode_dot_spec.cr	Both macro APIs select Unicode dot for the exact ASCII byte.
+tests/tests/unicode_dot.rs::test::test_unicode_dot_bytes_invalid_utf8	ported	spec/logos/unicode_dot_spec.cr	Both macro APIs select the byte fallback for 0xFF.
+tests/tests/unicode_dot.rs::test::test_unicode_dot_bytes_unicode	ported	spec/logos/unicode_dot_spec.cr	Both macro APIs take the full three-byte upstream character as one Unicode dot.
+tests/tests/unicode_dot.rs::test::test_unicode_dot_str_ascii	ported	spec/logos/unicode_dot_spec.cr	Checks exact ASCII dot, slice, span, remainder and EOF.
+tests/tests/unicode_dot.rs::test::test_unicode_dot_str_unicode	ported	spec/logos/unicode_dot_spec.cr	Checks exact three-byte private-use code point, slice, span, remainder and EOF.

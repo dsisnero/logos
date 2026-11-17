@@ -114,22 +114,22 @@ logos-codegen/src/lib.rs::function::is_logos_attr	function	in_progress	-	Discove
 logos-codegen/src/lib.rs::function::strip_attributes	function	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/lib.rs::function::strip_attrs_from_vec	function	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/parser/definition.rs::class::Definition	class	in_progress	-	Discovered; contract review pending.
-logos-codegen/src/parser/definition.rs::class::Literal	class	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/definition.rs::class::Literal	class	intentional_divergence	src/logos/pattern.cr, spec/logos/binary_spec.cr	Crystal uses String literals and the bytes option for encoding rather than Rust byte-string syntax. Manifest arrays accept raw octets.
 logos-codegen/src/parser/definition.rs::method::Definition.named_attr	method	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/parser/definition.rs::method::Definition.new	method	in_progress	-	Discovered; contract review pending.
-logos-codegen/src/parser/definition.rs::method::Literal.escape	method	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/definition.rs::method::Literal.escape	method	ported	src/logos/pattern.cr, spec/logos/ignore_case_spec.cr, spec/logos/binary_spec.cr	Literal metacharacters are escaped when folding Unicode. Byte regex text preserves raw bytes through hex escapes.
 logos-codegen/src/parser/definition.rs::method::Literal.parse	method	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/parser/definition.rs::method::Literal.span	method	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/parser/definition.rs::method::Literal.token	method	in_progress	-	Discovered; contract review pending.
-logos-codegen/src/parser/definition.rs::method::Literal.unicode	method	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/definition.rs::method::Literal.unicode	method	intentional_divergence	src/logos/define_macro.cr, src/logos/macros.cr, spec/logos/binary_spec.cr	The bytes override selects syntax explicitly. Omitted bytes inherits the Crystal lexer source mode for compatibility.
 logos-codegen/src/parser/error_type.rs::class::ErrorType	class	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/parser/error_type.rs::method::ErrorType.default	method	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/parser/error_type.rs::method::ErrorType.named_attr	method	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/parser/error_type.rs::method::ErrorType.new	method	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/parser/error_type.rs::method::ErrorType.span	method	in_progress	-	Discovered; contract review pending.
-logos-codegen/src/parser/ignore_flags.rs::class::IgnoreFlags	class	in_progress	-	Discovered; contract review pending.
-logos-codegen/src/parser/ignore_flags.rs::method::IgnoreFlags.parse_group	method	in_progress	-	Discovered; contract review pending.
-logos-codegen/src/parser/ignore_flags.rs::method::IgnoreFlags.parse_ident	method	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/ignore_flags.rs::class::IgnoreFlags	class	ported	src/logos/define_macro.cr, src/logos/macros.cr, spec/logos/ignore_case_spec.cr, spec/logos/codegen_priority_spec.cr	Ignore case is available through both macros and through generated matcher manifests. Inline flags follow regex parser scope.
+logos-codegen/src/parser/ignore_flags.rs::method::IgnoreFlags.parse_group	method	intentional_divergence	src/logos/define_macro.cr, src/logos/macros.cr, spec/logos/ignore_case_spec.cr	Named boolean options replace the Rust grouped attribute syntax.
+logos-codegen/src/parser/ignore_flags.rs::method::IgnoreFlags.parse_ident	method	intentional_divergence	src/logos/define_macro.cr, src/logos/macros.cr, spec/logos/ignore_case_spec.cr	Crystal uses named boolean arguments and retains an ASCII-only convenience flag. Rust parses case as an identifier and rejects ascii_case.
 logos-codegen/src/parser/mod.rs::class::Parser	class	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/parser/mod.rs::method::Parser.err	method	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/parser/mod.rs::method::Parser.generics	method	in_progress	-	Discovered; contract review pending.
@@ -156,10 +156,10 @@ logos-codegen/src/parser/nested.rs::method::AttributeParser.parse_literal	method
 logos-codegen/src/parser/nested.rs::method::AttributeParser.parse_unnamed	method	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/parser/nested.rs::method::AttributeParser.parsed	method	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/parser/nested.rs::method::TokenStream.from	method	in_progress	-	Discovered; contract review pending.
-logos-codegen/src/parser/subpattern.rs::class::Subpattern	class	partial	src/logos/pattern.cr, spec/logos/advanced_spec.cr, spec/logos/codegen_priority_spec.cr	Stores named definitions in both macro APIs and expands them in generated matcher manifests; per-definition encoding remains to review.
+logos-codegen/src/parser/subpattern.rs::class::Subpattern	class	ported	src/logos/pattern.cr, spec/logos/binary_spec.cr, spec/logos/codegen_priority_spec.cr	Both macros and manifests preserve per-definition encoding independently of the caller pattern.
 logos-codegen/src/parser/subpattern.rs::class::Subpatterns	class	ported	src/logos/pattern.cr, spec/logos/advanced_spec.cr, spec/logos/codegen_priority_spec.cr	Keeps a per-lexer table and resolves dependencies in declaration order.
-logos-codegen/src/parser/subpattern.rs::method::Subpattern.new	method	partial	src/logos/pattern.cr, spec/logos/advanced_spec.cr, spec/logos/codegen_priority_spec.cr	Preserves escapes and adds noncapturing groups; Rust also scopes each definition to its literal encoding.
-logos-codegen/src/parser/subpattern.rs::method::Subpatterns.new	method	partial	src/logos/pattern.cr, spec/logos/advanced_spec.cr, spec/logos/codegen_priority_spec.cr	Builds definitions in order and rejects duplicate names and forward references; Rust also parses every definition before use.
+logos-codegen/src/parser/subpattern.rs::method::Subpattern.new	method	ported	src/logos/pattern.cr, spec/logos/binary_spec.cr, spec/logos/codegen_priority_spec.cr	Preserves escaped regex text and wraps definitions in the selected Unicode or byte scope.
+logos-codegen/src/parser/subpattern.rs::method::Subpatterns.new	method	ported	src/logos/pattern.cr, spec/logos/binary_spec.cr	Resolves definitions in order, rejects duplicate or unknown names, and validates regex syntax and UTF-8 before use.
 logos-codegen/src/parser/subpattern.rs::method::Subpatterns.subst_subpatterns	method	ported	src/logos/pattern.cr, spec/logos/advanced_spec.cr, spec/logos/codegen_priority_spec.cr	Expands complete named references, preserves their grouping, and leaves ordinary token patterns literal.
 logos-codegen/src/parser/type_params.rs::class::TypeParams	class	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/parser/type_params.rs::function::replace_lifetime	function	in_progress	-	Discovered; contract review pending.
@@ -173,8 +173,8 @@ logos-codegen/src/parser/type_params.rs::method::TypeParams.generics	method	in_p
 logos-codegen/src/parser/type_params.rs::method::TypeParams.set	method	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/pattern.rs::class::Pattern	class	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/pattern.rs::method::Pattern.check_for_greedy_all	method	ported	src/logos/macros.cr, src/logos/define_macro.cr, spec/logos/greedy_spec.cr	Pinned grouped greedy allow-and-reject cases pass for both macro APIs.
-logos-codegen/src/pattern.rs::method::Pattern.compile	method	partial	src/logos/pattern.cr, spec/logos/diagnostics_spec.cr	Regex parsing and UTF-8 checks delegate to regex-syntax; remaining option normalization awaits fixture coverage.
-logos-codegen/src/pattern.rs::method::Pattern.compile_lit	method	ported	src/logos/pattern.cr, spec/logos/pattern_spec.cr	Builds literal HIR from source bytes and weights it by byte length.
+logos-codegen/src/pattern.rs::method::Pattern.compile	method	ported	src/logos/pattern.cr, spec/logos/ignore_case_spec.cr, spec/logos/binary_spec.cr, spec/logos/codegen_priority_spec.cr	Parses each regex with its encoding and case options. Validates HIR against lexer source mode after parsing.
+logos-codegen/src/pattern.rs::method::Pattern.compile_lit	method	ported	src/logos/pattern.cr, spec/logos/ignore_case_spec.cr, spec/logos/codegen_priority_spec.cr	Builds literal HIR from raw bytes and uses byte-length priority even when folding case.
 logos-codegen/src/pattern.rs::method::Pattern.complexity	method	ported	src/logos/pattern.cr, spec/logos/pattern_spec.cr	Counts scalars for valid UTF-8 regex literals and bytes for invalid UTF-8, preserving repetition and alternation weights.
 logos-codegen/src/pattern.rs::method::Pattern.fmt	method	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/pattern.rs::method::Pattern.has_greedy_all	method	ported	src/logos/macros.cr, src/logos/define_macro.cr, spec/logos/greedy_spec.cr	Greedy recognition uses the syntax shard HIR walker and checks nested disjunction cases.

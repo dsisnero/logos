@@ -123,3 +123,82 @@ module Logos::Spec::Binary
     end
   end
 end
+
+module Logos::Spec::Binary::PatternOptions
+  Logos.define Defined do
+    utf8 false
+    subpattern :digit, %q(\d), bytes: false
+    subpattern :raw, ".", bytes: true
+    regex "~(?&digit)(?&raw)", :Mixed
+  end
+
+  @[Logos::Options(utf8: false)]
+  @[Logos::Subpattern(:digit, %q(\d), bytes: false)]
+  @[Logos::Subpattern(:raw, ".", bytes: true)]
+  @[Logos::Regex(:Mixed, "~(?&digit)(?&raw)")]
+  enum Annotated
+    Mixed
+  end
+
+  logos_derive(Annotated)
+
+  Logos.define SafeByteRules do
+    subpattern :ascii_word, %q(\w+), bytes: true
+    token "!", :Mark, bytes: true
+    regex "(?&ascii_word)", :Word
+  end
+
+  Logos.define RawRegex do
+    utf8 false
+    regex "\xFF+", :Marker, bytes: true
+  end
+
+  Logos.define InvalidUnusedSubpattern do
+    subpattern :raw, ".", bytes: true
+    token "!", :Mark
+  end
+
+  Logos.define InvalidFoldedLiteral do
+    token "\xFF", :Marker, ignore_case: true
+  end
+
+  describe "pattern encoding" do
+    it "preserves raw bytes supplied in regex text" do
+      input = Bytes[0xFF, 0xFF]
+      lexer = RawRegex.lexer(input)
+      stream = lexer.spanned
+      stream.next.should eq({Logos::Result(RawRegex, Nil).ok(RawRegex::Marker), 0...2})
+      lexer.slice.should eq(input)
+      stream.next.should eq(Iterator::Stop::INSTANCE)
+    end
+
+    it "rejects byte rules that could break string boundaries" do
+      expect_raises(Exception, /UTF-8.*byte-oriented/) { InvalidUnusedSubpattern.lexer("!").next }
+      expect_raises(Exception, /UTF-8.*byte-oriented/) { InvalidFoldedLiteral.lexer("").next }
+    end
+
+    it "scopes each subpattern independently of a byte regex and lexer" do
+      {% for type in [Defined, Annotated] %}
+        input = Bytes[0x7E, 0xD9, 0xA1, 0xFF, 0x3F]
+        lexer = {{ type }}.lexer(input)
+        stream = lexer.spanned
+        stream.next.should eq({Logos::Result({{ type }}, Nil).ok({{ type }}::Mixed), 0...4})
+        lexer.slice.should eq(input[0, 4])
+        stream.next.should eq({Logos::Result({{ type }}, Nil).error(nil), 4...5})
+        lexer.slice.should eq(input[4, 1])
+        stream.next.should eq(Iterator::Stop::INSTANCE)
+      {% end %}
+    end
+
+    it "accepts ASCII-only byte rules and keeps byte subpatterns ASCII in a string lexer" do
+      lexer = SafeByteRules.lexer("!wordé")
+      stream = lexer.spanned
+      stream.next.should eq({Logos::Result(SafeByteRules, Nil).ok(SafeByteRules::Mark), 0...1})
+      stream.next.should eq({Logos::Result(SafeByteRules, Nil).ok(SafeByteRules::Word), 1...5})
+      lexer.slice.should eq("word")
+      stream.next.should eq({Logos::Result(SafeByteRules, Nil).error(nil), 5...7})
+      lexer.slice.should eq("é")
+      stream.next.should eq(Iterator::Stop::INSTANCE)
+    end
+  end
+end
