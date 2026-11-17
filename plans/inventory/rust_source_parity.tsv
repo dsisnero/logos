@@ -235,7 +235,7 @@ src/lexer.rs::method::Lexer<'source, Token>.with_extras	ported	src/logos/lexer.c
 src/lexer.rs::method::SpannedIter<'source, Token>.clone	ported	src/logos/lexer.cr, spec/logos/navigation_spec.cr	Creates an independent inner lexer cursor and clones cloneable extras.
 src/lexer.rs::method::SpannedIter<'source, Token>.deref	intentional_divergence	src/logos/lexer.cr, spec/logos/navigation_spec.cr	SpannedIter#lexer supplies explicit read access to the inner lexer.
 src/lexer.rs::method::SpannedIter<'source, Token>.deref_mut	intentional_divergence	src/logos/lexer.cr, spec/logos/navigation_spec.cr	SpannedIter#lexer supplies explicit mutable access through the existing lexer object.
-src/lexer.rs::method::SpannedIter<'source, Token>.next	ported	src/logos/lexer.cr, spec/logos/navigation_spec.cr, spec/logos/simple_spec.cr	Yields each result with its matching byte span and stops at EOF.
+src/lexer.rs::method::SpannedIter<'source, Token>.next	ported	src/logos/lexer.cr, spec/logos/navigation_spec.cr, spec/logos/simple_spec.cr, benchmarks/prebuild_contract.cr, benchmarks/rust/src/main.rs	Yields each result with its matching byte span and stops at EOF. The release gate compares the full token and byte-span stream, including errors and EOF, with pinned Rust Logos.
 src/lib.rs::class::Filter	intentional_divergence	src/logos/result.cr, spec/logos/callback_dispatch_spec.cr	Crystal represents the Rust enum with Emit(T) and Skip structs.
 src/lib.rs::class::FilterResult	intentional_divergence	src/logos/result.cr, spec/logos/callback_dispatch_spec.cr	Crystal represents the Rust enum with Emit(T), Skip and Error(E) structs.
 src/lib.rs::class::Skip	ported	src/logos/result.cr, spec/logos/callback_dispatch_spec.cr	Skip marks matched input as trivia in both macro APIs.

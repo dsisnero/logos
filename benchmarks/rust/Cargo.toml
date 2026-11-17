@@ -1,0 +1,11 @@
+[package]
+name = "logos-rust-baseline"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+logos = { path = "../../logos_rust", version = "=0.16.1" }
+
+[profile.release]
+lto = true

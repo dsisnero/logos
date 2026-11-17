@@ -4,7 +4,7 @@ require "./benchmark_token"
   require "../temp/generated_benchmark_token"
 {% end %}
 
-SOURCE = ("let variable = 12345;\n" * 1_000)
+SOURCE = {{ read_file(__DIR__ + "/lexer_compare_input.txt") }} * 1_000
 ROUNDS = ENV.fetch("LOGOS_BENCH_ROUNDS", "10").to_i
 
 count = 0

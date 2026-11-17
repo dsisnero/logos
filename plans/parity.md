@@ -2,24 +2,22 @@
 
 ## Where we are
 
-- **Current focus** — Phase 11 is complete. DSL declarations export strict
-  manifests for the three shipped examples and benchmark. An installed
-  consumer verifies regeneration and stale matcher rejection after a rule edit.
+- **Current focus** — Phase 8 is complete. Release Crystal and pinned Rust
+  agree on the token, byte-span and EOF contract. Crystal took 9.6–11.0×
+  as long across the two timing orders. The full results and commands are
+  in [the performance ledger](performance_experiments.md).
 - **Next up**
-  1. **Phase 8. Generated matcher performance baseline.** Verify the strict
-     release token and span contract first. Compare the same workload and
-     rules with pinned Rust Logos, then record repeated measurements in
-     [the performance ledger](performance_experiments.md) before selecting
-     an optimization.
+  1. **Phase 12. Generated result dispatch.** Reproduce the scanner versus
+     public lexer split and reduce the largest measured cost between a
+     resolved match and its public result.
 - **Status by area** — All 269 source and 249 test-tree items retain their
   dispositions. All shipped strict manifests and the package entry point
   have executable coverage. Documentation describes lazy runtime matcher
   construction, source prebuild, and diagnostic timing.
 - **Gates** — Format, lint, and 305 specs pass. `make test-prebuilt` passes
-  17 specs. `make test-package` passes four package specs, including four
-  shipped contracts executed through the built CLI. The cached frozen install
-  keeps the lockfile unchanged. Markdown and all inventory drift checks pass.
-- **Last feature commit** — `feat: export strict prebuild manifests from lexer declarations`.
+  17 specs. `make benchmark-release`, Markdown and all inventory drift
+  checks pass. Phase 11 package qualification passed four specs.
+- **Last feature commit** — `test: establish a pinned Rust release benchmark baseline`.
 
 ## Scope and verification
 
@@ -198,8 +196,9 @@ the strict example and benchmark contracts with the pinned dependencies.
 
 ### Phase 8. Generated matcher performance baseline
 
-**Next.** Refresh the historical measurements using the exported strict
-manifest and record the measured baseline before selecting an optimization.
+**Complete.** The pinned release harness verifies parity before timing.
+The renewed baseline and the diagnostic result-dispatch control are
+recorded in the performance ledger.
 
 - Verify the benchmark token and span contract in release builds.
 - Compare the same source and rules on Crystal and pinned Rust Logos using
@@ -215,6 +214,21 @@ performance target without leaving an unmeasured experiment active.
 Phases 9–11 are complete.
 [The lexer authoring roadmap](lexer_ergonomics.md) records the vendor
 references, red–green sequences, and completion criteria.
+
+### Phase 12. Generated result dispatch
+
+**Next.** Establish a reusable matcher-only control for the resolved
+benchmark. Compare it with the public prebuilt lexer and identify the
+largest cost between a generated match and the returned result. Reduce
+that cost in one focused change and keep the generic matcher path
+compatible.
+
+- Start with targeted equivalence specs for resolved matches, deferred
+  ties, callbacks, skips, and error spans.
+- Verify the strict release contract before measuring the candidate, then
+  confirm any improvement in forward and reverse run order.
+- Preserve the current baseline and record the measured disposition in
+  the performance ledger.
 
 ## Completed feature phases
 

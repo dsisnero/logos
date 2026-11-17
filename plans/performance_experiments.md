@@ -14,32 +14,66 @@ into `main` before the next experiment starts.
 
 ## Measurement contract
 
-- Build with `crystal build --release -Dprecompiled benchmarks/lexer_compare.cr`.
-- Generate the matcher with `make prebuild` from
-  an exported strict manifest with resolved priorities:
+Run `make benchmark-release` to export the resolved strict manifest, build
+both release lexers, compare token and span streams, and check counts.
+Re-run the contract before timing any change. Use the same input and round
+count for both binaries, and leave other builds idle while timing.
 
-  ```sh
-  mkdir -p temp
-  crystal eval 'require "./benchmarks/benchmark_token"; BenchmarkToken.write_prebuild_manifest(STDOUT, resolve_priorities: true)' > temp/benchmark_token.json
-  make prebuild MANIFEST=temp/benchmark_token.json OUT=temp/generated_benchmark_token.cr
-  ```
-- Time with `hyperfine`, using `LOGOS_BENCH_ROUNDS=500` to amortize process
-  startup and reduce scheduler noise.
-- Run generated-matcher and affected priority/Unicode specs before measuring.
-- Record a failure or flat result, then discard that branch; do not merge it.
+## Current release baseline (2026-11-17)
 
-## Baseline
+Crystal lexer source at `8a639e05a38aa2c0a6e3e98a745da1b783796f80`
+with this phase's benchmark harness, Crystal 1.22.3 and LLVM 23.1.5,
+regex-automata 0.2.1 and regex-syntax 0.5.0 at `1623e24`. The Rust binary
+links the vendored Logos v0.16.1 at `c7d40fa` using Rust 1.100.0
+(`0ef1bc386`), the benchmark Cargo lockfile, and release LTO. Both ran
+on the same Apple M4 (Mac16,12, 10 cores) under arm64 macOS 27.0.1.
+Each lexer uses one worker. At 2,000 rounds each scans 44,000,000 bytes
+and emits 10,000,000 tokens. The wall time includes process startup.
 
-The table records historical experiment baselines. The next baseline is the
-completed parity branch described in [the parity plan](parity.md), after
-package qualification. Its release measurements have not yet been recorded;
-do not reuse the historical Rust ratio as a current result.
+| Order | Generated Crystal, mean ± SD | Rust, mean ± SD | Crystal / Rust | Throughput (Crystal / Rust) |
+| --- | ---: | ---: | ---: | ---: |
+| Crystal first, 7 runs | 877.2 ± 100.7 ms | 80.0 ± 6.4 ms | 11.0× | 50.2 / 550.1 MB/s |
+| Rust first, 7 runs | 854.7 ± 40.9 ms | 89.3 ± 5.6 ms | 9.6× | 51.5 / 492.5 MB/s |
+
+The unwarmed trial after qualification took 739.2 ms on Crystal and 67.1 ms
+on Rust. Both warm run orders remain above the 4× target. The latest
+comparison uses the same checked-in input for both binaries.
+
+```sh
+make benchmark-release
+export LOGOS_BENCH_ROUNDS=2000
+hyperfine --shell=none --runs 1 --export-json temp/benchmark-first.json \
+  temp/benchmark-crystal temp/benchmark-rust/release/logos-rust-baseline
+hyperfine --shell=none --warmup 2 --runs 7 --export-json temp/benchmark-forward.json \
+  temp/benchmark-crystal temp/benchmark-rust/release/logos-rust-baseline
+hyperfine --shell=none --warmup 2 --runs 7 --export-json temp/benchmark-reverse.json \
+  temp/benchmark-rust/release/logos-rust-baseline temp/benchmark-crystal
+```
+
+Timing used Hyperfine 2.0.0. The release guard first failed because the
+Crystal executable printed a summary in place of a stream. It now checks
+the exact token, error, byte span and EOF output against Rust, and verifies
+5,000 tokens in a one-round run of each timed binary.
+
+A separate exploratory run compared the public Crystal lexer with a
+temporary matcher-only control. The control called the same generated
+winner-table matcher on cached source bytes, advanced by the returned
+match length, and counted every winner except the whitespace rule. Both
+produced 5,000 tokens in one round. With the same 2,000 rounds, two warmups
+and seven trials, the public lexer averaged 993.9 ± 197.3 ms and the
+matcher-only control averaged 408.6 ± 37.0 ms. The gap shows room to reduce work around the generated matcher on this
+input. The control bypasses the public result and error paths, so its
+timing isolates the scan and minimal counting loop. Next, reproduce this
+breakdown and reduce the work between a resolved match and the public
+result using the release contract as the gate.
+
+## Historical baselines
 
 | Item | Branch | Commit | Status |
 | --- | --- | --- | --- |
-| Current runtime baseline for new experiments | `main` | `da2ab30a68d2ec275490151e07e90337188a2611` | Includes all winners below and opt-in pre-resolved accept priorities. New experiments start from current main, including subsequent ledger-only commits. |
-| Compact prebuilt DFA and offset scanning | `performance-prebuild` | `d02f4a3` | Existing baseline: eliminated runtime DFA construction and remainder-string allocation. |
-| Stable benchmark control and generated UTF-8 safety contract | `performance-prebuild` | `f6b9b6ad2fc382ce27c7775cd25da807c8194954` | Base for all new isolated experiments; merged as a dependency of the first winner. |
+| Pre-resolved priorities | `main` | `da2ab30a68d2ec275490151e07e90337188a2611` | Includes the earlier benchmark winners below. |
+| Compact prebuilt DFA and offset scanning | `performance-prebuild` | `d02f4a3` | Eliminated runtime DFA construction and remainder-string allocation. |
+| Stable benchmark control and generated UTF-8 safety contract | `performance-prebuild` | `f6b9b6ad2fc382ce27c7775cd25da807c8194954` | Merged as a dependency of the first winner. |
 
 ## Rust comparison and diagnosis (2026-08-15)
 
@@ -125,12 +159,11 @@ No active experiment. The next experiment must start from the documented baselin
 
 ## Queue
 
-1. **Refresh the qualified baseline:** complete Phase 8 in the parity plan.
-   Regenerate the strict benchmark manifest, verify release token and span
-   contracts, and measure Crystal against pinned Rust on the same machine.
-   Record compiler versions, repeated runs, variance, and the exact baseline
-   commit before choosing an optimization. Existing resolved actions and
-   strict binding coverage must be retained.
+1. **Measure and reduce generated result dispatch.** Reproduce the split
+   between the matcher-only scan and the public lexer. Pick the largest
+   demonstrated cost in the resolved path, then compare its replacement
+   with the current release baseline. Keep token, span, callback, skip,
+   and error behavior under the prebuild specs and release contract.
 2. **Generated direct leaf dispatch (candidate after measurement):** extend the manifest
    with variants, skip flags, priorities, and callback eligibility; generate a
    matcher that returns the token/skip action directly, bypassing pattern-ID

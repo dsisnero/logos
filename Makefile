@@ -1,4 +1,4 @@
-.PHONY: install update format lint test test-prebuilt test-package markdown markdown-check prebuild clean
+.PHONY: install update format lint test test-prebuilt test-package benchmark-release markdown markdown-check prebuild clean
 
 # Only docs that are currently clean under rumdl are gated; add files here once
 # their existing formatting issues are fixed.
@@ -25,6 +25,16 @@ test-prebuilt:
 
 test-package:
 	crystal spec -Dpackage_qualification spec/logos/package_spec.cr
+
+# Build both release lexers and verify their streams before timing them.
+benchmark-release:
+	@mkdir -p temp
+	crystal eval 'require "./benchmarks/benchmark_token"; BenchmarkToken.write_prebuild_manifest(STDOUT, resolve_priorities: true)' > temp/benchmark_token.json
+	crystal run src/logos_codegen.cr -- --manifest temp/benchmark_token.json --out temp/generated_benchmark_token.cr
+	crystal build --release benchmarks/prebuild_contract.cr -o temp/benchmark-contract
+	crystal build --release -Dprecompiled benchmarks/lexer_compare.cr -o temp/benchmark-crystal
+	CARGO_TARGET_DIR="$(CURDIR)/temp/benchmark-rust" cargo build --locked --release --manifest-path benchmarks/rust/Cargo.toml
+	bash benchmarks/verify_release.sh temp/benchmark-contract temp/benchmark-crystal temp/benchmark-rust/release/logos-rust-baseline
 
 # Generate an ordinary Crystal matcher from a JSON manifest before compiling
 # an application. Example:

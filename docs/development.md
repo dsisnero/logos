@@ -173,6 +173,19 @@ Run the focused generator specs with
 `crystal spec -Dcodegen_library spec/logos/codegen_priority_spec.cr`. The flag
 suppresses the generator command-line entry point when importing it for tests.
 
+### Release performance baseline
+
+Run `make benchmark-release` with Crystal and Cargo installed. The target
+exports the strict benchmark manifest, builds the Crystal release lexer,
+and builds Rust Logos from the pinned `logos_rust/` checkout. It compares
+the exact token, byte-span and EOF streams with the Crystal runtime and
+prebuilt lexers and checks that both timed binaries emit 5,000 tokens per
+round. Build outputs and stream reports live under `temp/`.
+
+Both timed programs repeat the same checked-in input line 1,000 times per
+round. See [the performance ledger](../plans/performance_experiments.md) for
+the measured baseline and timing commands.
+
 ### Package qualification
 
 Run `make test-package` to verify a working-tree snapshot under `temp/`.

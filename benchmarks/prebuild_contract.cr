@@ -5,7 +5,9 @@ define_benchmark_token(OracleToken)
 
 raise "strict benchmark binding missing" unless Logos.generated_matcher_binding?("BenchmarkToken")
 
-["let variable = 12345;\n", "letter let let1 _a 0;", "é = ? 99", "", " \n\t"].each do |source|
+spans = ARGV.first? == "--spans"
+sources = spans ? ARGV[1..] : ["let variable = 12345;\n", "letter let let1 _a 0;", "é = ? 99", "", " \n\t"]
+sources.each do |source|
   generated = BenchmarkToken.lexer(source)
   oracle = OracleToken.lexer(source)
   loop do
@@ -13,11 +15,16 @@ raise "strict benchmark binding missing" unless Logos.generated_matcher_binding?
     right = oracle.next
     if left.is_a?(Iterator::Stop) || right.is_a?(Iterator::Stop)
       raise "stop mismatch" unless left.is_a?(Iterator::Stop) && right.is_a?(Iterator::Stop)
+      puts "EOF" if spans
       break
     end
     raise "span mismatch" unless generated.span == oracle.span
     raise "error mismatch" unless left.ok? == right.ok?
     raise "variant mismatch" if left.ok? && left.unwrap.to_s != right.unwrap.to_s
+    if spans
+      label = left.ok? ? left.unwrap.to_s : "error"
+      puts "#{label}@#{generated.span}"
+    end
   end
 end
-puts "generated/runtime contract passed"
+puts "generated/runtime contract passed" unless spans
