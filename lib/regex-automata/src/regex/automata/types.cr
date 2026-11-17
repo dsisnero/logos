@@ -1,8 +1,13 @@
 module Regex::Automata
   struct SmallIndexError
-    getter attempted : Int64
+    getter attempted : UInt64
 
-    def initialize(@attempted : Int64)
+    def initialize(attempted : Int)
+      @attempted = attempted.to_u64
+    end
+
+    def to_s(io : IO) : Nil
+      io << "failed to create small index from " << @attempted << ", which exceeds " << SmallIndex::MAX.as_u32
     end
   end
 
@@ -17,18 +22,28 @@ module Regex::Automata
 
     @id : Int32
 
-    def initialize(@id : Int32)
+    def initialize(@id : Int32, *, unchecked : Bool = false)
+      raise ArgumentError.new("invalid small index") if !unchecked && (@id < 0 || @id > MAX_VALUE)
     end
 
     def self.new_unchecked(index : Int) : SmallIndex
-      SmallIndex.new(index.to_i32)
+      SmallIndex.new(index.to_i32, unchecked: true)
+    end
+
+    # Rust's SmallIndex::new returns a Result. Crystal's direct constructor
+    # raises on invalid values; this method retains the value-or-error result.
+    def self.try_new(index : Int) : SmallIndex | SmallIndexError
+      raise ArgumentError.new("small index cannot be negative") if index < 0
+      return SmallIndexError.new(index) if index > MAX_VALUE
+
+      new_unchecked(index)
     end
 
     def self.must(index : Int) : SmallIndex
-      index_i64 = index.to_i64
-      raise ArgumentError.new("invalid small index") if index_i64 < 0 || index_i64 > MAX_VALUE.to_i64
+      result = try_new(index)
+      raise ArgumentError.new("invalid small index") if result.is_a?(SmallIndexError)
 
-      SmallIndex.new_unchecked(index_i64.to_i32)
+      result
     end
 
     def self.from_ne_bytes(bytes : Bytes) : SmallIndex | SmallIndexError
@@ -59,8 +74,22 @@ module Regex::Automata
       @id
     end
 
+    def as_i32 : Int32
+      @id
+    end
+
     def to_i64 : Int64
       @id.to_i64
+    end
+
+    def as_u64 : UInt64
+      @id.to_u64
+    end
+
+    # Crystal's Array indices are Int32 on supported targets. This is the
+    # corresponding safe index representation for a small index.
+    def as_usize : Int32
+      @id
     end
 
     def as_u32 : UInt32
@@ -79,6 +108,18 @@ module Regex::Automata
   end
 
   # Pattern identifiers
+  struct PatternIDError
+    getter attempted : UInt64
+
+    def initialize(error : SmallIndexError)
+      @attempted = error.attempted
+    end
+
+    def to_s(io : IO) : Nil
+      io << "failed to create PatternID from " << @attempted << ", which exceeds " << PatternID::MAX.as_u32
+    end
+  end
+
   struct PatternID
     include Comparable(PatternID)
 
@@ -89,25 +130,33 @@ module Regex::Automata
 
     @id : Int32
 
-    def initialize(@id : Int32)
+    def initialize(@id : Int32, *, unchecked : Bool = false)
+      raise ArgumentError.new("invalid PatternID value") if !unchecked && (@id < 0 || @id > SmallIndex::MAX_VALUE)
     end
 
     def self.new_unchecked(value : Int) : PatternID
-      PatternID.new(value.to_i32)
+      PatternID.new(value.to_i32, unchecked: true)
+    end
+
+    def self.try_new(value : Int) : PatternID | PatternIDError
+      result = SmallIndex.try_new(value)
+      return PatternIDError.new(result) if result.is_a?(SmallIndexError)
+
+      new_unchecked(result.to_i32)
     end
 
     def self.must(value : Int) : PatternID
-      value_i64 = value.to_i64
-      raise ArgumentError.new("invalid PatternID value") if value_i64 < 0 || value_i64 > SmallIndex::MAX_VALUE.to_i64
+      result = try_new(value)
+      raise ArgumentError.new("invalid PatternID value") if result.is_a?(PatternIDError)
 
-      PatternID.new_unchecked(value_i64.to_i32)
+      result
     end
 
-    def self.from_ne_bytes(bytes : Bytes) : PatternID | SmallIndexError
+    def self.from_ne_bytes(bytes : Bytes) : PatternID | PatternIDError
       result = SmallIndex.from_ne_bytes(bytes)
       return PatternID.new_unchecked(result.to_i32) if result.is_a?(SmallIndex)
 
-      result
+      PatternIDError.new(result)
     end
 
     def self.from_ne_bytes_unchecked(bytes : Bytes) : PatternID
@@ -126,8 +175,20 @@ module Regex::Automata
       @id
     end
 
+    def as_i32 : Int32
+      @id
+    end
+
     def to_i64 : Int64
       @id.to_i64
+    end
+
+    def as_u64 : UInt64
+      @id.to_u64
+    end
+
+    def as_usize : Int32
+      @id
     end
 
     def as_u32 : UInt32
@@ -146,6 +207,18 @@ module Regex::Automata
   end
 
   # State identifiers
+  struct StateIDError
+    getter attempted : UInt64
+
+    def initialize(error : SmallIndexError)
+      @attempted = error.attempted
+    end
+
+    def to_s(io : IO) : Nil
+      io << "failed to create StateID from " << @attempted << ", which exceeds " << StateID::MAX.as_u32
+    end
+  end
+
   struct StateID
     include Comparable(StateID)
 
@@ -156,25 +229,33 @@ module Regex::Automata
 
     @id : Int32
 
-    def initialize(@id : Int32)
+    def initialize(@id : Int32, *, unchecked : Bool = false)
+      raise ArgumentError.new("invalid StateID value") if !unchecked && (@id < 0 || @id > SmallIndex::MAX_VALUE)
     end
 
     def self.new_unchecked(value : Int) : StateID
-      StateID.new(value.to_i32)
+      StateID.new(value.to_i32, unchecked: true)
+    end
+
+    def self.try_new(value : Int) : StateID | StateIDError
+      result = SmallIndex.try_new(value)
+      return StateIDError.new(result) if result.is_a?(SmallIndexError)
+
+      new_unchecked(result.to_i32)
     end
 
     def self.must(value : Int) : StateID
-      value_i64 = value.to_i64
-      raise ArgumentError.new("invalid StateID value") if value_i64 < 0 || value_i64 > SmallIndex::MAX_VALUE.to_i64
+      result = try_new(value)
+      raise ArgumentError.new("invalid StateID value") if result.is_a?(StateIDError)
 
-      StateID.new_unchecked(value_i64.to_i32)
+      result
     end
 
-    def self.from_ne_bytes(bytes : Bytes) : StateID | SmallIndexError
+    def self.from_ne_bytes(bytes : Bytes) : StateID | StateIDError
       result = SmallIndex.from_ne_bytes(bytes)
       return StateID.new_unchecked(result.to_i32) if result.is_a?(SmallIndex)
 
-      result
+      StateIDError.new(result)
     end
 
     def self.from_ne_bytes_unchecked(bytes : Bytes) : StateID
@@ -193,8 +274,20 @@ module Regex::Automata
       @id
     end
 
+    def as_i32 : Int32
+      @id
+    end
+
     def to_i64 : Int64
       @id.to_i64
+    end
+
+    def as_u64 : UInt64
+      @id.to_u64
+    end
+
+    def as_usize : Int32
+      @id
     end
 
     def as_u32 : UInt32
@@ -217,14 +310,8 @@ module Regex::Automata
 
     @value : Int32
 
-    def self.new(value : Int32) : NonMaxUsize?
-      return nil if value == Int32::MAX || value < 0
-
-      value = value
-      previous_def
-    end
-
     def initialize(@value : Int32)
+      raise ArgumentError.new("match offset must be non-negative") if @value < 0
     end
 
     def <=>(other : self) : Int32
@@ -256,6 +343,32 @@ module Regex::Automata
     getter has_prefilter : Bool
 
     def initialize(@premultiplied : Bool = false, @has_empty : Bool = false, @has_byte_classes : Bool = true, @is_anchored : Bool = false, @is_leftmost : Bool = false, @is_utf8 : Bool = false, @is_always_start_anchored : Bool = false, @has_prefilter : Bool = false)
+    end
+
+    def to_u32 : UInt32
+      value = 0_u32
+      value |= 1_u32 if @premultiplied
+      value |= 1_u32 << 1 if @has_empty
+      value |= 1_u32 << 2 if @has_byte_classes
+      value |= 1_u32 << 3 if @is_anchored
+      value |= 1_u32 << 4 if @is_leftmost
+      value |= 1_u32 << 5 if @is_utf8
+      value |= 1_u32 << 6 if @has_prefilter
+      value |= 1_u32 << 7 if @is_always_start_anchored
+      value
+    end
+
+    def self.from_u32(value : UInt32) : DFAFlags
+      new(
+        premultiplied: (value & 1_u32) != 0,
+        has_empty: (value & (1_u32 << 1)) != 0,
+        has_byte_classes: (value & (1_u32 << 2)) != 0,
+        is_anchored: (value & (1_u32 << 3)) != 0,
+        is_leftmost: (value & (1_u32 << 4)) != 0,
+        is_utf8: (value & (1_u32 << 5)) != 0,
+        has_prefilter: (value & (1_u32 << 6)) != 0,
+        is_always_start_anchored: (value & (1_u32 << 7)) != 0
+      )
     end
   end
 end

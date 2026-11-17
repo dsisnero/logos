@@ -135,3 +135,205 @@ At the current project state, remaining `partial` rows in the inventories are la
   traits mapping to Crystal mixins or typed generics
 
 That distinction should be preserved when updating manifests.
+
+## Executable Rust output comparison
+
+Run `python3 scripts/check_hir_output_parity.py --rust-tests` to run the 147
+vendored default-feature unit tests, compile the pinned Rust
+crate and Crystal oracle, extract every literal `t`/`t_bytes` call from
+`src/hir/translate.rs`, and compare 316 exact HIR display outputs. The script
+uses `rustc` directly, requires no registry downloads, and writes all build
+artifacts under `temp/hir-parity/`. Its source revision check prevents an
+unreviewed vendor refresh from silently changing expected outputs.
+
+`spec/fixtures/hir_translate.tsv` records the Rust expectations as hexadecimal
+UTF-8 to preserve embedded whitespace and control characters. Regenerate only
+with `python3 scripts/check_hir_output_parity.py --write-fixture`; never derive
+expected values from Crystal. `make test` exercises every fixture. Independent
+structural expectations in `spec/hir_alternation_spec.cr` additionally verify
+the complete eight-case Rust `smart_alternation` matrix and byte/Unicode edges.
+
+Run `python3 scripts/check_hir_output_parity.py --properties` to compare 457
+literal translator and analysis-helper inputs plus eight length-boundary cases
+across all twelve HIR property fields. `spec/fixtures/hir_properties.tsv` contains the Rust snapshots; regenerate
+with `--properties --write-fixture`. The property specs run with `make test`.
+
+This is evidence for the extracted cases, not a claim that dynamic fixtures,
+all direct-constructor property assertions, or all support-module assertions were audited.
+The remaining audit is tracked in `plans/parity.md`.
+
+Inventory statuses are `ported`, `partial`, `missing`, `in_progress`, `skipped`,
+and `intentional_divergence`. Earlier `done`/`not_applicable` labels have been
+migrated; mappings and non-port rationales remain curated.
+
+HIR and Properties length results use `UInt64?` to match the pinned Rust build’s
+64-bit `usize`: minimum lengths saturate, and maximum lengths become `nil` on
+overflow. Class-local length helpers remain small integer byte counts.
+
+## HIR construction and complete translator runtime audit
+
+Run `python3 scripts/check_hir_construction_parity.py` to compile a temporary
+instrumented copy of the pinned Rust source and execute all 47 default-feature
+translator tests, preserving their original assertions. A separate Rust
+characterization test supplies constructor and property-union compositions.
+No vendored files are modified and no registry downloads are needed.
+
+The committed fixtures contain 565 translator calls, 444 constructor
+compositions, and 144 standalone property unions. Crystal compares exact node kinds and nesting, literal bytes, effective
+class intervals, capture indices/names, repetition bounds/greediness, display,
+and all twelve property fields. Error cases compare kind and complete primary
+span positions. The three manually constructed AST regressions are reconstructed
+as AST nodes; the fuzz-match case retains its verbose parser configuration.
+
+`plans/inventory/rust_hir_assertion_audit.tsv` maps all 545 upstream assertion
+locations: 537 execute under the default Unicode features and eight belong to
+six feature-disabled tests. It also maps the two no-panic fuzz calls to complete
+runtime snapshots. Unaccounted assertions fail the audit instead of becoming
+implicit skips. Disabled Unicode build modes remain excluded from this phase;
+Crystal supplies its Unicode tables unconditionally.
+
+Regenerate expectations only with
+`python3 scripts/check_hir_construction_parity.py --write-fixture`; Rust tests
+must pass before expectations are written. Artifacts and logs stay under
+`temp/hir-construction/`. Both new fixture specs run with `make test` without
+requiring Rust. The constructor recipes are characterization cases, not a claim
+that all arbitrary HIR trees have been enumerated.
+
+Use `Hir::Hir.character_class` for Rust-equivalent smart class construction from
+concrete byte/Unicode classes or the `Hir::Class` wrapper. `Hir::Hir.new(Node)`
+remains a raw wrapper. Smart construction lowers singleton classes to literals
+and empty classes to the byte fail node; repetition simplification uses the
+child's maximum length, including captured empty expressions.
+
+### Unicode tables and character-class assertion audit
+
+```bash
+python3 scripts/check_class_unicode_parity.py
+python3 scripts/sync_unicode_ranges.py
+```
+
+The class/Unicode oracle copies the pinned Rust source under `temp/`, preserves
+and executes all enabled class and Unicode test assertions, and captures raw
+constructor inputs plus complete operation results. Additional native cases
+exercise scalar boundaries, byte conversion, complement folding, and internal
+folded-state sequences. The audit ledger records every native assertion and the
+three unavailable feature-mode contracts individually.
+
+The fixture contains every Unicode 16.0.0 range-table entry, property alias,
+property-value alias, and simple-case-fold mapping. Every alias query is checked
+through the direct Unicode helper and through parsing, comparing full intervals
+or exact error kinds and spans. Specs also verify table key inventories and
+walk every valid scalar through the stateful simple-case folder.
+
+To intentionally regenerate expectations from a passing native run:
+
+```bash
+python3 scripts/check_class_unicode_parity.py --write-fixture --rust-only
+python3 scripts/sync_unicode_ranges.py --write
+python3 scripts/check_class_unicode_parity.py
+```
+
+The sync script regenerates Crystal range constants from the Rust fixture;
+it never reads Crystal results to establish expected data. Changes to the
+pinned upstream revision require a separately reviewed inventory refresh.
+
+### Literal extraction and UTF-8 assertion audit
+
+```bash
+python3 scripts/check_literal_utf8_parity.py
+```
+
+The oracle runs all 20 original literal/UTF-8 Rust tests and three native
+characterization tests in a temporary source copy. It checks the assertion
+ledger, compares freshly captured expectations with the committed fixture,
+then runs the focused Crystal specs. The 7,524 fixture cases preserve literal
+bytes, order, exactness, sequence metadata, consumed operands, extraction
+configuration and limits, all byte ranks, and ordered UTF-8 range/reset output.
+Both languages also verify exact encodings across every valid Unicode scalar
+and retain the upstream surrogate-range loop.
+
+To regenerate expectations after a reviewed upstream change:
+
+```bash
+python3 scripts/check_literal_utf8_parity.py --write-fixture --rust-only
+python3 scripts/check_literal_utf8_parity.py
+```
+
+Expectations are written only after the native tests pass, never from Crystal
+results. Generated sources and logs stay under `temp/literal-utf8-parity/`.
+
+### Diagnostics, printers, and visitor contracts
+
+```bash
+python3 scripts/check_diagnostic_parity.py
+```
+
+This oracle runs the 21 original Rust error/printer tests with their assertions
+intact, plus native characterization tests for diagnostics, class ranges,
+Unicode whitespace, all error-kind messages, raw byte literals, writer failures,
+and visitor contracts. It replays parser/translator test inputs through the
+pinned Rust parsers to obtain formatted diagnostics, including primary and
+auxiliary positions. Explicit formatter cases verify that span line/column
+metadata controls caret placement, independently of byte offsets.
+
+Visitor modules contain no upstream unit tests. The native characterization
+records every hook in expression and class-set traversals and injects an error
+at every fallible hook occurrence, including `finish`. Rust uses `Result` and
+Crystal uses exceptions; both must stop at the same event without later hooks.
+Writers fail at each byte boundary and compare both the error and emitted bytes.
+Printing and traversal also run on directly constructed 50,000-level trees.
+Crystal printers use the iterative visitor path to preserve constant stack use.
+
+All expectations come from Rust. To intentionally regenerate them:
+
+```bash
+python3 scripts/check_diagnostic_parity.py --write-fixture --rust-only
+python3 scripts/check_diagnostic_parity.py
+```
+
+Temporary sources and logs stay under `temp/diagnostic-parity/`. The assertion
+ledger maps every assertion in the original error/printer unit tests; visitor
+characterizations are labeled separately. AST error enums retain kind identity;
+`AST::Error#nest_limit` and `#kind_message` preserve the nesting-limit payload
+and its formatted text.
+
+### Public APIs and complete assertion reconciliation
+
+```bash
+python3 scripts/check_public_api_parity.py
+```
+
+This gate runs all 147 original default-feature Rust tests in a disposable
+instrumented source copy and checks the 25 remaining assertion locations.
+Five direct test ports retain the original assertions; the negative minimum
+length helper covers all ten upstream inputs. Another 306 native snapshots
+check all 32 singleton LookSet bits, mixed masks, exact debug output, native
+representation round-trips, character helpers across U+0000–U+00FF, and byte/Unicode range lengths.
+Full-byte range length arithmetic widens before adding one, returning 256
+without endpoint overflow.
+`LookSet.full` includes reserved bits: its length is 32 although its iterator
+currently yields 18 known assertions.
+
+`rust_assertion_audit.tsv` indexes every assertion macro location in the pinned
+`#[cfg(test)]` modules, joining the six feature ledgers. This is a location
+count, not a count of runtime invocations or assertions in generated fixtures.
+The scanner deliberately uses the existing regex backend. Feature exclusions
+and Rust layout/Drop exclusions point to `rust_test_configuration.tsv`, which
+matches all 158 inventory identities against the actual native test list:
+147 default-feature tests (144 ported and three Rust runtime/layout exclusions)
+and 11 tests requiring omitted Unicode tables. Crystal always ships those
+tables. Visitor modules have no original unit tests; their separate native
+characterizations remain in the diagnostic ledger.
+
+To regenerate after reviewing changes to the pinned source or audit evidence:
+
+```bash
+python3 scripts/check_public_api_parity.py --write-fixture --rust-only
+python3 scripts/check_public_api_parity.py
+```
+
+The complete index checks source locations and evidence paths. Run the earlier
+feature oracles to independently revalidate their detailed fixtures; the index
+alone does not establish behavior from an inventory status. Rust enum/trait
+representation differences are recorded as `intentional_divergence`, with
+precise tested contracts and limits, rather than outstanding behavioral gaps.

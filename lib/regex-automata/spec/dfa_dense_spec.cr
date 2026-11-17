@@ -8,6 +8,449 @@ private def write_u32_le(bytes : Bytes, offset : Int32, value : UInt32) : Nil
 end
 
 describe "DFA::Dense" do
+  it "enumerates dense and sparse materialized state transitions" do
+    state = Regex::Automata::DFA::State.new(Regex::Automata::StateID.new(7), 5)
+    state.id.should eq(Regex::Automata::StateID.new(7))
+    state.set_transition(1, Regex::Automata::StateID.new(3))
+    state.set_transition(2, Regex::Automata::StateID.new(3))
+    state.set_transition(4, Regex::Automata::StateID.new(4))
+
+    state.transitions.should eq([
+      {0, Regex::Automata::DFA::DEAD_STATE_ID},
+      {1, Regex::Automata::StateID.new(3)},
+      {2, Regex::Automata::StateID.new(3)},
+      {3, Regex::Automata::DFA::DEAD_STATE_ID},
+      {4, Regex::Automata::StateID.new(4)},
+    ])
+    state.sparse_transitions.should eq([
+      {1, 2, Regex::Automata::StateID.new(3)},
+      {4, 4, Regex::Automata::StateID.new(4)},
+    ])
+  end
+
+  it "returns a dense match state pattern slice" do
+    dfa = Regex::Automata::DFA::DFA.builder
+      .configure { |config| config.match_kind(Regex::Automata::MatchKind::All) }
+      .build_many(["a", "a"])
+    state = dfa.next_eoi_state(dfa.next_state(dfa.start, 'a'.ord.to_u8))
+    dfa.pattern_id_slice(state).should eq([Regex::Automata::PatternID.new(0), Regex::Automata::PatternID.new(1)])
+  end
+
+  it "reconstructs the dense match-state pattern map" do
+    dfa = Regex::Automata::DFA::DFA.builder
+      .configure { |config| config.match_kind(Regex::Automata::MatchKind::All) }
+      .build_many(["a", "a"])
+    state = dfa.next_eoi_state(dfa.next_state(dfa.start, 'a'.ord.to_u8))
+
+    dfa.pattern_map[state].should eq([Regex::Automata::PatternID.new(0), Regex::Automata::PatternID.new(1)])
+    dfa.pattern_map.keys.each { |id| dfa.is_match_state?(id).should be_true }
+  end
+
+  it "writes the dense match-state wire payload" do
+    states = [0.as(Int32?)]
+    slices = [{0, 2}] of Tuple(Int32, Int32)
+    ids = [Regex::Automata::PatternID.new(0), Regex::Automata::PatternID.new(1)]
+    matches = Regex::Automata::MatchStates.new(states, slices, ids, 2, nil)
+    bytes = Bytes.new(matches.write_to_len)
+
+    matches.write_to(bytes).should eq(matches.write_to_len)
+    bytes.size.should eq(28)
+    bytes[0, 4].should eq(Bytes[1, 0, 0, 0])
+    bytes[12, 4].should eq(Bytes[2, 0, 0, 0])
+    bytes[24, 4].should eq(Bytes[1, 0, 0, 0])
+    restored, read = Regex::Automata::MatchStates.from_bytes(bytes)
+    read.should eq(bytes.size)
+    restored.slices.should eq(matches.slices)
+    restored.pattern_ids.should eq(matches.pattern_ids)
+  end
+
+  it "rebuilds dense match metadata from a state map" do
+    dfa = Regex::Automata::DFA::DFA.new_many(["a", "a"])
+    rebuilt = Regex::Automata::MatchStates.from_map(dfa.pattern_map, dfa.pattern_len, dfa.tt.not_nil!)
+
+    rebuilt.to_map.should eq(dfa.pattern_map)
+    rebuilt.pattern_len.should eq(dfa.pattern_len)
+  end
+
+  it "updates dense match metadata from a state map" do
+    dfa = Regex::Automata::DFA::DFA.new_many(["a", "b"])
+    state = dfa.next_eoi_state(dfa.next_state(dfa.start, 'a'.ord.to_u8))
+    map = dfa.pattern_map
+    map[state] = [Regex::Automata::PatternID.new(1)]
+
+    dfa.set_pattern_map(map)
+    dfa.pattern_id_slice(state).should eq([Regex::Automata::PatternID.new(1)])
+    dfa.states[dfa.to_index(state)].match.should eq([Regex::Automata::PatternID.new(1)])
+  end
+
+  it "persists explicit dense special-state updates" do
+    dfa = Regex::Automata::DFA::DFA.new("abc")
+    replacement = dfa.special.remap { Regex::Automata::StateID.new(0) }
+
+    dfa.update_special { replacement }
+    dfa.special.max.should eq(Regex::Automata::StateID.new(0))
+  end
+
+  it "remaps dense transitions and starts without moving state rows" do
+    dfa = Regex::Automata::DFA::DFA.new("abc")
+    start = dfa.start
+    replacement = dfa.quit_id
+
+    dfa.remap { |id| id == start ? replacement : id }
+    dfa.start.should eq(replacement)
+    dfa.trans.includes?(replacement).should be_true
+  end
+
+  it "remaps one dense state row" do
+    dfa = Regex::Automata::DFA::DFA.new("abc")
+    start = dfa.start
+    dfa.remap_state(start) { dfa.quit_id }
+
+    dfa.next_state(start, 'a'.ord.to_u8).should eq(dfa.quit_id)
+  end
+
+  it "sets dense byte and EOI transitions" do
+    dfa = Regex::Automata::DFA::DFA.new("abc")
+    start = dfa.start
+    target = dfa.quit_id
+
+    dfa.set_transition(start, Regex::Automata::Unit.u8('a'.ord.to_u8), target)
+    dfa.set_transition(start, Regex::Automata::Unit.eoi(dfa.byte_classes), target)
+    dfa.next_state(start, 'a'.ord.to_u8).should eq(target)
+    dfa.next_eoi_state(start).should eq(target)
+  end
+
+  it "sets validated dense start states" do
+    dfa = Regex::Automata::DFA::DFA.new("abc")
+    target = dfa.next_state(dfa.start, 'a'.ord.to_u8)
+
+    dfa.set_start_state(Regex::Automata::Anchored::No, Regex::Automata::Start::LineLF, target)
+    dfa.st.start(Regex::Automata::Anchored::No, Regex::Automata::Start::LineLF).should eq(target)
+    dfa.is_start_state?(target).should be_true
+  end
+
+  it "recomputes dense universal start states after bulk updates" do
+    dfa = Regex::Automata::DFA::DFA.new("abc")
+    target = dfa.next_state(dfa.start, 'a'.ord.to_u8)
+    dfa.st.unanchored_states.each_key { |start| dfa.st.unanchored_states[start] = target }
+
+    dfa.set_universal_starts
+    dfa.universal_start_state(Regex::Automata::Anchored::No).should eq(target)
+  end
+
+  it "adds an empty dense state across companion storage" do
+    dfa = Regex::Automata::DFA::DFA.new("abc")
+    old_len = dfa.state_len
+    id = dfa.add_empty_state
+
+    dfa.state_len.should eq(old_len + 1)
+    dfa.states.last.id.should eq(id)
+    dfa.next_eoi_state(id).should eq(Regex::Automata::DFA::DEAD_STATE_ID)
+  end
+
+  it "swaps dense transition rows without moving state metadata" do
+    dfa = Regex::Automata::DFA::DFA.new("abc")
+    first = dfa.start
+    second = dfa.next_state(first, 'a'.ord.to_u8)
+    first_byte = dfa.next_state(first, 'a'.ord.to_u8)
+    first_eoi = dfa.next_eoi_state(first)
+    second_byte = dfa.next_state(second, 'b'.ord.to_u8)
+    second_eoi = dfa.next_eoi_state(second)
+    first_patterns = dfa.states[dfa.to_index(first)].match.dup
+    second_patterns = dfa.states[dfa.to_index(second)].match.dup
+
+    dfa.swap_states(first, second)
+
+    dfa.next_state(first, 'b'.ord.to_u8).should eq(second_byte)
+    dfa.next_eoi_state(first).should eq(second_eoi)
+    dfa.next_state(second, 'a'.ord.to_u8).should eq(first_byte)
+    dfa.next_eoi_state(second).should eq(first_eoi)
+    dfa.states[dfa.to_index(first)].match.should eq(first_patterns)
+    dfa.states[dfa.to_index(second)].match.should eq(second_patterns)
+  end
+
+  it "computes dense accelerators only when enabled" do
+    accelerated = Regex::Automata::DFA::DFA.new("foo")
+    disabled = Regex::Automata::DFA::Builder.new
+      .configure { |config| config.accelerate(false) }
+      .build("foo")
+
+    accelerated.states.any? { |state| accelerated.is_accel_state?(state.id) }.should be_true
+    disabled.states.any? { |state| disabled.is_accel_state?(state.id) }.should be_false
+    accelerated.states
+      .map { |state| accelerated.accelerator(state.id).to_a }
+      .find { |bytes| !bytes.empty? }
+      .should eq(['f'.ord.to_u8])
+  end
+
+  it "retains the dense start byte map from the NFA look matcher" do
+    dfa = Regex::Automata::DFA::Builder.new
+      .thompson { |config| config.look_matcher(Regex::Automata::LookMatcher.new('a'.ord.to_u8)) }
+      .build("foo")
+
+    dfa.start_map.get('a'.ord.to_u8).should eq(Regex::Automata::Start::CustomLineTerminator)
+    dfa.start_map.get('b'.ord.to_u8).should eq(Regex::Automata::Start::WordByte)
+    roundtrip = Regex::Automata::DFA::DFA.from_bytes(dfa.to_bytes_native_endian[0])[0]
+    roundtrip.start_map.get('a'.ord.to_u8).should eq(Regex::Automata::Start::CustomLineTerminator)
+  end
+
+  it "truncates trailing dense state storage" do
+    dfa = Regex::Automata::DFA::DFA.new("abc")
+    original_len = dfa.state_len
+    dfa.add_empty_state
+
+    dfa.truncate_states(original_len)
+    dfa.state_len.should eq(original_len)
+    dfa.states.size.should eq(original_len)
+  end
+
+  it "iterates dense start states in unanchored then anchored order" do
+    table = Regex::Automata::StartTable.new(
+      Regex::Automata::StartKind::Both,
+      Regex::Automata::StateID.new(2),
+      Regex::Automata::StateID.new(4)
+    )
+    starts = table.iter
+    starts.size.should eq(12)
+    table.memory_usage.should eq(12 * sizeof(Regex::Automata::StateID))
+    starts.first.should eq({Regex::Automata::StateID.new(2), Regex::Automata::Anchored::No, Regex::Automata::Start::NonWordByte, nil})
+    starts[6].should eq({Regex::Automata::StateID.new(4), Regex::Automata::Anchored::Yes, Regex::Automata::Start::NonWordByte, nil})
+    table.table.should eq(starts.map(&.[0]))
+    table.dead.should eq(Regex::Automata::DFA::DEAD_STATE_ID)
+  end
+
+  it "creates dead dense start tables with optional per-pattern rows" do
+    table = Regex::Automata::StartTable.dead(
+      Regex::Automata::StartKind::Both,
+      Regex::Automata::LookMatcher.new('a'.ord.to_u8),
+      2
+    )
+
+    table.table.all? { |id| id == Regex::Automata::StateID::ZERO }.should be_true
+    table.pattern_states.size.should eq(2)
+    table.start_map.get('a'.ord.to_u8).should eq(Regex::Automata::Start::CustomLineTerminator)
+  end
+
+  it "writes the standalone dense start-table payload" do
+    table = Regex::Automata::StartTable.new(
+      Regex::Automata::StartKind::Both,
+      Regex::Automata::StateID.new(2),
+      Regex::Automata::StateID.new(4)
+    )
+    bytes = Bytes.new(table.write_to_len)
+
+    table.write_to(bytes).should eq(table.write_to_len)
+    bytes.size.should eq(324)
+    bytes[0, 4].should eq(Bytes[0, 0, 0, 0])
+    bytes[260, 4].should eq(Bytes[6, 0, 0, 0])
+    bytes[264, 4].should eq(Bytes[255, 255, 255, 255])
+    bytes[276, 4].should eq(Bytes[2, 0, 0, 0])
+    restored, read = Regex::Automata::StartTable.from_bytes(bytes)
+    read.should eq(bytes.size)
+    restored.table.should eq(table.table)
+    restored.start_map.get('a'.ord.to_u8).should eq(Regex::Automata::Start::WordByte)
+  end
+
+  it "owns an independent dense start-table snapshot" do
+    table = Regex::Automata::StartTable.new(
+      Regex::Automata::StartKind::Both,
+      Regex::Automata::StateID.new(2),
+      Regex::Automata::StateID.new(4)
+    )
+
+    copy = table.to_owned
+    copy.unanchored_states[Regex::Automata::Start::Text] = Regex::Automata::StateID.new(9)
+    table.start(Regex::Automata::Anchored::No, Regex::Automata::Start::Text).should eq(Regex::Automata::StateID.new(2))
+    copy.start(Regex::Automata::Anchored::No, Regex::Automata::Start::Text).should eq(Regex::Automata::StateID.new(9))
+  end
+
+  it "updates materialized dense start states" do
+    table = Regex::Automata::StartTable.new(
+      Regex::Automata::StartKind::Both,
+      Regex::Automata::StateID.new(2),
+      Regex::Automata::StateID.new(4)
+    )
+    id = Regex::Automata::StateID.new(8)
+
+    table.set_start(Regex::Automata::Anchored::No, Regex::Automata::Start::LineLF, id)
+    table.start(Regex::Automata::Anchored::No, Regex::Automata::Start::LineLF).should eq(id)
+    table.universal_start(Regex::Automata::Anchored::No).should be_nil
+  end
+
+  it "validates dense start states against a transition table" do
+    transitions = Regex::Automata::TransitionTable.minimal(Regex::Automata::ByteClasses.empty)
+    table = Regex::Automata::StartTable.new(
+      Regex::Automata::StartKind::Both,
+      transitions.to_state_id(0),
+      transitions.to_state_id(1)
+    )
+
+    table.validate(transitions) { false }.should be_nil
+    table.validate(transitions) { |id| id == transitions.to_state_id(1) }.not_nil!.message.should eq("start states cannot be match states")
+  end
+
+  it "exposes dense start states through the DFA" do
+    dfa = Regex::Automata::DFA::DFA.new("abc")
+    dfa.starts.size.should eq(12)
+    dfa.starts.first[1].should eq(Regex::Automata::Anchored::No)
+    dfa.starts[6][1].should eq(Regex::Automata::Anchored::Yes)
+  end
+
+  it "enumerates dense states in transition-table order" do
+    dfa = Regex::Automata::DFA::DFA.new("abc")
+    dfa.states.size.should eq(dfa.state_len)
+    dfa.states.each_with_index do |state, index|
+      state.id.should eq(dfa.to_state_id(index))
+    end
+  end
+
+  it "exposes the dense transition table in state-row order" do
+    dfa = Regex::Automata::DFA::DFA.new("abc")
+    dfa.trans.size.should eq(dfa.state_len * dfa.stride)
+    dfa.trans.first.should eq(Regex::Automata::DFA::DEAD_STATE_ID)
+  end
+
+  it "views logical transition-table states without stride padding" do
+    classes = Regex::Automata::ByteClasses.empty
+    table = Regex::Automata::TransitionTable.minimal(classes)
+    dead = table.to_state_id(0)
+    quit = table.to_state_id(1)
+    table.set_eoi_transition(dead, quit)
+
+    state = table.state(dead)
+    state.id.should eq(dead)
+    state.transitions.size.should eq(table.alphabet_len)
+    state.transitions.last.should eq({table.alphabet_len - 1, quit})
+    table.states.map(&.id).should eq([dead, quit])
+  end
+
+  it "round trips dense DFA flag bits" do
+    flags = Regex::Automata::DFAFlags.new(has_empty: true, is_utf8: true, is_always_start_anchored: true)
+    decoded = Regex::Automata::DFAFlags.from_u32(flags.to_u32)
+    decoded.has_empty.should be_true
+    decoded.is_utf8.should be_true
+    decoded.is_always_start_anchored.should be_true
+    decoded.is_anchored.should be_false
+  end
+
+  it "requires premultiplied IDs for transition-table validity" do
+    classes = Regex::Automata::ByteClasses.empty
+    table = Regex::Automata::TransitionTable.new(classes, 2, 2)
+
+    table.is_valid(Regex::Automata::StateID.new(0)).should be_true
+    table.is_valid(Regex::Automata::StateID.new(4)).should be_true
+    table.is_valid(Regex::Automata::StateID.new(1)).should be_false
+    table.is_valid(Regex::Automata::StateID.new(5)).should be_false
+    table.is_valid(Regex::Automata::StateID.new(8)).should be_false
+  end
+
+  it "rejects malformed dense transition-table bytes" do
+    expect_raises(Regex::Automata::DeserializeError) do
+      Regex::Automata::TransitionTable.from_bytes(Bytes.new(7))
+    end
+
+    classes = Regex::Automata::ByteClasses.empty
+    table = Regex::Automata::TransitionTable.new(classes, 1, 2)
+    source = table.to_bytes
+    source[4] = 0_u8
+    source[5] = 0_u8
+    source[6] = 0_u8
+    source[7] = 0_u8
+    expect_raises(Regex::Automata::DeserializeError) do
+      Regex::Automata::TransitionTable.from_bytes(source)
+    end
+
+    source = table.to_bytes
+    source[264] = 1_u8
+    expect_raises(Regex::Automata::DeserializeError) do
+      Regex::Automata::TransitionTable.from_bytes(source)
+    end
+  end
+
+  it "round trips dense transition-table bytes from an unaligned slice" do
+    classes = Regex::Automata::ByteClasses.empty
+    table = Regex::Automata::TransitionTable.new(classes, 1, 2)
+    table.set_transition_by_class(Regex::Automata::StateID.new(0), 0, Regex::Automata::StateID.new(2))
+
+    encoded = table.to_bytes
+    padded = Bytes.new(encoded.size + 1)
+    encoded.copy_to(padded[1, encoded.size])
+
+    decoded = Regex::Automata::TransitionTable.from_bytes(padded[1, encoded.size])
+    decoded.next_state_by_class(Regex::Automata::StateID.new(0), 0).should eq(Regex::Automata::StateID.new(2))
+  end
+
+  it "builds and truncates owned dense transition rows" do
+    table = Regex::Automata::TransitionTable.minimal(Regex::Automata::ByteClasses.empty)
+
+    table.len.should eq(2)
+    table.next_state_by_class(Regex::Automata::StateID.new(0), 0).should eq(Regex::Automata::DFA::DEAD_STATE_ID)
+    table.next_state_by_class(Regex::Automata::StateID.new(2), 0).should eq(Regex::Automata::DFA::DEAD_STATE_ID)
+
+    added = table.add_empty_state
+    added.should eq(Regex::Automata::StateID.new(4))
+    table.len.should eq(3)
+    table.truncate(2)
+    table.len.should eq(2)
+    table.is_valid(added).should be_false
+  end
+
+  it "validates and serializes owned dense transition mutations" do
+    table = Regex::Automata::TransitionTable.minimal(Regex::Automata::ByteClasses.empty)
+    dead = Regex::Automata::DFA::DEAD_STATE_ID
+    quit = Regex::Automata::StateID.new(2)
+
+    table.set(dead, Regex::Automata::Unit.eoi(1), quit)
+    table.next_eoi_state(dead).should eq(quit)
+    expect_raises(ArgumentError, /invalid 'to' state/) do
+      table.set(dead, Regex::Automata::Unit.eoi(1), Regex::Automata::StateID.new(1))
+    end
+
+    bytes = Bytes.new(table.write_to_len)
+    table.write_to(bytes).should eq(bytes.size)
+    Regex::Automata::TransitionTable.from_bytes(bytes).next_eoi_state(dead).should eq(quit)
+    expect_raises(Regex::Automata::SerializeError) do
+      table.write_to(Bytes.new(bytes.size - 1))
+    end
+
+    table.set_transition_by_class(dead, 0, quit)
+    table.swap(dead, quit)
+    table.next_state_by_class(quit, 0).should eq(quit)
+    table.remap(quit) { dead }
+    table.next_state_by_class(quit, 0).should eq(dead)
+    table.prev_state_id(quit).should eq(dead)
+    table.next_state_id(dead).should eq(quit)
+
+    copy = table.to_owned
+    copy.table_mut[0] = quit
+    table.table[0].should eq(dead)
+  end
+
+  it "validates and copies flattened dense match states" do
+    states = Array(Regex::Automata::DFA::State).new
+    dead = Regex::Automata::DFA::DEAD_STATE_ID
+    states << Regex::Automata::DFA::State.new(dead, 2)
+    matched = Regex::Automata::DFA::State.new(Regex::Automata::StateID.new(1), 2)
+    matched.add_match(Regex::Automata::PatternID.new(1))
+    states << matched
+
+    matches = Regex::Automata::MatchStates.from_states(states, nil, 2)
+    matches.match_state?(Regex::Automata::StateID.new(1)).should be_true
+    matches.len.should eq(1)
+    matches.pattern_len(0).should eq(1)
+    matches.pattern_id(0, 0).should eq(Regex::Automata::PatternID.new(1))
+    matches.pattern_id_slice(0).should eq([Regex::Automata::PatternID.new(1)])
+    matches.pattern_ids.should eq([Regex::Automata::PatternID.new(1)])
+    matches.slices.should eq([{0, 1}])
+    matches.match_pattern(Regex::Automata::StateID.new(1), 0).should eq(Regex::Automata::PatternID.new(1))
+    matches.memory_usage.should eq(12)
+    matches.validate.should be_nil
+
+    copy = matches.to_owned
+    copy.object_id.should_not eq(matches.object_id)
+    copy.match_pattern(Regex::Automata::StateID.new(1), 0).should eq(Regex::Automata::PatternID.new(1))
+  end
+
   it "exposes dense config defaults and upstream-style getters" do
     config = Regex::Automata::DFA::DFA.config
 
@@ -51,6 +494,140 @@ describe "DFA::Dense" do
     config.get_determinize_size_limit.should eq(456_i64)
   end
 
+  it "reports whether per-pattern starts were materialized" do
+    ordinary = Regex::Automata::DFA::DFA.new_many(["abc", "def"])
+    ordinary.starts_for_each_pattern?.should be_false
+
+    specialized = Regex::Automata::DFA::DFA.builder
+      .configure { |config| config.starts_for_each_pattern(true) }
+      .build_many(["abc", "def"])
+    specialized.starts_for_each_pattern?.should be_true
+  end
+
+  it "merges dense config overrides without sharing the quit set" do
+    prefilter = Regex::Automata::Prefilter.new(
+      Regex::Automata::MatchKind::LeftmostFirst,
+      ["base"]
+    ).not_nil!
+    override_prefilter = Regex::Automata::Prefilter.new(
+      Regex::Automata::MatchKind::LeftmostFirst,
+      ["override"]
+    ).not_nil!
+    base = Regex::Automata::DFA::DFA.config
+      .accelerate(false)
+      .prefilter(prefilter)
+      .match_kind(Regex::Automata::MatchKind::All)
+      .quit('x'.ord.to_u8, true)
+      .dfa_size_limit(123_i64)
+    merged = base.overwrite(
+      Regex::Automata::DFA::DFA.config
+        .accelerate(true)
+        .prefilter(override_prefilter)
+        .start_kind(Regex::Automata::StartKind::Anchored)
+        .determinize_size_limit(456_i64)
+    )
+
+    merged.get_accelerate.should be_true
+    merged.get_prefilter.should be(override_prefilter)
+    merged.get_match_kind.should eq(Regex::Automata::MatchKind::All)
+    merged.get_starts.should eq(Regex::Automata::StartKind::Anchored)
+    merged.get_quit('x'.ord.to_u8).should be_true
+    merged.get_dfa_size_limit.should eq(123_i64)
+    merged.get_determinize_size_limit.should eq(456_i64)
+
+    base.quit('y'.ord.to_u8, true)
+    merged.get_quit('y'.ord.to_u8).should be_false
+  end
+
+  it "preserves explicit false options when overwriting dense config" do
+    base = Regex::Automata::DFA::DFA.config
+      .accelerate(true)
+      .minimize(true)
+      .starts_for_each_pattern(true)
+      .byte_classes(true)
+      .unicode_word_boundary(true)
+      .specialize_start_states(true)
+    merged = base.overwrite(
+      Regex::Automata::DFA::DFA.config
+        .accelerate(false)
+        .minimize(false)
+        .starts_for_each_pattern(false)
+        .byte_classes(false)
+        .unicode_word_boundary(false)
+        .specialize_start_states(false)
+    )
+
+    merged.get_accelerate.should be_false
+    merged.get_minimize.should be_false
+    merged.get_starts_for_each_pattern.should be_false
+    merged.get_byte_classes.should be_false
+    merged.get_unicode_word_boundary.should be_false
+    merged.get_specialize_start_states.should be_false
+  end
+
+  it "lets an explicit nil prefilter override an attached forward prefilter for reverse DFA construction" do
+    prefilter = Regex::Automata::Prefilter.new(
+      Regex::Automata::MatchKind::LeftmostFirst,
+      ["needle"]
+    ).not_nil!
+    base = Regex::Automata::DFA::DFA.config.prefilter(prefilter)
+    merged = base.overwrite(Regex::Automata::DFA::DFA.config.prefilter(nil))
+    merged.get_prefilter.should be_nil
+  end
+
+  it "honors quit bytes with caller-supplied byte classes" do
+    nfa = Regex::Automata::NFA::NFA.new("abc")
+    config = Regex::Automata::DFA::DFA.config.quit('x'.ord.to_u8, true)
+    dfa = Regex::Automata::DFA::Builder.new(
+      config,
+      nfa,
+      nil,
+      Regex::Automata::ByteClasses.identity
+    ).build
+
+    result = dfa.try_search_fwd(Regex::Automata::Input.new("abx"))
+    result.should be_a(Regex::Automata::MatchError)
+    result.as(Regex::Automata::MatchError).quit?.should be_true
+  end
+
+  it "derives dense byte classes from the retained NFA set and isolates quit bytes" do
+    # dense.rs::Builder::build_from_nfa clones the NFA ByteClassSet, then
+    # adds quit-byte boundaries before determinization.
+    nfa = Regex::Automata::NFA::NFA.new("abc")
+    quitset = Regex::Automata::ByteSet.new
+    quitset.add('x'.ord.to_u8)
+    expected_set = nfa.byte_class_set
+    expected_set.add_set(quitset)
+    expected = expected_set.byte_classes
+    original = nfa.byte_classes
+
+    dfa = Regex::Automata::DFA::Builder.from_nfa(
+      nfa,
+      Regex::Automata::DFA::DFA.config.quit('x'.ord.to_u8, true)
+    ).build
+
+    (0..255).each do |byte|
+      dfa.byte_classifier[byte].should eq(expected[byte])
+    end
+    dfa.byte_classifier.alphabet_len.should eq(expected.alphabet_len)
+    nfa.byte_classes.alphabet_len.should eq(original.alphabet_len)
+    dfa.byte_classifier['x'.ord].should_not eq(dfa.byte_classifier['y'.ord])
+    dfa.try_search_fwd(Regex::Automata::Input.new("aby")).should be_nil
+    dfa.try_search_fwd(Regex::Automata::Input.new("abx")).should eq(
+      Regex::Automata::MatchError.quit('x'.ord.to_u8, 2)
+    )
+
+    plain = Regex::Automata::DFA::Builder.from_nfa(nfa).build
+    (0..255).each do |byte|
+      plain.byte_classifier[byte].should eq(original[byte])
+    end
+    singleton = Regex::Automata::DFA::Builder.from_nfa(
+      nfa,
+      Regex::Automata::DFA::DFA.config.byte_classes(false)
+    ).build
+    singleton.byte_classifier.is_singleton.should be_true
+  end
+
   it "exposes builder and config convenience constructors" do
     dfa = Regex::Automata::DFA::DFA.builder
       .configure(Regex::Automata::DFA::DFA.config.start_kind(Regex::Automata::StartKind::Anchored))
@@ -58,6 +635,29 @@ describe "DFA::Dense" do
 
     dfa.start_state(Regex::Automata::StartConfig.new(nil, Regex::Automata::Anchored::No))
       .should be_a(Regex::Automata::UnsupportedAnchoredStartError)
+  end
+
+  it "merges successive dense builder configurations" do
+    dfa = Regex::Automata::DFA::Builder.new
+      .configure(Regex::Automata::DFA::DFA.config.byte_classes(false))
+      .configure(Regex::Automata::DFA::DFA.config.start_kind(Regex::Automata::StartKind::Anchored))
+      .build("abc")
+
+    dfa.byte_classifier.is_singleton.should be_true
+    dfa.start_state(Regex::Automata::StartConfig.new(nil, Regex::Automata::Anchored::No))
+      .should be_a(Regex::Automata::UnsupportedAnchoredStartError)
+  end
+
+  it "preserves successive Thompson builder configurations" do
+    dfa = Regex::Automata::DFA::Builder.new
+      .thompson { |config| config.reverse(true) }
+      .thompson { |config| config.utf8(false) }
+      .syntax { |config| config.unicode(false).utf8(false) }
+      .build("(?-u:[\\xFF])")
+
+    dfa.try_search_rev(Regex::Automata::Input.new(Bytes[0xFF_u8])).should eq(
+      Regex::Automata::HalfMatch.must(0, 0)
+    )
   end
 
   it "builds dense DFAs through convenience constructors" do
@@ -126,11 +726,56 @@ describe "DFA::Dense" do
     dfa.get_prefilter.should be(prefilter)
     dfa.flags.has_prefilter.should be_true
     dfa.as_ref.should be(dfa)
-    dfa.to_owned.should be(dfa)
+    owned = dfa.to_owned
+    owned.should_not be(dfa)
+    owned.get_prefilter.should be(prefilter)
 
     dfa.set_prefilter(nil)
     dfa.get_prefilter.should be_nil
     dfa.flags.has_prefilter.should be_false
+    owned.get_prefilter.should be(prefilter)
+  end
+
+  it "preserves a pending leftmost match when a prefilter finds a later candidate" do
+    prefilter = Regex::Automata::Prefilter.new(
+      Regex::Automata::MatchKind::LeftmostFirst,
+      ["ab", "c"]
+    ).not_nil!
+    dfa = Regex::Automata::DFA::Builder.new
+      .configure(
+        Regex::Automata::DFA::DFA.config
+          .prefilter(prefilter)
+          .starts_for_each_pattern(true)
+      )
+      .build("(?:ab|c)*c")
+    input = Regex::Automata::Input.new("cabac")
+    expected = Regex::Automata::HalfMatch.must(0, 1)
+
+    dfa.try_search_fwd(input).should eq(expected)
+    dfa.to_sparse.try_search_fwd(input).should eq(expected)
+  end
+
+  it "restarts context-sensitive DFA searches at prefilter candidates" do
+    prefilter = Regex::Automata::Prefilter.new(
+      Regex::Automata::MatchKind::LeftmostFirst,
+      ["abc"]
+    ).not_nil!
+    dfa = Regex::Automata::DFA::Builder.new
+      .configure(
+        Regex::Automata::DFA::DFA.config
+          .prefilter(prefilter)
+          .specialize_start_states(true)
+      )
+      .build("(?-u:\\b)abc")
+    input = Regex::Automata::Input.new("xabc ").span(1...4)
+
+    # Restarting at offset 1 must retain the preceding `x`; otherwise the
+    # artificial beginning of the candidate span would incorrectly satisfy
+    # the word boundary.
+    dfa.try_search_fwd(input).should be_nil
+    state = Regex::Automata::OverlappingState.new
+    dfa.try_search_overlapping_fwd(input, state).should be_nil
+    state.get_match.should be_nil
   end
 
   it "reports DFA size-limit failures through BuildError" do
@@ -143,6 +788,20 @@ describe "DFA::Dense" do
     error.is_size_limit_exceeded.should be_true
   end
 
+  it "distinguishes dense size-limit failures from unsupported syntax" do
+    size_error = expect_raises(Regex::Automata::BuildError) do
+      Regex::Automata::DFA::Builder.new
+        .configure(Regex::Automata::DFA::DFA.config.dfa_size_limit(1_i64))
+        .build("abc")
+    end
+    size_error.is_size_limit_exceeded.should be_true
+
+    unsupported_error = expect_raises(Regex::Automata::BuildError) do
+      Regex::Automata::DFA::Builder.new.build("\\babc\\b")
+    end
+    unsupported_error.is_size_limit_exceeded.should be_false
+  end
+
   it "reports determinization scratch-limit failures through BuildError" do
     error = expect_raises(Regex::Automata::BuildError) do
       Regex::Automata::DFA::Builder.new
@@ -151,6 +810,34 @@ describe "DFA::Dense" do
     end
 
     error.is_size_limit_exceeded.should be_true
+    error.size_limit.should eq(1_i64)
+  end
+
+  it "classifies dense build failures like Rust's size-limit predicate" do
+    Regex::Automata::BuildError.unsupported_dfa_word_boundary_unicode.is_size_limit_exceeded.should be_false
+    Regex::Automata::BuildError.too_many_states.is_size_limit_exceeded.should be_true
+    Regex::Automata::BuildError.too_many_start_states.is_size_limit_exceeded.should be_true
+    Regex::Automata::BuildError.too_many_match_pattern_ids.is_size_limit_exceeded.should be_true
+    error = Regex::Automata::BuildError.dfa_exceeded_size_limit(42_i64)
+    error.size_limit.should eq(42_i64)
+    error.is_size_limit_exceeded.should be_true
+  end
+
+  it "wraps an NFA build failure without treating it as a DFA size failure" do
+    error = expect_raises(Regex::Automata::BuildError) do
+      Regex::Automata::DFA::Builder.new
+        .thompson { |config| config.nfa_size_limit(1_i64) }
+        .build("abc")
+    end
+
+    error.should_not be_a(Regex::Automata::NFA::BuildError)
+    error.is_size_limit_exceeded.should be_false
+    error.nfa_source.should be_a(Regex::Automata::NFA::BuildError)
+
+    syntax_error = expect_raises(Regex::Automata::BuildError) do
+      Regex::Automata::DFA::Builder.new.build("(xyz")
+    end
+    syntax_error.nfa_source.should be_a(Regex::Automata::NFA::BuildError)
   end
 
   it "minimizes dense DFAs when requested" do
@@ -167,6 +854,33 @@ describe "DFA::Dense" do
     minimized.try_search_fwd(Regex::Automata::Input.new("zoo")).should eq(
       Regex::Automata::HalfMatch.must(0, 3)
     )
+  end
+
+  it "preserves EOI and per-pattern start IDs through minimization and serialization" do
+    dfa = Regex::Automata::DFA::Builder.new
+      .configure(
+        Regex::Automata::DFA::DFA.config
+          .minimize(true)
+          .starts_for_each_pattern(true)
+          .specialize_start_states(true)
+      )
+      .build_many(["foo$", "bar", "(?-u:\\b)baz"])
+    roundtrip = Regex::Automata::DFA::DFA.from_bytes(dfa.to_bytes_native_endian[0])[0]
+
+    [dfa, roundtrip].each do |candidate|
+      candidate.try_search_fwd(Regex::Automata::Input.new("foo")).should eq(
+        Regex::Automata::HalfMatch.must(0, 3)
+      )
+      candidate.try_search_fwd(Regex::Automata::Input.new("bar")).should eq(
+        Regex::Automata::HalfMatch.must(1, 3)
+      )
+      input = Regex::Automata::Input.new("baz")
+        .anchored_pattern(Regex::Automata::PatternID.new(2))
+      candidate.try_search_fwd(input).should eq(Regex::Automata::HalfMatch.must(2, 3))
+      candidate.to_sparse.try_search_fwd(Regex::Automata::Input.new("foo")).should eq(
+        Regex::Automata::HalfMatch.must(0, 3)
+      )
+    end
   end
 
   it "rejects unicode word boundaries unless heuristic support is enabled" do
@@ -224,34 +938,70 @@ describe "DFA::Dense" do
     dfa.alphabet_len.should eq(dfa.byte_classifier.alphabet_len)
     dfa.stride.should eq(1 << dfa.stride2)
     dfa.stride.should be >= dfa.alphabet_len
-    dfa.memory_usage.should eq(dfa.to_bytes_native_endian[0].size)
+    # Rust dense::DFA::memory_usage counts its four live backing tables, not
+    # the serialized header, padding, and wire metadata.
+    dfa.memory_usage.should be < dfa.to_bytes_native_endian[0].size
   end
 
-  it "round-trips little, big, and native-endian dense bytes" do
+  it "round-trips dense state indexes through premultiplied IDs" do
+    dfa = Regex::Automata::DFA::Builder.new.build("(?:foo|bar|baz)[0-9]+")
+
+    dfa.state_len.should eq(dfa.size)
+    dfa.state_len.times do |index|
+      id = dfa.to_state_id(index)
+      dfa.to_index(id).should eq(index)
+      dfa[id].id.should eq(id)
+    end
+  end
+
+  it "keeps transition and start IDs coherent after state partitioning" do
+    dfa = Regex::Automata::DFA::Builder.new
+      .configure { |config| config.starts_for_each_pattern(true).specialize_start_states(true) }
+      .build_many(["a[^x]*x", "(?-u:\\b)foo", "bar$"])
+
+    dfa.states.each_index do |index|
+      id = dfa.to_state_id(index)
+      (dfa.alphabet_len - 1).times do |byte_class|
+        next_id = dfa.tt.not_nil!.next_state_by_class(id, byte_class)
+        dfa.to_index(next_id).should be >= 0
+        dfa.to_index(next_id).should be < dfa.state_len
+      end
+      eoi_id = dfa.next_eoi_state(id)
+      dfa.to_index(eoi_id).should be >= 0
+      dfa.to_index(eoi_id).should be < dfa.state_len
+    end
+
+    %w[aZZx foo bar].each do |haystack|
+      dfa.try_search_fwd(haystack.to_slice).should_not be_a(Regex::Automata::MatchError)
+    end
+  end
+
+  it "round-trips native-endian dense bytes and rejects the opposite endianness" do
     dfa = Regex::Automata::DFA::Builder.new
       .configure { |config| config.starts_for_each_pattern(true) }
       .build_many(["foo[0-9]+", "bar[0-9]+"])
-
-    {dfa.to_bytes_little_endian, dfa.to_bytes_big_endian, dfa.to_bytes_native_endian}.each do |serialized|
-      bytes, written = serialized
-      roundtrip, read = Regex::Automata::DFA::DFA.from_bytes(bytes)
-
-      read.should eq(written)
-      roundtrip.try_search_fwd(Regex::Automata::Input.new("foo123")).should eq(
-        Regex::Automata::HalfMatch.must(0, 6)
-      )
-      roundtrip.try_search_fwd(Regex::Automata::Input.new("bar456")).should eq(
-        Regex::Automata::HalfMatch.must(1, 6)
-      )
+    bytes, padding = dfa.to_bytes_native_endian
+    roundtrip, read = Regex::Automata::DFA::DFA.from_bytes(bytes)
+    read.should eq(bytes.size)
+    padding.should be >= 0
+    padding.should be < 4
+    roundtrip.try_search_fwd(Regex::Automata::Input.new("foo123")).should eq(Regex::Automata::HalfMatch.must(0, 6))
+    roundtrip.try_search_fwd(Regex::Automata::Input.new("bar456")).should eq(Regex::Automata::HalfMatch.must(1, 6))
+    opposite = Regex::Automata::DFA::DFA.native_wire_endian == :little ? dfa.to_bytes_big_endian[0] : dfa.to_bytes_little_endian[0]
+    expect_raises(Regex::Automata::DeserializeError, /endianness mismatch/) do
+      Regex::Automata::DFA::DFA.from_bytes(opposite)
     end
   end
 
   it "writes dense bytes into caller-provided buffers" do
     dfa = Regex::Automata::DFA::DFA.new("abc")
 
-    little_bytes, little_written = dfa.to_bytes_little_endian
-    big_bytes, big_written = dfa.to_bytes_big_endian
-    native_bytes, native_written = dfa.to_bytes_native_endian
+    little_bytes, _ = dfa.to_bytes_little_endian
+    little_written = dfa.write_to_len
+    big_bytes, _ = dfa.to_bytes_big_endian
+    big_written = dfa.write_to_len
+    native_bytes, _ = dfa.to_bytes_native_endian
+    native_written = dfa.write_to_len
 
     dfa.write_to_len.should eq(native_written)
 
@@ -278,10 +1028,25 @@ describe "DFA::Dense" do
     bytes = dfa.to_bytes_little_endian[0].dup
     invalid_start = ((dfa.size + 10) << dfa.stride2).to_u32
 
-    write_u32_le(bytes, 28, invalid_start)
+    start_offset = 312 + dfa.state_len * dfa.stride * 4 + 276
+    write_u32_le(bytes, start_offset, invalid_start)
 
     expect_raises(Regex::Automata::DeserializeError) do
       Regex::Automata::DFA::DFA.from_bytes(bytes)
     end
+  end
+
+  it "rejects serialized start states that point to a match state" do
+    dfa = Regex::Automata::DFA::DFA.new("abc")
+    bytes = dfa.to_bytes_little_endian[0].dup
+    match_id = dfa.states.find(&.accepting?).not_nil!.id.to_i.to_u32
+
+    start_offset = 312 + dfa.state_len * dfa.stride * 4 + 276
+    (start_offset...(start_offset + 48)).step(4) { |offset| write_u32_le(bytes, offset, match_id) }
+
+    error = expect_raises(Regex::Automata::DeserializeError) do
+      Regex::Automata::DFA::DFA.from_bytes(bytes)
+    end
+    error.message.not_nil!.should contain("start states cannot be match states")
   end
 end

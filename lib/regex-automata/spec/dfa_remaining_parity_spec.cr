@@ -61,8 +61,8 @@ private def to_sparse_regex(re : Regex::Automata::DFA::Regex) : Regex::Automata:
 end
 
 private def roundtrip_dense_regex(re : Regex::Automata::DFA::Regex) : Regex::Automata::DFA::Regex
-  forward_bytes = re.forward.to_bytes_native_endian[0]
-  reverse_bytes = re.reverse.to_bytes_native_endian[0]
+  forward_bytes = re.forward.as(Regex::Automata::DFA::DFA).to_bytes_native_endian[0]
+  reverse_bytes = re.reverse.as(Regex::Automata::DFA::DFA).to_bytes_native_endian[0]
   forward = Regex::Automata::DFA::DFA.from_bytes(forward_bytes)[0]
   reverse = Regex::Automata::DFA::DFA.from_bytes(reverse_bytes)[0]
   Regex::Automata::DFA::Regex.builder.build_from_dfas(forward, reverse)
@@ -71,15 +71,11 @@ end
 private def roundtrip_sparse_regex(re : Regex::Automata::DFA::Regex) : Regex::Automata::DFA::Regex
   forward_sparse = re.forward.to_sparse
   reverse_sparse = re.reverse.to_sparse
-  forward_bytes = forward_sparse.to_bytes_native_endian[0]
-  reverse_bytes = reverse_sparse.to_bytes_native_endian[0]
+  forward_bytes = forward_sparse.to_bytes_native_endian
+  reverse_bytes = reverse_sparse.to_bytes_native_endian
   forward = Regex::Automata::DFA::Sparse::DFA.from_bytes(forward_bytes)[0]
   reverse = Regex::Automata::DFA::Sparse::DFA.from_bytes(reverse_bytes)[0]
   Regex::Automata::DFA::Regex.builder.build_from_dfas(forward, reverse)
-end
-
-private def dense_byte_class_count_offset(dfa : Regex::Automata::DFA::DFA) : Int32
-  8 + 4 + 4 + 4 + 4 + 4 + (Regex::Automata::Start.len * 2 * 4) + 4 + (dfa.st.pattern_states.size * (4 + Regex::Automata::Start.len * 4))
 end
 
 private def write_u32_le_spec(bytes : Bytes, offset : Int32, value : UInt32) : Nil
@@ -137,9 +133,10 @@ REGEX
   end
 
   it "ports unminimized_prefilter" do
-    prefilter = Regex::Automata::Prefilter
-      .new(Regex::Automata::MatchKind::LeftmostFirst, ["abcd"])
-      .not_nil!
+    hirs = DFA_SUITE_PATTERNS.map do |pattern|
+      Regex::Automata::Syntax.parse_with(pattern, Regex::Automata::Syntax::Config.new)
+    end
+    prefilter = Regex::Automata::Prefilter.from_hirs_prefix(Regex::Automata::MatchKind::LeftmostFirst, hirs)
     builder = Regex::Automata::DFA::Regex.builder
       .dense(Regex::Automata::DFA::DFA.config.prefilter(prefilter))
 
@@ -188,9 +185,10 @@ REGEX
   end
 
   it "ports sparse_unminimized_prefilter" do
-    prefilter = Regex::Automata::Prefilter
-      .new(Regex::Automata::MatchKind::LeftmostFirst, ["abcd"])
-      .not_nil!
+    hirs = DFA_SUITE_PATTERNS.map do |pattern|
+      Regex::Automata::Syntax.parse_with(pattern, Regex::Automata::Syntax::Config.new)
+    end
+    prefilter = Regex::Automata::Prefilter.from_hirs_prefix(Regex::Automata::MatchKind::LeftmostFirst, hirs)
     builder = Regex::Automata::DFA::Regex.builder
       .dense(Regex::Automata::DFA::DFA.config.prefilter(prefilter))
 
@@ -239,28 +237,24 @@ REGEX
     assert_multi_pattern_v2_behavior(roundtrip_sparse_regex(re))
   end
 
-  it "ports invalid_byte_classes" do
+  it "rejects an invalid native byte class map" do
     dfa = Regex::Automata::DFA::DFA.new("abc")
     bytes = dfa.to_bytes_little_endian[0]
     corrupted = bytes.dup
-    offset = dense_byte_class_count_offset(dfa)
-
-    write_u32_le_spec(corrupted, offset, 1_u32)
+    corrupted[56] = 255_u8
 
     expect_raises(Regex::Automata::DeserializeError) do
       Regex::Automata::DFA::DFA.from_bytes(corrupted)
     end
   end
 
-  it "ports invalid_byte_classes_min" do
+  it "rejects an invalid native byte class map after minimization" do
     dfa = Regex::Automata::DFA::DFA.builder
       .configure(Regex::Automata::DFA::DFA.config.minimize(true))
       .build("(foo|bar|baz)")
     bytes = dfa.to_bytes_little_endian[0]
     corrupted = bytes.dup
-    offset = dense_byte_class_count_offset(dfa)
-
-    write_u32_le_spec(corrupted, offset, 1_u32)
+    corrupted[56] = 255_u8
 
     expect_raises(Regex::Automata::DeserializeError) do
       Regex::Automata::DFA::DFA.from_bytes(corrupted)

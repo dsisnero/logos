@@ -5,73 +5,37 @@ require "../src/regex/automata/search"
 describe "DFA API" do
   describe "quit bytes" do
     it "handles quit bytes in forward direction" do
-      # Test that quit bytes in the forward direction work correctly.
-      # This corresponds to the Rust test `quit_fwd` in tests/dfa/api.rs
-
-      # First, test that DFA works without quit bytes
-      # Use a simpler pattern: "abc"
-      dfa_no_quit = Regex::Automata::DFA::Builder.new
-        .build("abc")
-
-      # This should match "abc"
-      result = dfa_no_quit.try_search_fwd("abcxyz".to_slice)
-      result.should_not be_nil
-      result.should_not be_a(Regex::Automata::MatchError)
-      if match = result.as?(Tuple(Int32, Array(Regex::Automata::PatternID)))
-        # match is a Tuple(Int32, Array(PatternID))
-        end_pos, pattern_ids = match
-        end_pos.should eq(3) # "abc" ends at position 3
-      end
-
-      # Now test with quit byte 'x'
-      config = Regex::Automata::Config.new.quit('x'.ord.to_u8, true)
-
       dfa = Regex::Automata::DFA::Builder.new
-        .configure(config)
-        .build("abc")
+        .configure(Regex::Automata::Config.new.quit('x'.ord.to_u8, true))
+        .build("[[:word:]]+$")
+      input = Regex::Automata::Input.new("abcxyz")
+      expected = Regex::Automata::MatchError.quit('x'.ord.to_u8, 3)
 
-      # Test forward search with quit byte
-      # The input is "abcxyz", pattern is "abc"
-      # The DFA should match "abc" (positions 0-2) and NOT see 'x' at position 3
-      # because it stops after matching "abc"
-      # Actually, for quit bytes to be tested, we need a pattern that would
-      # normally continue past 'x'. Let me use pattern "abcd" instead.
-      # With pattern "abcd", when searching "abcxyz", it will see 'x' at position 3
-      # and should quit.
+      dfa.try_search_fwd(input).should eq(expected)
 
-      dfa2 = Regex::Automata::DFA::Builder.new
-        .configure(config)
-        .build("abcd")
+      state = Regex::Automata::OverlappingState.start
+      dfa.try_search_overlapping_fwd(input, state).should eq(expected)
+    end
 
-      result = dfa2.try_search_fwd("abcxyz".to_slice)
+    it "reports a later quit even when an earlier match is pending" do
+      # Rust dfa/search.rs::find_fwd returns MatchError::quit from the search
+      # loop even when `mat` already contains an earlier match.
+      dfa = Regex::Automata::DFA::Builder.new
+        .configure(Regex::Automata::Config.new.quit('x'.ord.to_u8, true))
+        .build("a")
 
-      # Check that we got a MatchError::quit
-      result.should be_a(Regex::Automata::MatchError)
-
-      error = result.as(Regex::Automata::MatchError)
-      error.quit?.should be_true
-      error.byte.should eq('x'.ord.to_u8)
-      error.offset.should eq(3)
+      dfa.try_search_fwd(Regex::Automata::Input.new("ayx"))
+        .should eq(Regex::Automata::MatchError.quit('x'.ord.to_u8, 2))
     end
 
     it "handles quit bytes in reverse direction" do
-      # Test that quit bytes in the reverse direction work correctly.
-      # This corresponds to the Rust test `quit_rev` in tests/dfa/api.rs
-      # Note: Using [a-z] instead of [[:word:]] because POSIX classes may not be supported
-
       dfa = Regex::Automata::DFA::Builder.new
         .configure { |config| config.quit('x'.ord.to_u8, true) }
         .thompson { |config| config.reverse(true) }
-        .build("[a-z]+") # Character class a-z (similar to [[:word:]] for ASCII)
+        .build("^[[:word:]]+")
 
-      result = dfa.try_search_rev("abcxyz".to_slice)
-
-      result.should be_a(Regex::Automata::MatchError)
-
-      error = result.as(Regex::Automata::MatchError)
-      error.quit?.should be_true
-      error.byte.should eq('x'.ord.to_u8)
-      error.offset.should eq(3)
+      dfa.try_search_rev(Regex::Automata::Input.new("abcxyz"))
+        .should eq(Regex::Automata::MatchError.quit('x'.ord.to_u8, 3))
     end
 
     it "panics when Unicode word boundaries conflict with quit configuration" do
@@ -100,83 +64,87 @@ describe "DFA API" do
 
       dfa = Regex::Automata::DFA::Builder.new.configure(config).build("\\b")
 
-      # Search for word boundary
-      result = dfa.try_search_fwd(" a".to_slice)
-
-      # Should get a match (not a quit error)
-      result.should_not be_nil
-      result.should_not be_a(Regex::Automata::MatchError)
-
-      if match = result.as?(Tuple(Int32, Array(Regex::Automata::PatternID)))
-        end_pos, pattern_ids = match
-        # We should get a match (either at position 0 or 1)
-        # The important part is that Unicode word boundaries were implicitly enabled
-        end_pos.should be >= 0
-        pattern_ids.should eq([Regex::Automata::PatternID.new(0)])
-      end
+      dfa.try_search_fwd(Regex::Automata::Input.new(" a"))
+        .should eq(Regex::Automata::HalfMatch.must(0, 1))
     end
   end
 
   describe "universal start search" do
-    it "supports universal start states" do
-      # A variant of `Automaton::is_special_state`'s doctest, but with universal
-      # start states.
-      # See: https://github.com/rust-lang/regex/pull/1195
-      # This corresponds to the Rust test `universal_start_search` in tests/dfa/api.rs
+    it "walks dense and sparse universal start states like the Rust automaton contract" do
+      find = ->(dfa : Regex::Automata::Automaton, haystack : String) do
+        state = dfa.universal_start_state(Regex::Automata::Anchored::No).not_nil!
+        last_match : Regex::Automata::HalfMatch? = nil
 
-      # Simple test: build a DFA and check that universal start state methods work
-      # Enable specialize_start_states to make start states special
-      config = Regex::Automata::Config.new.specialize_start_states(true)
-      dfa = Regex::Automata::DFA::Builder.new.configure(config).build("[a-z]+")
+        haystack.to_slice.each_with_index do |byte, index|
+          state = dfa.next_state(state, byte)
+          next unless dfa.is_special_state?(state)
 
-      # Check that universal_start_state returns a state
-      start_state = dfa.universal_start_state(Regex::Automata::Anchored::No)
-      start_state.should_not be_nil
-
-      # Check that is_special_state works
-      dfa.is_special_state?(start_state.not_nil!).should be_true # Start state is special
-
-      # Check that next_state works
-      next_state = dfa.next_state(start_state.not_nil!, 'a'.ord.to_u8)
-      next_state.should_not be_nil
-
-      # Check that is_match_state works
-      # The start state is not a match state (empty string doesn't match [a-z]+)
-      dfa.is_match_state?(start_state.not_nil!).should be_false
-
-      # Check that is_dead_state and is_quit_state work
-      dfa.is_dead_state?(start_state.not_nil!).should be_false
-      dfa.is_dead_state?(Regex::Automata::DFA::DEAD_STATE_ID).should be_true
-
-      dfa.is_quit_state?(start_state.not_nil!).should be_false
-      dfa.is_quit_state?(Regex::Automata::DFA::QUIT_STATE_ID).should be_true
-
-      # Check that next_eoi_state works
-      eoi_state = dfa.next_eoi_state(start_state.not_nil!)
-      eoi_state.should_not be_nil
-
-      # Check that match_pattern works (when state is a match state)
-      # First, find a match state by searching
-      result = dfa.try_search_fwd("abc".to_slice)
-      result.should_not be_nil
-      result.should_not be_a(Regex::Automata::MatchError)
-
-      if match = result.as?(Tuple(Int32, Array(Regex::Automata::PatternID)))
-        end_pos, pattern_ids = match
-        end_pos.should eq(3) # "abc" ends at position 3
-        pattern_ids.should eq([Regex::Automata::PatternID.new(0)])
-
-        # Check match_pattern - we need a match state ID to test this
-        match_state = dfa.universal_start_state(Regex::Automata::Anchored::No).not_nil!
-        "abc".to_slice.each do |byte|
-          match_state = dfa.next_state(match_state, byte)
+          if dfa.is_match_state?(state)
+            last_match = Regex::Automata::HalfMatch.new(dfa.match_pattern(state, 0), index)
+          elsif dfa.is_dead_state?(state)
+            break
+          elsif dfa.is_quit_state?(state)
+            break if last_match
+            raise "unexpected quit state at #{index}"
+          end
         end
-        dfa.is_match_state?(match_state).should be_true
-        dfa.match_len(match_state).should eq(1)
-        dfa.match_pattern(match_state, 0).should eq(Regex::Automata::PatternID.new(0))
-        pattern_ids[0].should eq(Regex::Automata::PatternID.new(0))
+
+        state = dfa.next_eoi_state(state)
+        last_match = Regex::Automata::HalfMatch.new(dfa.match_pattern(state, 0), haystack.bytesize) if dfa.is_match_state?(state)
+        last_match
+      end
+
+      check = ->(pattern : String, haystack : String, pattern_id : Int32, offset : Int32) do
+        dense = Regex::Automata::DFA::DFA.new(pattern)
+        [dense, dense.to_sparse].each do |engine|
+          find.call(engine, haystack).should eq(Regex::Automata::HalfMatch.must(pattern_id, offset))
+        end
+      end
+
+      check.call("[a-z]+", "123 foobar 4567", 0, 10)
+      check.call("[0-9]{4}", "123 foobar 4567", 0, 15)
+
+      dfa = Regex::Automata::DFA::DFA.new_many(["[a-z]+", "[0-9]+"])
+      [dfa, dfa.to_sparse].each do |engine|
+        find.call(engine, "123 foobar 4567").should eq(Regex::Automata::HalfMatch.must(1, 3))
+        find.call(engine, " foobar 4567").should eq(Regex::Automata::HalfMatch.must(0, 7))
+        find.call(engine, " 4567").should eq(Regex::Automata::HalfMatch.must(1, 5))
       end
     end
+  end
+
+  it "ports Rust Automaton::try_which_overlapping_matches" do
+    # Pinned dfa/automaton.rs example: the set includes matches that share
+    # an ending position as well as matches at other positions.
+    patterns = [
+      "[[:word:]]+", "[0-9]+", "[[:alpha:]]+", "foo", "bar", "barfoo", "foobar",
+    ]
+    dfa = Regex::Automata::DFA::Builder.new
+      .configure(Regex::Automata::DFA::DFA.config.match_kind(Regex::Automata::MatchKind::All))
+      .build_many(patterns)
+    patset = Regex::Automata::PatternSet.new(dfa.pattern_len)
+
+    dfa.try_which_overlapping_matches(Regex::Automata::Input.new("foobar"), patset).should be_nil
+    patset.iter.map(&.to_i).to_a.should eq([0, 2, 3, 4, 6])
+  end
+
+  it "preserves Rust's which-set reuse, capacity, and earliest rules" do
+    dfa = Regex::Automata::DFA::Builder.new
+      .configure(Regex::Automata::DFA::DFA.config.match_kind(Regex::Automata::MatchKind::All))
+      .build_many(["a", "b"])
+    patset = Regex::Automata::PatternSet.new(2)
+    patset.insert(Regex::Automata::PatternID.new(1))
+
+    dfa.try_which_overlapping_matches(Regex::Automata::Input.new("a"), patset).should be_nil
+    patset.iter.map(&.to_i).to_a.should eq([0, 1])
+
+    small = Regex::Automata::PatternSet.new(1)
+    dfa.try_which_overlapping_matches(Regex::Automata::Input.new("b"), small).should be_nil
+    small.iter.map(&.to_i).to_a.should be_empty
+
+    earliest = Regex::Automata::PatternSet.new(2)
+    dfa.try_which_overlapping_matches(Regex::Automata::Input.new("ab").earliest(true), earliest).should be_nil
+    earliest.iter.map(&.to_i).to_a.should eq([0])
   end
 
   describe "dense metadata" do
@@ -232,12 +200,16 @@ describe "DFA API" do
       )
     end
 
-    it "reports anchored configuration via flags" do
+    it "reports anchored support independently from semantic NFA flags" do
       dfa = Regex::Automata::DFA::Builder.new
         .configure { |config| config.start_kind(Regex::Automata::StartKind::Anchored) }
         .build("abc")
 
-      dfa.is_always_start_anchored?.should be_true
+      dfa.is_always_start_anchored?.should be_false
+      dfa.start_kind.should eq(Regex::Automata::StartKind::Anchored)
+      dfa.quit_id.should eq(dfa.to_state_id(1))
+      dfa.quitset.empty?.should be_true
+      dfa.special.quit_id.should eq(dfa.quit_id)
       dfa.start_state(Regex::Automata::StartConfig.new(nil, Regex::Automata::Anchored::No))
         .should be_a(Regex::Automata::UnsupportedAnchoredStartError)
     end
@@ -391,6 +363,24 @@ describe "DFA API" do
       dfa.try_search_rev("ab".to_slice).should eq(dfa_no_accel.try_search_rev("ab".to_slice))
     end
 
+    it "keeps non-overlapping Input searches equivalent with accelerator states" do
+      forward = Regex::Automata::DFA::Builder.new.build("a[^x]*x")
+      forward_plain = Regex::Automata::DFA::Builder.new
+        .configure { |config| config.accelerate(false) }
+        .build("a[^x]*x")
+      reverse = Regex::Automata::DFA::Builder.new
+        .thompson { |config| config.reverse(true) }
+        .build("a[^x]*x")
+      reverse_plain = Regex::Automata::DFA::Builder.new
+        .configure { |config| config.accelerate(false) }
+        .thompson { |config| config.reverse(true) }
+        .build("a[^x]*x")
+      input = Regex::Automata::Input.new("za" + "y" * 256 + "xq")
+
+      forward.try_search_fwd(input).should eq(forward_plain.try_search_fwd(input))
+      reverse.try_search_rev(input).should eq(reverse_plain.try_search_rev(input))
+    end
+
     it "reports overlapping matches without suffix duplicates" do
       dfa = Regex::Automata::DFA::Builder.new.build("abc")
 
@@ -401,7 +391,9 @@ describe "DFA API" do
     end
 
     it "reports overlapping multi-pattern matches at the same end position" do
-      dfa = Regex::Automata::DFA::DFA.new_many(["a", "a"])
+      dfa = Regex::Automata::DFA::DFA.builder
+        .configure { |config| config.match_kind(Regex::Automata::MatchKind::All) }
+        .build_many(["a", "a"])
 
       dfa.try_search_overlapping_fwd("a".to_slice).should eq([
         {1, [Regex::Automata::PatternID.new(0), Regex::Automata::PatternID.new(1)]},
@@ -506,13 +498,13 @@ describe "DFA API" do
       # Create a simple DFA
       dfa = Regex::Automata::DFA::Builder.new.build("abc")
 
-      # Serialize to little-endian
-      bytes, bytes_written = dfa.to_bytes_little_endian
-      bytes_written.should be > 0
+      # Serialize to native endian.
+      bytes, padding = dfa.to_bytes_native_endian
+      bytes.size.should eq(dfa.write_to_len + padding)
 
       # Deserialize
       dfa2, bytes_read = Regex::Automata::DFA::DFA.from_bytes(bytes)
-      bytes_read.should eq(bytes_written)
+      bytes_read.should eq(bytes.size)
 
       # Test that deserialized DFA works
       result = dfa2.try_search_fwd("abc".to_slice)
@@ -533,13 +525,13 @@ describe "DFA API" do
         .configure(config)
         .build("abcd")
 
-      # Serialize to little-endian (from_bytes assumes little-endian)
-      bytes, bytes_written = dfa.to_bytes_little_endian
-      bytes_written.should be > 0
+      # Serialize to native endian, as required by Rust from_bytes.
+      bytes, padding = dfa.to_bytes_native_endian
+      bytes.size.should eq(dfa.write_to_len + padding)
 
       # Deserialize
       dfa2, bytes_read = Regex::Automata::DFA::DFA.from_bytes(bytes)
-      bytes_read.should eq(bytes_written)
+      bytes_read.should eq(bytes.size)
 
       # Test that quit bytes still work
       result = dfa2.try_search_fwd("abcxyz".to_slice)
@@ -550,13 +542,13 @@ describe "DFA API" do
       # Create a multi-pattern DFA
       dfa = Regex::Automata::DFA::DFA.new_many(["abc", "def"])
 
-      # Serialize to little-endian (from_bytes assumes little-endian)
-      bytes, bytes_written = dfa.to_bytes_little_endian
-      bytes_written.should be > 0
+      # Serialize to native endian, as required by Rust from_bytes.
+      bytes, padding = dfa.to_bytes_native_endian
+      bytes.size.should eq(dfa.write_to_len + padding)
 
       # Deserialize
       dfa2, bytes_read = Regex::Automata::DFA::DFA.from_bytes(bytes)
-      bytes_read.should eq(bytes_written)
+      bytes_read.should eq(bytes.size)
 
       # Test that both patterns work
       result1 = dfa2.try_search_fwd("abc".to_slice)
@@ -571,7 +563,7 @@ describe "DFA API" do
         .configure { |config| config.start_kind(Regex::Automata::StartKind::Anchored) }
         .build("(?-u:\\b)abc")
 
-      serialized = dfa.to_bytes_little_endian
+      serialized = dfa.to_bytes_native_endian
       bytes = serialized[0]
       deserialized = Regex::Automata::DFA::DFA.from_bytes(bytes)
       dfa2 = deserialized[0]
@@ -580,7 +572,7 @@ describe "DFA API" do
       word_start = dfa2.start_state(Regex::Automata::StartConfig.new('q'.ord.to_u8, Regex::Automata::Anchored::Yes)).as(Regex::Automata::StateID)
 
       text_start.should_not eq(word_start)
-      dfa2.is_always_start_anchored?.should be_true
+      dfa2.is_always_start_anchored?.should be_false
       dfa2.universal_start_state(Regex::Automata::Anchored::Yes).should be_nil
     end
 

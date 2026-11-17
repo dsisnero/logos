@@ -64,6 +64,32 @@ describe Regex::Automata::GroupInfo do
       ])
     end
   end
+
+  it "handles empty and invalid pattern metadata without raising" do
+    empty = Regex::Automata::GroupInfo.empty
+    invalid = Regex::Automata::PatternID.new(99)
+
+    empty.pattern_len.should eq(0)
+    empty.all_group_len.should eq(0)
+    empty.slot_len.should eq(0)
+    empty.implicit_slot_len.should eq(0)
+    empty.explicit_slot_len.should eq(0)
+    empty.group_len(invalid).should eq(0)
+    empty.to_index(invalid, "missing").should be_nil
+    empty.to_name(invalid, 0).should be_nil
+    empty.pattern_names(invalid).to_a.should be_empty
+    empty.all_names.to_a.should be_empty
+    empty.slot(invalid, 0).should be_nil
+    empty.slots(invalid, 0).should be_nil
+
+    info = Regex::Automata::GroupInfo.new([[nil, "name"] of String?])
+    info.group_len(invalid).should eq(0)
+    info.to_index(invalid, "name").should be_nil
+    info.to_name(invalid, 1).should be_nil
+    info.pattern_names(invalid).to_a.should be_empty
+    info.slot(invalid, 0).should be_nil
+    info.slots(invalid, 0).should be_nil
+  end
 end
 
 describe Regex::Automata::Captures do
@@ -147,6 +173,52 @@ describe Regex::Automata::Captures do
 
     interpolated = caps.interpolate_bytes(haystack.to_slice, "day=$day".to_slice)
     String.new(interpolated).should eq("day=14")
+
+    string_dst = IO::Memory.new
+    string_dst << "prefix:"
+    caps.interpolate_string_into(haystack, "$month/$year", string_dst)
+    string_dst.to_s.should eq("prefix:03/2010")
+
+    bytes_dst = "prefix:".bytes
+    caps.interpolate_bytes_into(haystack.to_slice, "$day".to_slice, bytes_dst)
+    String.new(Bytes.new(bytes_dst.size) { |i| bytes_dst[i] }).should eq("prefix:14")
+  end
+
+  it "clones capture snapshots without sharing mutable slots" do
+    info = Regex::Automata::GroupInfo.new([[nil, "word"] of String?])
+    original = Regex::Automata::Captures.all(info)
+    original.set_pattern(Regex::Automata::PatternID.new(0))
+    original.slots_mut[0] = 2
+    original.slots_mut[1] = 6
+    original.slots_mut[2] = 2
+    original.slots_mut[3] = 6
+
+    copied = original.clone
+    copied.clear
+
+    original.is_match.should be_true
+    original.get_group_by_name("word").should eq(Regex::Automata::Span.new(2, 6))
+    copied.is_match.should be_false
+    copied.slots.compact.should be_empty
+  end
+
+  it "extracts the full match and requested participating groups" do
+    info = Regex::Automata::GroupInfo.new([[nil, "year", "month"] of String?])
+    caps = Regex::Automata::Captures.all(info)
+    caps.set_pattern(Regex::Automata::PatternID.new(0))
+    slots = caps.slots_mut
+    slots[0] = 3; slots[1] = 10
+    slots[2] = 3; slots[3] = 7
+    slots[4] = 8; slots[5] = 10
+
+    caps.extract("On 2010-03.", 2).should eq({"2010-03", ["2010", "03"]})
+    extracted_bytes = caps.extract_bytes("On 2010-03.".to_slice, 1)
+    String.new(extracted_bytes[0]).should eq("2010-03")
+    extracted_bytes[1].map { |bytes| String.new(bytes) }.should eq(["2010"])
+
+    expect_raises(ArgumentError, /too few matching groups/) do
+      caps.extract("On 2010-03.", 3)
+    end
   end
 end
 

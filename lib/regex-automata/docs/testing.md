@@ -1,122 +1,32 @@
 # Testing
 
-## Test Structure
+Crystal specs are in [`spec/`](../spec/). The full local gate is `make test`;
+focused examples can be run with `crystal spec spec/<file>_spec.cr` or a
+file-and-line selector. The Makefile routes Crystal caches and temporary
+artifacts to `./temp`.
 
-Tests are organized in `spec/` directory mirroring the `src/` structure:
+## Parity test workflow
 
-```
-spec/
-├── nfa_spec.cr          # NFA tests
-├── dfa/
-│   ├── builder_spec.cr  # DFA builder tests
-│   └── dense_spec.cr    # Dense DFA tests
-└── hybrid/
-    └── lazy_spec.cr     # Hybrid lazy DFA tests
-```
+1. Read the relevant pinned Rust implementation and its nearest Rust test or
+   `vendor/regex/testdata/` case.
+2. Port the test to Crystal with the same inputs, assertions, and error
+   expectations. Run it and confirm red before implementation.
+3. Implement the smallest behavior change, then rerun the focused spec until
+   green. Continue until the entire feature's upstream cases are covered.
+4. Run `make install`, `make format`, `make lint`, `make test`, and
+   `make parity`, plus the checks in [AGENTS.md](../AGENTS.md), before
+   checking off the feature in [plans/parity.md](../plans/parity.md).
 
-## Running Tests
+The shared fixture reader in `spec/support/vendor_regex_suite.cr` loads
+vendor TOML cases. Engine-specific Rust blacklists and supported modes still
+matter: a spot-check passing is not a full suite signoff. Exact coverage and
+remaining cases are recorded in [plans/parity.md](../plans/parity.md) and
+[plans/inventory/rust_test_parity.tsv](../plans/inventory/rust_test_parity.tsv).
 
-### Basic Test Run
-```bash
-make test
-# or
-crystal spec
-```
+Run pinned Rust tests from `vendor/regex` with Cargo's `--offline` option when
+the local dependencies are cached. Put `CARGO_TARGET_DIR` under `./temp` and
+request network access if a required dependency is unavailable; do not infer
+Rust success from a Crystal-only run.
 
-### Specific Test File
-```bash
-crystal spec spec/nfa_spec.cr
-```
-
-### Specific Test Example
-```bash
-crystal spec spec/nfa_spec.cr:15  # Line 15
-```
-
-### With Coverage
-```bash
-crystal spec --coverage
-```
-
-### With Profiling
-```bash
-crystal spec --profile
-```
-
-## Test Philosophy
-
-### Behavior-First Testing
-
-Tests are ported directly from Rust upstream to ensure behavior parity. Each Rust `#[test]` function becomes a Crystal `it` block.
-
-### Test Porting Workflow
-
-1. **Locate upstream test**: Find corresponding test in `vendor/regex/regex-automata/tests/`
-2. **Create spec file**: Mirror Rust test module structure
-3. **Port assertions**: Convert Rust `assert!`, `assert_eq!` to Crystal `should`
-4. **Verify behavior**: Run test and compare with Rust output
-
-### Example: Porting Rust Test
-
-```rust
-// Rust test in vendor/regex/regex-automata/tests/nfa.rs
-#[test]
-fn test_empty_nfa() {
-    let nfa = NFA::new("");
-    assert!(nfa.is_match(""));
-    assert!(!nfa.is_match("a"));
-}
-```
-
-```crystal
-# Crystal spec in spec/nfa_spec.cr
-describe "NFA" do
-  it "matches empty string" do
-    nfa = NFA.new("")
-    nfa.is_match("").should be_true
-    nfa.is_match("a").should be_false
-  end
-end
-```
-
-## Test Data
-
-Test data files are kept in `spec/fixtures/` when needed. For upstream test data:
-
-1. Copy from `vendor/regex/regex-automata/testdata/`
-2. Preserve file structure and encoding
-3. Document any modifications needed for Crystal
-
-## Integration Tests
-
-Integration tests verify the library works with dependent crates:
-
-- `regex-syntax`: HIR compilation
-- Consumer code (e.g., Logos): End-to-end matching
-
-## Property-Based Testing
-
-Consider using property-based testing for complex invariants:
-
-```crystal
-it "always returns same result for same input" do
-  property do |pattern : String, input : String|
-    nfa1 = NFA.new(pattern)
-    nfa2 = NFA.new(pattern)
-    nfa1.is_match(input).should eq(nfa2.is_match(input))
-  end
-end
-```
-
-## Continuous Integration
-
-Tests run automatically on:
-- Every commit via GitHub Actions
-- PR merges to main branch
-- Release tagging
-
-CI checks:
-- All specs pass
-- Code formatting (`crystal tool format --check`)
-- Linting (`ameba`)
-- Coverage thresholds
+No repository GitHub Actions workflow is currently checked in, so local gate
+results must be recorded explicitly in the feature commit or PR.

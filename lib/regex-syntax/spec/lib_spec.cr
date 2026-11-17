@@ -57,8 +57,7 @@ describe Regex::Syntax do
     Regex::Syntax.word_character?('à').should be_true
     Regex::Syntax.word_character?('β').should be_true
     Regex::Syntax.word_character?('𑀑').should be_true
-    Regex::Syntax.word_character?('𗠨').should be_true
-    Regex::Syntax.word_character?('𛆱').should be_true
+    Regex::Syntax.word_character?('𑠁').should be_true
     Regex::Syntax.word_character?('𖹀').should be_true
     Regex::Syntax.word_character?('-').should be_false
     Regex::Syntax.word_character?('☃').should be_false

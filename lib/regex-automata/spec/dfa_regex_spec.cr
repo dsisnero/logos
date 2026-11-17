@@ -85,6 +85,29 @@ describe "DFA::Regex" do
     matches[2].end.should eq(17) # "foo123"
   end
 
+  it "accepts bounded and anchored Input for Rust Regex#is_match and #find_iter" do
+    # regex-automata/src/dfa/regex.rs accepts Into<Input> for both APIs;
+    # tests/dfa/suite.rs supplies the fixture's bounds and anchor mode.
+    re = Regex::Automata::DFA::Regex.new("a")
+    bounded = Regex::Automata::Input.new("a a a").range(2...5)
+    re.is_match(bounded.clone).should be_true
+    re.find_iter(bounded.clone).to_a.should eq([
+      Regex::Automata::Match.must(0, 2...3),
+      Regex::Automata::Match.must(0, 4...5),
+    ])
+    anchored = bounded.clone.anchored(Regex::Automata::Anchored::Yes)
+    re.find_iter(anchored).to_a.should eq([Regex::Automata::Match.must(0, 2...3)])
+    re.is_match(Regex::Automata::Input.new("a a a").range(1...5).anchored(Regex::Automata::Anchored::Yes)).should be_false
+  end
+
+  it "supports direct iterator advancement and exhaustion" do
+    it = Regex::Automata::DFA::Regex.new_many(["[a-z]+", "[0-9]+"]).find_iter("abc 12")
+
+    it.next.should eq(Regex::Automata::Match.must(0, 0...3))
+    it.next.should eq(Regex::Automata::Match.must(1, 4...6))
+    it.next.should eq(Iterator::Stop::INSTANCE)
+  end
+
   it "handles pattern_len for multi-pattern regexes" do
     re = Regex::Automata::DFA::Regex.new_many(["[a-z]+", "[0-9]+", "[A-Z]+"])
     re.pattern_len.should eq(3)
@@ -143,6 +166,15 @@ describe "DFA::Regex" do
     re.try_search(Regex::Automata::Input.new("foo123").anchored(Regex::Automata::Anchored::Yes)).should eq(
       Regex::Automata::Match.must(0, 0...6)
     )
+  end
+
+  it "does not restart an always-start-anchored DFA after a failed prefix" do
+    re = Regex::Automata::DFA::Regex.new("^foo")
+
+    re.try_search(Regex::Automata::Input.new("foo")).should eq(
+      Regex::Automata::Match.must(0, 0...3)
+    )
+    re.try_search(Regex::Automata::Input.new("xfoo")).should be_nil
   end
 
   it "handles empty patterns" do

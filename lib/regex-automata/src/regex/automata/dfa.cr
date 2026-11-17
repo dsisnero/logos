@@ -9,6 +9,7 @@ require "./transition_table"
 require "./match_states"
 require "./minimize"
 require "./start_table"
+require "./determinize_state"
 require "set"
 require "regex-syntax"
 
@@ -39,10 +40,11 @@ module Regex::Automata::DFA
     getter id : StateID
     property next : Array(StateID)    # indexed by byte class
     property match : Array(PatternID) # empty if not accepting
-    getter look_need : LookSet        # look-around assertions present in this state
-    getter look_have : LookSet        # look-around assertions satisfied at this state
-    getter? is_from_word : Bool       # whether previous byte was a word byte (for word boundaries)
-    getter? is_half_crlf : Bool       # whether we're in a half-CRLF state (for CRLF anchors)
+    property accepting_override : Bool?
+    getter look_need : LookSet  # look-around assertions present in this state
+    getter look_have : LookSet  # look-around assertions satisfied at this state
+    getter? is_from_word : Bool # whether previous byte was a word byte (for word boundaries)
+    getter? is_half_crlf : Bool # whether we're in a half-CRLF state (for CRLF anchors)
     property eoi_next : StateID
 
     def initialize(@id : StateID, byte_classes : Int32, @look_need : LookSet = LookSet.new, @look_have : LookSet = LookSet.new, @is_from_word : Bool = false, @is_half_crlf : Bool = false)
@@ -56,12 +58,44 @@ module Regex::Automata::DFA
       state = State.new(new_id, @next.size, @look_need, @look_have, @is_from_word, @is_half_crlf)
       state.next.replace(@next.dup)
       state.match.replace(@match.dup)
+      state.accepting_override = @accepting_override
       state.eoi_next = @eoi_next
       state
     end
 
     def set_transition(byte_class : Int32, target : StateID)
       @next[byte_class] = target
+    end
+
+    # Enumerate dense byte-class transitions in class order.
+    def transitions : Array(Tuple(Int32, StateID))
+      @next.map_with_index { |target, byte_class| {byte_class, target} }
+    end
+
+    # Coalesce adjacent equal non-dead transitions into inclusive class runs.
+    def sparse_transitions : Array(Tuple(Int32, Int32, StateID))
+      runs = [] of Tuple(Int32, Int32, StateID)
+      start = nil.as(Int32?)
+      target = nil.as(StateID?)
+      @next.each_with_index do |next_id, byte_class|
+        if next_id == DEAD_STATE_ID
+          if run_start = start
+            runs << {run_start, byte_class - 1, target.not_nil!}
+            start = nil
+            target = nil
+          end
+        elsif target == next_id
+        elsif run_start = start
+          runs << {run_start, byte_class - 1, target.not_nil!}
+          start = byte_class
+          target = next_id
+        else
+          start = byte_class
+          target = next_id
+        end
+      end
+      runs << {start.not_nil!, @next.size - 1, target.not_nil!} if start
+      runs
     end
 
     def add_match(pattern_id : PatternID)
@@ -73,7 +107,7 @@ module Regex::Automata::DFA
     end
 
     def accepting? : Bool
-      !@match.empty?
+      @accepting_override || !@match.empty?
     end
   end
 
@@ -98,7 +132,7 @@ module Regex::Automata::DFA
     getter flags : DFAFlags
 
     # Constructor with flat transition table optimization
-    def initialize(@states : Array(State), @tt : TransitionTable?, start_unanchored : StateID, byte_classes : ByteClasses | Int32, start_anchored : StateID? = nil, accelerators : Array(Bytes)? = nil, prefilter : Prefilter? = nil, quitset : ByteSet = ByteSet.new, flags : DFAFlags = DFAFlags.new, start_table : StartTable? = nil)
+    def initialize(@states : Array(State), @tt : TransitionTable?, start_unanchored : StateID, byte_classes : ByteClasses | Int32, start_anchored : StateID? = nil, accelerators : Array(Bytes)? = nil, prefilter : Prefilter? = nil, quitset : ByteSet = ByteSet.new, flags : DFAFlags = DFAFlags.new, start_table : StartTable? = nil, pattern_len : Int32? = nil)
       # Convert start states to premultiplied IDs if we have a transition table
       if @tt
         @start_unanchored = @tt.not_nil!.to_state_id(start_unanchored.to_i)
@@ -127,6 +161,20 @@ module Regex::Automata::DFA
         @start_anchored = @tt.not_nil!.to_state_id(@start_anchored.to_i)
       end
 
+      # Keep the materialized state graph in the same premultiplied ID space
+      # that the public DFA API exposes when a dense transition table exists.
+      @states = normalize_states_for_transition_table(@states, @tt.not_nil!)
+      @flags = DFAFlags.new(
+        premultiplied: true,
+        has_empty: @flags.has_empty,
+        has_byte_classes: @flags.has_byte_classes,
+        is_anchored: @flags.is_anchored,
+        is_leftmost: @flags.is_leftmost,
+        is_utf8: @flags.is_utf8,
+        is_always_start_anchored: @flags.is_always_start_anchored,
+        has_prefilter: @flags.has_prefilter
+      )
+
       @st = start_table || StartTable.new(
         @flags.is_anchored ? StartKind::Anchored : StartKind::Both,
         @start_unanchored,
@@ -140,8 +188,18 @@ module Regex::Automata::DFA
       if @tt && start_table
         @st = @st.remap { |id| @tt.not_nil!.to_state_id(id.to_i) }
       end
-      @ms = MatchStates.from_states(@states, @tt)
+      @ms = MatchStates.from_states(@states, @tt, pattern_len)
+      @wire_accels = nil
       @special = build_special
+    end
+
+    private def normalize_states_for_transition_table(states : Array(State), tt : TransitionTable) : Array(State)
+      states.map_with_index do |state, index|
+        normalized = state.dup(tt.to_state_id(index))
+        normalized.next = state.next.map { |id| tt.to_state_id(id.to_i) }
+        normalized.eoi_next = tt.to_state_id(state.eoi_next.to_i)
+        normalized
+      end
     end
 
     # Create a new DFA from a pattern string using default configuration
@@ -182,23 +240,31 @@ module Regex::Automata::DFA
       Builder.from_nfa(nfa).build
     end
 
-    # Deserialize a DFA from bytes
-    # Returns a tuple of (DFA, bytes_read) or raises DeserializeError
-    def self.from_bytes(slice : Bytes) : Tuple(DFA, Int32)
-      from_bytes_with_endianness(slice, detect_serialized_endianness(slice))
-    end
-
     def self.build_transition_table(states : Array(State), byte_classifier : ByteClasses) : TransitionTable
       stride2 = compute_stride2(byte_classifier)
       tt = TransitionTable.new(byte_classifier, stride2, states.size)
+      states_are_premultiplied = states.each_with_index.any? do |state, index|
+        state.id == tt.to_state_id(index) && state.id != StateID.new(index)
+      end
+
       states.each_with_index do |state, idx|
         state_id = tt.to_state_id(idx)
 
         state.next.each_with_index do |next_id, byte_class|
-          tt.set_transition_by_class(state_id, byte_class, tt.to_state_id(next_id.to_i))
+          target = if states_are_premultiplied
+                     next_id
+                   else
+                     tt.to_state_id(next_id.to_i)
+                   end
+          tt.set_transition_by_class(state_id, byte_class, target)
         end
 
-        tt.set_eoi_transition(state_id, tt.to_state_id(state.eoi_next.to_i))
+        eoi_target = if states_are_premultiplied
+                       state.eoi_next
+                     else
+                       tt.to_state_id(state.eoi_next.to_i)
+                     end
+        tt.set_eoi_transition(state_id, eoi_target)
       end
       tt
     end
@@ -214,577 +280,8 @@ module Regex::Automata::DFA
       stride2
     end
 
-    private def self.from_bytes_with_endianness(slice : Bytes, endianness : Symbol) : Tuple(DFA, Int32)
-      offset = 0
-
-      ensure_bytes_available(slice, offset, 8, "magic bytes")
-
-      # Check magic
-      magic = slice[offset, 8]
-      unless magic == "CRDFA001".to_slice
-        raise DeserializeError.new("Invalid magic bytes")
-      end
-      offset += 8
-
-      # Read version
-      ensure_bytes_available(slice, offset, 4, "version")
-      version = read_u32(slice, offset, endianness)
-      unless version == 1 || version == 2 || version == 3 || version == 4
-        raise DeserializeError.new("Unsupported version: #{version}")
-      end
-      offset += 4
-
-      # Read flags
-      ensure_bytes_available(slice, offset, 4, "flags")
-      flags = flags_from_u32(read_u32(slice, offset, endianness))
-      offset += 4
-
-      # Read state count
-      ensure_bytes_available(slice, offset, 4, "state count")
-      state_count = read_u32(slice, offset, endianness).to_i32
-      offset += 4
-
-      # Read start states
-      ensure_bytes_available(slice, offset, 8, "start states")
-      start_unanchored_unsigned = read_u32(slice, offset, endianness)
-      start_unanchored = StateID.new(unsigned_to_signed(start_unanchored_unsigned))
-      offset += 4
-      start_anchored_unsigned = read_u32(slice, offset, endianness)
-      start_anchored = StateID.new(unsigned_to_signed(start_anchored_unsigned))
-      offset += 4
-
-      start_table = nil
-      if version >= 2
-        unanchored_states = {} of Start => StateID
-        anchored_states = {} of Start => StateID
-        Start.each do |start_kind|
-          ensure_bytes_available(slice, offset, 4, "unanchored start state")
-          start_id = StateID.new(unsigned_to_signed(read_u32(slice, offset, endianness)))
-          offset += 4
-          unanchored_states[start_kind] = start_id
-        end
-        Start.each do |start_kind|
-          ensure_bytes_available(slice, offset, 4, "anchored start state")
-          start_id = StateID.new(unsigned_to_signed(read_u32(slice, offset, endianness)))
-          offset += 4
-          anchored_states[start_kind] = start_id
-        end
-        pattern_states = {} of PatternID => Hash(Start, StateID)
-        if version >= 4
-          ensure_bytes_available(slice, offset, 4, "pattern start state count")
-          pattern_state_count = read_u32(slice, offset, endianness).to_i32
-          offset += 4
-          pattern_state_count.times do
-            ensure_bytes_available(slice, offset, 4, "pattern start pattern id")
-            pattern_id = PatternID.new(read_u32(slice, offset, endianness).to_i32)
-            offset += 4
-            states = {} of Start => StateID
-            Start.each do |start_kind|
-              ensure_bytes_available(slice, offset, 4, "pattern start state")
-              start_id = StateID.new(unsigned_to_signed(read_u32(slice, offset, endianness)))
-              offset += 4
-              states[start_kind] = start_id
-            end
-            pattern_states[pattern_id] = states
-          end
-        end
-        start_table = StartTable.new(
-          flags.is_anchored ? StartKind::Anchored : StartKind::Both,
-          start_unanchored,
-          start_anchored,
-          unanchored_states,
-          anchored_states,
-          pattern_states
-        )
-      end
-
-      # Read byte classes count
-      ensure_bytes_available(slice, offset, 4, "byte class count")
-      byte_classes_count = read_u32(slice, offset, endianness).to_i32
-      offset += 4
-
-      # Read byte class mapping
-      ensure_bytes_available(slice, offset, 256, "byte class map")
-      class_mapping = Array.new(256) do
-        byte_class = slice[offset].to_i32
-        offset += 1
-        byte_class
-      end
-
-      # Create ByteClasses object
-      byte_classes_obj = ByteClasses.from_mapping(class_mapping, byte_classes_count)
-
-      stride2 = 0
-      stride = 1
-      while stride < byte_classes_obj.alphabet_len
-        stride <<= 1
-        stride2 += 1
-      end
-
-      if start_unanchored.to_i >= 0
-        start_unanchored = StateID.new(start_unanchored.to_i >> stride2)
-        validate_serialized_state_id!(start_unanchored, state_count, "unanchored start state")
-      end
-      if start_anchored.to_i >= 0
-        start_anchored = StateID.new(start_anchored.to_i >> stride2)
-        validate_serialized_state_id!(start_anchored, state_count, "anchored start state")
-      end
-      if start_table
-        start_table = start_table.remap do |id|
-          remapped = StateID.new(id.to_i >> stride2)
-          validate_serialized_state_id!(remapped, state_count, "start table state")
-          remapped
-        end
-      end
-
-      # Read states
-      states = Array(State).new(state_count)
-      state_count.times do |state_index|
-        # Read state ID
-        ensure_bytes_available(slice, offset, 4, "state id")
-        id_unsigned = read_u32(slice, offset, endianness)
-        id = StateID.new(unsigned_to_signed(id_unsigned))
-        offset += 4
-        validate_serialized_state_id!(id, state_count, "state id")
-
-        # Read transitions
-        ensure_bytes_available(slice, offset, 4, "transition count")
-        trans_count = read_u32(slice, offset, endianness).to_i32
-        offset += 4
-        unless trans_count == byte_classes_count
-          raise DeserializeError.new("invalid transition count #{trans_count} for state #{state_index}")
-        end
-        ensure_bytes_available(slice, offset, trans_count * 4, "state transitions")
-        next_states = Array.new(trans_count) do
-          next_id_unsigned = read_u32(slice, offset, endianness)
-          offset += 4
-          next_id = StateID.new(unsigned_to_signed(next_id_unsigned))
-          validate_serialized_state_id!(next_id, state_count, "transition state")
-          next_id
-        end
-
-        # Read match patterns
-        ensure_bytes_available(slice, offset, 4, "match count")
-        match_count = read_u32(slice, offset, endianness).to_i32
-        offset += 4
-        ensure_bytes_available(slice, offset, match_count * 4, "match pattern ids")
-        match_patterns = Array.new(match_count) do
-          PatternID.new(read_u32(slice, offset, endianness).to_i32)
-        end
-        offset += match_count * 4
-
-        # Read look sets and flags
-        ensure_bytes_available(slice, offset, 14, "state metadata")
-        look_need = LookSet.new(read_u32(slice, offset, endianness))
-        offset += 4
-        look_have = LookSet.new(read_u32(slice, offset, endianness))
-        offset += 4
-        is_from_word = slice[offset] != 0
-        offset += 1
-        is_half_crlf = slice[offset] != 0
-        offset += 1
-        eoi_next_unsigned = read_u32(slice, offset, endianness)
-        eoi_next = StateID.new(unsigned_to_signed(eoi_next_unsigned))
-        offset += 4
-        validate_serialized_state_id!(eoi_next, state_count, "EOI transition state")
-
-        # Create state
-        state = State.new(id, trans_count, look_need, look_have, is_from_word, is_half_crlf)
-        state.next = next_states
-        state.match = match_patterns
-        state.eoi_next = eoi_next
-        states << state
-      end
-
-      if st = start_table
-        start_table = StartTable.new(
-          st.kind,
-          st.unanchored,
-          st.anchored,
-          st.unanchored_states,
-          st.anchored_states,
-          st.pattern_states,
-          compute_universal_start(states, st.unanchored_states),
-          compute_universal_start(states, st.anchored_states)
-        )
-      end
-
-      # Read accelerators
-      ensure_bytes_available(slice, offset, 4, "accelerator count")
-      accel_count = read_u32(slice, offset, endianness).to_i32
-      offset += 4
-      unless accel_count == state_count
-        raise DeserializeError.new("invalid accelerator count #{accel_count}, expected #{state_count}")
-      end
-      accelerators = Array.new(accel_count) do
-        ensure_bytes_available(slice, offset, 4, "accelerator length")
-        accel_size = read_u32(slice, offset, endianness).to_i32
-        offset += 4
-        ensure_bytes_available(slice, offset, accel_size, "accelerator bytes")
-        accel = slice[offset, accel_size]
-        offset += accel_size
-        accel
-      end
-
-      # Read quit set
-      ensure_bytes_available(slice, offset, 32, "quit byte set")
-      quit_bytes = slice[offset, 32]
-      offset += 32
-      quitset = ByteSet.from_bytes(quit_bytes)
-
-      # Create DFA
-      dfa = DFA.new(states, nil, start_unanchored, byte_classes_obj, start_anchored, accelerators, nil, quitset, flags, start_table)
-
-      {dfa, offset}
-    end
-
-    private def self.read_u32(slice : Bytes, offset : Int32, endianness : Symbol) : UInt32
-      case endianness
-      when :little
-        slice[offset].to_u32 |
-          (slice[offset + 1].to_u32 << 8) |
-          (slice[offset + 2].to_u32 << 16) |
-          (slice[offset + 3].to_u32 << 24)
-      when :big
-        (slice[offset].to_u32 << 24) |
-          (slice[offset + 1].to_u32 << 16) |
-          (slice[offset + 2].to_u32 << 8) |
-          slice[offset + 3].to_u32
-      when :native
-        read_u32(slice, offset, :little)
-      else
-        raise "Unsupported endianness: #{endianness}"
-      end
-    end
-
-    private def self.read_u64(slice : Bytes, offset : Int32, endianness : Symbol) : UInt64
-      case endianness
-      when :little
-        value = 0_u64
-        (0..7).each do |i|
-          value |= slice[offset + i].to_u64 << (i * 8)
-        end
-        value
-      when :big
-        value = 0_u64
-        (0..7).each do |i|
-          value |= slice[offset + i].to_u64 << ((7 - i) * 8)
-        end
-        value
-      when :native
-        read_u64(slice, offset, :little)
-      else
-        raise "Unsupported endianness: #{endianness}"
-      end
-    end
-
-    private def self.unsigned_to_signed(unsigned : UInt32) : Int32
-      if unsigned >= 0x80000000_u32
-        # Negative value stored as two's complement
-        -((0xFFFFFFFF_u32 - unsigned + 1).to_i32)
-      else
-        unsigned.to_i32
-      end
-    end
-
-    # Serialize this DFA to bytes in little-endian format
-    # Returns a tuple of (bytes, bytes_written)
-    def to_bytes_little_endian : Tuple(Bytes, Int32)
-      to_bytes_with_endianness(:little)
-    end
-
-    # Serialize this DFA to bytes in big-endian format
-    # Returns a tuple of (bytes, bytes_written)
-    def to_bytes_big_endian : Tuple(Bytes, Int32)
-      to_bytes_with_endianness(:big)
-    end
-
-    # Serialize this DFA to bytes in native-endian format
-    # Returns a tuple of (bytes, bytes_written)
-    def to_bytes_native_endian : Tuple(Bytes, Int32)
-      to_bytes_with_endianness(:native)
-    end
-
-    # Serialize this DFA into the given buffer in little-endian format.
-    # Returns the number of bytes written or raises when the buffer is too small.
-    def write_to_little_endian(dst : Bytes) : Int32
-      write_to_with_endianness(dst, :little)
-    end
-
-    # Serialize this DFA into the given buffer in big-endian format.
-    # Returns the number of bytes written or raises when the buffer is too small.
-    def write_to_big_endian(dst : Bytes) : Int32
-      write_to_with_endianness(dst, :big)
-    end
-
-    # Serialize this DFA into the given buffer in native-endian format.
-    # Returns the number of bytes written or raises when the buffer is too small.
-    def write_to_native_endian(dst : Bytes) : Int32
-      write_to_with_endianness(dst, :native)
-    end
-
-    # Return the number of bytes required to serialize this DFA.
-    def write_to_len : Int32
-      to_bytes_native_endian[1]
-    end
-
-    private def to_bytes_with_endianness(endianness : Symbol) : Tuple(Bytes, Int32)
-      # Calculate total size needed
-      total_size = 0
-
-      # Header: magic (8 bytes), version (4 bytes), flags (4 bytes)
-      total_size += 8 + 4 + 4
-
-      # State count (4 bytes), start_unanchored (4 bytes), start_anchored (4 bytes)
-      total_size += 4 + 4 + 4
-      total_size += (Start.len * 2 * 4)
-      total_size += 4
-      total_size += @st.pattern_states.size * (4 + Start.len * 4)
-
-      # Byte classes count (4 bytes) + byte class mapping (256 bytes)
-      total_size += 4 + 256
-
-      # For each state:
-      @states.each do |state|
-        # id (4 bytes), transitions count (4 bytes), match patterns count (4 bytes)
-        total_size += 4 + 4 + 4
-        # transitions (each 4 bytes)
-        total_size += state.next.size * 4
-        # match patterns (each 4 bytes)
-        total_size += state.match.size * 4
-        # look_need (4 bytes), look_have (4 bytes), is_from_word (1 byte), is_half_crlf (1 byte), eoi_next (4 bytes)
-        total_size += 4 + 4 + 1 + 1 + 4
-      end
-
-      # Accelerators: count (4 bytes) + for each accelerator: length (4 bytes) + bytes
-      total_size += 4
-      @accelerators.each do |accel|
-        total_size += 4 + accel.size
-      end
-
-      # Quit set: 32 bytes (256 bits / 8)
-      total_size += 32
-
-      # Allocate buffer
-      buffer = Bytes.new(total_size)
-      offset = 0
-
-      # Write magic "CRDFA001"
-      buffer[offset, 8].copy_from("CRDFA001".to_slice)
-      offset += 8
-
-      # Write version
-      write_u32(4, buffer, offset, endianness)
-      offset += 4
-
-      # Write flags
-      write_u32(flags_to_u32, buffer, offset, endianness)
-      offset += 4
-
-      # Write state count
-      write_u32(@states.size.to_u32, buffer, offset, endianness)
-      offset += 4
-
-      # Write start states
-      start_unanchored_value = @start_unanchored.to_i
-      start_unanchored_unsigned = start_unanchored_value < 0 ? (0xFFFFFFFF_u32 + start_unanchored_value + 1).to_u32 : start_unanchored_value.to_u32
-      write_u32(start_unanchored_unsigned, buffer, offset, endianness)
-      offset += 4
-
-      start_anchored_value = @start_anchored.to_i
-      start_anchored_unsigned = start_anchored_value < 0 ? (0xFFFFFFFF_u32 + start_anchored_value + 1).to_u32 : start_anchored_value.to_u32
-      write_u32(start_anchored_unsigned, buffer, offset, endianness)
-      offset += 4
-
-      Start.each do |start_kind|
-        write_u32((@st.unanchored_states[start_kind]? || @st.unanchored).to_i.to_u32, buffer, offset, endianness)
-        offset += 4
-      end
-      Start.each do |start_kind|
-        write_u32((@st.anchored_states[start_kind]? || @st.anchored).to_i.to_u32, buffer, offset, endianness)
-        offset += 4
-      end
-      write_u32(@st.pattern_states.size.to_u32, buffer, offset, endianness)
-      offset += 4
-      @st.pattern_states.each do |pattern_id, states|
-        write_u32(pattern_id.to_i.to_u32, buffer, offset, endianness)
-        offset += 4
-        Start.each do |start_kind|
-          write_u32((states[start_kind]? || states[Start::Text]).to_i.to_u32, buffer, offset, endianness)
-          offset += 4
-        end
-      end
-
-      # Write byte classes count
-      write_u32(@byte_classes.to_u32, buffer, offset, endianness)
-      offset += 4
-
-      # Write byte class mapping
-      (0..255).each do |byte|
-        buffer[offset] = @byte_classifier[byte].to_u8
-        offset += 1
-      end
-
-      # Write states
-      @states.each do |state|
-        # Write state ID
-        id_value = state.id.to_i
-        id_unsigned = id_value < 0 ? (0xFFFFFFFF_u32 + id_value + 1).to_u32 : id_value.to_u32
-        write_u32(id_unsigned, buffer, offset, endianness)
-        offset += 4
-
-        # Write transitions count and transitions
-        write_u32(state.next.size.to_u32, buffer, offset, endianness)
-        offset += 4
-        state.next.each do |next_id|
-          # Convert signed to unsigned, preserving negative values as large positive values
-          value = next_id.to_i
-          unsigned_value = value < 0 ? (0xFFFFFFFF_u32 + value + 1).to_u32 : value.to_u32
-          write_u32(unsigned_value, buffer, offset, endianness)
-          offset += 4
-        end
-
-        # Write match patterns count and patterns
-        write_u32(state.match.size.to_u32, buffer, offset, endianness)
-        offset += 4
-        state.match.each do |pattern_id|
-          write_u32(pattern_id.to_i.to_u32, buffer, offset, endianness)
-          offset += 4
-        end
-
-        # Write look sets and flags
-        write_u32(state.look_need.to_u32, buffer, offset, endianness)
-        offset += 4
-        write_u32(state.look_have.to_u32, buffer, offset, endianness)
-        offset += 4
-        buffer[offset] = state.is_from_word? ? 1_u8 : 0_u8
-        offset += 1
-        buffer[offset] = state.is_half_crlf? ? 1_u8 : 0_u8
-        offset += 1
-        eoi_next_value = state.eoi_next.to_i
-        eoi_next_unsigned = eoi_next_value < 0 ? (0xFFFFFFFF_u32 + eoi_next_value + 1).to_u32 : eoi_next_value.to_u32
-        write_u32(eoi_next_unsigned, buffer, offset, endianness)
-        offset += 4
-      end
-
-      # Write accelerators
-      write_u32(@accelerators.size.to_u32, buffer, offset, endianness)
-      offset += 4
-      @accelerators.each do |accel|
-        write_u32(accel.size.to_u32, buffer, offset, endianness)
-        offset += 4
-        buffer[offset, accel.size].copy_from(accel)
-        offset += accel.size
-      end
-
-      # Write quit set (32 bytes for 256 bits)
-      quit_bytes = @quitset.to_bytes
-      buffer[offset, 32].copy_from(quit_bytes)
-      offset += 32
-
-      {buffer, offset}
-    end
-
-    private def write_to_with_endianness(dst : Bytes, endianness : Symbol) : Int32
-      bytes, written = to_bytes_with_endianness(endianness)
-      if dst.size < written
-        raise SerializeError.new("buffer too small: need #{written} bytes, got #{dst.size}")
-      end
-      dst[0, written].copy_from(bytes[0, written])
-      written
-    end
-
-    private def write_u32(value : UInt32, buffer : Bytes, offset : Int32, endianness : Symbol)
-      case endianness
-      when :little
-        buffer[offset] = (value & 0xFF).to_u8
-        buffer[offset + 1] = ((value >> 8) & 0xFF).to_u8
-        buffer[offset + 2] = ((value >> 16) & 0xFF).to_u8
-        buffer[offset + 3] = ((value >> 24) & 0xFF).to_u8
-      when :big
-        buffer[offset] = ((value >> 24) & 0xFF).to_u8
-        buffer[offset + 1] = ((value >> 16) & 0xFF).to_u8
-        buffer[offset + 2] = ((value >> 8) & 0xFF).to_u8
-        buffer[offset + 3] = (value & 0xFF).to_u8
-      when :native
-        # Native is little-endian on most systems
-        write_u32(value, buffer, offset, :little)
-      end
-    end
-
-    private def write_u64(value : UInt64, buffer : Bytes, offset : Int32, endianness : Symbol)
-      case endianness
-      when :little
-        (0..7).each do |i|
-          buffer[offset + i] = ((value >> (i * 8)) & 0xFF).to_u8
-        end
-      when :big
-        (0..7).each do |i|
-          buffer[offset + i] = ((value >> ((7 - i) * 8)) & 0xFF).to_u8
-        end
-      when :native
-        write_u64(value, buffer, offset, :little)
-      end
-    end
-
     def start : StateID
       @start_unanchored
-    end
-
-    private def flags_to_u32 : UInt32
-      value = 0_u32
-      value |= 1_u32 if @flags.premultiplied
-      value |= 1_u32 << 1 if @flags.has_empty
-      value |= 1_u32 << 2 if @flags.has_byte_classes
-      value |= 1_u32 << 3 if @flags.is_anchored
-      value |= 1_u32 << 4 if @flags.is_leftmost
-      value |= 1_u32 << 5 if @flags.is_utf8
-      value |= 1_u32 << 6 if @flags.has_prefilter
-      value |= 1_u32 << 7 if @flags.is_always_start_anchored
-      value
-    end
-
-    private def self.flags_from_u32(value : UInt32) : DFAFlags
-      DFAFlags.new(
-        premultiplied: (value & 1_u32) != 0,
-        has_empty: (value & (1_u32 << 1)) != 0,
-        has_byte_classes: (value & (1_u32 << 2)) != 0,
-        is_anchored: (value & (1_u32 << 3)) != 0,
-        is_leftmost: (value & (1_u32 << 4)) != 0,
-        is_utf8: (value & (1_u32 << 5)) != 0,
-        has_prefilter: (value & (1_u32 << 6)) != 0,
-        is_always_start_anchored: (value & (1_u32 << 7)) != 0
-      )
-    end
-
-    private def self.detect_serialized_endianness(slice : Bytes) : Symbol
-      if slice.size < 12
-        raise DeserializeError.new("serialized DFA too short")
-      end
-
-      little = read_u32(slice, 8, :little)
-      return :little if supported_serialized_version?(little)
-
-      big = read_u32(slice, 8, :big)
-      return :big if supported_serialized_version?(big)
-
-      raise DeserializeError.new("Unsupported version: #{little}")
-    end
-
-    private def self.supported_serialized_version?(version : UInt32) : Bool
-      version == 1 || version == 2 || version == 3 || version == 4
-    end
-
-    private def self.ensure_bytes_available(slice : Bytes, offset : Int32, len : Int32, what : String) : Nil
-      if len < 0 || offset < 0 || offset + len > slice.size
-        raise DeserializeError.new("serialized DFA too short while reading #{what}")
-      end
-    end
-
-    private def self.validate_serialized_state_id!(id : StateID, state_count : Int32, what : String) : Nil
-      unless 0 <= id.to_i < state_count
-        raise DeserializeError.new("invalid #{what}: #{id.to_i}")
-      end
     end
 
     def self.compute_universal_start(states : Array(State), start_states : Hash(Start, StateID)) : StateID?
@@ -811,6 +308,41 @@ module Regex::Automata::DFA
       @states.size
     end
 
+    # Returns the total number of states in this DFA.
+    #
+    # State IDs are premultiplied transition-table offsets, so callers that
+    # need to index a side table should use `to_index` instead of treating an
+    # ID as an array index directly.
+    def state_len : Int32
+      @tt.not_nil!.len
+    end
+
+    # Converts a premultiplied state ID to its transition-table index.
+    def to_index(id : StateID) : Int32
+      @tt.not_nil!.to_index(id)
+    end
+
+    # Converts a transition-table index to its premultiplied state ID.
+    def to_state_id(index : Int32) : StateID
+      @tt.not_nil!.to_state_id(index)
+    end
+
+    # Returns the flat, premultiplied transition table in state-row order.
+    # This is the Crystal equivalent of Rust's borrowed transition slice.
+    def trans : Array(StateID)
+      @tt.not_nil!.table
+    end
+
+    # Returns the identifier of the dedicated quit state.
+    def quit_id : StateID
+      @special.quit_id
+    end
+
+    # Returns the supported start-state modes for this DFA.
+    def start_kind : StartKind
+      @st.kind
+    end
+
     # Get state by ID
     def [](id : StateID) : State
       state_idx = id.to_i
@@ -820,106 +352,73 @@ module Regex::Automata::DFA
       @states[state_idx]
     end
 
-    # Remove dead states (unreachable or can't reach accept state)
+    # Remove unreachable states and states that cannot reach a match or quit.
     def remove_dead_states : DFA
-      # Forward reachable from start
-      # Materialized states use ordinary indices, not the table's strided IDs.
-      table = @tt
-      start_unanchored = table ? StateID.new(table.to_index(@start_unanchored)) : @start_unanchored
-      start_anchored = table ? StateID.new(table.to_index(@start_anchored)) : @start_anchored
-      start_table = table ? @st.remap { |id| StateID.new(table.to_index(id)) } : @st
-      roots = Set{start_unanchored, start_anchored}
-      start_table.remap do |id|
-        roots.add(id)
-        id
+      # Traverse public state IDs, including contextual starts and EOI edges.
+      forward = Set{@start_unanchored, @start_anchored, @st.unanchored, @st.anchored, @st.dead}
+      @st.iter.each { |entry| forward.add(entry[0]) }
+      if id = @st.universal_start_unanchored
+        forward.add(id)
       end
-      forward = roots.dup
-      stack = roots.to_a
-      while !stack.empty?
-        state_id = stack.pop
-        state_idx = state_id.to_i
-        current_state = @states[state_idx]
-        (current_state.next + [current_state.eoi_next]).each do |next_id|
-          if !forward.includes?(next_id)
-            forward.add(next_id)
-            stack.push(next_id)
-          end
+      if id = @st.universal_start_anchored
+        forward.add(id)
+      end
+
+      stack = forward.to_a
+      until stack.empty?
+        each_state_target(self[stack.pop]) do |target|
+          stack << target if !is_terminal_state?(target) && forward.add?(target)
         end
       end
 
-      # Backward reachable from accepting states
-      backward = Set(StateID).new
-      # Build reverse transitions
-      reverse = Array(Set(StateID)).new(@states.size) { Set(StateID).new }
-      @states.each_with_index do |state, i|
-        (state.next + [state.eoi_next]).each do |next_id|
-          reverse[next_id.to_i].add(StateID.new(i))
-        end
-      end
-
-      # Start from accepting states
-      stack.clear
+      # Paths to quit are observable even if they never reach a match.
+      reverse = Array.new(@states.size) { Set(StateID).new }
       @states.each do |state|
-        if state.accepting?
-          state_id = state.id
-          backward.add(state_id)
-          stack.push(state_id)
+        each_state_target(state) do |target|
+          reverse[to_index(target)].add(state.id) unless is_dead_state?(target)
+        end
+        stack << state.id if state.accepting? || is_quit_state?(state.id)
+      end
+
+      backward = stack.to_set
+      until stack.empty?
+        reverse[to_index(stack.pop)].each do |predecessor|
+          stack << predecessor if backward.add?(predecessor)
         end
       end
 
-      # BFS from accepting states
-      while !stack.empty?
-        state_id = stack.pop
-        state_idx = state_id.to_i
-        reverse[state_idx].each do |prev_id|
-          unless backward.includes?(prev_id)
-            backward.add(prev_id)
-            stack.push(prev_id)
-          end
-        end
-      end
-
-      # Live states = intersection
       live = forward & backward
-      # Dead and quit must keep their reserved indices even if not live.
       live.add(DEAD_STATE_ID)
-      live.add(QUIT_STATE_ID)
+      live.add(quit_id) if is_quit_state?(quit_id)
       return self if live.size == @states.size
 
-      # Create mapping from old to new state IDs
-      old_to_new = {} of StateID => StateID
-      new_states = [] of State
-      live.to_a.sort_by(&.to_i).each_with_index do |old_id, new_index|
-        new_id = StateID.new(new_index)
-        old_to_new[old_id] = new_id
-        # Create copy of state with new ID
-        state_idx = old_id.to_i
-        old_state = @states[state_idx]
-        new_state = old_state.dup(new_id)
-        new_states << new_state
+      # The constructor takes ordinary row indices for the new states.
+      ids = live.to_a.sort!
+      indices = {} of StateID => StateID
+      ids.each_with_index { |id, index| indices[id] = StateID.new(index) }
+      states = ids.map do |id|
+        state = self[id].dup(indices[id])
+        state.next.map! { |target| indices.fetch(target, DEAD_STATE_ID) }
+        state.eoi_next = indices.fetch(state.eoi_next, DEAD_STATE_ID)
+        state
       end
-
-      # Update transitions in new states
-      new_states.each do |state|
-        state.next.each_with_index do |next_id, i|
-          if old_to_new.has_key?(next_id)
-            state.next[i] = old_to_new[next_id]
-          elsif next_id == QUIT_STATE_ID
-            state.next[i] = QUIT_STATE_ID
-          else
-            state.next[i] = DEAD_STATE_ID
-          end
-        end
-        state.eoi_next = old_to_new[state.eoi_next]? || DEAD_STATE_ID
+      starts = @st.remap { |id| indices.fetch(id, DEAD_STATE_ID) }
+      pruned = DFA.new(states, nil, indices.fetch(@start_unanchored, DEAD_STATE_ID),
+        @byte_classifier, indices.fetch(@start_anchored, DEAD_STATE_ID),
+        ids.map { |id| @accelerators[to_index(id)] }, @prefilter, @quitset, @flags,
+        starts, pattern_len: pattern_len)
+      pruned.update_special do |special|
+        # A newly adjacent ordinary row can resemble a synthetic quit row.
+        special.set_quit_id(pruned.to_state_id(indices.fetch(quit_id, DEAD_STATE_ID).to_i))
+        special.set_no_special_start_states if @special.no_start_states?
+        special
       end
+      pruned
+    end
 
-      # Update start state
-      new_start_unanchored = old_to_new[start_unanchored]? || DEAD_STATE_ID
-      new_start_anchored = old_to_new[start_anchored]? || DEAD_STATE_ID
-      remapped_starts = start_table.remap { |id| old_to_new[id]? || DEAD_STATE_ID }
-
-      DFA.new(new_states, nil, new_start_unanchored, @byte_classifier, new_start_anchored,
-        nil, @prefilter, @quitset, @flags, remapped_starts)
+    private def each_state_target(state : State, & : StateID ->) : Nil
+      state.next.each { |target| yield target }
+      yield state.eoi_next
     end
 
     # Reduce byte classes using equivalence analysis
@@ -936,12 +435,20 @@ module Regex::Automata::DFA
           state.is_half_crlf?
         )
         reduced.match = state.match.dup
-        reduced.eoi_next = state.eoi_next
+        reduced.eoi_next = if tt = @tt
+                             StateID.new(tt.to_index(state.eoi_next))
+                           else
+                             state.eoi_next
+                           end
 
         class_count.times do |klass|
           representative = byte_classes.representative(klass)
           old_class = @byte_classifier[representative]
-          reduced.next[klass] = state.next[old_class]
+          reduced.next[klass] = if tt = @tt
+                                  StateID.new(tt.to_index(state.next[old_class]))
+                                else
+                                  state.next[old_class]
+                                end
         end
         reduced
       end.to_a
@@ -972,7 +479,8 @@ module Regex::Automata::DFA
         @prefilter,
         @quitset,
         @flags,
-        start_table
+        start_table,
+        pattern_len
       )
     end
 
@@ -987,6 +495,9 @@ module Regex::Automata::DFA
       last_match : Tuple(Int32, Array(PatternID))? = nil
       start_state_id = search_start_state
       current_state_id = start_state_id
+      if is_match_state?(current_state_id)
+        last_match = {0, state_matches(current_state_id)}
+      end
 
       idx = 0
       size = slice.size
@@ -1021,6 +532,9 @@ module Regex::Automata::DFA
       last_match : Tuple(Int32, Array(PatternID))? = nil
       start_state_id = search_start_state
       current_state_id = start_state_id
+      if is_match_state?(current_state_id)
+        last_match = {0, state_matches(current_state_id)}
+      end
 
       idx = 0
       size = slice.size
@@ -1030,7 +544,7 @@ module Regex::Automata::DFA
         next_state_id = transition(slice[idx], current_state_id)
 
         if is_quit_state?(next_state_id)
-          return last_match || MatchError.quit(byte, idx)
+          return MatchError.quit(byte, idx)
         end
 
         break if is_dead_state?(next_state_id)
@@ -1112,10 +626,10 @@ module Regex::Automata::DFA
     # Unsafe version of next_state that assumes valid state ID
     def next_state_unchecked(current : StateID, input : UInt8) : StateID
       if tt = @tt
-        tt.next_state(current, input)
+        tt.next_state_unchecked(current, input)
       else
         byte_class = @byte_classifier[input]
-        @states[current.to_i].next[byte_class]
+        @states.unsafe_fetch(current.to_i).next.unsafe_fetch(byte_class)
       end
     end
 
@@ -1135,18 +649,17 @@ module Regex::Automata::DFA
 
     # Alias for compatibility with Rust Automaton trait
     def is_match_state?(id : StateID) : Bool
-      return false if is_dead_state?(id) || is_quit_state?(id)
-      @special.is_match_state?(id) || match_state?(id)
+      @special.is_match_state?(id)
     end
 
     # Check if state is a dead state
     def is_dead_state?(id : StateID) : Bool
-      ::Regex::Automata::DFA.dead_state?(id)
+      @special.is_dead_state?(id)
     end
 
     # Check if state is a quit state
     def is_quit_state?(id : StateID) : Bool
-      ::Regex::Automata::DFA.quit_state?(id) || @special.is_quit_state?(id)
+      @special.is_quit_state?(id)
     end
 
     # Check if state is a special state (dead, quit, match, start, etc.)
@@ -1156,25 +669,34 @@ module Regex::Automata::DFA
 
     # Check if state is a start state
     def is_start_state?(id : StateID) : Bool
-      return false if is_dead_state?(id) || is_quit_state?(id)
-      @special.is_start_state?(id) || @st.start_state?(id)
+      @special.is_start_state?(id)
     end
 
     # Check if state is an accelerated state
     def is_accel_state?(id : StateID) : Bool
-      return false if is_dead_state?(id) || is_quit_state?(id)
-      return true if @special.is_accel_state?(id)
-
-      state_idx = id.to_i
-      if tt = @tt
-        state_idx = tt.to_index(id)
-      end
-      !@accelerators[state_idx].empty?
+      @special.is_accel_state?(id)
     end
 
     # Returns the number of patterns in this automaton
     def pattern_len : Int32
       @ms.pattern_len
+    end
+
+    # Returns true when this DFA has specialized anchored start states for
+    # individual patterns.
+    def starts_for_each_pattern? : Bool
+      !@st.pattern_len.nil?
+    end
+
+    # Returns the byte-to-start-configuration map retained from DFA
+    # construction, including the configured line terminator.
+    def start_map : StartByteMap
+      @st.start_map
+    end
+
+    # Return every configured start state in deterministic table order.
+    def starts : Array(Tuple(StateID, Anchored, Start, PatternID?))
+      @st.iter
     end
 
     # Returns the total number of transition entries available to each state.
@@ -1195,12 +717,12 @@ module Regex::Automata::DFA
       1 << stride2
     end
 
-    # Returns the serialized byte size of this DFA.
-    #
-    # This matches the current port's on-wire representation and gives a
-    # concrete, implementation-backed notion of memory footprint.
+    # Rust dense::DFA::memory_usage counts the four live backing tables,
+    # excluding the wire header and alignment used by serialization.
     def memory_usage : Int32
-      to_bytes_native_endian[0].size
+      @tt.not_nil!.len * 4 + @st.iter.size * 4 +
+        @ms.memory_usage * 4 // sizeof(PatternID) +
+        4 + @accelerators.count { |needles| !needles.empty? } * 8
     end
 
     # Returns the number of matches in the given state
@@ -1211,6 +733,133 @@ module Regex::Automata::DFA
     # Returns the pattern ID for the match at the given index in the given state
     def match_pattern(id : StateID, index : Int32) : PatternID
       @ms.match_pattern(id, index)
+    end
+
+    # Returns every matching pattern ID for the given state in priority order.
+    def pattern_id_slice(id : StateID) : Array(PatternID)
+      Array.new(match_len(id)) { |index| match_pattern(id, index) }
+    end
+
+    # Reconstruct the match-state-to-pattern-ID map used by DFA
+    # transformations. The map follows transition-table order, just as the
+    # Rust dense DFA's builder representation does.
+    def pattern_map : Hash(StateID, Array(PatternID))
+      @ms.to_map
+    end
+
+    # Replaces match-state metadata after a DFA transformation. Keep the
+    # materialized states synchronized because Crystal's serializer preserves
+    # those states in addition to the flattened match-state representation.
+    def set_pattern_map(matches : Hash(StateID, Array(PatternID))) : Nil
+      table = @tt.not_nil!
+      @states.each { |state| state.match.clear }
+      matches.each do |id, pattern_ids|
+        raise ArgumentError.new("invalid match state ID") unless table.is_valid(id)
+        @states[table.to_index(id)].match.concat(pattern_ids)
+      end
+      @ms = MatchStates.from_map(matches, @ms.pattern_len, table)
+      @wire_accels = nil
+      @special = build_special
+    end
+
+    # Applies a replacement update to special-state metadata. Crystal structs
+    # are value types, so this is the faithful equivalent of Rust's mutable
+    # borrow rather than returning a non-persistent copy.
+    def update_special(&block : Special -> Special) : Nil
+      @special = yield @special
+    end
+
+    # Rewrites transition targets and start references without changing the
+    # physical order of state rows. This mirrors Rust's OwnedDFA#remap; callers
+    # that rearrange rows remain responsible for their own special metadata.
+    def remap(&map : StateID -> StateID) : Nil
+      table = @tt.not_nil!
+      table.table_mut.map! { |id| yield id }
+      @states.each do |state|
+        state.next.map! { |id| yield id }
+        state.eoi_next = yield state.eoi_next
+      end
+      @st = @st.remap { |id| yield id }
+      @start_unanchored = yield @start_unanchored
+      @start_anchored = yield @start_anchored
+    end
+
+    # Rewrites the targets in one state row without changing any other row or
+    # start reference.
+    def remap_state(id : StateID, &map : StateID -> StateID) : Nil
+      table = @tt.not_nil!
+      raise ArgumentError.new("invalid state ID") unless table.is_valid(id)
+      table.remap(id) { |target| map.call(target) }
+      state = @states[table.to_index(id)]
+      state.next.map! { |target| map.call(target) }
+      state.eoi_next = map.call(state.eoi_next)
+    end
+
+    # Sets one byte-or-EOI transition in both dense representations.
+    def set_transition(from : StateID, unit : Unit, to : StateID) : Nil
+      table = @tt.not_nil!
+      table.set(from, unit, to)
+      state = @states[table.to_index(from)]
+      if unit.is_eoi
+        state.eoi_next = to
+      else
+        state.set_transition(table.classes.get_by_unit(unit), to)
+      end
+    end
+
+    # Updates one start configuration after validating its dense state ID.
+    def set_start_state(anchored : Anchored, start : Start, id : StateID, pattern : PatternID? = nil) : Nil
+      table = @tt.not_nil!
+      raise ArgumentError.new("invalid start state") unless table.is_valid(id)
+      @st.set_start(anchored, start, id, pattern)
+      @wire_accels = nil
+      @special = build_special
+    end
+
+    # Recomputes universal start-state shortcuts after bulk start updates.
+    def set_universal_starts : Nil
+      @st.refresh_universal_starts
+    end
+
+    # Adds a dead-filled state row and extends every Crystal-side companion
+    # representation that is indexed by dense state position.
+    def add_empty_state : StateID
+      table = @tt.not_nil!
+      id = table.add_empty_state
+      @states << State.new(id, @byte_classes)
+      @accelerators << Bytes.empty
+      @ms = MatchStates.from_states(@states, table, @ms.pattern_len)
+      @wire_accels = nil
+      @special = build_special
+      id
+    end
+
+    # Swaps the outgoing transition rows for two dense states. As in Rust,
+    # callers are responsible for repairing incoming and start references if
+    # they need the resulting DFA to retain its original language. Match,
+    # start and accelerator metadata remains attached to its state ID; only
+    # the transition rows move.
+    def swap_states(id1 : StateID, id2 : StateID) : Nil
+      table = @tt.not_nil!
+      table.swap(id1, id2)
+
+      state1 = @states[table.to_index(id1)]
+      state2 = @states[table.to_index(id2)]
+      state1.next, state2.next = state2.next, state1.next
+      state1.eoi_next, state2.eoi_next = state2.eoi_next, state1.eoi_next
+    end
+
+    # Removes trailing state rows. As in Rust, callers must ensure no retained
+    # transition or start reference points into the removed suffix.
+    def truncate_states(len : Int32) : Nil
+      table = @tt.not_nil!
+      raise ArgumentError.new("invalid state length") unless 0 <= len <= table.len
+      table.truncate(len)
+      @states.truncate(0, len)
+      @accelerators.truncate(0, len)
+      @ms = MatchStates.from_states(@states, table, @ms.pattern_len)
+      @wire_accels = nil
+      @special = build_special
     end
 
     # Returns true if and only if this automaton is guaranteed to be valid for UTF-8 input
@@ -1306,9 +955,29 @@ module Regex::Automata::DFA
       self
     end
 
-    # Return an owned view of this DFA.
+    # Copy owned tables directly. A serialization round trip is not a clone:
+    # the pinned native ByteSet reader has observable bucket behavior.
     def to_owned : DFA
-      self
+      table = @tt || raise "missing dense transition table"
+      copied_table = table.to_owned
+      copied_states = @states.map_with_index do |state, index|
+        copy = state.dup(StateID.new(index))
+        copy.next = state.next.map { |id| StateID.new(table.to_index(id)) }
+        copy.eoi_next = StateID.new(table.to_index(state.eoi_next))
+        copy
+      end
+      copied_quitset = ByteSet.new
+      @quitset.each { |byte| copied_quitset.add(byte) }
+      copy = DFA.new(copied_states, copied_table,
+        StateID.new(table.to_index(@start_unanchored)), @byte_classifier,
+        StateID.new(table.to_index(@start_anchored)), @accelerators.map(&.dup),
+        @prefilter, copied_quitset, @flags)
+      copy.restore_wire_metadata(@st.to_owned, @special,
+        @ms.to_owned.with_state_mapping(@ms.to_map.keys, copied_table), @wire_padding.try(&.dup))
+      if raw = @wire_accels
+        copy.retain_wire_accels(raw)
+      end
+      copy
     end
 
     # Returns the start state for the given configuration
@@ -1320,7 +989,8 @@ module Regex::Automata::DFA
         end
       end
 
-      @st.start(config.anchored, StartTable.from_look_behind(config.look_behind), config.pattern)
+      kind = config.look_behind.try { |byte| @st.start_map.get(byte) } || Start::Text
+      @st.start(config.anchored, kind, config.pattern)
     end
 
     # Returns the start state for a forward search (for backward compatibility)
@@ -1457,11 +1127,9 @@ module Regex::Automata::DFA
 
     private def build_special : Special
       special = Special.new
-      special.set_quit_id(if tt = @tt
-        tt.to_state_id(QUIT_STATE_ID.to_i)
-      else
-        QUIT_STATE_ID
-      end)
+      if quit_id = synthetic_quit_state_id
+        special.set_quit_id(quit_id)
+      end
 
       @states.each_with_index do |state, index|
         state_id = if tt = @tt
@@ -1476,6 +1144,21 @@ module Regex::Automata::DFA
       end
       special
     end
+
+    private def synthetic_quit_state_id : StateID?
+      return nil if @states.size <= QUIT_STATE_ID.to_i
+
+      candidate = @states[QUIT_STATE_ID.to_i]
+      return nil if candidate.accepting?
+      return nil unless candidate.eoi_next == DEAD_STATE_ID
+      return nil unless candidate.next.all? { |next_id| next_id == DEAD_STATE_ID }
+
+      if tt = @tt
+        tt.to_state_id(QUIT_STATE_ID.to_i)
+      else
+        QUIT_STATE_ID
+      end
+    end
   end
 
   # Subset construction builder
@@ -1488,11 +1171,42 @@ module Regex::Automata::DFA
       is_half_crlf : Bool,
       matches : Array(PatternID)
 
+    # Maps the original dense-state indexes to their final positions after a
+    # partitioning pass. Unlike Rust's swap-based Remapper, Crystal rebuilds
+    # the dense tables once in their final order, so the machine is never
+    # temporarily left with stale transition IDs.
+    private class StatePermutation
+      @old_to_new : Array(Int32)
+
+      def initialize(order : Array(Int32))
+        @old_to_new = Array.new(order.size, -1)
+        order.each_with_index do |old_index, new_index|
+          @old_to_new[old_index] = new_index
+        end
+      end
+
+      def new_index(old_index : Int32) : Int32
+        @old_to_new[old_index]
+      end
+
+      def remap_state_id(id : StateID) : StateID
+        StateID.new(new_index(id.to_i))
+      end
+
+      def remap_transition(id : StateID, table : TransitionTable) : StateID
+        table.to_state_id(new_index(table.to_index(id)))
+      end
+    end
+
     @nfa : NFA::NFA?
     @dfa_states : Array(State)
     @dfa_state_count : Int32
     @dfa_state_metas : Array(StateMeta)
-    @state_map : Hash(Tuple(Set(StateID), LookSet, Bool, Bool, Array(PatternID)), StateID) # (NFA state set, look_have, is_from_word, is_half_crlf, delayed matches) -> DFA state ID
+    @state_map : Hash(Determinize::State, StateID)
+    @scratch_state_builder : Determinize::StateBuilderEmpty
+    @state_key_memory_usage : Int64
+    @state_meta_payload_bytes : Int64 = 0_i64
+    @built : Bool = false
     @byte_classes : ByteClasses
     @transition_table : TransitionTable
     @nfa_has_word : Bool
@@ -1517,7 +1231,7 @@ module Regex::Automata::DFA
 
     # Configure the builder with a new configuration
     def configure(config : Config) : Builder
-      Builder.new(config, nfa: @nfa, hir_compiler: @hir_compiler, syntax_config: @syntax_config)
+      Builder.new(@config.overwrite(config), nfa: @nfa, hir_compiler: @hir_compiler, syntax_config: @syntax_config)
     end
 
     # Configure the builder using a block
@@ -1529,8 +1243,7 @@ module Regex::Automata::DFA
     # Configure the Thompson NFA compiler
     def thompson(&block : HirCompilerConfig -> HirCompilerConfig) : Builder
       config = @config
-      hir_compiler_config = HirCompilerConfig.new.which_captures(NFA::WhichCaptures::None)
-      hir_compiler_config = block.call(hir_compiler_config)
+      hir_compiler_config = block.call(@hir_compiler.config)
       hir_compiler = HirCompiler.new(hir_compiler_config)
       Builder.new(config, nfa: @nfa, hir_compiler: hir_compiler, syntax_config: @syntax_config)
     end
@@ -1539,6 +1252,14 @@ module Regex::Automata::DFA
     def syntax(&block : ::Regex::Syntax::ParserBuilder -> ::Regex::Syntax::ParserBuilder) : Builder
       syntax_config = block.call((@syntax_config || ::Regex::Syntax::ParserBuilder.new))
       Builder.new(@config, nfa: @nfa, hir_compiler: @hir_compiler, syntax_config: syntax_config)
+    end
+
+    # Snapshot configuration without sharing mutable parser options or compiler
+    # scratch. A seeded NFA is immutable during construction and can be shared.
+    def clone : Builder
+      compiler_config = @hir_compiler.config.overwrite(HirCompilerConfig.new)
+      Builder.new(@config.dup, nfa: @nfa, hir_compiler: HirCompiler.new(compiler_config),
+        byte_classes: @byte_classes, syntax_config: @syntax_config.try(&.dup))
     end
 
     def initialize(config : Config = Config.new, nfa : NFA::NFA? = nil, hir_compiler : HirCompiler? = nil, byte_classes : ByteClasses | Int32 = 256, syntax_config : ::Regex::Syntax::ParserBuilder? = nil)
@@ -1557,9 +1278,19 @@ module Regex::Automata::DFA
           next unless state.is_a?(NFA::Look)
 
           case state.kind
-          when NFA::Look::Kind::WordBoundaryAscii, NFA::Look::Kind::NonWordBoundaryAscii
+          when NFA::Look::Kind::WordBoundaryAscii,
+               NFA::Look::Kind::NonWordBoundaryAscii,
+               NFA::Look::Kind::WordStartAscii,
+               NFA::Look::Kind::WordEndAscii,
+               NFA::Look::Kind::WordStartHalfAscii,
+               NFA::Look::Kind::WordEndHalfAscii
             @nfa_has_word = true
-          when NFA::Look::Kind::WordBoundaryUnicode, NFA::Look::Kind::NonWordBoundaryUnicode
+          when NFA::Look::Kind::WordBoundaryUnicode,
+               NFA::Look::Kind::NonWordBoundaryUnicode,
+               NFA::Look::Kind::WordStartUnicode,
+               NFA::Look::Kind::WordEndUnicode,
+               NFA::Look::Kind::WordStartHalfUnicode,
+               NFA::Look::Kind::WordEndHalfUnicode
             @nfa_has_word = true
             @nfa_has_unicode_word = true
           when NFA::Look::Kind::StartLF,
@@ -1584,22 +1315,25 @@ module Regex::Automata::DFA
 
       if @nfa_has_unicode_word
         unless @config.unicode_word_boundary?
-          raise BuildError.new("cannot build DFAs for regexes with Unicode word boundaries; switch to ASCII word boundaries, or heuristically enable Unicode word boundaries or use a different regex engine")
+          raise BuildError.unsupported_dfa_word_boundary_unicode
         end
         @quitset = add_non_ascii_quit_bytes(@quitset)
       end
 
-      # Create byte classes with quit bytes in separate classes
+      # Rust dense::Builder::build_from_nfa clones the retained NFA set and
+      # adds quit-byte boundaries before deriving its transition alphabet.
       @byte_classes = case byte_classes
                       when ByteClasses
-                        # If we already have byte classes, we need to ensure quit bytes are separate
-                        # For now, just use the provided classes
                         byte_classes
                       when Int32
-                        if @quitset.empty?
-                          ByteClasses.identity
+                        if !@config.get_byte_classes
+                          ByteClasses.singletons
+                        elsif current_nfa = @nfa
+                          set = current_nfa.byte_class_set
+                          set.add_set(@quitset) unless @quitset.empty?
+                          set.byte_classes
                         else
-                          ByteClasses.with_quitset(@quitset)
+                          ByteClasses.singletons
                         end
                       else
                         raise "Unreachable"
@@ -1611,7 +1345,9 @@ module Regex::Automata::DFA
         StateMeta.new(Set(StateID).new, LookSet.new, LookSet.new, false, false, [] of PatternID),
         StateMeta.new(Set(StateID).new, LookSet.new, LookSet.new, false, false, [] of PatternID),
       ]
-      @state_map = {} of Tuple(Set(StateID), LookSet, Bool, Bool, Array(PatternID)) => StateID
+      @state_map = {} of Determinize::State => StateID
+      @scratch_state_builder = Determinize::StateBuilderEmpty.new
+      @state_key_memory_usage = 0_i64
       @start_unanchored = nil
       @start_anchored = nil
     end
@@ -1619,16 +1355,7 @@ module Regex::Automata::DFA
     # Build DFA from NFA using subset construction
     # Build DFA from a pattern string
     def build(pattern : String) : DFA
-      # Parse pattern to HIR
-      hir = syntax_parser.parse(pattern)
-
-      # Compile HIR to NFA
-      nfa = @hir_compiler.compile(hir)
-
-      # Build DFA from NFA
-      Builder.from_nfa(nfa, @config).build
-    rescue ex : ::Regex::Syntax::AST::Error | ::Regex::Syntax::Hir::Error
-      raise BuildError.new(ex.message)
+      build_many([pattern])
     end
 
     # Build a DFA from multiple pattern strings
@@ -1639,12 +1366,17 @@ module Regex::Automata::DFA
       end
 
       # Compile HIRs to NFA
-      nfa = @hir_compiler.compile_multi(hirs)
+      # Rust dense::Builder always disables captures, even after an explicit
+      # Thompson override, and clones its compiler before changing config.
+      compiler = HirCompiler.new(@hir_compiler.config.which_captures(NFA::WhichCaptures::None))
+      nfa = compiler.build_many_from_hir(hirs)
 
       # Build DFA from NFA
       Builder.from_nfa(nfa, @config).build
     rescue ex : ::Regex::Syntax::AST::Error | ::Regex::Syntax::Hir::Error
-      raise BuildError.new(ex.message)
+      raise BuildError.nfa(NFA::BuildError.syntax(ex))
+    rescue ex : NFA::BuildError
+      raise BuildError.nfa(ex)
     end
 
     # Compute accelerators for DFA states
@@ -1723,6 +1455,10 @@ module Regex::Automata::DFA
 
     # Build DFA from the configured NFA
     def build : DFA
+      # The public builder is reusable. Its completed runner owns tables that
+      # the previous DFA still references, so a subsequent run needs fresh scratch.
+      return clone.build if @built
+      @built = true
       raise "No NFA configured. Use build(pattern) or provide an NFA to the builder." unless @nfa
 
       nfa = @nfa.not_nil!
@@ -1787,14 +1523,11 @@ module Regex::Automata::DFA
       queue = [] of StateID
       processed = Set(StateID).new
 
-      if unanchored_start_id
-        queue << unanchored_start_id
-        processed.add(unanchored_start_id)
-      end
+      (unanchored_start_states.values + anchored_start_states.values).each do |start_id|
+        next if processed.includes?(start_id)
 
-      if anchored_start_id && anchored_start_id != unanchored_start_id && !processed.includes?(anchored_start_id)
-        queue << anchored_start_id
-        processed.add(anchored_start_id)
+        queue << start_id
+        processed.add(start_id)
       end
 
       pattern_start_states.each_value do |starts|
@@ -1809,6 +1542,7 @@ module Regex::Automata::DFA
       unanchored_start_states.each do |start_kind, start_id|
         unanchored_start_lookup[start_id] = start_kind
       end
+      start_byte_map = StartByteMap.new(nfa.look_matcher)
 
       while !queue.empty?
         dfa_id = queue.pop
@@ -1831,72 +1565,101 @@ module Regex::Automata::DFA
           current_look_have = look_have
 
           # Look-ahead assertions based on the current byte.
-          if byte == '\n'.ord.to_u8
-            current_look_have = current_look_have.insert(Look::EndLF)
-            if !is_half_crlf
-              current_look_have = current_look_have.insert(Look::EndCRLF)
-            end
-          elsif byte == '\r'.ord.to_u8
-            current_look_have = current_look_have.insert(Look::EndCRLF)
+          if byte == '\r'.ord.to_u8
+            current_look_have = current_look_have.insert(Look::EndCRLF) if !nfa.is_reverse || !is_half_crlf
+          elsif byte == '\n'.ord.to_u8
+            current_look_have = current_look_have.insert(Look::EndCRLF) if nfa.is_reverse || !is_half_crlf
           end
+          current_look_have = current_look_have.insert(Look::EndLF) if byte == nfa.look_matcher.get_line_terminator
 
-          if @nfa_has_crlf && is_half_crlf && byte != '\n'.ord.to_u8
+          if @nfa_has_crlf && is_half_crlf && byte != (nfa.is_reverse ? '\r'.ord.to_u8 : '\n'.ord.to_u8)
             current_look_have = current_look_have.insert(Look::StartCRLF)
           end
 
           if @nfa_has_word
-            if is_from_word != ::Regex::Automata.is_word_byte(byte)
-              current_look_have = current_look_have.insert(Look::WordAscii).remove(Look::WordAsciiNegate)
-              if @nfa_has_unicode_word
-                current_look_have = current_look_have.insert(Look::WordUnicode).remove(Look::WordUnicodeNegate)
-              end
+            if is_from_word == ::Regex::Automata.is_word_byte(byte)
+              current_look_have = current_look_have.insert(Look::WordAsciiNegate)
+              current_look_have = current_look_have.insert(Look::WordUnicodeNegate) if @nfa_has_unicode_word
             else
-              current_look_have = current_look_have.remove(Look::WordAscii).insert(Look::WordAsciiNegate)
-              if @nfa_has_unicode_word
-                current_look_have = current_look_have.remove(Look::WordUnicode).insert(Look::WordUnicodeNegate)
-              end
+              current_look_have = current_look_have.insert(Look::WordAscii)
+              current_look_have = current_look_have.insert(Look::WordUnicode) if @nfa_has_unicode_word
+            end
+
+            unless ::Regex::Automata.is_word_byte(byte)
+              current_look_have = current_look_have.insert(Look::WordEndHalfAscii)
+              current_look_have = current_look_have.insert(Look::WordEndHalfUnicode) if @nfa_has_unicode_word
+            end
+
+            if is_from_word && !::Regex::Automata.is_word_byte(byte)
+              current_look_have = current_look_have.insert(Look::WordEndAscii)
+              current_look_have = current_look_have.insert(Look::WordEndUnicode) if @nfa_has_unicode_word
+            elsif !is_from_word && ::Regex::Automata.is_word_byte(byte)
+              current_look_have = current_look_have.insert(Look::WordStartAscii)
+              current_look_have = current_look_have.insert(Look::WordStartUnicode) if @nfa_has_unicode_word
             end
           end
 
-          # Update satisfied look mask for the next position
-          # Start assertions (^, \A) are only true at position 0
-          # After consuming a byte, we're no longer at start
-          next_look_have = look_have.remove(Look::StartLF).remove(Look::Start).remove(Look::StartCRLF)
+          next_look_have = LookSet.new
 
           # Start of line assertions are true after a line terminator.
-          if byte == '\n'.ord.to_u8
+          if byte == nfa.look_matcher.get_line_terminator && nfa.look_set_any.contains_anchor_line
             next_look_have = next_look_have.insert(Look::StartLF)
-            if @nfa_has_crlf
-              next_look_have = next_look_have.insert(Look::StartCRLF)
-            end
+          end
+          if @nfa_has_crlf && byte == (nfa.is_reverse ? '\r'.ord.to_u8 : '\n'.ord.to_u8)
+            next_look_have = next_look_have.insert(Look::StartCRLF)
           end
 
-          # Word boundary assertions are computed per transition.
-          next_look_have = next_look_have.remove(Look::WordAscii).remove(Look::WordAsciiNegate)
-          if @nfa_has_unicode_word
-            next_look_have = next_look_have.remove(Look::WordUnicode).remove(Look::WordUnicodeNegate)
+          if @nfa_has_word && !::Regex::Automata.is_word_byte(byte)
+            next_look_have = next_look_have.insert(Look::WordStartHalfAscii)
+            next_look_have = next_look_have.insert(Look::WordStartHalfUnicode) if @nfa_has_unicode_word
           end
 
-          # Determine next is_from_word flag (for word boundary detection)
-          next_is_from_word = @nfa_has_word && ::Regex::Automata.is_word_byte(byte)
-          next_is_half_crlf = @nfa_has_crlf && byte == '\r'.ord.to_u8
+          # Rust recomputes epsilon closure only when this byte satisfies a
+          # new assertion that the state needs. Repeating closure otherwise
+          # can also change priority after epsilon states were omitted.
+          newly_needed_look = current_look_have.subtract(look_have).intersect(look_need)
+          effective_nfa_ids = if newly_needed_look.empty?
+                                nfa_set.to_a
+                              else
+                                nfa.epsilon_closure_with_look_ordered(nfa_set, current_look_have)
+                              end
+          next_matches = [] of PatternID
 
-          # Recompute the closure for every transition so that contextual
-          # assertions like word boundaries and line anchors are evaluated from
-          # the current byte boundary instead of only when a coarse look_need
-          # summary happens to detect it.
-          effective_nfa_set = nfa.epsilon_closure_with_look(nfa_set, current_look_have)
-
+          saw_leftmost_match = false
           next_set.clear
-          effective_nfa_set.each do |nfa_id|
-            transitions = nfa.transitions(nfa_id, byte)
-            transitions.each do |next_nfa_id|
-              next_set.add(next_nfa_id)
+          effective_nfa_ids.each do |nfa_id|
+            case nfa_state = nfa.state(nfa_id)
+            when NFA::Union,
+                 NFA::BinaryUnion,
+                 NFA::Fail,
+                 NFA::Look,
+                 NFA::Capture,
+                 NFA::Empty
+              break if saw_leftmost_match && @config.match_kind != MatchKind::All
+            when NFA::Match
+              pattern_id = nfa_state.pattern_id
+              next_matches << pattern_id unless next_matches.includes?(pattern_id)
+              saw_leftmost_match = true
+              break if @config.match_kind != MatchKind::All
+            when NFA::ByteRange
+              break if saw_leftmost_match && @config.match_kind != MatchKind::All
+              if nfa_state.trans.matches_byte(byte)
+                next_set.add(nfa_state.trans.next)
+              end
+            when NFA::Sparse
+              break if saw_leftmost_match && @config.match_kind != MatchKind::All
+              nfa_state.transitions.each do |transition|
+                if transition.matches_byte(byte)
+                  next_set.add(transition.next)
+                end
+              end
             end
           end
 
           # Compute next set closure (needed for both quit check and regular transition)
           next_set_closure = nfa.epsilon_closure_with_look(next_set, next_look_have)
+          next_is_from_word = !next_set_closure.empty? && @nfa_has_word && ::Regex::Automata.is_word_byte(byte)
+          next_is_half_crlf = !next_set_closure.empty? && @nfa_has_crlf && byte == (nfa.is_reverse ? '\n'.ord.to_u8 : '\r'.ord.to_u8)
 
           # Check for quit bytes first (they overrule regex matching)
           if !@quitset.empty? && is_quit_byte_class?(byte_class)
@@ -1907,16 +1670,11 @@ module Regex::Automata::DFA
             end
             @transition_table.set_transition_by_class(@transition_table.to_state_id(dfa_id.to_i), byte_class, @transition_table.to_state_id(QUIT_STATE_ID.to_i))
           else
-            delayed_matches = collect_matches(effective_nfa_set)
-            if !next_set_closure.empty? || !delayed_matches.empty?
-              key = {next_set_closure, next_look_have, next_is_from_word, next_is_half_crlf, delayed_matches}
-              next_id = @state_map[key]?
-              if next_id.nil?
-                next_id = add_dfa_state(next_set, next_look_have, next_is_from_word, next_is_half_crlf, delayed_matches)
-                unless processed.includes?(next_id)
-                  queue << next_id
-                  processed.add(next_id)
-                end
+            if !next_set_closure.empty? || !next_matches.empty?
+              next_id = add_dfa_state(next_set, next_look_have, next_is_from_word, next_is_half_crlf, next_matches)
+              unless processed.includes?(next_id)
+                queue << next_id
+                processed.add(next_id)
               end
               @transition_table.set_transition_by_class(@transition_table.to_state_id(dfa_id.to_i), byte_class, @transition_table.to_state_id(next_id.to_i))
             else
@@ -1925,8 +1683,8 @@ module Regex::Automata::DFA
               # appropriate contextual start state for the next position so that
               # look-behind sensitive assertions like word boundaries and line
               # anchors can still begin matching later in the haystack.
-              if unanchored_start_lookup.has_key?(dfa_id)
-                next_start_kind = StartTable.from_look_behind(byte)
+              if !nfa.is_always_start_anchored && unanchored_start_lookup.has_key?(dfa_id)
+                next_start_kind = start_byte_map.get(byte)
                 next_start_id = unanchored_start_states[next_start_kind]? || unanchored_start_states[Start::Text]
                 @transition_table.set_transition_by_class(
                   @transition_table.to_state_id(dfa_id.to_i),
@@ -1943,6 +1701,8 @@ module Regex::Automata::DFA
       # Compute EOI transitions for each DFA state.
       initial_size = @dfa_state_count
       (0...initial_size).each do |idx|
+        next if idx == DEAD_STATE_ID.to_i || idx == QUIT_STATE_ID.to_i
+
         meta = @dfa_state_metas[idx]?
         next unless meta
         nfa_set = meta.nfa_set
@@ -1954,11 +1714,16 @@ module Regex::Automata::DFA
         if @nfa_has_crlf || is_half_crlf
           eoi_look_have = eoi_look_have.insert(Look::EndCRLF)
         end
+        eoi_look_have = eoi_look_have.insert(Look::StartCRLF) if is_half_crlf && @nfa_has_crlf
         if @nfa_has_word
+          eoi_look_have = eoi_look_have.insert(Look::WordEndHalfAscii)
+          eoi_look_have = eoi_look_have.insert(Look::WordEndHalfUnicode) if @nfa_has_unicode_word
           if is_from_word
             eoi_look_have = eoi_look_have.insert(Look::WordAscii).remove(Look::WordAsciiNegate)
+            eoi_look_have = eoi_look_have.insert(Look::WordEndAscii)
             if @nfa_has_unicode_word
               eoi_look_have = eoi_look_have.insert(Look::WordUnicode).remove(Look::WordUnicodeNegate)
+              eoi_look_have = eoi_look_have.insert(Look::WordEndUnicode)
             end
           else
             eoi_look_have = eoi_look_have.remove(Look::WordAscii).insert(Look::WordAsciiNegate)
@@ -1968,7 +1733,7 @@ module Regex::Automata::DFA
           end
         end
 
-        delayed_matches = collect_matches(nfa.epsilon_closure_with_look(nfa_set, eoi_look_have))
+        delayed_matches = collect_matches(nfa.epsilon_closure_with_look_ordered(nfa_set, eoi_look_have))
         eoi_id = add_dfa_state(nfa_set, eoi_look_have, is_from_word, false, delayed_matches)
         @transition_table.set_eoi_transition(@transition_table.to_state_id(idx), @transition_table.to_state_id(eoi_id.to_i))
       end
@@ -1984,7 +1749,7 @@ module Regex::Automata::DFA
         anchored_start_states,
         pattern_start_states
       )
-      accelerators = if @config.accelerate?
+      accelerators = if @config.accelerate? && !@config.get_minimize
                        compute_accelerators(@dfa_state_count, @transition_table, @byte_classes)
                      else
                        Array.new(@dfa_state_count) { Bytes.empty }
@@ -2001,19 +1766,17 @@ module Regex::Automata::DFA
         accelerators
       )
       @dfa_state_count = @dfa_state_metas.size
-      @dfa_states = materialize_states_from_metadata(@dfa_state_metas, @transition_table)
-      patch_contextual_start_transitions(@transition_table, unanchored_start_states)
-      patch_contextual_start_transitions(@transition_table, anchored_start_states)
-      @dfa_states = materialize_states_from_metadata(@dfa_state_metas, @transition_table)
+      start_ids = (unanchored_start_states.values + anchored_start_states.values + pattern_start_states.values.flat_map(&.values)).to_set
+      @dfa_states = materialize_states_from_metadata(@dfa_state_metas, @transition_table, start_ids)
 
       # Create DFA flags from config
       flags = DFAFlags.new(
         has_byte_classes: true,
-        has_empty: dfa_has_empty?(unanchored_start_states, anchored_start_states),
+        has_empty: nfa.has_empty,
         is_utf8: nfa.utf8?,
         is_leftmost: @config.match_kind == MatchKind::LeftmostFirst,
         is_anchored: @config.start_kind == StartKind::Anchored,
-        is_always_start_anchored: nfa.start_anchored == nfa.start_unanchored
+        is_always_start_anchored: nfa.is_always_start_anchored
       )
       st = StartTable.new(
         @config.start_kind,
@@ -2023,10 +1786,12 @@ module Regex::Automata::DFA
         anchored_start_states,
         pattern_start_states,
         DFA.compute_universal_start(@dfa_states, unanchored_start_states),
-        DFA.compute_universal_start(@dfa_states, anchored_start_states)
+        DFA.compute_universal_start(@dfa_states, anchored_start_states),
+        start_map: StartByteMap.new(nfa.look_matcher),
+        pattern_len: @config.starts_for_each_pattern? ? nfa.pattern_len : nil
       )
 
-      dfa = DFA.new(@dfa_states, @transition_table, unanchored_start_id, @byte_classes, anchored_start_id, accelerators, nil, @quitset, flags, st)
+      dfa = DFA.new(@dfa_states, @transition_table, unanchored_start_id, @byte_classes, anchored_start_id, accelerators, nil, @quitset, flags, st, nfa.pattern_len)
 
       # The state shuffling done before this point always assumes that start
       # states should be marked as "special," even though it isn't the
@@ -2041,15 +1806,56 @@ module Regex::Automata::DFA
         dfa.set_prefilter(prefilter)
       end
 
-      dfa = Minimizer.new(dfa).run if @config.get_minimize
+      if @config.get_minimize
+        dfa = Minimizer.new(dfa).run
+        dfa = accelerate_minimized_dfa(dfa) if @config.accelerate?
+      end
 
       if limit = @config.get_dfa_size_limit
         if dfa.memory_usage > limit
-          raise BuildError.new("DFA exceeded size limit of #{limit} bytes", size_limit_exceeded: true)
+          raise BuildError.dfa_exceeded_size_limit(limit)
         end
       end
 
       dfa
+    end
+
+    # Rust dense::Builder::build_from_nfa minimizes before selecting and
+    # shuffling accelerated states. Rebuild the minimized transition graph in
+    # the same logical-ID space used by the construction-time shuffler.
+    private def accelerate_minimized_dfa(dfa : DFA) : DFA
+      tt = dfa.tt.not_nil!
+      state_count = dfa.state_len
+      metas = dfa.states.map do |state|
+        StateMeta.new(Set(StateID).new, state.look_have, state.look_need,
+          state.is_from_word?, state.is_half_crlf?, state.match.dup)
+      end
+      logical = ->(id : StateID) { StateID.new(tt.to_index(id)) }
+      unanchored_starts = dfa.st.unanchored_states.transform_values { |id| logical.call(id) }
+      anchored_starts = dfa.st.anchored_states.transform_values { |id| logical.call(id) }
+      pattern_starts = dfa.st.pattern_states.transform_values do |starts|
+        starts.transform_values { |id| logical.call(id) }
+      end
+      accelerators = compute_accelerators(state_count, tt, dfa.byte_classifier)
+      metas, tt, unanchored_id, anchored_id, unanchored_starts, anchored_starts, pattern_starts, accelerators = reorder_accelerated_states(
+        state_count, metas, tt,
+        logical.call(dfa.st.unanchored), logical.call(dfa.st.anchored),
+        unanchored_starts, anchored_starts, pattern_starts, accelerators
+      )
+      start_ids = (unanchored_starts.values + anchored_starts.values + pattern_starts.values.flat_map(&.values)).to_set
+      states = materialize_states_from_metadata(metas, tt, start_ids)
+      st = StartTable.new(
+        dfa.st.kind, unanchored_id, anchored_id,
+        unanchored_starts, anchored_starts, pattern_starts,
+        DFA.compute_universal_start(states, unanchored_starts),
+        DFA.compute_universal_start(states, anchored_starts),
+        start_map: dfa.st.start_map,
+        pattern_len: dfa.st.pattern_len
+      )
+      accelerated = DFA.new(states, tt, unanchored_id, dfa.byte_classifier,
+        anchored_id, accelerators, dfa.get_prefilter, dfa.quitset, dfa.flags, st, dfa.pattern_len)
+      accelerated.special.set_no_special_start_states unless @config.specialize_start_states?
+      accelerated
     end
 
     private def syntax_parser : ::Regex::Syntax::Parser
@@ -2061,37 +1867,38 @@ module Regex::Automata::DFA
       fallback || StateID.new(0)
     end
 
-    private def dfa_has_empty?(unanchored_start_states : Hash(Start, StateID), anchored_start_states : Hash(Start, StateID)) : Bool
-      start_ids = (unanchored_start_states.values + anchored_start_states.values).uniq
-      start_ids.any? do |id|
-        meta = @dfa_state_metas[id.to_i]
-        !meta.matches.empty? || !@dfa_state_metas[@transition_table.to_index(@transition_table.next_eoi_state(@transition_table.to_state_id(id.to_i)))].matches.empty?
-      end
-    end
-
     private def build_start_states(nfa_start : StateID) : Hash(Start, StateID)
       start_set = Set{nfa_start}
       starts = {} of Start => StateID
 
-      text_look_have, text_is_from_word = start_look_have_for(Start::Text)
-      text_start = add_dfa_state(start_set, text_look_have, text_is_from_word, false, [] of PatternID)
-      Start.each do |start_kind|
-        starts[start_kind] = text_start
+      prefix_look = @nfa.not_nil!.look_set_prefix_any
+
+      non_word_look_have, non_word_is_from_word, non_word_is_half_crlf = start_look_have_for(Start::NonWordByte)
+      non_word_start = add_dfa_state(start_set, non_word_look_have, non_word_is_from_word, non_word_is_half_crlf, [] of PatternID)
+      starts[Start::NonWordByte] = non_word_start
+
+      if prefix_look.contains_word
+        word_look_have, word_is_from_word, word_is_half_crlf = start_look_have_for(Start::WordByte)
+        starts[Start::WordByte] = add_dfa_state(start_set, word_look_have, word_is_from_word, word_is_half_crlf, [] of PatternID)
+      else
+        starts[Start::WordByte] = non_word_start
       end
 
-      if @nfa_has_crlf
-        {Start::LineLF, Start::LineCR}.each do |start_kind|
-          look_have, is_from_word = start_look_have_for(start_kind)
-          starts[start_kind] = add_dfa_state(start_set, look_have, is_from_word, false, [] of PatternID)
+      if prefix_look.contains_anchor
+        {
+          Start::Text,
+          Start::LineLF,
+          Start::LineCR,
+          Start::CustomLineTerminator,
+        }.each do |start_kind|
+          look_have, is_from_word, is_half_crlf = start_look_have_for(start_kind)
+          starts[start_kind] = add_dfa_state(start_set, look_have, is_from_word, is_half_crlf, [] of PatternID)
         end
-      end
-
-      if @nfa_has_word
-        {Start::NonWordByte, Start::WordByte}.each do |start_kind|
-          look_have, is_from_word = start_look_have_for(start_kind)
-          starts[start_kind] = add_dfa_state(start_set, look_have, is_from_word, false, [] of PatternID)
-        end
-        starts[Start::CustomLineTerminator] = starts[Start::NonWordByte]
+      else
+        starts[Start::Text] = non_word_start
+        starts[Start::LineLF] = non_word_start
+        starts[Start::LineCR] = non_word_start
+        starts[Start::CustomLineTerminator] = non_word_start
       end
 
       starts
@@ -2113,7 +1920,7 @@ module Regex::Automata::DFA
     private def clone_dfa_state(source_id : StateID) : StateID
       source_meta = @dfa_state_metas[source_id.to_i]
       new_id = StateID.new(@dfa_state_count)
-      @dfa_state_metas << source_meta
+      append_state_meta(source_meta)
       @transition_table.add_state
       @transition_table.copy_state(@transition_table.to_state_id(source_id.to_i), @transition_table.to_state_id(new_id.to_i))
       @dfa_state_count += 1
@@ -2121,28 +1928,54 @@ module Regex::Automata::DFA
       new_id
     end
 
-    private def start_look_have_for(start_kind : Start) : Tuple(LookSet, Bool)
+    private def start_look_have_for(start_kind : Start) : Tuple(LookSet, Bool, Bool)
       look_have = LookSet.new
       is_from_word = false
+      is_half_crlf = false
+      nfa = @nfa.not_nil!
+      lookset = nfa.look_set_any
+      rev = nfa.is_reverse
+      lineterm = nfa.look_matcher.get_line_terminator
 
       case start_kind
       when Start::Text
-        look_have = look_have.insert(Look::Start).insert(Look::StartLF)
-        look_have = look_have.insert(Look::StartCRLF) if @nfa_has_crlf
+        look_have = look_have.insert(Look::Start) if lookset.contains_anchor_haystack
+        look_have = look_have.insert(Look::StartLF).insert(Look::StartCRLF) if lookset.contains_anchor_line
+        look_have = look_have.insert(Look::WordStartHalfAscii).insert(Look::WordStartHalfUnicode) if lookset.contains_word
       when Start::LineLF
-        look_have = look_have.insert(Look::StartLF)
-        look_have = look_have.insert(Look::StartCRLF) if @nfa_has_crlf
+        if rev
+          is_half_crlf = true if lookset.contains_anchor_crlf
+          look_have = look_have.insert(Look::StartLF) if lookset.contains_anchor_line
+        else
+          look_have = look_have.insert(Look::StartCRLF) if lookset.contains_anchor_line
+        end
+        look_have = look_have.insert(Look::StartLF) if lookset.contains_anchor_line && lineterm == '\n'.ord.to_u8
+        look_have = look_have.insert(Look::WordStartHalfAscii).insert(Look::WordStartHalfUnicode) if lookset.contains_word
       when Start::LineCR
-        look_have = look_have.insert(Look::StartCRLF) if @nfa_has_crlf
+        if lookset.contains_anchor_crlf
+          if rev
+            look_have = look_have.insert(Look::StartCRLF)
+          else
+            is_half_crlf = true
+          end
+        end
+        look_have = look_have.insert(Look::StartLF) if lookset.contains_anchor_line && lineterm == '\r'.ord.to_u8
+        look_have = look_have.insert(Look::WordStartHalfAscii).insert(Look::WordStartHalfUnicode) if lookset.contains_word
       when Start::WordByte
-        is_from_word = true
-        look_have = look_have.insert(Look::WordAscii)
-        look_have = look_have.insert(Look::WordUnicode) if @nfa_has_unicode_word
-      when Start::NonWordByte, Start::CustomLineTerminator
-        look_have = look_have.insert(Look::WordAsciiNegate)
-        look_have = look_have.insert(Look::WordUnicodeNegate) if @nfa_has_unicode_word
+        is_from_word = true if lookset.contains_word
+      when Start::NonWordByte
+        look_have = look_have.insert(Look::WordStartHalfAscii).insert(Look::WordStartHalfUnicode) if lookset.contains_word
+      when Start::CustomLineTerminator
+        look_have = look_have.insert(Look::StartLF) if lookset.contains_anchor_line
+        if lookset.contains_word
+          if ::Regex::Automata::Utf8.is_word_byte(lineterm)
+            is_from_word = true
+          else
+            look_have = look_have.insert(Look::WordStartHalfAscii).insert(Look::WordStartHalfUnicode)
+          end
+        end
       end
-      {look_have, is_from_word}
+      {look_have, is_from_word, is_half_crlf}
     end
 
     private def add_dfa_state(nfa_set : Set(StateID), look_have : LookSet = LookSet.new, is_from_word : Bool = false, is_half_crlf : Bool = false, matches : Array(PatternID)? = nil) : StateID
@@ -2150,25 +1983,33 @@ module Regex::Automata::DFA
       nfa = @nfa.not_nil!
 
       # First compute epsilon closure with the given satisfied look conditions
-      closure = nfa.epsilon_closure_with_look(nfa_set, look_have)
-      state_matches = matches || collect_matches(closure)
-
-      # Check if we already have a DFA state for this (closure, look_have, delayed matches)
-      key = {closure, look_have, is_from_word, is_half_crlf, state_matches}
-      if existing = @state_map[key]?
-        return existing
-      end
-
-      dfa_id = StateID.new(@dfa_state_count)
-
-      # Compute look need set from NFA states that are look-around assertions
+      closure_ids = nfa.epsilon_closure_with_look_ordered(nfa_set, look_have)
+      state_matches = matches || collect_matches(closure_ids)
+      # Probe with borrowed scratch bytes; only a new cached state owns a copy.
+      builder_matches = @scratch_state_builder.into_matches
+      builder_matches.set_is_from_word if is_from_word
+      builder_matches.set_is_half_crlf if is_half_crlf
+      builder_matches.set_look_have { look_have }
+      state_matches.each { |pid| builder_matches.add_match_pattern_id(pid) }
+      builder = builder_matches.into_nfa
       look_need = LookSet.new
-      nfa_set.each do |nfa_id|
+      closure_ids.each do |nfa_id|
+        builder.add_nfa_state_id(nfa_id)
         nfa_state = nfa.states[nfa_id.to_i]
         if nfa_state.is_a?(NFA::Look)
           look_need = look_need.union(look_from_nfa_kind(nfa_state.kind))
         end
       end
+      builder.set_look_need { look_need }
+      if existing = @state_map[Determinize::State.new(builder.as_bytes)]?
+        @scratch_state_builder = builder.clear
+        return existing
+      end
+      key = builder.to_state
+      @scratch_state_builder = builder.clear
+      @state_key_memory_usage += key.memory_usage
+      dfa_id = StateID.new(@dfa_state_count)
+      closure = closure_ids.to_set
       meta = StateMeta.new(closure, look_have, look_need, is_from_word, is_half_crlf, state_matches)
 
       # Check if any NFA state in set is a match
@@ -2176,14 +2017,14 @@ module Regex::Automata::DFA
         puts "DFA state #{dfa_id.to_i}: NFA set size #{nfa_set.size}, look_need #{look_need}, look_have #{look_have}"
         nfa_set.each do |nfa_id|
           nfa_state = nfa.states[nfa_id.to_i]
-          puts "  NFA state #{nfa_id.to_i}: #{nfa_state.class} #{nfa_state.is_a?(NFA::Match) ? "(match pattern #{nfa_state.pattern_id.to_i}, next=#{nfa_state.next.inspect})" : ""}"
+          puts "  NFA state #{nfa_id.to_i}: #{nfa_state.class} #{nfa_state.is_a?(NFA::Match) ? "(match pattern #{nfa_state.pattern_id.to_i})" : ""}"
         end
         state_matches.each do |pattern_id|
           puts "DFA state #{dfa_id.to_i}: adding match for pattern #{pattern_id.to_i}"
         end
       end
 
-      @dfa_state_metas << meta
+      append_state_meta(meta)
       @transition_table.add_state
       @dfa_state_count += 1
       @state_map[key] = dfa_id
@@ -2191,33 +2032,32 @@ module Regex::Automata::DFA
       dfa_id
     end
 
-    private def collect_matches(closure : Set(StateID)) : Array(PatternID)
+    private def collect_matches(closure : Enumerable(StateID)) : Array(PatternID)
       raise "No NFA configured" unless @nfa
       nfa = @nfa.not_nil!
 
       matches = [] of PatternID
+      saw_leftmost_match = false
       closure.each do |nfa_id|
         nfa_state = nfa.states[nfa_id.to_i]
-        next unless nfa_state.is_a?(NFA::Match)
-        next unless nfa_state.next.nil?
-
-        idx = matches.bsearch_index { |pid| pid >= nfa_state.pattern_id } || matches.size
-        if idx == matches.size || matches[idx] != nfa_state.pattern_id
-          matches.insert(idx, nfa_state.pattern_id)
+        if nfa_state.is_a?(NFA::Match)
+          matches << nfa_state.pattern_id unless matches.includes?(nfa_state.pattern_id)
+          saw_leftmost_match = true
+          break if @config.match_kind != MatchKind::All
+        elsif saw_leftmost_match && @config.match_kind != MatchKind::All
+          break
         end
       end
       matches
     end
 
     private def is_quit_byte_class?(byte_class : Int32) : Bool
-      # Check if this byte class contains any quit bytes
-      # Since we're using ByteClasses.with_quitset, all quit bytes should be in class 0
-      # But we should check more carefully
       return false if @quitset.empty?
 
-      # For now, assume quit bytes are in class 0
-      # This is true if we're using ByteClasses.with_quitset
-      byte_class == 0
+      256.times do |byte|
+        return true if @byte_classes[byte] == byte_class && @quitset.includes?(byte.to_u8)
+      end
+      false
     end
 
     private def look_from_nfa_kind(kind : NFA::Look::Kind) : LookSet
@@ -2231,13 +2071,37 @@ module Regex::Automata::DFA
       when NFA::Look::Kind::EndCRLF
         LookSet.from_look(Look::EndCRLF)
       when NFA::Look::Kind::WordBoundaryAscii
-        LookSet.from_look(Look::WordAscii)
+        LookSet.new(
+          Look::WordAscii.as_repr |
+          Look::WordStartAscii.as_repr |
+          Look::WordEndAscii.as_repr
+        )
       when NFA::Look::Kind::NonWordBoundaryAscii
         LookSet.from_look(Look::WordAsciiNegate)
       when NFA::Look::Kind::WordBoundaryUnicode
-        LookSet.from_look(Look::WordUnicode)
+        LookSet.new(
+          Look::WordUnicode.as_repr |
+          Look::WordStartUnicode.as_repr |
+          Look::WordEndUnicode.as_repr
+        )
       when NFA::Look::Kind::NonWordBoundaryUnicode
         LookSet.from_look(Look::WordUnicodeNegate)
+      when NFA::Look::Kind::WordStartAscii
+        LookSet.from_look(Look::WordStartAscii)
+      when NFA::Look::Kind::WordEndAscii
+        LookSet.from_look(Look::WordEndAscii)
+      when NFA::Look::Kind::WordStartUnicode
+        LookSet.from_look(Look::WordStartUnicode)
+      when NFA::Look::Kind::WordEndUnicode
+        LookSet.from_look(Look::WordEndUnicode)
+      when NFA::Look::Kind::WordStartHalfAscii
+        LookSet.from_look(Look::WordStartHalfAscii)
+      when NFA::Look::Kind::WordEndHalfAscii
+        LookSet.from_look(Look::WordEndHalfAscii)
+      when NFA::Look::Kind::WordStartHalfUnicode
+        LookSet.from_look(Look::WordStartHalfUnicode)
+      when NFA::Look::Kind::WordEndHalfUnicode
+        LookSet.from_look(Look::WordEndHalfUnicode)
       when NFA::Look::Kind::StartText
         LookSet.from_look(Look::Start)
       when NFA::Look::Kind::EndText, NFA::Look::Kind::EndTextWithNewline
@@ -2255,57 +2119,6 @@ module Regex::Automata::DFA
       expanded
     end
 
-    private def patch_contextual_start_transitions(tt : TransitionTable, start_states : Hash(Start, StateID)) : Nil
-      start_ids = start_states.values.uniq
-      return if start_ids.empty?
-      start_tt_ids = start_ids.map { |id| tt.to_state_id(id.to_i) }.to_set
-
-      text_start_id = start_states[Start::Text]? || start_ids.first
-      text_tt_id = tt.to_state_id(text_start_id.to_i)
-
-      start_ids.each do |start_id|
-        start_kind = start_states.key_for(start_id)
-        next unless start_kind
-
-        tt_id = tt.to_state_id(start_id.to_i)
-        (@byte_classes.alphabet_len - 1).times do |byte_class|
-          next_state = tt.next_state_by_class(tt_id, byte_class)
-          text_next = tt.next_state_by_class(text_tt_id, byte_class)
-
-          byte = @byte_classes.representative(byte_class)
-          if ::Regex::Automata::DFA.dead_state?(next_state)
-            if contextual_start_kind?(start_kind) &&
-               !::Regex::Automata::DFA.dead_state?(text_next) &&
-               !start_tt_ids.includes?(text_next)
-              tt.set_transition_by_class(tt_id, byte_class, text_next)
-            else
-              next_start_kind = StartTable.from_look_behind(byte)
-              next_start_id = start_states[next_start_kind]? || text_start_id
-              tt.set_transition_by_class(tt_id, byte_class, tt.to_state_id(next_start_id.to_i))
-            end
-            next
-          end
-
-          next unless contextual_start_kind?(start_kind)
-
-          next if ::Regex::Automata::DFA.dead_state?(text_next)
-          next unless start_tt_ids.includes?(next_state)
-          next if start_tt_ids.includes?(text_next)
-
-          tt.set_transition_by_class(tt_id, byte_class, text_next)
-        end
-      end
-    end
-
-    private def contextual_start_kind?(start_kind : Start) : Bool
-      case start_kind
-      when Start::NonWordByte, Start::LineLF, Start::LineCR, Start::CustomLineTerminator
-        true
-      else
-        false
-      end
-    end
-
     private def all_non_ascii_bytes_are_quit?(quitset : ByteSet) : Bool
       # Check if all bytes 0x80-0xFF are in the quit set
       (0x80..0xFF).all? do |b|
@@ -2316,17 +2129,20 @@ module Regex::Automata::DFA
     private def check_determinize_size_limit! : Nil
       return unless limit = @config.get_determinize_size_limit
       if determinize_memory_usage > limit
-        raise BuildError.new("determinization exceeded size limit of #{limit} bytes", size_limit_exceeded: true)
+        raise BuildError.determinize_exceeded_size_limit(limit)
       end
     end
 
     private def determinize_memory_usage : Int64
-      usage = (@dfa_state_metas.size * 64 + @state_map.size * 32).to_i64
-      @dfa_state_metas.each do |meta|
-        usage += (meta.nfa_set.size * 8).to_i64
-        usage += (meta.matches.size * 4).to_i64
-      end
-      usage
+      @dfa_state_metas.size.to_i64 * 64 + @state_map.size.to_i64 * 32 +
+        @state_key_memory_usage + @scratch_state_builder.capacity + @state_meta_payload_bytes
+    end
+
+    private def append_state_meta(meta : StateMeta) : Nil
+      @dfa_state_metas << meta
+      # Preserve the per-row Crystal estimate, including specialized start
+      # copies, while keeping finite-budget checks constant-time as in Rust.
+      @state_meta_payload_bytes += meta.nfa_set.size.to_i64 * 8 + meta.matches.size.to_i64 * 4
     end
 
     private def reorder_special_states(state_count : Int32, metas : Array(StateMeta), tt : TransitionTable, unanchored_start_id : StateID, anchored_start_id : StateID, unanchored_start_states : Hash(Start, StateID), anchored_start_states : Hash(Start, StateID), pattern_start_states : Hash(PatternID, Hash(Start, StateID))) : Tuple(Array(StateMeta), TransitionTable, StateID, StateID, Hash(Start, StateID), Hash(Start, StateID), Hash(PatternID, Hash(Start, StateID)))
@@ -2353,10 +2169,7 @@ module Regex::Automata::DFA
       end
 
       new_order = [DEAD_STATE_ID.to_i, QUIT_STATE_ID.to_i] + match_indices + start_only_indices + other_indices
-      old_to_new = {} of Int32 => Int32
-      new_order.each_with_index do |old_index, new_index|
-        old_to_new[old_index] = new_index
-      end
+      permutation = StatePermutation.new(new_order)
 
       reordered_metas = Array(StateMeta).new(state_count)
       reordered_tt = TransitionTable.new(tt.classes, tt.stride2, state_count)
@@ -2367,19 +2180,19 @@ module Regex::Automata::DFA
         new_tt_id = reordered_tt.to_state_id(new_index)
         (tt.classes.alphabet_len - 1).times do |byte_class|
           old_next = tt.next_state_by_class(old_tt_id, byte_class)
-          reordered_tt.set_transition_by_class(new_tt_id, byte_class, reordered_tt.to_state_id(old_to_new[tt.to_index(old_next)]))
+          reordered_tt.set_transition_by_class(new_tt_id, byte_class, permutation.remap_transition(old_next, reordered_tt))
         end
-        reordered_tt.set_eoi_transition(new_tt_id, reordered_tt.to_state_id(old_to_new[tt.to_index(tt.next_eoi_state(old_tt_id))]))
+        reordered_tt.set_eoi_transition(new_tt_id, permutation.remap_transition(tt.next_eoi_state(old_tt_id), reordered_tt))
       end
 
       {
         reordered_metas,
         reordered_tt,
-        StateID.new(old_to_new[unanchored_start_id.to_i]),
-        StateID.new(old_to_new[anchored_start_id.to_i]),
-        remap_start_state_ids(unanchored_start_states, old_to_new),
-        remap_start_state_ids(anchored_start_states, old_to_new),
-        remap_pattern_start_state_ids(pattern_start_states, old_to_new),
+        permutation.remap_state_id(unanchored_start_id),
+        permutation.remap_state_id(anchored_start_id),
+        remap_start_state_ids(unanchored_start_states, permutation),
+        remap_start_state_ids(anchored_start_states, permutation),
+        remap_pattern_start_state_ids(pattern_start_states, permutation),
       }
     end
 
@@ -2422,10 +2235,7 @@ module Regex::Automata::DFA
                   match_nonaccel + match_accel + normal_accel + start_accel + start_nonaccel + normal_nonaccel
       return {metas, tt, unanchored_start_id, anchored_start_id, unanchored_start_states, anchored_start_states, pattern_start_states, accelerators} if new_order == (0...state_count).to_a
 
-      old_to_new = {} of Int32 => Int32
-      new_order.each_with_index do |old_index, new_index|
-        old_to_new[old_index] = new_index
-      end
+      permutation = StatePermutation.new(new_order)
 
       reordered_metas = Array(StateMeta).new(state_count)
       reordered_tt = TransitionTable.new(tt.classes, tt.stride2, state_count)
@@ -2439,19 +2249,19 @@ module Regex::Automata::DFA
         new_tt_id = reordered_tt.to_state_id(new_index)
         (tt.classes.alphabet_len - 1).times do |byte_class|
           old_next = tt.next_state_by_class(old_tt_id, byte_class)
-          reordered_tt.set_transition_by_class(new_tt_id, byte_class, reordered_tt.to_state_id(old_to_new[tt.to_index(old_next)]))
+          reordered_tt.set_transition_by_class(new_tt_id, byte_class, permutation.remap_transition(old_next, reordered_tt))
         end
-        reordered_tt.set_eoi_transition(new_tt_id, reordered_tt.to_state_id(old_to_new[tt.to_index(tt.next_eoi_state(old_tt_id))]))
+        reordered_tt.set_eoi_transition(new_tt_id, permutation.remap_transition(tt.next_eoi_state(old_tt_id), reordered_tt))
       end
 
       {
         reordered_metas,
         reordered_tt,
-        StateID.new(old_to_new[unanchored_start_id.to_i]),
-        StateID.new(old_to_new[anchored_start_id.to_i]),
-        remap_start_state_ids(unanchored_start_states, old_to_new),
-        remap_start_state_ids(anchored_start_states, old_to_new),
-        remap_pattern_start_state_ids(pattern_start_states, old_to_new),
+        permutation.remap_state_id(unanchored_start_id),
+        permutation.remap_state_id(anchored_start_id),
+        remap_start_state_ids(unanchored_start_states, permutation),
+        remap_start_state_ids(anchored_start_states, permutation),
+        remap_pattern_start_state_ids(pattern_start_states, permutation),
         reordered_accels,
       }
     end
@@ -2462,30 +2272,37 @@ module Regex::Automata::DFA
       state
     end
 
-    private def materialize_states_from_metadata(metas : Array(StateMeta), tt : TransitionTable) : Array(State)
+    private def materialize_states_from_metadata(metas : Array(StateMeta), tt : TransitionTable, start_ids : Set(StateID)) : Array(State)
       states = Array(State).new(metas.size)
       metas.each_with_index do |meta, index|
-        state = build_state_shell(StateID.new(index), meta)
         tt_id = tt.to_state_id(index)
+        state = build_state_shell(StateID.new(index), meta)
         state.next = Array.new(tt.classes.alphabet_len - 1) do |byte_class|
           StateID.new(tt.to_index(tt.next_state_by_class(tt_id, byte_class)))
         end
         state.eoi_next = StateID.new(tt.to_index(tt.next_eoi_state(tt_id)))
+
+        if state.match.empty?
+          eoi_meta = metas[state.eoi_next.to_i]
+          state.accepting_override = true unless eoi_meta.matches.empty?
+        end
         states << state
       end
       states
     end
 
-    private def remap_start_state_ids(starts : Hash(Start, StateID), old_to_new : Hash(Int32, Int32)) : Hash(Start, StateID)
+    private def remap_start_state_ids(starts : Hash(Start, StateID), permutation : StatePermutation) : Hash(Start, StateID)
       starts.transform_values do |id|
-        StateID.new(old_to_new[id.to_i])
+        permutation.remap_state_id(id)
       end
     end
 
-    private def remap_pattern_start_state_ids(pattern_starts : Hash(PatternID, Hash(Start, StateID)), old_to_new : Hash(Int32, Int32)) : Hash(PatternID, Hash(Start, StateID))
+    private def remap_pattern_start_state_ids(pattern_starts : Hash(PatternID, Hash(Start, StateID)), permutation : StatePermutation) : Hash(PatternID, Hash(Start, StateID))
       pattern_starts.transform_values do |starts|
-        remap_start_state_ids(starts, old_to_new)
+        remap_start_state_ids(starts, permutation)
       end
     end
   end
 end
+
+require "./dense_wire"

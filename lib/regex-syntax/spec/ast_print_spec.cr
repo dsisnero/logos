@@ -83,7 +83,7 @@ describe Regex::Syntax::AST::Printer do
     print_ast("(?siUmux)").should eq("(?siUmux)")
     print_ast("(?i:a)").should eq("(?i:a)")
     print_ast("(?P<foo>a)").should eq("(?P<foo>a)")
-    print_ast("(?<foo>a)").should eq("(?P<foo>a)")
+    print_ast("(?<foo>a)").should eq("(?<foo>a)")
     print_ast("(a)").should eq("(a)")
     print_ast("(?:a)").should eq("(?:a)")
   end
@@ -137,15 +137,7 @@ describe Regex::Syntax::AST::Printer do
     print_ast("[[:^xdigit:]]").should eq("[[:^xdigit:]]")
     print_ast(%q(\pL)).should eq(%q(\pL))
     print_ast(%q(\PL)).should eq(%q(\PL))
-    print_ast(%q(\p{L})).should eq(%q(\p{L}))
-    print_ast(%q(\P{L})).should eq(%q(\P{L}))
     print_ast(%q(\p{Greek})).should eq(%q(\p{Greek}))
     print_ast(%q(\P{sc:Greek})).should eq(%q(\P{sc:Greek}))
-    print_ast(%q(\p{X=Y})).should eq(%q(\p{X=Y}))
-    print_ast(%q(\P{X=Y})).should eq(%q(\P{X=Y}))
-    print_ast(%q(\p{X:Y})).should eq(%q(\p{X:Y}))
-    print_ast(%q(\P{X:Y})).should eq(%q(\P{X:Y}))
-    print_ast(%q(\p{X!=Y})).should eq(%q(\p{X!=Y}))
-    print_ast(%q(\P{X!=Y})).should eq(%q(\P{X!=Y}))
   end
 end

@@ -1,3 +1,5 @@
+require "./utf8_sequences"
+
 module Regex::Automata
   class Captures
   end
@@ -77,6 +79,13 @@ module Regex::Automata
       raise "invalid match span: end < start" if @end < @start
     end
 
+    # Create a new match from a pattern ID and a Span.
+    def initialize(@pattern : PatternID, span : Span)
+      @start = span.start
+      @end = span.end
+      raise "invalid match span: end < start" if @end < @start
+    end
+
     # Create a new match from a pattern ID and a range
     def initialize(@pattern : PatternID, range : Range(Int32, Int32))
       @start = range.begin
@@ -92,6 +101,11 @@ module Regex::Automata
       new(PatternID.new(pattern), start, _end)
     end
 
+    # Create a new match from a numeric pattern ID and a Span.
+    def self.must(pattern : Int32, span : Span) : Match
+      new(PatternID.new(pattern), span)
+    end
+
     # Create a new match from a pattern ID and a range
     #
     # This is like `Match.new`, but accepts an `Int32` instead of a
@@ -100,19 +114,33 @@ module Regex::Automata
       new(PatternID.new(pattern), range)
     end
 
-    # Returns the span as a range
-    def span : Range(Int32, Int32)
+    # Returns the match span.
+    def span : Span
+      Span.new(@start, @end)
+    end
+
+    # Returns the match span as a range.
+    def range : Range(Int32, Int32)
       @start...@end
     end
 
-    # Returns the length of the match
-    def length : Int32
+    # Returns the length of the match.
+    def len : Int32
       @end - @start
     end
 
-    # Returns true if the match is empty
-    def empty? : Bool
+    # Returns true if the match is empty.
+    def is_empty : Bool
       @start == @end
+    end
+
+    # Crystal-style compatibility aliases.
+    def length : Int32
+      len
+    end
+
+    def empty? : Bool
+      is_empty
     end
   end
 
@@ -128,20 +156,33 @@ module Regex::Automata
       @start...@end
     end
 
-    def empty? : Bool
+    def is_empty : Bool
       @start >= @end
     end
 
-    def length : Int32
+    def len : Int32
       Math.max(@end - @start, 0)
     end
 
-    def contains?(offset : Int32) : Bool
-      !empty? && @start <= offset && offset < @end
+    def contains(offset : Int32) : Bool
+      !is_empty && @start <= offset && offset <= @end
     end
 
     def offset(amount : Int32) : Span
       Span.new(@start + amount, @end + amount)
+    end
+
+    # Crystal-style compatibility aliases.
+    def empty? : Bool
+      is_empty
+    end
+
+    def length : Int32
+      len
+    end
+
+    def contains?(offset : Int32) : Bool
+      contains(offset)
     end
   end
 
@@ -264,13 +305,8 @@ module Regex::Automata
       @span_start > @span_end
     end
 
-    # Assumes valid UTF-8 input, like upstream.
     def is_char_boundary(offset : Int32) : Bool
-      return false if offset < 0 || offset > @haystack.size
-      return true if offset == 0 || offset == @haystack.size
-
-      byte = @haystack[offset]
-      byte < 0x80 || byte >= 0xC0
+      Utf8.is_boundary(@haystack, offset)
     end
 
     def clone : Input
@@ -282,7 +318,8 @@ module Regex::Automata
 
     private def validate_span(span : Span) : Nil
       haystack_size = @haystack.size
-      return if span.end <= haystack_size && span.start <= span.end + 1
+      return if span.start >= 0 && span.end >= 0 && span.end <= haystack_size &&
+                span.start.to_i64 <= span.end.to_i64 + 1
 
       raise ArgumentError.new("invalid span #{span.start}...#{span.end} for haystack of length #{haystack_size}")
     end

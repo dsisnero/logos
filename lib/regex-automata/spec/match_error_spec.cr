@@ -1,6 +1,17 @@
 require "./spec_helper"
 
 describe Regex::Automata::MatchError do
+  it "retains a directly constructed structured error" do
+    error = Regex::Automata::MatchError.new(
+      Regex::Automata::MatchError::Kind::Quit,
+      byte: 'x'.ord.to_u8,
+      offset: 7
+    )
+
+    error.should eq(Regex::Automata::MatchError.quit('x'.ord.to_u8, 7))
+    error.kind.should eq(Regex::Automata::MatchError::Kind::Quit)
+  end
+
   it "preserves quit constructor state and kind" do
     error = Regex::Automata::MatchError.quit('x'.ord.to_u8, 7)
 
@@ -13,7 +24,8 @@ describe Regex::Automata::MatchError do
     error.gave_up?.should be_false
     error.haystack_too_long?.should be_false
     error.unsupported_anchored?.should be_false
-    error.message.should eq("quit search after observing byte 120 at offset 7")
+    error.message.should eq("quit search after observing byte x at offset 7")
+    Regex::Automata::MatchError.quit(0xff_u8, 0).message.should eq("quit search after observing byte \\xFF at offset 0")
   end
 
   it "preserves gave-up constructor state and kind" do

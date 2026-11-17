@@ -56,6 +56,12 @@ describe Regex::Automata::Syntax::Config do
     updated.get_nest_limit.should eq(7)
     updated.get_octal.should be_true
   end
+
+  it "retains Rust's u32 nesting limit even above Crystal parser's signed range" do
+    config = Regex::Automata::Syntax::Config.new.nest_limit(UInt32::MAX)
+    config.get_nest_limit.should eq(UInt32::MAX)
+    Regex::Automata::Syntax.parse_with("a", config).minimum_len.should eq(1)
+  end
 end
 
 describe Regex::Automata::Syntax do
@@ -64,6 +70,18 @@ describe Regex::Automata::Syntax do
 
     hir.static_explicit_captures_len.should eq(1)
     hir.minimum_len.should eq(1)
+  end
+
+  it "parses many patterns with default and explicit configurations" do
+    Regex::Automata::Syntax.parse_many(["a", "b+"]).size.should eq(2)
+
+    hirs = Regex::Automata::Syntax.parse_many_with(
+      ["a*", "b+"],
+      Regex::Automata::Syntax::Config.new.swap_greed(true)
+    )
+    hirs.each do |hir|
+      hir.node.as(Regex::Syntax::Hir::Repetition).greedy?.should be_false
+    end
   end
 
   it "parses with explicit CRLF and multiline settings" do
@@ -82,8 +100,8 @@ describe Regex::Automata::Syntax do
       Regex::Automata::Syntax::Config.new.unicode(false).utf8(false)
     )
 
-    hir.node.should be_a(Regex::Syntax::Hir::CharClass)
-    hir.node.as(Regex::Syntax::Hir::CharClass).intervals.should eq([0xFF_u8..0xFF_u8])
+    hir.node.should be_a(Regex::Syntax::Hir::Literal)
+    hir.node.as(Regex::Syntax::Hir::Literal).bytes.should eq(Bytes[0xFF])
     hir.properties.utf8?.should be_false
   end
 

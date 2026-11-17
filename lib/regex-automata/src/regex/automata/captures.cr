@@ -83,7 +83,7 @@ module Regex::Automata
         pattern.sum { |name| name.try(&.bytesize) || 0 }
       end
       hash_entries = @name_to_index_by_pattern.sum(&.size) * 12
-      slot_entries = @slot_starts_by_pattern.sum(&.size) * 4
+      slot_entries = @slot_starts_by_pattern.sum(&.size) * sizeof(Int32?)
       (names_bytes + hash_entries + slot_entries).to_i32
     end
 
@@ -268,6 +268,18 @@ module Regex::Automata
       index ? get_group(index) : nil
     end
 
+    # Extract the full match and the first `group_count` participating capture
+    # groups from a String haystack. Rust expresses the group count in the
+    # return type; Crystal supplies it at runtime.
+    def extract(haystack : String, group_count : Int32 = group_len - 1) : Tuple(String, Array(String))
+      extract_matches(group_count) { |span| extract_string(haystack, span) }
+    end
+
+    # Bytes variant of #extract.
+    def extract_bytes(haystack : Bytes, group_count : Int32 = group_len - 1) : Tuple(Bytes, Array(Bytes))
+      extract_matches(group_count) { |span| haystack[span.start, span.len] }
+    end
+
     def iter : CapturesPatternIter
       CapturesPatternIter.new(self)
     end
@@ -295,8 +307,22 @@ module Regex::Automata
       end
     end
 
-    def interpolate_string_into(haystack : String, replacement : String, dst : String) : Nil
-      dst << interpolate_string(haystack, replacement)
+    # Appends interpolated text to a mutable output stream. Crystal's String
+    # values are immutable, so IO is the counterpart to Rust's &mut String.
+    def interpolate_string_into(haystack : String, replacement : String, dst : IO) : Nil
+      Interpolate.string(
+        replacement,
+        ->(index : Int32, io : IO) do
+          if span = get_group(index)
+            if match = haystack.byte_slice(span.start, span.length)
+              io << match
+            end
+          end
+          nil
+        end,
+        ->(name : String) { @group_info.to_index(pattern.not_nil!, name) if pattern },
+        dst
+      )
     end
 
     def interpolate_bytes(haystack : Bytes, replacement : Bytes) : Bytes
@@ -337,7 +363,35 @@ module Regex::Automata
     end
 
     def memory_usage : Int32
-      @group_info.memory_usage + (@slots.size * sizeof(Int32)).to_i32
+      @group_info.memory_usage + (@slots.size * sizeof(Int32?)).to_i32
+    end
+
+    private def extract_matches(group_count : Int32, & : Span -> T) : Tuple(T, Array(T)) forall T
+      raise ArgumentError.new("capture group count must not be negative") if group_count < 0
+
+      matched = iter.compact_map { |span| span }
+      whole = matched.next
+      raise ArgumentError.new("a match is required for capture extraction") unless whole.is_a?(Span)
+      full = yield whole
+      groups = Array(T).new(group_count) do
+        span = matched.next
+        raise ArgumentError.new("too few matching groups for capture extraction") unless span.is_a?(Span)
+        yield span
+      end
+      {full, groups}
+    end
+
+    private def extract_string(haystack : String, span : Span) : String
+      bytes = haystack.to_slice
+      unless 0 <= span.start <= span.end <= bytes.size
+        raise IndexError.new("capture span is outside the haystack")
+      end
+      {span.start, span.end}.each do |offset|
+        if offset < bytes.size && (bytes[offset] & 0xc0) == 0x80
+          raise IndexError.new("capture span is not on UTF-8 character boundaries")
+        end
+      end
+      haystack.byte_slice(span.start, span.len)
     end
   end
 

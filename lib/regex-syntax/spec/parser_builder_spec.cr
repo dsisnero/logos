@@ -2,8 +2,8 @@ require "./spec_helper"
 
 describe Regex::Syntax::ParserBuilder do
   it "parses with default options through the top-level helper" do
-    Regex::Syntax.parse("a|b").node.should be_a(Regex::Syntax::Hir::Alternation)
-    Regex::Syntax::Parser.new.parse("a|b").node.should be_a(Regex::Syntax::Hir::Alternation)
+    Regex::Syntax.parse("a|b").node.as(Regex::Syntax::Hir::UnicodeClass).intervals.should eq([0x61_u32..0x62_u32])
+    Regex::Syntax::Parser.new.parse("a|b").node.as(Regex::Syntax::Hir::UnicodeClass).intervals.should eq([0x61_u32..0x62_u32])
   end
 
   it "builds parsers with configured options like Rust" do
@@ -81,5 +81,21 @@ describe Regex::Syntax::ParserBuilder do
     builder.utf8(true).should be(builder)
     builder.line_terminator('\n'.ord.to_u8).should be(builder)
     builder.build.should be_a(Regex::Syntax::Parser)
+  end
+end
+
+describe "custom line terminators in group translator snapshots" do
+  it "preserves the configured terminator through captured and scoped groups" do
+    parser = Regex::Syntax::ParserBuilder.new.line_terminator('X'.ord.to_u8).build
+    ["(.)", "(?:.)", "(?i:.)", "((?:.))"].each do |pattern|
+      grouped = parser.parse(pattern)
+      # Rust Translator retains its terminator while only group flags change.
+      # Peel captures to assert the exact lowered Unicode scalar intervals.
+      node = grouped.node
+      while node.is_a?(Regex::Syntax::Hir::Capture)
+        node = node.sub
+      end
+      node.as(Regex::Syntax::Hir::UnicodeClass).intervals.should eq([0_u32..87_u32, 89_u32..0x10FFFF_u32])
+    end
   end
 end

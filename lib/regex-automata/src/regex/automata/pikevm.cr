@@ -8,7 +8,6 @@ module Regex::Automata::NFA
     class Config
       @match_kind : Regex::Automata::MatchKind?
       @prefilter : Regex::Automata::Prefilter?
-      @utf8_empty : Bool?
 
       def initialize
       end
@@ -27,11 +26,6 @@ module Regex::Automata::NFA
         self
       end
 
-      def utf8_empty(yes : Bool) : Config
-        @utf8_empty = yes
-        self
-      end
-
       def get_match_kind : Regex::Automata::MatchKind
         @match_kind || Regex::Automata::MatchKind::LeftmostFirst
       end
@@ -40,15 +34,10 @@ module Regex::Automata::NFA
         @prefilter
       end
 
-      def get_utf8_empty : Bool
-        @utf8_empty.nil? ? true : @utf8_empty.not_nil!
-      end
-
       def overwrite(other : Config) : Config
         merged = Config.new
         merged.match_kind(other.@match_kind || @match_kind || Regex::Automata::MatchKind::LeftmostFirst)
         merged.prefilter(other.@prefilter.nil? ? @prefilter : other.@prefilter)
-        merged.utf8_empty(other.@utf8_empty.nil? ? get_utf8_empty : other.@utf8_empty.not_nil!)
         merged
       end
     end
@@ -106,11 +95,26 @@ module Regex::Automata::NFA
     class Cache
       @curr : ActiveStates
       @next : ActiveStates
+      @stack : Array(EpsilonFrame)
 
       getter curr : ActiveStates
       getter next : ActiveStates
+      getter stack : Array(EpsilonFrame)
+
+      def clone : Cache
+        copy = dup
+        copy.copy_owned_state
+        copy
+      end
+
+      protected def copy_owned_state : Nil
+        @curr = @curr.clone
+        @next = @next.clone
+        @stack = @stack.dup
+      end
 
       def initialize(re : PikeVM)
+        @stack = [] of EpsilonFrame
         @curr = ActiveStates.new(re)
         @next = ActiveStates.new(re)
       end
@@ -124,9 +128,12 @@ module Regex::Automata::NFA
         @next.reset(re)
       end
 
-      def setup_search : Nil
+      def setup_search(captures_slot_len : Int32) : Nil
+        @stack.clear
         @curr.clear
         @next.clear
+        @curr.slot_table.setup_search(captures_slot_len)
+        @next.slot_table.setup_search(captures_slot_len)
       end
 
       def swap_states! : Nil
@@ -136,8 +143,8 @@ module Regex::Automata::NFA
         @next.clear
       end
 
-      def memory_usage : Int32
-        @curr.memory_usage + @next.memory_usage
+      def memory_usage : UInt64
+        @curr.memory_usage + @next.memory_usage + (@stack.size * sizeof(EpsilonFrame)).to_u64
       end
     end
 
@@ -181,51 +188,132 @@ module Regex::Automata::NFA
       end
     end
 
-    private record Thread, id : Regex::Automata::StateID, slots : Array(Int32?)
+    private record ExploreFrame, id : Regex::Automata::StateID
+    private record RestoreCaptureFrame, slot : Int32, offset : Int32?
+    private alias EpsilonFrame = ExploreFrame | RestoreCaptureFrame
+
+    private class SlotTable
+      @table : Array(Int32?)
+      @used_len : Int32
+      @slots_per_state : Int32
+      @slots_for_captures : Int32
+
+      def clone : SlotTable
+        copy = dup
+        copy.copy_owned_state
+        copy
+      end
+
+      protected def copy_owned_state : Nil
+        @table = @table.dup
+      end
+
+      def initialize
+        @table = [] of Int32?
+        @used_len = 0
+        @slots_per_state = 0
+        @slots_for_captures = 0
+      end
+
+      def reset(re : PikeVM) : Nil
+        nfa = re.get_nfa
+        @slots_per_state = nfa.group_info.slot_len
+        @slots_for_captures = Math.max(@slots_per_state, nfa.pattern_len * 2)
+        @used_len = nfa.states.size.to_i32 * @slots_per_state + @slots_for_captures
+        if @table.size < @used_len
+          @table = Array(Int32?).new(@used_len, nil)
+        elsif @used_len > 0
+          @table[0, @used_len].fill(nil)
+        end
+      end
+
+      def setup_search(captures_slot_len : Int32) : Nil
+        # Public Crystal callers may provide spare output slots. They remain
+        # absent; no NFA state has storage beyond its own capture-slot row.
+        @slots_for_captures = Math.min(captures_slot_len, @slots_per_state)
+      end
+
+      def for_state(id : Regex::Automata::StateID) : Slice(Int32?)
+        offset = id.to_i * @slots_per_state
+        Slice(Int32?).new(@table.to_unsafe + offset, @slots_for_captures)
+      end
+
+      def all_absent : Slice(Int32?)
+        offset = @used_len - @slots_for_captures
+        slice = Slice(Int32?).new(@table.to_unsafe + offset, @slots_for_captures)
+        slice.fill(nil)
+        slice
+      end
+
+      def copy_from(id : Regex::Automata::StateID, slots : Slice(Int32?)) : Nil
+        target = for_state(id)
+        index = 0
+        while index < target.size
+          target[index] = slots[index]
+          index += 1
+        end
+      end
+
+      def copy_to(id : Regex::Automata::StateID, slots : Array(Int32?)) : Nil
+        source = for_state(id)
+        index = 0
+        limit = Math.min(source.size, slots.size)
+        while index < limit
+          slots[index] = source[index]
+          index += 1
+        end
+      end
+
+      def memory_usage : Int32
+        (@table.size * sizeof(Int32?)).to_i32
+      end
+    end
 
     private class ActiveStates
       getter set : Regex::Automata::SparseSet
-      getter threads : Array(Thread)
+      getter slot_table : SlotTable
+
+      def clone : ActiveStates
+        copy = dup
+        copy.copy_owned_state
+        copy
+      end
+
+      protected def copy_owned_state : Nil
+        @set = @set.clone
+        @slot_table = @slot_table.clone
+      end
 
       def initialize(re : PikeVM)
         @set = Regex::Automata::SparseSet.new(re.get_nfa.states.size.to_i32)
-        @threads = [] of Thread
+        @slot_table = SlotTable.new
+        @slot_table.reset(re)
       end
 
       def reset(re : PikeVM) : Nil
         @set.resize(re.get_nfa.states.size.to_i32)
+        @slot_table.reset(re)
         clear
       end
 
       def clear : Nil
         @set.clear
-        @threads.clear
       end
 
       def empty? : Bool
-        @threads.empty?
+        @set.empty?
       end
 
-      def add(thread : Thread) : Bool
-        return false unless @set.insert(thread.id)
-
-        @threads << thread
-        true
+      def add(id : Regex::Automata::StateID, slots : Slice(Int32?)) : Nil
+        @slot_table.copy_from(id, slots)
       end
 
-      def contains?(id : Regex::Automata::StateID) : Bool
-        found = false
-        @set.each do |sid|
-          if sid == id
-            found = true
-            break
-          end
-        end
-        found
+      def mark_seen(id : Regex::Automata::StateID) : Bool
+        @set.insert(id)
       end
 
-      def memory_usage : Int32
-        @set.memory_usage + (@threads.sum { |thread| thread.slots.size } * sizeof(Int32)).to_i32
+      def memory_usage : UInt64
+        @set.memory_usage + @slot_table.memory_usage
       end
     end
 
@@ -299,7 +387,7 @@ module Regex::Automata::NFA
     def is_match(cache : Cache, haystack : String | Bytes | Regex::Automata::Input) : Bool
       input = normalize_input(haystack)
       input.earliest(true)
-      !find(cache, input).nil?
+      !search_slots(cache, input, [] of Int32?).nil?
     end
 
     def find(cache : Cache, haystack : String | Bytes | Regex::Automata::Input) : Regex::Automata::Match?
@@ -381,7 +469,8 @@ module Regex::Automata::NFA
 
     private def search_slots_internal(cache : Cache, original_input : Regex::Automata::Input, requested_slot_len : Int32) : Tuple(Regex::Automata::PatternID?, Array(Int32?)?)
       input = original_input.clone
-      slot_len = Math.max(requested_slot_len, @nfa.group_info.implicit_slot_len)
+      min_slot_len = @nfa.has_empty && @nfa.is_utf8 ? @nfa.group_info.implicit_slot_len : 0
+      slot_len = Math.max(requested_slot_len, min_slot_len)
 
       loop do
         hm, matched_slots = search_imp(cache, input, slot_len)
@@ -390,14 +479,18 @@ module Regex::Automata::NFA
           return {hm.pattern, matched_slots}
         end
 
-        next_start = hm.offset + 1
+        return {nil, nil} if input.get_anchored != Regex::Automata::Anchored::No
+
+        # Rust's skip_splits_fwd advances the search start one byte at a time,
+        # even when the rejected match was later in the haystack.
+        next_start = input.start + 1
         return {nil, nil} if next_start > input.end
         input.set_start(next_start)
       end
     end
 
     private def search_imp(cache : Cache, input : Regex::Automata::Input, slot_len : Int32) : Tuple(Regex::Automata::HalfMatch?, Array(Int32?)?)
-      cache.setup_search
+      cache.setup_search(slot_len)
       return {nil, nil} if input.is_done
 
       allmatches = @config.get_match_kind.continue_past_first_match
@@ -424,15 +517,16 @@ module Regex::Automata::NFA
 
         if (hm.nil? || allmatches) && (!anchored || at == input.start)
           add_epsilon_closure(
+            cache.stack,
             cache.curr,
             input,
             at,
             start_id,
-            Array(Int32?).new(slot_len, nil)
+            cache.curr.slot_table.all_absent
           )
         end
 
-        pid, slots = advance_threads(cache.curr, cache.next, input, at, allmatches)
+        pid, slots = advance_threads(cache.stack, cache.curr, cache.next, input, at, allmatches)
         if pid && slots
           hm = Regex::Automata::HalfMatch.new(pid, at)
           matched_slots = slots
@@ -447,7 +541,7 @@ module Regex::Automata::NFA
     end
 
     private def search_overlapping(cache : Cache, input : Regex::Automata::Input, patset : Regex::Automata::PatternSet) : Nil
-      cache.setup_search
+      cache.setup_search(0)
       return if input.is_done
 
       allmatches = @config.get_match_kind.continue_past_first_match
@@ -455,7 +549,6 @@ module Regex::Automata::NFA
       return unless start_config
       anchored, start_id = start_config
       prefilter = anchored ? nil : @config.get_prefilter
-      slot_len = @nfa.group_info.implicit_slot_len
       at = input.start
 
       while at <= input.end
@@ -472,15 +565,16 @@ module Regex::Automata::NFA
 
         if patset.is_empty || allmatches
           add_epsilon_closure(
+            cache.stack,
             cache.curr,
             input,
             at,
             start_id,
-            Array(Int32?).new(slot_len, nil)
+            cache.curr.slot_table.all_absent
           )
         end
 
-        advance_threads_overlapping(cache.curr, cache.next, input, at, allmatches, patset)
+        advance_threads_overlapping(cache.stack, cache.curr, cache.next, input, at, allmatches, patset)
         break if patset.is_full || input.get_earliest
 
         cache.swap_states!
@@ -488,24 +582,29 @@ module Regex::Automata::NFA
       end
     end
 
-    private def advance_threads(curr : ActiveStates, nxt : ActiveStates, input : Regex::Automata::Input, at : Int32, allmatches : Bool) : Tuple(Regex::Automata::PatternID?, Array(Int32?)?)
+    private def advance_threads(stack : Array(EpsilonFrame), curr : ActiveStates, nxt : ActiveStates, input : Regex::Automata::Input, at : Int32, allmatches : Bool) : Tuple(Regex::Automata::PatternID?, Array(Int32?)?)
       pid = nil.as(Regex::Automata::PatternID?)
       matched_slots = nil.as(Array(Int32?)?)
 
-      curr.threads.each do |thread|
-        state = @nfa.state(thread.id)
+      curr.set.each do |id|
+        state = @nfa.state(id)
         case state
         when Match
           pid = state.pattern_id
-          matched_slots = thread.slots.dup
+          matched_slots = Array(Int32?).new(curr.slot_table.for_state(id).size, nil)
+          curr.slot_table.copy_to(id, matched_slots)
           break unless allmatches
         when ByteRange
           if state.trans.matches(input.haystack, at)
-            add_epsilon_closure(nxt, input, at + 1, state.trans.next, thread.slots.dup)
+            add_epsilon_closure(stack, nxt, input, at + 1, state.trans.next, curr.slot_table.for_state(id))
           end
         when Sparse
           if next_id = state.matches(input.haystack, at)
-            add_epsilon_closure(nxt, input, at + 1, next_id, thread.slots.dup)
+            add_epsilon_closure(stack, nxt, input, at + 1, next_id, curr.slot_table.for_state(id))
+          end
+        when Dense
+          if next_id = state.matches(input.haystack, at)
+            add_epsilon_closure(stack, nxt, input, at + 1, next_id, curr.slot_table.for_state(id))
           end
         end
       end
@@ -513,59 +612,71 @@ module Regex::Automata::NFA
       {pid, matched_slots}
     end
 
-    private def advance_threads_overlapping(curr : ActiveStates, nxt : ActiveStates, input : Regex::Automata::Input, at : Int32, allmatches : Bool, patset : Regex::Automata::PatternSet) : Nil
-      curr.threads.each do |thread|
-        state = @nfa.state(thread.id)
+    private def advance_threads_overlapping(stack : Array(EpsilonFrame), curr : ActiveStates, nxt : ActiveStates, input : Regex::Automata::Input, at : Int32, allmatches : Bool, patset : Regex::Automata::PatternSet) : Nil
+      curr.set.each do |id|
+        state = @nfa.state(id)
         case state
         when Match
-          next if should_skip_empty_utf8_thread?(input, at, thread.slots, state.pattern_id)
+          # Rust nexts_overlapping has no capture slots: an empty match inside
+          # a UTF-8 codepoint is identified by the NFA and current offset.
+          next if @nfa.has_empty && @nfa.is_utf8 && !input.is_char_boundary(at)
           patset.try_insert(state.pattern_id)
           break unless allmatches
         when ByteRange
           if state.trans.matches(input.haystack, at)
-            add_epsilon_closure(nxt, input, at + 1, state.trans.next, thread.slots.dup)
+            add_epsilon_closure(stack, nxt, input, at + 1, state.trans.next, curr.slot_table.for_state(id))
           end
         when Sparse
           if next_id = state.matches(input.haystack, at)
-            add_epsilon_closure(nxt, input, at + 1, next_id, thread.slots.dup)
+            add_epsilon_closure(stack, nxt, input, at + 1, next_id, curr.slot_table.for_state(id))
+          end
+        when Dense
+          if next_id = state.matches(input.haystack, at)
+            add_epsilon_closure(stack, nxt, input, at + 1, next_id, curr.slot_table.for_state(id))
           end
         end
       end
     end
 
-    private def add_epsilon_closure(active : ActiveStates, input : Regex::Automata::Input, at : Int32, sid : Regex::Automata::StateID, slots : Array(Int32?)) : Nil
-      stack = [{sid, slots}] of Tuple(Regex::Automata::StateID, Array(Int32?))
-      visited = Set(Int32).new
-      active.threads.each { |thread| visited.add(thread.id.to_i) }
+    private def add_epsilon_closure(stack : Array(EpsilonFrame), active : ActiveStates, input : Regex::Automata::Input, at : Int32, sid : Regex::Automata::StateID, slots : Slice(Int32?)) : Nil
+      stack << ExploreFrame.new(sid)
 
       until stack.empty?
-        current_sid, current_slots = stack.pop
-        next if visited.includes?(current_sid.to_i)
-        visited.add(current_sid.to_i)
-
-        case state = @nfa.state(current_sid)
-        when Fail, Match, ByteRange, Sparse
-          active.add(Thread.new(current_sid, current_slots))
-        when Empty
-          stack << {state.next, current_slots}
-        when Look
-          next unless look_matches?(state.kind, input.haystack, at)
-          stack << {state.next, current_slots}
-        when BinaryUnion
-          stack << {state.alt2, current_slots.dup}
-          stack << {state.alt1, current_slots}
-        when Union
-          last = state.alternates.size - 1
-          last.downto(0) do |index|
-            alt_slots = index == 0 ? current_slots : current_slots.dup
-            stack << {state.alternates[index], alt_slots}
+        frame = stack.pop
+        if frame.is_a?(RestoreCaptureFrame)
+          slots[frame.slot] = frame.offset
+          next
+        end
+        current_sid = frame.as(ExploreFrame).id
+        # Mirror Rust's epsilon_closure_explore: continue straight-line
+        # epsilon transitions without a push immediately followed by a pop.
+        loop do
+          break unless active.mark_seen(current_sid)
+          case state = @nfa.state(current_sid)
+          when Fail, Match, ByteRange, Sparse, Dense
+            active.add(current_sid, slots)
+            break
+          when Empty
+            current_sid = state.next
+          when Look
+            break unless look_matches?(state.kind, input.haystack, at)
+            current_sid = state.next
+          when BinaryUnion
+            stack << ExploreFrame.new(state.alt2)
+            current_sid = state.alt1
+          when Union
+            break if state.alternates.empty?
+            (state.alternates.size - 1).downto(1) do |index|
+              stack << ExploreFrame.new(state.alternates[index])
+            end
+            current_sid = state.alternates[0]
+          when Capture
+            if state.slot < slots.size
+              stack << RestoreCaptureFrame.new(state.slot, slots[state.slot])
+              slots[state.slot] = at
+            end
+            current_sid = state.next
           end
-        when Capture
-          next_slots = current_slots.dup
-          if state.slot < next_slots.size
-            next_slots[state.slot] = at
-          end
-          stack << {state.next, next_slots}
         end
       end
     end
@@ -581,6 +692,14 @@ module Regex::Automata::NFA
              when Look::Kind::WordBoundaryUnicode  then Regex::Automata::Look::WordUnicode
              when Look::Kind::NonWordBoundaryUnicode
                Regex::Automata::Look::WordUnicodeNegate
+             when Look::Kind::WordStartAscii       then Regex::Automata::Look::WordStartAscii
+             when Look::Kind::WordEndAscii         then Regex::Automata::Look::WordEndAscii
+             when Look::Kind::WordStartUnicode     then Regex::Automata::Look::WordStartUnicode
+             when Look::Kind::WordEndUnicode       then Regex::Automata::Look::WordEndUnicode
+             when Look::Kind::WordStartHalfAscii   then Regex::Automata::Look::WordStartHalfAscii
+             when Look::Kind::WordEndHalfAscii     then Regex::Automata::Look::WordEndHalfAscii
+             when Look::Kind::WordStartHalfUnicode then Regex::Automata::Look::WordStartHalfUnicode
+             when Look::Kind::WordEndHalfUnicode   then Regex::Automata::Look::WordEndHalfUnicode
              when Look::Kind::StartText
                Regex::Automata::Look::Start
              when Look::Kind::EndText
@@ -613,7 +732,7 @@ module Regex::Automata::NFA
     end
 
     private def should_skip_empty_utf8_match?(input : Regex::Automata::Input, hm : Regex::Automata::HalfMatch, slots : Array(Int32?)) : Bool
-      return false unless @config.get_utf8_empty && @nfa.has_empty && @nfa.is_utf8
+      return false unless @nfa.has_empty && @nfa.is_utf8
 
       slot_index = hm.pattern.to_i * 2
       start = slots[slot_index]?
@@ -621,17 +740,6 @@ module Regex::Automata::NFA
       return false unless start && finish
 
       start == finish && !input.is_char_boundary(finish)
-    end
-
-    private def should_skip_empty_utf8_thread?(input : Regex::Automata::Input, at : Int32, slots : Array(Int32?), pid : Regex::Automata::PatternID) : Bool
-      return false unless @config.get_utf8_empty && @nfa.has_empty && @nfa.is_utf8
-
-      slot_index = pid.to_i * 2
-      start = slots[slot_index]?
-      finish = slots[slot_index + 1]?
-      return false unless start && finish
-
-      start == finish && start == at && !input.is_char_boundary(at)
     end
   end
 end

@@ -1,6 +1,6 @@
 module Regex::Automata::DFA
-  # A dense-DFA minimizer that merges equivalent states while preserving the
-  # current port's observable state metadata.
+  # Hopcroft minimization of dense DFA behavior, matching Rust's partitions
+  # by pattern IDs, nonmatches, and quit before transition refinement.
   class Minimizer
     def initialize(@dfa : DFA)
     end
@@ -9,72 +9,91 @@ module Regex::Automata::DFA
       return @dfa if @dfa.states.size <= 2
 
       partitions = initial_partitions
-      loop do
-        part_of = partition_map(partitions)
-        refined = refine_partitions(part_of)
-        break if refined == partitions
-        partitions = refined
+      waiting = partitions.map(&.dup)
+      incoming = incoming_transitions
+
+      until waiting.empty?
+        splitter = waiting.pop
+        break unless splitter
+
+        incoming.first.size.times do |unit|
+          sources = incoming_sources(incoming, splitter, unit)
+          next unless sources
+
+          partition_count = partitions.size
+          partition_count.times do |partition_id|
+            group = partitions[partition_id]
+            inside, outside = split(group, sources)
+            next if inside.empty? || outside.empty?
+
+            partitions[partition_id] = inside
+            partitions << outside
+            if waiting_index = waiting.index(group)
+              waiting[waiting_index] = inside
+              waiting << outside
+            elsif inside.size <= outside.size
+              waiting << inside
+            else
+              waiting << outside
+            end
+          end
+        end
       end
 
       rebuild(partitions)
     end
 
     private def initial_partitions : Array(Array(Int32))
-      grouped = {} of Tuple(Symbol, Array(PatternID), LookSet, LookSet, Bool, Bool) => Array(Int32)
+      grouped = {} of Tuple(Symbol, Array(PatternID)) => Array(Int32)
 
       @dfa.states.each_with_index do |state, index|
-        kind = case index
-               when DEAD_STATE_ID.to_i
-                 :dead
-               when QUIT_STATE_ID.to_i
+        kind = if index == QUIT_STATE_ID.to_i
                  :quit
+               elsif state.match.empty?
+                 :nonmatch
                else
-                 :normal
+                 :match
                end
-        key = {kind, state.match, state.look_need, state.look_have, state.is_from_word?, state.is_half_crlf?}
+        # Rust partitions by match pattern IDs, non-match, and quit only.
+        # Look metadata is a determinization aid, not observable DFA behavior.
+        key = {kind, state.match}
         (grouped[key] ||= [] of Int32) << index
       end
 
       grouped.values.sort_by(&.first)
     end
 
-    private def refine_partitions(part_of : Array(Int32)) : Array(Array(Int32))
-      grouped = {} of Tuple(Symbol, Array(PatternID), LookSet, LookSet, Bool, Bool, Array(Int32), Int32) => Array(Int32)
-
-      @dfa.states.each_with_index do |state, index|
-        kind = case index
-               when DEAD_STATE_ID.to_i
-                 :dead
-               when QUIT_STATE_ID.to_i
-                 :quit
-               else
-                 :normal
-               end
-        transitions = state.next.map { |id| part_of[id.to_i] }
-        key = {
-          kind,
-          state.match,
-          state.look_need,
-          state.look_have,
-          state.is_from_word?,
-          state.is_half_crlf?,
-          transitions,
-          part_of[state.eoi_next.to_i],
-        }
-        (grouped[key] ||= [] of Int32) << index
+    # Reverse transition index, with the final slot representing EOI. This is
+    # the same input relation used by Rust's Hopcroft worklist.
+    private def incoming_transitions : Array(Array(Array(Int32)))
+      alphabet_len = @dfa.states.first.next.size + 1
+      incoming = Array.new(@dfa.states.size) { Array.new(alphabet_len) { [] of Int32 } }
+      @dfa.states.each_with_index do |state, source|
+        state.next.each_with_index do |target, unit|
+          incoming[logical_state_index(target)][unit] << source
+        end
+        incoming[logical_state_index(state.eoi_next)][alphabet_len - 1] << source
       end
-
-      grouped.values.sort_by(&.first)
+      incoming
     end
 
-    private def partition_map(partitions : Array(Array(Int32))) : Array(Int32)
-      part_of = Array.new(@dfa.states.size, 0)
-      partitions.each_with_index do |group, partition_id|
-        group.each do |state_index|
-          part_of[state_index] = partition_id
+    private def incoming_sources(incoming : Array(Array(Array(Int32))), splitter : Array(Int32), unit : Int32) : Array(Bool)?
+      sources = Array.new(@dfa.states.size, false)
+      found = false
+      splitter.each do |target|
+        incoming[target][unit].each do |source|
+          sources[source] = true
+          found = true
         end
       end
-      part_of
+      found ? sources : nil
+    end
+
+    private def split(group : Array(Int32), sources : Array(Bool)) : Tuple(Array(Int32), Array(Int32))
+      inside = [] of Int32
+      outside = [] of Int32
+      group.each { |state| sources[state] ? inside << state : outside << state }
+      {inside, outside}
     end
 
     private def rebuild(partitions : Array(Array(Int32))) : DFA
@@ -92,8 +111,8 @@ module Regex::Automata::DFA
         old_index = group.first
         representative = @dfa.states[old_index]
         state = representative.dup(StateID.new(new_index))
-        state.next = representative.next.map { |id| StateID.new(old_to_new[id.to_i]) }
-        state.eoi_next = StateID.new(old_to_new[representative.eoi_next.to_i])
+        state.next = representative.next.map { |id| StateID.new(old_to_new[logical_state_index(id)]) }
+        state.eoi_next = StateID.new(old_to_new[logical_state_index(representative.eoi_next)])
         new_states << state
         new_accelerators[new_index] = @dfa.accelerators[old_index]
       end
@@ -114,7 +133,8 @@ module Regex::Automata::DFA
         @dfa.get_prefilter,
         @dfa.quitset,
         @dfa.flags,
-        start_table
+        start_table,
+        @dfa.pattern_len
       )
 
       minimized.special.set_no_special_start_states if @dfa.special.no_start_states?

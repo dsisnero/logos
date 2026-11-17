@@ -14,6 +14,70 @@ describe Regex::Automata::Meta::Regex do
     caps = re.create_captures
     re.captures("bar", caps)
     caps.get_match.should eq(Regex::Automata::Match.must(1, 0...3))
+    re.memory_usage.should be > 0
+  end
+
+  it "preserves pool-capacity configuration through builder overwrite" do
+    base = Regex::Automata::Meta::Regex.config.pool_capacity(3)
+    merged = base.overwrite(Regex::Automata::Meta::Regex.config.pool_capacity(0))
+
+    base.get_pool_capacity.should eq(3)
+    merged.get_pool_capacity.should eq(0)
+  end
+
+  it "uses Rust's finite Meta engine limits unless explicitly disabled" do
+    defaults = Regex::Automata::Meta::Regex.config
+    defaults.get_nfa_size_limit.should eq(10_i64 * (1_i64 << 20))
+    defaults.get_onepass_size_limit.should eq(1_i64 * (1_i64 << 20))
+    defaults.get_dfa_size_limit.should eq(40_i64 * (1_i64 << 10))
+    defaults.get_dfa_state_limit.should eq(30_i64)
+
+    disabled = defaults
+      .nfa_size_limit(nil)
+      .onepass_size_limit(nil)
+      .dfa_size_limit(nil)
+      .dfa_state_limit(nil)
+    disabled.get_nfa_size_limit.should be_nil
+    disabled.get_onepass_size_limit.should be_nil
+    disabled.get_dfa_size_limit.should be_nil
+    disabled.get_dfa_state_limit.should be_nil
+
+    defaults.overwrite(disabled).get_nfa_size_limit.should be_nil
+    defaults.overwrite(disabled).get_onepass_size_limit.should be_nil
+    defaults.overwrite(disabled).get_dfa_size_limit.should be_nil
+    defaults.overwrite(disabled).get_dfa_state_limit.should be_nil
+  end
+
+  it "preserves explicit Meta configuration values through overwrite" do
+    prefilter = Regex::Automata::Prefilter.new(Regex::Automata::MatchKind::LeftmostFirst, ["foo"])
+    configured = Regex::Automata::Meta::Regex.config
+      .match_kind(Regex::Automata::MatchKind::All)
+      .utf8_empty(false)
+      .auto_prefilter(false)
+      .prefilter(prefilter)
+      .which_captures(Regex::Automata::NFA::WhichCaptures::None)
+      .hybrid_cache_capacity(1024)
+      .hybrid(false)
+      .dfa(false)
+      .onepass(false)
+      .backtrack(false)
+      .byte_classes(false)
+      .line_terminator(0_u8)
+
+    configured.get_match_kind.should eq(Regex::Automata::MatchKind::All)
+    configured.get_utf8_empty.should be_false
+    configured.get_auto_prefilter.should be_false
+    configured.get_prefilter.should be(prefilter)
+    configured.get_which_captures.should eq(Regex::Automata::NFA::WhichCaptures::None)
+    configured.get_hybrid_cache_capacity.should eq(1024)
+    configured.get_hybrid.should be_false
+    configured.get_dfa.should be_false
+    configured.get_onepass.should be_false
+    configured.get_backtrack.should be_false
+    configured.get_byte_classes.should be_false
+    configured.get_line_terminator.should eq(0_u8)
+
+    Regex::Automata::Meta::Regex.config.overwrite(configured).get_prefilter.should be(prefilter)
   end
 
   it "no_dfa" do
@@ -22,6 +86,19 @@ describe Regex::Automata::Meta::Regex do
       .build("foo|bar")
 
     re.find("zzbarzz").should eq(Regex::Automata::Match.must(0, 2...5))
+  end
+
+  it "uses the configured line terminator for multiline anchors" do
+    re = Regex::Automata::Meta::Regex.builder
+      .syntax(Regex::Automata::Syntax::Config.new.multi_line(true))
+      .configure(Regex::Automata::Meta::Regex.config.line_terminator(0_u8))
+      .build("^foo$")
+
+    if core = re.core_dfa
+      core.try_search(Regex::Automata::Input.new("\0foo\0")).should eq(Regex::Automata::Match.must(0, 1...4))
+    end
+    re.find("\0foo\0").should eq(Regex::Automata::Match.must(0, 1...4))
+    re.find("\nfoo\n").should be_nil
   end
 
   it "no_dfa_hybrid" do
@@ -74,10 +151,41 @@ describe Regex::Automata::Meta::Regex do
     end
   end
 
+  it "preserves Meta build-error introspection for NFA limits" do
+    error = expect_raises(Regex::Automata::Meta::BuildError) do
+      Regex::Automata::Meta::Regex.builder
+        .configure(Regex::Automata::Meta::Regex.config.nfa_size_limit(0_i64))
+        .build("a+")
+    end
+
+    error.pattern.should be_nil
+    error.size_limit.should eq(0_i64)
+    error.syntax_error.should be_nil
+    error.is_size_limit_exceeded.should be_true
+    error.message.should eq("error building NFA")
+  end
+
+  it "converts only retryable match errors to Meta retry failures" do
+    Regex::Automata::Meta::RetryFailError
+      .from_match_error(Regex::Automata::MatchError.quit('x'.ord.to_u8, 7))
+      .offset.should eq(7)
+    Regex::Automata::Meta::RetryFailError
+      .from_match_error(Regex::Automata::MatchError.gave_up(9))
+      .offset.should eq(9)
+
+    expect_raises(Exception, /impossible meta retry failure/) do
+      Regex::Automata::Meta::RetryFailError.from_match_error(
+        Regex::Automata::MatchError.haystack_too_long(4)
+      )
+    end
+  end
+
   it "supports explicit cache-backed searching" do
     re = Regex::Automata::Meta::Regex.new("foo(?P<num>[0-9]+)")
     cache = re.create_cache
     input = Regex::Automata::Input.new("xxfoo123yy")
+
+    cache.memory_usage.should be > 0
 
     re.search_with(cache, input).should eq(Regex::Automata::Match.must(0, 2...8))
     re.search_half_with(cache, input).should eq(Regex::Automata::HalfMatch.must(0, 8))
@@ -85,6 +193,8 @@ describe Regex::Automata::Meta::Regex do
     caps = re.create_captures
     re.search_captures_with(cache, input, caps)
     caps.get_match.should eq(Regex::Automata::Match.must(0, 2...8))
+    cache.reset(re)
+    re.search_with(cache, input).should eq(Regex::Automata::Match.must(0, 2...8))
     caps.get_group_by_name("num").should eq(Regex::Automata::Span.new(5, 8))
   end
 
@@ -117,7 +227,7 @@ describe Regex::Automata::Meta::Regex do
     Regex::Automata::Meta::Regex.new("\\w").is_accelerated.should be_false
   end
 
-  it "uses the large alternation literal bypass when heuristic extraction gives up" do
+  it "uses the core prefilter below Rust's large-alternation bypass threshold" do
     pattern = large_literal_alternation(1000)
     re = Regex::Automata::Meta::Regex.new(pattern)
     cache = re.create_cache
@@ -132,6 +242,77 @@ describe Regex::Automata::Meta::Regex do
     slots.should eq([2, 9])
   end
 
+  it "uses hybrid reverse-inner acceleration when dense DFAs are disabled" do
+    re = Regex::Automata::Meta::Regex.builder
+      .configure(Regex::Automata::Meta::Regex.config.dfa(false))
+      .build("\\w+@\\w+")
+
+    re.is_accelerated.should be_true
+    re.find("xx user@example.com yy").should eq(Regex::Automata::Match.must(0, 3...15))
+  end
+
+  it "uses hybrid reverse-suffix acceleration when dense DFAs are disabled" do
+    re = Regex::Automata::Meta::Regex.builder
+      .configure(Regex::Automata::Meta::Regex.config.dfa(false))
+      .build("\\d+XYZ")
+
+    re.is_accelerated.should be_true
+    re.find("xx 123XYZ yy").should eq(Regex::Automata::Match.must(0, 3...9))
+  end
+
+  it "accounts for lazy Meta strategy caches" do
+    re = Regex::Automata::Meta::Regex.builder
+      .configure(Regex::Automata::Meta::Regex.config.dfa(false))
+      .build("\\d+XYZ")
+    cache = re.create_cache
+    before = cache.memory_usage
+
+    re.search_with(cache, Regex::Automata::Input.new("xx 123XYZ yy")).should eq(
+      Regex::Automata::Match.must(0, 3...9)
+    )
+    cache.memory_usage.should be >= before
+  end
+
+  it "applies Rust's reverse-suffix safety admission rules" do
+    ["\\d+XYZ", "[A-Z][0-9]XYZ", "\\w+\\s+Holmes"].each do |pattern|
+      Regex::Automata::Meta::Regex.new(pattern).is_accelerated.should be_true
+    end
+
+    ["\\b\\w+nn\\b", "^\\d+XYZ", "(?:[A-Za-z]ab)?b", "[a-z]+"].each do |pattern|
+      Regex::Automata::Meta::Regex.new(pattern).is_accelerated.should be_false
+    end
+  end
+
+  it "applies Rust's reverse-inner safety admission rules" do
+    ["\\w+@\\w+", "[A-Z][0-9]@(foo|bar)", "\\w+\\s+Holmes\\s+\\w+", "\\s[A-Za-z]{0,12}ing\\s"].each do |pattern|
+      Regex::Automata::Meta::Regex.new(pattern).is_accelerated.should be_true
+    end
+
+    ["\\s[\\sA-Za-z]{0,12}ing\\s", "\\s*[A-Za-z]{0,12}ing\\s"].each do |pattern|
+      Regex::Automata::Meta::Regex.new(pattern).is_accelerated.should be_false
+    end
+  end
+
+  it "rejects unsafe reverse inner and suffix candidates" do
+    [
+      "^\\w+@\\w+", "\\w+", "(?:[ac-z]{3}|[ac-z])(?:aba|baa)",
+      "(?:.abc)?[a]+[b]+c.*", "(?:[ac-z]{2}b[ac-z])?[ac-z]b",
+      "(?:[a-wyz]{3}|[a-wyz]).b", "(?:[a-z]cb|c)[a-z]*b",
+      ".abb|b", ".bb|b",
+    ].each do |pattern|
+      Regex::Automata::Meta::Regex.new(pattern).is_accelerated.should be_false
+    end
+  end
+
+  it "rejects reverse strategies for unsafe multi-pattern sets" do
+    [
+      ["\\w+@\\w+", "\\w+#\\w+"], ["\\d+XYZ", "\\w+XYZ"],
+      ["\\d+XYZ", "\\w+ABC"], ["\\d+b", ".bb|b"], ["\\d+b", "ab"],
+    ].each do |patterns|
+      Regex::Automata::Meta::Regex.builder.build_many(patterns).is_accelerated.should be_false
+    end
+  end
+
   it "disables the large alternation literal bypass when auto prefilters are off" do
     pattern = large_literal_alternation(1000)
     re = Regex::Automata::Meta::Regex.builder
@@ -142,7 +323,7 @@ describe Regex::Automata::Meta::Regex do
     re.find("xxtok0777yy").should eq(Regex::Automata::Match.must(0, 2...9))
   end
 
-  it "uses the literal fast path for exact multi-pattern literal sets" do
+  it "uses the core engine for exact multi-pattern literal sets" do
     re = Regex::Automata::Meta::Regex.builder.build_many(["foo", "bar", "foobar"] of String)
     cache = re.create_cache
     caps = re.create_captures
@@ -178,7 +359,7 @@ describe Regex::Automata::Meta::Regex do
     )
     patset.contains(Regex::Automata::PatternID.new(0)).should be_true
     patset.contains(Regex::Automata::PatternID.new(1)).should be_false
-    patset.contains(Regex::Automata::PatternID.new(2)).should be_true
+    patset.contains(Regex::Automata::PatternID.new(2)).should be_false
   end
 
   it "uses automatic core prefilters for non-literal meta regexes" do
@@ -196,6 +377,31 @@ describe Regex::Automata::Meta::Regex do
 
     re.is_accelerated.should be_false
     re.find("xxBruce Wayne!").should eq(Regex::Automata::Match.must(0, 2...13))
+  end
+
+  it "falls back to the core strategy when no special Meta strategy applies" do
+    re = Regex::Automata::Meta::Regex.new("[a-z]+")
+
+    re.is_accelerated.should be_false
+    re.find("123abc").should eq(Regex::Automata::Match.must(0, 3...6))
+  end
+
+  it "falls back to the core strategy when automatic prefilters are disabled" do
+    re = Regex::Automata::Meta::Regex.builder
+      .configure(Regex::Automata::Meta::Regex.config.auto_prefilter(false))
+      .build("\\w+Holmes")
+
+    re.is_accelerated.should be_false
+    re.find("xxSherlockHolmes!").should eq(Regex::Automata::Match.must(0, 0...16))
+  end
+
+  it "falls back to the core strategy when reverse engines are disabled" do
+    re = Regex::Automata::Meta::Regex.builder
+      .configure(Regex::Automata::Meta::Regex.config.dfa(false).hybrid(false))
+      .build("\\w+Holmes")
+
+    re.is_accelerated.should be_false
+    re.find("xxSherlockHolmes!").should eq(Regex::Automata::Match.must(0, 0...16))
   end
 
   it "lets explicit core prefilters drive acceleration" do
@@ -229,6 +435,26 @@ describe Regex::Automata::Meta::Regex do
     slots.should eq([2, 5])
   end
 
+  it "uses hybrid reverse-anchored fallback when dense construction is unavailable" do
+    Regex::Automata::Meta::Regex.new("\\w+Holmes$").is_accelerated.should be_true
+
+    multi = Regex::Automata::Meta::Regex.builder
+      .build_many(["\\w+Holmes$", "\\w+Watson$"] of String)
+    multi.is_accelerated.should be_true
+
+    hybrid_only = Regex::Automata::Meta::Regex.builder
+      .configure(Regex::Automata::Meta::Regex.config.dfa(false))
+      .build("\\w+Holmes$")
+    hybrid_only.is_accelerated.should be_true
+
+    no_reverse = Regex::Automata::Meta::Regex.builder
+      .configure(Regex::Automata::Meta::Regex.config.dfa(false).hybrid(false))
+      .build("\\w+Holmes$")
+    no_reverse.is_accelerated.should be_false
+
+    Regex::Automata::Meta::Regex.new("^\\w+Holmes$").is_accelerated.should be_false
+  end
+
   it "reruns capture searches after reverse anchored start discovery" do
     re = Regex::Automata::Meta::Regex.new("(?P<word>foo)$")
     cache = re.create_cache
@@ -258,17 +484,43 @@ describe Regex::Automata::Meta::Regex do
     re.find(input).should be_nil
   end
 
-  it "uses reverse suffix acceleration for greedy suffix matches" do
+  it "preserves leftmost results when an earlier suffix can occur in its prefix" do
     re = Regex::Automata::Meta::Regex.new("[a-z]+ing")
     cache = re.create_cache
     input = Regex::Automata::Input.new("tingling")
     slots = [nil, nil] of Int32?
 
-    re.is_accelerated.should be_true
     re.search_with(cache, input).should eq(Regex::Automata::Match.must(0, 0...8))
     re.search_half_with(cache, input).should eq(Regex::Automata::HalfMatch.must(0, 8))
     re.search_slots_with(cache, input, slots).should eq(Regex::Automata::PatternID.new(0))
     slots.should eq([0, 8])
+  end
+
+  it "uses reverse suffix acceleration after a fixed-length prefix" do
+    re = Regex::Automata::Meta::Regex.builder
+      .configure(Regex::Automata::Meta::Regex.config.dfa_size_limit(1_i64 << 20).dfa_state_limit(nil))
+      .build("[a-z]shing")
+
+    re.is_accelerated.should be_true
+    re.find("fshing").should eq(Regex::Automata::Match.must(0, 0...6))
+  end
+
+  it "uses a disjoint class separator to preserve reverse suffix ordering" do
+    re = Regex::Automata::Meta::Regex.builder
+      .configure(Regex::Automata::Meta::Regex.config.dfa_size_limit(20_i64 << 20).dfa_state_limit(nil))
+      .build("\\w+\\s+Holmes")
+
+    re.is_accelerated.should be_true
+    re.find("Sherlock Holmes").should eq(Regex::Automata::Match.must(0, 0...15))
+  end
+
+  it "does not use reverse suffix acceleration for MatchKind::All" do
+    re = Regex::Automata::Meta::Regex.builder
+      .configure(Regex::Automata::Meta::Regex.config.match_kind(Regex::Automata::MatchKind::All))
+      .build("[a-z]+ing")
+
+    re.is_accelerated.should be_false
+    re.find("tingling").should eq(Regex::Automata::Match.must(0, 0...8))
   end
 
   it "reruns explicit captures after reverse suffix start discovery" do
@@ -286,7 +538,9 @@ describe Regex::Automata::Meta::Regex do
   end
 
   it "uses reverse inner acceleration for inner literal matches" do
-    re = Regex::Automata::Meta::Regex.new("[a-z]+XYZ\\d+")
+    re = Regex::Automata::Meta::Regex.builder
+      .configure(Regex::Automata::Meta::Regex.config.dfa_size_limit(1_i64 << 20).dfa_state_limit(nil))
+      .build("[a-z]+XYZ\\d+")
     cache = re.create_cache
     input = Regex::Automata::Input.new("abcXYZ123")
     slots = [nil, nil] of Int32?
@@ -355,8 +609,10 @@ describe Regex::Automata::Meta::Regex do
     patset.iter.to_a.should eq([Regex::Automata::PatternID.new(0)])
   end
 
-  it "accumulates literal overlapping matches without clearing the pattern set" do
-    re = Regex::Automata::Meta::Regex.builder.build_many(["foo", "foobar"] of String)
+  it "accumulates core overlapping matches under Rust's all-match mode without clearing the pattern set" do
+    re = Regex::Automata::Meta::Regex.builder
+      .configure(Regex::Automata::Meta::Regex.config.match_kind(Regex::Automata::MatchKind::All))
+      .build_many(["foo", "foobar"] of String)
     cache = re.create_cache
     patset = Regex::Automata::PatternSet.new(re.pattern_len + 1)
     patset.insert(Regex::Automata::PatternID.new(2))
@@ -484,6 +740,16 @@ describe Regex::Automata::Meta::Regex do
   it "iterates captures and split spans" do
     re = Regex::Automata::Meta::Regex.new("foo(?P<num>[0-9]+)")
 
+    input = Regex::Automata::Input.new("foo1 foo12")
+    [re.find_iter(input).input, re.captures_iter(input).input, re.split(input).input, re.splitn(2, input).input].each do |iterator_input|
+      iterator_input.haystack.should eq(input.haystack)
+      iterator_input.get_span.should eq(input.get_span)
+    end
+    re.find_iter(input).regex.should be(re)
+    re.captures_iter(input).regex.should be(re)
+    re.find_iter(input).count.should eq(2)
+    re.captures_iter(input).count.should eq(2)
+
     re.captures_iter("foo1 foo12").map(&.get_group_by_name("num")).to_a.should eq([
       Regex::Automata::Span.new(3, 4),
       Regex::Automata::Span.new(8, 10),
@@ -494,6 +760,12 @@ describe Regex::Automata::Meta::Regex do
       Regex::Automata::Span.new(0, 1),
       Regex::Automata::Span.new(2, 3),
       Regex::Automata::Span.new(5, 6),
+    ])
+    splitter.splitn(0, "a b").to_a.should be_empty
+    splitter.splitn(1, "a b").to_a.should eq([Regex::Automata::Span.new(0, 3)])
+    splitter.splitn(2, "a b c").to_a.should eq([
+      Regex::Automata::Span.new(0, 1),
+      Regex::Automata::Span.new(2, 5),
     ])
   end
 

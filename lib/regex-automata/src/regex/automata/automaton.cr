@@ -27,6 +27,10 @@ module Regex::Automata
     # function must be defined for all possible values of `input`.
     abstract def next_state(current : StateID, input : UInt8) : StateID
 
+    def next_state_unchecked(current : StateID, input : UInt8) : StateID
+      next_state(current, input)
+    end
+
     # Transitions from the current state to the next state for the special
     # EOI symbol.
     #
@@ -182,6 +186,15 @@ module Regex::Automata
     # This honors the search span within the context of the complete haystack,
     # which matters for look-around at the boundaries of the span.
     def try_search_fwd(input : Input) : HalfMatch? | MatchError
+      result = try_search_fwd_once(input)
+      return result unless has_empty? && is_utf8?
+      return result unless result.is_a?(HalfMatch)
+      Empty.skip_splits_fwd(input, result) do |search|
+        try_search_fwd_once(search)
+      end
+    end
+
+    private def try_search_fwd_once(input : Input) : HalfMatch? | MatchError
       return nil if input.is_done
 
       start_state = start_state_forward(input)
@@ -189,17 +202,78 @@ module Regex::Automata
 
       current_state = start_state.as(StateID)
       last_match : HalfMatch? = nil
+      if is_match_state?(current_state)
+        last_match = HalfMatch.new(match_pattern(current_state, 0), input.start)
+        return last_match if input.get_earliest
+      end
       at = input.start
+      pre = input.get_anchored == Anchored::No ? get_prefilter : nil
+      universal_start = !universal_start_state(Anchored::No).nil?
+
+      # A prefilter reports only candidate starts. When the DFA's start state
+      # depends on surrounding context, recompute it at the candidate so that
+      # look-around remains correct.
+      if pre && last_match.nil?
+        candidate = pre.find(input.haystack, Span.new(at, input.end))
+        return nil unless candidate
+
+        at = candidate.start
+        unless universal_start
+          restarted = prefilter_restart_fwd(input, at)
+          return restarted if restarted.is_a?(MatchError)
+          current_state = restarted.as(StateID)
+        end
+      end
 
       while at < input.end
+        {% unless flag?(:dfa_scalar_search) %}
+          # Four-transition fast path from pinned dfa/search.rs. Each
+          # step stops before a special state so the common handler retains
+          # match/quit/prefilter precedence. The outer bound proves all four
+          # byte accesses valid; state validity is the Automaton contract.
+          while input.end - at >= 4
+            {% for step in 0...4 %}
+              fast_next = next_state_unchecked(current_state, input.haystack.unsafe_fetch(at))
+              break if is_special_state?(fast_next)
+              current_state = fast_next
+              at += 1
+            {% end %}
+          end
+          break if at == input.end
+        {% end %}
         next_state = next_state(current_state, input.haystack[at])
-        return last_match || MatchError.quit(input.haystack[at], at) if is_quit_state?(next_state)
+        return MatchError.quit(input.haystack[at], at) if is_quit_state?(next_state)
         break if is_dead_state?(next_state)
-
         current_state = next_state
+        if is_start_state?(current_state)
+          if pre && last_match.nil?
+            candidate = pre.find(input.haystack, Span.new(at, input.end))
+            return nil unless candidate
+
+            if candidate.start > at
+              at = candidate.start
+              unless universal_start
+                restarted = prefilter_restart_fwd(input, at)
+                return restarted if restarted.is_a?(MatchError)
+                current_state = restarted.as(StateID)
+              end
+              next
+            end
+          elsif pre.nil? && is_accel_state?(current_state)
+            at = Regex::Automata.find_fwd(accelerator(current_state), input.haystack, at + 1) || input.end
+            next
+          end
+        end
         if is_match_state?(current_state)
           last_match = HalfMatch.new(match_pattern(current_state, 0), at)
           return last_match if input.get_earliest
+          if is_accel_state?(current_state)
+            at = Regex::Automata.find_fwd(accelerator(current_state), input.haystack, at + 1) || input.end
+            next
+          end
+        elsif is_accel_state?(current_state)
+          at = Regex::Automata.find_fwd(accelerator(current_state), input.haystack, at + 1) || input.end
+          next
         end
         at += 1
       end
@@ -211,7 +285,7 @@ module Regex::Automata
                           next_eoi_state(current_state)
                         end
         if input.end < input.haystack.size && is_quit_state?(current_state)
-          return last_match || MatchError.quit(input.haystack[input.end], input.end)
+          return MatchError.quit(input.haystack[input.end], input.end)
         end
         if is_match_state?(current_state)
           offset = input.end < input.haystack.size ? input.end : input.haystack.size
@@ -234,6 +308,15 @@ module Regex::Automata
     # This honors the search span within the context of the complete haystack,
     # which matters for look-around at the boundaries of the span.
     def try_search_rev(input : Input) : HalfMatch? | MatchError
+      result = try_search_rev_once(input)
+      return result unless has_empty? && is_utf8?
+      return result unless result.is_a?(HalfMatch)
+      Empty.skip_splits_rev(input, result) do |search|
+        try_search_rev_once(search)
+      end
+    end
+
+    private def try_search_rev_once(input : Input) : HalfMatch? | MatchError
       return nil if input.is_done
 
       start_state = start_state_reverse(input)
@@ -257,12 +340,21 @@ module Regex::Automata
       loop do
         next_state = next_state(current_state, input.haystack[at])
         return MatchError.quit(input.haystack[at], at) if is_quit_state?(next_state)
-        break if is_dead_state?(next_state)
+        return last_match if is_dead_state?(next_state)
 
         current_state = next_state
-        if is_match_state?(current_state)
+        if is_start_state?(current_state)
+          if is_accel_state?(current_state)
+            at = Regex::Automata.find_rev(accelerator(current_state), input.haystack, at).try(&.+(1)) || input.start
+          end
+        elsif is_match_state?(current_state)
           last_match = HalfMatch.new(match_pattern(current_state, 0), at + 1)
           return last_match if input.get_earliest
+          if is_accel_state?(current_state)
+            at = Regex::Automata.find_rev(accelerator(current_state), input.haystack, at).try(&.+(1)) || input.start
+          end
+        elsif is_accel_state?(current_state)
+          at = Regex::Automata.find_rev(accelerator(current_state), input.haystack, at).try(&.+(1)) || input.start
         end
 
         break if at == input.start
@@ -322,7 +414,18 @@ module Regex::Automata
         if is_special_state?(current_state)
           if is_start_state?(current_state)
             if pre
-              # Prefilters are not implemented yet in this port.
+              candidate = pre.find(input.haystack, Span.new(state.at, input.end))
+              return nil unless candidate
+
+              if candidate.start > state.at
+                state.at = candidate.start
+                unless universal_start
+                  restarted = prefilter_restart_fwd(input, state.at)
+                  return restarted if restarted.is_a?(MatchError)
+                  current_state = restarted.as(StateID)
+                end
+                next
+              end
             elsif is_accel_state?(current_state)
               needles = accelerator(current_state)
               state.at = Regex::Automata.find_fwd(needles, input.haystack, state.at + 1) || input.end
@@ -467,6 +570,22 @@ module Regex::Automata
         .uniq
     end
 
+    # Adds every pattern found by an overlapping Input search without clearing
+    # the caller's set. A too-small set silently drops out-of-range IDs, as in
+    # Rust's Automaton::try_which_overlapping_matches.
+    def try_which_overlapping_matches(input : Input, patset : PatternSet) : Nil | MatchError
+      state = OverlappingState.start
+      loop do
+        result = try_search_overlapping_fwd(input, state)
+        return result if result.is_a?(MatchError)
+        break unless found = state.get_match
+
+        patset.try_insert(found.pattern)
+        break if patset.is_full || input.get_earliest
+      end
+      nil
+    end
+
     private def overlap_eoi_fwd(input : Input, state : OverlappingState, current_state : StateID) : Nil | MatchError
       next_state_id = if trailing = input.haystack[input.end]?
                         next_state(current_state, trailing)
@@ -555,6 +674,14 @@ module Regex::Automata
       else
         false
       end
+    end
+
+    # Recompute a forward start state after a prefilter jumps to a candidate
+    # offset. A copied input preserves the full haystack and all search flags.
+    private def prefilter_restart_fwd(input : Input, at : Int32) : StateID | MatchError
+      restarted = input.clone
+      restarted.set_start(at)
+      start_state_forward(restarted)
     end
 
     # Returns the earliest match found in the given slice.

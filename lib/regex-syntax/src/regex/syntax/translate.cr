@@ -107,34 +107,39 @@ module Regex::Syntax
 
     # Translate an AST node to HIR node
     def translate(ast : AST::Node) : Hir::Node
-      case ast
-      when AST::Literal
-        translate_literal(ast)
-      when AST::ClassPerl
-        translate_class_perl(ast)
-      when AST::ClassUnicode
-        translate_class_unicode(ast)
-      when AST::ClassBracketed
-        translate_class_bracketed(ast)
-      when AST::Dot
-        translate_dot(ast)
-      when AST::Repetition
-        translate_repetition(ast)
-      when AST::Group
-        translate_group(ast)
-      when AST::Alternation
-        translate_alternation(ast)
-      when AST::Concat
-        translate_concat(ast)
-      when AST::Assertion
-        translate_assertion(ast)
-      when AST::SetFlags
-        translate_set_flags(ast)
-      when AST::Empty
-        Hir::Empty.new
-      else
-        Hir::Empty.new
+      node = case ast
+             when AST::Literal
+               translate_literal(ast)
+             when AST::ClassPerl
+               translate_class_perl(ast)
+             when AST::ClassUnicode
+               translate_class_unicode(ast)
+             when AST::ClassBracketed
+               translate_class_bracketed(ast)
+             when AST::Dot
+               translate_dot(ast)
+             when AST::Repetition
+               translate_repetition(ast)
+             when AST::Group
+               translate_group(ast)
+             when AST::Alternation
+               translate_alternation(ast)
+             when AST::Concat
+               translate_concat(ast)
+             when AST::Assertion
+               translate_assertion(ast)
+             when AST::SetFlags
+               translate_set_flags(ast)
+             when AST::Empty
+               Hir::Empty.new
+             else
+               Hir::Empty.new
+             end
+      case node
+      when Hir::UnicodeClass, Hir::CharClass
+        return Hir::Hir.character_class(node).node
       end
+      node
     end
 
     private def translate_literal(literal : AST::Literal) : Hir::Node
@@ -173,14 +178,14 @@ module Regex::Syntax
         Unicode.property_class("White_Space", false)
       when AST::ClassPerl::Kind::Word
         # Use Unicode word property (Perl word)
-        Unicode.property_class("word", false)
+        Unicode.perl_word
       when AST::ClassPerl::Kind::DigitNeg
         Unicode.property_class("Decimal_Number", true)
       when AST::ClassPerl::Kind::SpaceNeg
         Unicode.property_class("White_Space", true)
       when AST::ClassPerl::Kind::WordNeg
         # Use Unicode word property (Perl word) negated
-        Unicode.property_class("word", true)
+        Hir::UnicodeClass.new(true, Unicode.perl_word.intervals)
       else
         Hir::CharClass.new
       end
@@ -221,7 +226,7 @@ module Regex::Syntax
     end
 
     private def translate_class_unicode(class_unicode : AST::ClassUnicode) : Hir::Node
-      raise ParseError.new("Unicode not allowed", nil, class_unicode.span) unless @unicode
+      raise ParseError.new("Unicode not allowed", :unicode_not_allowed, class_unicode.span) unless @unicode
 
       if @ignore_case
         base_class = Unicode.property_class(class_unicode.name, false)
@@ -428,7 +433,8 @@ module Regex::Syntax
         end
       when AST::ClassSetItem::Kind::Perl
         if perl = item.item.as?(AST::ClassPerl)
-          translate_class_perl(perl).as(Hir::CharClass).intervals
+          node = translate_class_perl(perl).as(Hir::CharClass)
+          node.negated? ? invert_byte_intervals(node.intervals) : node.intervals
         else
           [] of Range(UInt8, UInt8)
         end
@@ -443,6 +449,7 @@ module Regex::Syntax
       when AST::ClassSetItem::Kind::Ascii
         if ascii = item.item.as?(AST::ClassAscii)
           intervals = ascii_class_bytes(ascii.kind)
+          validate_utf8_byte_intervals!(intervals, ascii.span, negated: ascii.negated?)
           ascii.negated? ? invert_byte_intervals(intervals) : intervals
         else
           [] of Range(UInt8, UInt8)
@@ -484,7 +491,7 @@ module Regex::Syntax
           # For Unicode mode, Perl classes become Unicode classes
           node = translate_class_perl(perl)
           if node.is_a?(Hir::UnicodeClass)
-            node.intervals
+            node.negated? ? invert_unicode_intervals(node.intervals) : node.intervals
           else
             # Convert byte ranges to Unicode ranges
             node.as(Hir::CharClass).intervals.map { |rng| rng.begin.to_u32..rng.end.to_u32 }
@@ -545,36 +552,26 @@ module Regex::Syntax
       start_literal = range.start
       end_literal = range.end
 
-      start_char = start_literal.c
-      end_char = end_literal.c
-      start_byte = single_byte_literal(start_literal)
-      end_byte = single_byte_literal(end_literal)
-
-      if start_char && end_char
-        # In byte mode (non-Unicode), only ASCII characters are allowed
-        # Characters above 255 would overflow when converting to UInt8
-        return [] of Range(UInt8, UInt8) unless start_char.ascii? && end_char.ascii?
-
-        if @ignore_case
-          # For case-insensitive matching, we need to include both cases
-          start_lower = start_char.downcase.ord.to_u8
-          end_lower = end_char.downcase.ord.to_u8
-          start_upper = start_char.upcase.ord.to_u8
-          end_upper = end_char.upcase.ord.to_u8
-
-          # Create ranges for both cases
-          ranges = [] of Range(UInt8, UInt8)
-          ranges << (start_lower..end_lower) if start_lower <= end_lower
-          ranges << (start_upper..end_upper) if start_upper <= end_upper
-          ranges
-        else
-          [(start_char.ord.to_u8..end_char.ord.to_u8)]
-        end
-      elsif start_byte && end_byte
-        [(start_byte..end_byte)]
+      start_byte = class_range_byte(start_literal)
+      end_byte = class_range_byte(end_literal)
+      intervals = [(start_byte..end_byte)]
+      if @ignore_case
+        klass = Hir::CharClass.new(false, intervals)
+        klass.case_fold_simple
+        klass.intervals
       else
-        [] of Range(UInt8, UInt8)
+        intervals
       end
+    end
+
+    private def class_range_byte(literal : AST::Literal) : UInt8
+      if byte = single_byte_literal(literal)
+        return byte
+      end
+      if (char = literal.c) && char.ascii?
+        return char.ord.to_u8
+      end
+      raise ParseError.new("Unicode not allowed", :unicode_not_allowed, literal.span)
     end
 
     private def translate_class_set_range_unicode(range : AST::ClassSetRange) : Array(Range(UInt32, UInt32))
@@ -618,7 +615,7 @@ module Regex::Syntax
       end
 
       if c = literal.c
-        raise ParseError.new("Unicode not allowed", nil, literal.span) unless c.ascii?
+        raise ParseError.new("Unicode not allowed") unless c.ascii?
 
         if @ignore_case
           # For case-insensitive matching, include both cases
@@ -679,20 +676,20 @@ module Regex::Syntax
       if @dot_matches_new_line
         kind = @unicode ? Hir::Dot::AnyChar : Hir::Dot::AnyByte
         ensure_valid_utf8_dot!(kind)
-        return Hir::DotNode.new(kind)
+        return Hir::Hir.dot(kind).node
       end
 
       if @unicode
         if @crlf
           kind = Hir::Dot::AnyCharExceptCRLF
           ensure_valid_utf8_dot!(kind)
-          Hir::DotNode.new(kind)
+          Hir::Hir.dot(kind).node
         else
           raise ParseError.new("invalid line terminator", :invalid_line_terminator, dot.span) unless @line_terminator <= 0x7F
           if @line_terminator == '\n'.ord.to_u8
             kind = Hir::Dot::AnyCharExceptLF
             ensure_valid_utf8_dot!(kind)
-            Hir::DotNode.new(kind)
+            Hir::Hir.dot(kind).node
           else
             Hir::UnicodeClass.new(false, dot_unicode_intervals(@line_terminator.chr))
           end
@@ -701,12 +698,12 @@ module Regex::Syntax
         if @crlf
           kind = Hir::Dot::AnyByteExceptCRLF
           ensure_valid_utf8_dot!(kind)
-          Hir::DotNode.new(kind)
+          Hir::Hir.dot(kind).node
         else
           if @line_terminator == '\n'.ord.to_u8
             kind = Hir::Dot::AnyByteExceptLF
             ensure_valid_utf8_dot!(kind)
-            Hir::DotNode.new(kind)
+            Hir::Hir.dot(kind).node
           else
             Hir::CharClass.new(false, dot_byte_intervals(@line_terminator))
           end
@@ -813,17 +810,17 @@ module Regex::Syntax
 
       case repetition.op.kind
       when AST::RepetitionOp::Kind::ZeroOrOne
-        Regex::Syntax::Hir::Hir.repetition(child, 0_u32, 1_u32, greedy: repetition.greedy?).node
+        Regex::Syntax::Hir::Hir.repetition(child, 0_u32, 1_u32, greedy: repetition.greedy? != @swap_greed).node
       when AST::RepetitionOp::Kind::ZeroOrMore
-        Regex::Syntax::Hir::Hir.repetition(child, 0_u32, nil, greedy: repetition.greedy?).node
+        Regex::Syntax::Hir::Hir.repetition(child, 0_u32, nil, greedy: repetition.greedy? != @swap_greed).node
       when AST::RepetitionOp::Kind::OneOrMore
-        Regex::Syntax::Hir::Hir.repetition(child, 1_u32, nil, greedy: repetition.greedy?).node
+        Regex::Syntax::Hir::Hir.repetition(child, 1_u32, nil, greedy: repetition.greedy? != @swap_greed).node
       when AST::RepetitionOp::Kind::Range
         Regex::Syntax::Hir::Hir.repetition(
           child,
           repetition.op.min || 0_u32,
           repetition.op.max,
-          greedy: repetition.greedy?
+          greedy: repetition.greedy? != @swap_greed
         ).node
       else
         child
@@ -925,7 +922,6 @@ module Regex::Syntax
         when AST::FlagsItem::Kind::Flag
           if flag = item.flag
             result[flag.to_s] = !negated
-            negated = false
           end
         end
       end
@@ -975,7 +971,6 @@ module Regex::Syntax
         when AST::FlagsItem::Kind::Flag
           if flag = item.flag
             result[flag.to_s] = !negated
-            negated = false
           end
         end
       end
@@ -1409,7 +1404,8 @@ module Regex::Syntax
         swap_greed: swap_greed,
         ignore_whitespace: ignore_whitespace,
         crlf: crlf,
-        nest_limit: @nest_limit
+        nest_limit: @nest_limit,
+        line_terminator: @line_terminator
       )
     end
 

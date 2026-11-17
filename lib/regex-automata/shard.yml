@@ -1,5 +1,5 @@
 name: regex-automata
-version: 0.1.2
+version: 0.2.1
 
 authors:
   - Logos Maintainers <logos@maciej.codes>
@@ -15,11 +15,12 @@ description: |
   This crate provides NFA and DFA construction from regular expressions,
   with support for both dense and sparse representations.
 
-repository: https://github.com/maciejhirsz/logos
+repository: https://github.com/dsisnero/regex-automata
 
 dependencies:
   regex-syntax:
     github: dsisnero/regex-syntax
+    commit: 1623e24e374171bcc165e7ca7e82f5a9fd5336db
 
 development_dependencies:
   ameba:

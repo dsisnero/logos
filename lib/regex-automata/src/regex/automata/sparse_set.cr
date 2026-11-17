@@ -3,62 +3,140 @@ require "./types"
 module Regex::Automata
   class SparseSet
     @dense : Array(StateID)
-    @sparse : Array(Int32?)
+    @sparse : Array(StateID)
+    @len : Int32
+
+    def clone : SparseSet
+      copy = dup
+      copy.copy_owned_state
+      copy
+    end
+
+    protected def copy_owned_state : Nil
+      @dense = @dense.dup
+      @sparse = @sparse.dup
+    end
 
     def initialize(capacity : Int32)
       @dense = [] of StateID
-      @sparse = Array(Int32?).new(capacity, nil)
+      @sparse = [] of StateID
+      @len = 0
+      resize(capacity)
     end
 
     def resize(capacity : Int32) : Nil
-      if capacity < @sparse.size
-        @dense.reject! { |sid| sid.to_i >= capacity }
-      end
-      @sparse = Array(Int32?).new(capacity, nil)
-      @dense.each_with_index do |sid, index|
-        @sparse[sid.to_i] = index.to_i32
+      raise ArgumentError.new("sparse set capacity cannot be negative") if capacity < 0
+      raise ArgumentError.new("sparse set capacity cannot exceed #{StateID::LIMIT}") if capacity.to_i64 > StateID::LIMIT
+
+      @len = 0
+      if @dense.size > capacity
+        while @dense.size > capacity
+          @dense.pop
+          @sparse.pop
+        end
+      else
+        while @dense.size < capacity
+          @dense << StateID.new(0)
+          @sparse << StateID.new(0)
+        end
       end
     end
 
+    def capacity : Int32
+      @sparse.size.to_i32
+    end
+
+    def len : Int32
+      @len
+    end
+
+    def contains(id : StateID) : Bool
+      index = id.to_i
+      dense_index = @sparse[index]
+      dense_index.to_i < @len && @dense[dense_index.to_i] == id
+    end
+
     def clear : Nil
-      @dense.clear
-      @sparse.fill(nil)
+      @len = 0
     end
 
     def insert(id : StateID) : Bool
       index = id.to_i
-      return false if index < 0 || index >= @sparse.size
-      return false if @sparse[index]?
+      return false if contains(id)
+      raise IndexError.new("sparse set capacity exceeded") if @len >= @dense.size
 
-      @sparse[index] = @dense.size.to_i32
-      @dense << id
+      @sparse[index] = StateID.new(@len)
+      @dense[@len] = id
+      @len += 1
       true
     end
 
     def is_empty : Bool
-      @dense.empty?
+      @len == 0
     end
 
     def empty? : Bool
       is_empty
     end
 
-    def iter
-      @dense.each
+    def iter : SparseSetIter
+      SparseSetIter.new(@dense, @len)
     end
 
     def each(& : StateID ->) : Nil
-      @dense.each { |sid| yield sid }
+      index = 0
+      while index < @len
+        yield @dense[index]
+        index += 1
+      end
     end
 
-    def memory_usage : Int32
-      ((@dense.size * sizeof(StateID)) + (@sparse.size * sizeof(Int32))).to_i32
+    def memory_usage : UInt64
+      (@dense.size.to_u64 * sizeof(StateID).to_u64) +
+        (@sparse.size.to_u64 * sizeof(StateID).to_u64)
+    end
+
+    def inspect(io : IO) : Nil
+      io << "SparseSet(["
+      index = 0
+      while index < @len
+        io << ", " if index > 0
+        io << "StateID(" << @dense[index].as_i32 << ')'
+        index += 1
+      end
+      io << "])"
+    end
+  end
+
+  struct SparseSetIter
+    include Iterator(StateID)
+
+    def initialize(@dense : Array(StateID), @len : Int32, @index : Int32 = 0)
+    end
+
+    def next
+      return stop if @index >= @len
+
+      id = @dense[@index]
+      @index += 1
+      id
     end
   end
 
   class SparseSets
     getter set1 : SparseSet
     getter set2 : SparseSet
+
+    def clone : SparseSets
+      copy = dup
+      copy.copy_owned_state
+      copy
+    end
+
+    protected def copy_owned_state : Nil
+      @set1 = @set1.clone
+      @set2 = @set2.clone
+    end
 
     def initialize(capacity : Int32)
       @set1 = SparseSet.new(capacity)
@@ -79,7 +157,7 @@ module Regex::Automata
       @set2.resize(capacity)
     end
 
-    def memory_usage : Int32
+    def memory_usage : UInt64
       @set1.memory_usage + @set2.memory_usage
     end
   end

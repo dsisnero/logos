@@ -5,6 +5,7 @@ module Regex::Automata
   class Config
     @accelerate : Bool?
     @prefilter : Prefilter?
+    @prefilter_set : Bool = false
     @minimize : Bool?
     @match_kind : MatchKind?
     @start_kind : StartKind?
@@ -76,6 +77,7 @@ module Regex::Automata
     # Set or clear the prefilter attached to DFAs built with this config.
     def prefilter(prefilter : Prefilter?) : Config
       @prefilter = prefilter
+      @prefilter_set = true
       if @specialize_start_states.nil?
         @specialize_start_states = !prefilter.nil?
       end
@@ -184,7 +186,10 @@ module Regex::Automata
       self
     end
 
-    # Set an optional size limit for determinization scratch space.
+    # Set an optional byte limit for estimated auxiliary storage during
+    # determinization. This excludes the DFA's transition storage. The
+    # estimate uses the Crystal builder's representation and can differ
+    # from the budget needed by Rust for the same pattern.
     def determinize_size_limit(bytes : Int64?) : Config
       @determinize_size_limit = bytes
       self
@@ -239,6 +244,15 @@ module Regex::Automata
       @prefilter
     end
 
+    # Returns a configuration where options explicitly set by `other` take
+    # precedence over this configuration. This mirrors the builder merge used
+    # by the upstream dense DFA implementation.
+    def overwrite(other : Config) : Config
+      merged = Config.new
+      merged.overwrite_from(self, other)
+      merged
+    end
+
     # Create a copy of this configuration
     def dup : Config
       # Create a new config
@@ -254,16 +268,41 @@ module Regex::Automata
     protected def copy_from(other : Config)
       @accelerate = other.@accelerate
       @prefilter = other.@prefilter
+      @prefilter_set = other.@prefilter_set
       @minimize = other.@minimize
       @match_kind = other.@match_kind
       @start_kind = other.@start_kind
       @starts_for_each_pattern = other.@starts_for_each_pattern
       @byte_classes = other.@byte_classes
       @unicode_word_boundary = other.@unicode_word_boundary
-      @quitset = other.@quitset
+      @quitset = clone_quitset(other.@quitset)
       @specialize_start_states = other.@specialize_start_states
       @dfa_size_limit = other.@dfa_size_limit
       @determinize_size_limit = other.@determinize_size_limit
+    end
+
+    protected def overwrite_from(base : Config, other : Config) : Nil
+      @accelerate = other.@accelerate.nil? ? base.@accelerate : other.@accelerate
+      @prefilter = other.@prefilter_set ? other.@prefilter : base.@prefilter
+      @prefilter_set = other.@prefilter_set || base.@prefilter_set
+      @minimize = other.@minimize.nil? ? base.@minimize : other.@minimize
+      @match_kind = other.@match_kind || base.@match_kind
+      @start_kind = other.@start_kind || base.@start_kind
+      @starts_for_each_pattern = other.@starts_for_each_pattern.nil? ? base.@starts_for_each_pattern : other.@starts_for_each_pattern
+      @byte_classes = other.@byte_classes.nil? ? base.@byte_classes : other.@byte_classes
+      @unicode_word_boundary = other.@unicode_word_boundary.nil? ? base.@unicode_word_boundary : other.@unicode_word_boundary
+      @quitset = clone_quitset(other.@quitset || base.@quitset)
+      @specialize_start_states = other.@specialize_start_states.nil? ? base.@specialize_start_states : other.@specialize_start_states
+      @dfa_size_limit = other.@dfa_size_limit || base.@dfa_size_limit
+      @determinize_size_limit = other.@determinize_size_limit || base.@determinize_size_limit
+    end
+
+    private def clone_quitset(quitset : ByteSet?) : ByteSet?
+      return nil unless quitset
+
+      copy = ByteSet.empty
+      quitset.each { |byte| copy.add(byte) }
+      copy
     end
   end
 end

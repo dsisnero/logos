@@ -29,13 +29,21 @@ module Regex::Syntax::Hir
     def canonicalize(intervals : Array(Range(UInt32, UInt32))) : Array(Range(UInt32, UInt32))
       return [] of Range(UInt32, UInt32) if intervals.empty?
 
-      sorted = intervals.map { |range| canonical_range(range) }
+      sorted = intervals.compact_map do |range|
+        range = canonical_range(range)
+        next if range.begin >= 0xD800_u32 && range.end <= 0xDFFF_u32
+
+        first = range.begin.in?(0xD800_u32..0xDFFF_u32) ? 0xE000_u32 : range.begin
+        last = range.end.in?(0xD800_u32..0xDFFF_u32) ? 0xD7FF_u32 : range.end
+        first..last
+      end
+      return [] of Range(UInt32, UInt32) if sorted.empty?
       sorted.sort_by!(&.begin)
       merged = [] of Range(UInt32, UInt32)
       current = sorted.first
 
       sorted[1..].each do |range|
-        if range.begin.to_u64 <= current.end.to_u64 + 1
+        if range.begin.to_u64 <= current.end.to_u64 + 1 || (current.end == 0xD7FF_u32 && range.begin == 0xE000_u32)
           current = current.begin..Math.max(current.end, range.end)
         else
           merged << current
@@ -75,7 +83,7 @@ module Regex::Syntax::Hir
         next_start = range.end == 0x10FFFF_u32 ? 0x10FFFF_u32 : (range.end + 1).to_u32
       end
       append_scalar_gap(result, next_start, 0x10FFFF_u32) if canonical.last.end < 0x10FFFF_u32
-      result
+      canonicalize(result)
     end
 
     def union(a : Array(Range(UInt8, UInt8)), b : Array(Range(UInt8, UInt8))) : Array(Range(UInt8, UInt8))
@@ -249,20 +257,16 @@ module Regex::Syntax::Hir
 
     def case_fold_unicode(intervals : Array(Range(UInt32, UInt32))) : Array(Range(UInt32, UInt32))
       folded = canonicalize(intervals)
-      additions = [] of Range(UInt32, UInt32)
+      additions = folded.dup
+      table = Regex::Syntax::Unicode::SimpleCaseFolder::TABLE
       folded.each do |range|
-        additions << range
-        next if range.end - range.begin > 512
-
-        range.each do |code_point|
-          char = code_point.chr
-          additions << (char.ord.to_u32..char.ord.to_u32)
-          if mapped = Regex::Syntax::UnicodeTables::CaseFoldingSimple::CASE_FOLDING_SIMPLE[char]?
-            mapped.each do |mapped_char|
-              cp = mapped_char.ord.to_u32
-              additions << (cp..cp)
-            end
+        index = table.bsearch_index { |entry| entry[0].ord.to_u32 >= range.begin } || table.size
+        while index < table.size && table[index][0].ord.to_u32 <= range.end
+          table[index][1].each do |mapped_char|
+            codepoint = mapped_char.ord.to_u32
+            additions << (codepoint..codepoint)
           end
+          index += 1
         end
       end
       canonicalize(additions)
@@ -393,19 +397,7 @@ module Regex::Syntax::Hir
   end
 
   private def self.case_fold_unicode_from_codepoint_ranges(ranges : Array(Range(UInt32, UInt32))) : Array(Range(UInt32, UInt32))
-    folded = [] of Range(UInt32, UInt32)
-    ranges.each do |range|
-      folded << range
-      if range.end - range.begin <= 512
-        range.each do |code_point|
-          char = code_point.chr
-          unicode_case_variants(char).each do |variant|
-            folded << (variant..variant)
-          end
-        end
-      end
-    end
-    folded
+    IntervalOps.case_fold_unicode(ranges)
   end
 
   private def self.case_fold_ascii_ranges(ranges : Array(Range(UInt8, UInt8))) : Array(Range(UInt8, UInt8))
@@ -458,7 +450,7 @@ module Regex::Syntax::Hir
 
   # Module-level helper for creating dot expressions
   def self.dot(dot : Dot) : Hir
-    Hir.new(DotNode.new(dot))
+    Hir.dot(dot)
   end
 
   # Base class for all HIR nodes
@@ -668,13 +660,13 @@ module Regex::Syntax::Hir
       case @kind
       when Kind::Unicode
         if unicode = @unicode
-          unicode.ranges.empty?
+          unicode.minimum_len.nil?
         else
           raise "unreachable"
         end
       when Kind::Bytes
         if bytes = @bytes
-          bytes.ranges.empty?
+          bytes.minimum_len.nil?
         else
           raise "unreachable"
         end
@@ -725,7 +717,7 @@ module Regex::Syntax::Hir
     end
 
     def len : Int32
-      (@end - @start + 1).to_i32
+      @end.to_i32 - @start.to_i32 + 1
     end
 
     def to_range : Range(UInt8, UInt8)
@@ -841,7 +833,7 @@ module Regex::Syntax::Hir
     end
 
     def ascii? : Bool
-      last = @intervals.last?
+      last = effective_intervals.last?
       last ? last.end <= 0x7F_u8 : true
     end
 
@@ -853,23 +845,24 @@ module Regex::Syntax::Hir
     # ameba:enable Naming/PredicateName
 
     def minimum_len : Int32?
-      @intervals.empty? ? nil : 1
+      effective_intervals.empty? ? nil : 1
     end
 
     def maximum_len : Int32?
-      @intervals.empty? ? nil : 1
+      effective_intervals.empty? ? nil : 1
     end
 
     def literal : Bytes?
-      return nil unless @intervals.size == 1 && @intervals[0].begin == @intervals[0].end
+      intervals = effective_intervals
+      return nil unless intervals.size == 1 && intervals[0].begin == intervals[0].end
 
-      Bytes[@intervals[0].begin]
+      Bytes[intervals[0].begin]
     end
 
     def to_unicode_class : UnicodeClass?
       return nil unless ascii?
 
-      UnicodeClass.new(false, @intervals.map { |range| range.begin.to_u32..range.end.to_u32 })
+      UnicodeClass.new(false, effective_intervals.map { |range| range.begin.to_u32..range.end.to_u32 })
     end
 
     def negate : self
@@ -907,8 +900,8 @@ module Regex::Syntax::Hir
     end
 
     def case_fold_simple : self
-      @intervals = IntervalOps.case_fold_ascii(@intervals)
-      normalize_full_domain_negation
+      @intervals = IntervalOps.case_fold_ascii(effective_intervals)
+      @negated = false
       self
     end
 
@@ -987,7 +980,7 @@ module Regex::Syntax::Hir
     end
 
     def ascii? : Bool
-      last = @intervals.last?
+      last = effective_intervals.last?
       last ? last.end <= 0x7F_u32 : true
     end
 
@@ -999,19 +992,20 @@ module Regex::Syntax::Hir
     # ameba:enable Naming/PredicateName
 
     def minimum_len : Int32?
-      first = @intervals.first?
+      first = effective_intervals.first?
       first ? utf8_len(first.begin) : nil
     end
 
     def maximum_len : Int32?
-      last = @intervals.last?
+      last = effective_intervals.last?
       last ? utf8_len(last.end) : nil
     end
 
     def literal : Bytes?
-      return nil unless @intervals.size == 1 && @intervals[0].begin == @intervals[0].end
+      intervals = effective_intervals
+      return nil unless intervals.size == 1 && intervals[0].begin == intervals[0].end
 
-      char = @intervals[0].begin.chr
+      char = intervals[0].begin.chr
       string = char.to_s
       Bytes.new(string.bytesize) { |i| string.to_slice[i] }
     end
@@ -1019,7 +1013,7 @@ module Regex::Syntax::Hir
     def to_byte_class : CharClass?
       return nil unless ascii?
 
-      CharClass.new(false, @intervals.map { |range| range.begin.to_u8..range.end.to_u8 })
+      CharClass.new(false, effective_intervals.map { |range| range.begin.to_u8..range.end.to_u8 })
     end
 
     def negate : self
@@ -1057,8 +1051,8 @@ module Regex::Syntax::Hir
     end
 
     def case_fold_simple : self
-      @intervals = IntervalOps.case_fold_unicode(@intervals)
-      normalize_full_domain_negation
+      @intervals = IntervalOps.case_fold_unicode(effective_intervals)
+      @negated = false
       self
     end
 
@@ -1227,11 +1221,8 @@ module Regex::Syntax::Hir
     end
 
     def self.full : self
-      bits = 0_u32
-      ordered_kinds.each do |kind|
-        bits |= bit_for(kind)
-      end
-      new(bits)
+      # Rust reserves all 32 bits, including assertions added in future versions.
+      new(UInt32::MAX)
     end
 
     def empty? : Bool
@@ -1239,9 +1230,7 @@ module Regex::Syntax::Hir
     end
 
     def len : Int32
-      count = 0
-      each { count += 1 }
-      count
+      @bits.popcount
     end
 
     def contains(kind : Look::Kind) : Bool
@@ -1548,9 +1537,29 @@ module Regex::Syntax::Hir
     def has_greedy_all? : Bool
       return false unless greedy? && max.nil?
 
-      case sub
+      child = sub
+      case child
       when DotNode
         true
+      when UnicodeClass
+        !child.negated? && dot_intervals?(child.intervals, 0x10FFFF_u32)
+      when CharClass
+        !child.negated? && dot_intervals?(child.intervals, 255_u8)
+      else
+        false
+      end
+    end
+
+    private def dot_intervals?(intervals, domain_end) : Bool
+      return false if intervals.empty? || intervals.first.begin != 0 || intervals.last.end != domain_end
+
+      case intervals.size
+      when 1
+        true
+      when 2
+        intervals[0].end == 9 && intervals[1].begin == 11
+      when 3
+        intervals[0].end == 9 && intervals[1].begin == 11 && intervals[1].end == 12 && intervals[2].begin == 14
       else
         false
       end
@@ -1653,8 +1662,8 @@ module Regex::Syntax::Hir
     @utf8 : Bool
     @explicit_captures_len : Int32
     @static_explicit_captures_len : Int32?
-    @minimum_len : Int32?
-    @maximum_len : Int32?
+    @minimum_len : UInt64?
+    @maximum_len : UInt64?
     @literal : Bool
     @alternation_literal : Bool
 
@@ -1679,9 +1688,9 @@ module Regex::Syntax::Hir
     def self.union(props : Enumerable(Properties)) : self
       array = props.to_a
       fix = array.empty? ? LookSet.empty : LookSet.full
-      static_len = array.empty? ? 0 : array.first.static_explicit_captures_len
-      minimum_len = nil.as(Int32?)
-      maximum_len = nil.as(Int32?)
+      static_len = array.first?.try(&.static_explicit_captures_len)
+      minimum_len = nil.as(UInt64?)
+      maximum_len = nil.as(UInt64?)
       look_set = LookSet.empty
       look_set_prefix = fix
       look_set_suffix = fix
@@ -1748,8 +1757,8 @@ module Regex::Syntax::Hir
                            utf8 : Bool,
                            explicit_captures_len : Int32,
                            static_explicit_captures_len : Int32?,
-                           minimum_len : Int32?,
-                           maximum_len : Int32?,
+                           minimum_len : UInt64?,
+                           maximum_len : UInt64?,
                            literal : Bool,
                            alternation_literal : Bool)
       @hir = nil
@@ -1799,11 +1808,11 @@ module Regex::Syntax::Hir
       @static_explicit_captures_len
     end
 
-    def minimum_len : Int32?
+    def minimum_len : UInt64?
       @minimum_len
     end
 
-    def maximum_len : Int32?
+    def maximum_len : UInt64?
       @maximum_len
     end
 
@@ -1849,7 +1858,23 @@ module Regex::Syntax::Hir
 
     # Create a dot expression
     def self.dot(dot : Dot) : Hir
-      Hir.new(DotNode.new(dot))
+      node = case dot
+             when Dot::AnyChar
+               UnicodeClass.new(false, [0_u32..0x10FFFF_u32])
+             when Dot::AnyCharExceptLF
+               UnicodeClass.new(false, [0_u32..9_u32, 11_u32..0x10FFFF_u32])
+             when Dot::AnyCharExceptCRLF
+               UnicodeClass.new(false, [0_u32..9_u32, 11_u32..12_u32, 14_u32..0x10FFFF_u32])
+             when Dot::AnyByte
+               CharClass.new(false, [0_u8..255_u8])
+             when Dot::AnyByteExceptLF
+               CharClass.new(false, [0_u8..9_u8, 11_u8..255_u8])
+             when Dot::AnyByteExceptCRLF
+               CharClass.new(false, [0_u8..9_u8, 11_u8..12_u8, 14_u8..255_u8])
+             else
+               raise "Unknown dot kind #{dot}"
+             end
+      Hir.new(node)
     end
 
     def self.empty : Hir
@@ -1858,6 +1883,25 @@ module Regex::Syntax::Hir
 
     def self.fail : Hir
       Hir.new(CharClass.new(false, [] of Range(UInt8, UInt8)))
+    end
+
+    def self.character_class(klass : Class) : Hir
+      if unicode = klass.unicode
+        character_class(unicode)
+      elsif bytes = klass.bytes
+        character_class(bytes)
+      else
+        raise "unreachable class kind"
+      end
+    end
+
+    def self.character_class(klass : UnicodeClass | CharClass) : Hir
+      return fail if klass.minimum_len.nil?
+      if bytes = klass.literal
+        return literal(bytes)
+      end
+
+      Hir.new(klass)
     end
 
     # Create a literal expression
@@ -1921,26 +1965,23 @@ module Regex::Syntax::Hir
           flattened << child
         end
       end
-      if flattened.all? { |child| child.is_a?(CharClass) || child.is_a?(UnicodeClass) }
-        if merged = merge_class_alternation(flattened)
-          return Hir.new(merged)
-        end
+      return fail if flattened.empty?
+      return Hir.new(flattened.first) if flattened.size == 1
+
+      if merged = merge_literal_alternation(flattened)
+        return Hir.new(merged)
+      end
+      if merged = merge_class_alternation(flattened)
+        return Hir.new(merged)
       end
       if lifted = lift_common_prefix(flattened)
         return lifted
       end
-      case flattened.size
-      when 0
-        fail
-      when 1
-        Hir.new(flattened.first)
-      else
-        Hir.new(Alternation.new(flattened))
-      end
+      Hir.new(Alternation.new(flattened))
     end
 
     def self.repetition(sub : Node, min : UInt32, max : UInt32?, greedy : Bool = true) : Hir
-      if zero_width_assertion_only?(sub)
+      if lengths(sub)[:max] == 0_u64
         min = Math.min(min, 1_u32)
         max = max ? Math.min(max, 1_u32) : 1_u32
       end
@@ -1978,12 +2019,12 @@ module Regex::Syntax::Hir
       self.class.static_capture_count(node)
     end
 
-    def minimum_len : Int32?
+    def minimum_len : UInt64?
       lengths = self.class.lengths(node)
       lengths[:possible] ? lengths[:min] : nil
     end
 
-    def maximum_len : Int32?
+    def maximum_len : UInt64?
       lengths = self.class.lengths(node)
       return nil unless lengths[:possible]
 
@@ -2056,124 +2097,120 @@ module Regex::Syntax::Hir
       merged
     end
 
+    # Rust tries single UTF-8 scalars before single raw bytes, regardless
+    # of the parser's Unicode flag. Mixed non-ASCII scalars/invalid bytes
+    # cannot be represented by one class.
+    private def self.merge_literal_alternation(children : Array(Node)) : Node?
+      return nil unless children.all?(Literal)
+
+      literals = children.map(&.as(Literal).bytes)
+      strings = literals.map { |bytes| String.new(bytes) }
+      if strings.all? { |string| string.valid_encoding? && string.size == 1 }
+        ranges = strings.map do |string|
+          codepoint = string.each_char.first.ord.to_u32
+          codepoint..codepoint
+        end
+        klass = UnicodeClass.new(false, ranges)
+        return klass.literal.try { |bytes| Literal.new(bytes) } || klass
+      end
+      return nil unless literals.all? { |bytes| bytes.size == 1 }
+
+      klass = CharClass.new(false, literals.map { |bytes| bytes[0]..bytes[0] })
+      klass.literal.try { |bytes| Literal.new(bytes) } || klass
+    end
+
     private def self.merge_class_alternation(children : Array(Node)) : Node?
       unicode_classes = [] of UnicodeClass
       byte_classes = [] of CharClass
-
       children.each do |child|
         case child
         when UnicodeClass
-          unicode_classes << child
+          # Materialize negation before converting between class kinds.
+          klass = UnicodeClass.empty
+          unicode_classes << klass.union(child)
         when CharClass
-          byte_classes << child
+          klass = CharClass.empty
+          byte_classes << klass.union(child)
         else
           return nil
         end
       end
 
-      if unicode_classes.empty?
-        merged = CharClass.empty
-        byte_classes.each { |klass| merged.union(klass) }
-        return merged
+      converted_bytes = byte_classes.compact_map(&.to_unicode_class)
+      if converted_bytes.size == byte_classes.size
+        merged = UnicodeClass.empty
+        unicode_classes.each { |klass| merged.union(klass) }
+        converted_bytes.each { |klass| merged.union(klass) }
+        return fail.node if merged.intervals.empty?
+        return merged.literal.try { |bytes| Literal.new(bytes) } || merged
       end
 
-      converted_byte_classes = byte_classes.compact_map(&.to_unicode_class)
-      return nil unless converted_byte_classes.size == byte_classes.size
+      converted_unicode = unicode_classes.compact_map(&.to_byte_class)
+      return nil unless converted_unicode.size == unicode_classes.size
 
-      merged = UnicodeClass.empty
-      unicode_classes.each { |klass| merged.union(klass) }
-      converted_byte_classes.each { |klass| merged.union(klass) }
-      merged
+      merged = CharClass.empty
+      byte_classes.each { |klass| merged.union(klass) }
+      converted_unicode.each { |klass| merged.union(klass) }
+      return fail.node if merged.intervals.empty?
+      merged.literal.try { |bytes| Literal.new(bytes) } || merged
     end
 
     private def self.lift_common_prefix(children : Array(Node)) : Hir?
-      return nil if children.size < 2
+      return nil unless children.all?(Concat)
 
-      sequences = children.map do |child|
-        case child
-        when Concat
-          child.children
-        else
-          [child] of Node
-        end
+      concats = children.map(&.as(Concat).children)
+      prefix = concats.first
+      common_len = prefix.size
+      concats.skip(1).each do |parts|
+        common_len = Math.min(common_len, parts.size)
+        common_len = (0...common_len).take_while { |index| same_node?(prefix[index], parts[index]) }.size
+        return nil if common_len == 0
       end
+      return nil if common_len == 0
 
-      prefix_len = 0
-      loop do
-        break if sequences.any? { |sequence| prefix_len >= sequence.size }
-        candidate = sequences.first[prefix_len]
-        break unless sequences.all? { |sequence| nodes_equal?(sequence[prefix_len], candidate) }
-        prefix_len += 1
-      end
-
-      return nil if prefix_len == 0
-
-      prefix = sequences.first[0, prefix_len]
-      suffixes = sequences.map do |sequence|
-        remainder = sequence[prefix_len..]
-        remainder ? remainder : ([] of Node)
-      end
-
-      if suffixes.all?(&.empty?)
-        # Preserve explicit empty alternation branches like `|` and `||`.
-        return nil if children.all?(&.is_a?(Empty))
-        return concat(prefix)
-      end
-
-      suffix_nodes = suffixes.map do |suffix|
-        concat(suffix).node
-      end
-      concat(prefix + [alternation(suffix_nodes).node])
+      suffixes = concats.map { |parts| concat(parts[common_len..]).node }
+      concat(prefix[0, common_len] + [alternation(suffixes).node])
     end
 
-    private def self.nodes_equal?(left : Node, right : Node) : Bool
-      if left.is_a?(Empty) && right.is_a?(Empty)
+    # Rust HIR equality is structural. Object identity would miss separately
+    # parsed copies of the same prefix; printed regex equality would erase
+    # distinctions such as captures and class variants.
+    private def self.same_node?(left : Node, right : Node) : Bool
+      return false unless left.class == right.class
+
+      case left
+      when Empty
         true
-      elsif left.is_a?(Literal) && right.is_a?(Literal)
-        l = left.as(Literal)
-        r = right.as(Literal)
-        l.bytes == r.bytes
-      elsif left.is_a?(DotNode) && right.is_a?(DotNode)
-        l = left.as(DotNode)
-        r = right.as(DotNode)
-        l.kind == r.kind
-      elsif left.is_a?(Look) && right.is_a?(Look)
-        l = left.as(Look)
-        r = right.as(Look)
-        l.kind == r.kind
-      elsif left.is_a?(CharClass) && right.is_a?(CharClass)
-        l = left.as(CharClass)
-        r = right.as(CharClass)
-        l.negated? == r.negated? && l.intervals == r.intervals
-      elsif left.is_a?(UnicodeClass) && right.is_a?(UnicodeClass)
-        l = left.as(UnicodeClass)
-        r = right.as(UnicodeClass)
-        l.negated? == r.negated? && l.intervals == r.intervals
-      elsif left.is_a?(Repetition) && right.is_a?(Repetition)
-        l = left.as(Repetition)
-        r = right.as(Repetition)
-        l.min == r.min &&
-          l.max == r.max &&
-          l.greedy? == r.greedy? &&
-          nodes_equal?(l.sub, r.sub)
-      elsif left.is_a?(Capture) && right.is_a?(Capture)
-        l = left.as(Capture)
-        r = right.as(Capture)
-        l.index == r.index &&
-          l.name == r.name &&
-          nodes_equal?(l.sub, r.sub)
-      elsif left.is_a?(Concat) && right.is_a?(Concat)
-        l = left.as(Concat)
-        r = right.as(Concat)
-        l.children.size == r.children.size &&
-          l.children.zip(r.children).all? { |lhs, rhs| nodes_equal?(lhs, rhs) }
-      elsif left.is_a?(Alternation) && right.is_a?(Alternation)
-        l = left.as(Alternation)
-        r = right.as(Alternation)
-        l.children.size == r.children.size &&
-          l.children.zip(r.children).all? { |lhs, rhs| nodes_equal?(lhs, rhs) }
+      when Literal
+        left.bytes == right.as(Literal).bytes
+      when UnicodeClass
+        other = right.as(UnicodeClass)
+        left.negated? == other.negated? && left.intervals == other.intervals
+      when CharClass
+        other = right.as(CharClass)
+        left.negated? == other.negated? && left.intervals == other.intervals
+      when Look
+        left.kind == right.as(Look).kind
+      when DotNode
+        left.kind == right.as(DotNode).kind
+      when Capture
+        other = right.as(Capture)
+        left.index == other.index && left.name == other.name && same_node?(left.sub, other.sub)
+      when Repetition
+        other = right.as(Repetition)
+        left.min == other.min && left.max == other.max && left.greedy? == other.greedy? && same_node?(left.sub, other.sub)
+      when Concat
+        same_children?(left.children, right.as(Concat).children)
+      when Alternation
+        same_children?(left.children, right.as(Alternation).children)
       else
         false
+      end
+    end
+
+    private def self.same_children?(left : Array(Node), right : Array(Node)) : Bool
+      left.size == right.size && left.zip(right).all? do |pair|
+        same_node?(pair[0], pair[1])
       end
     end
 
@@ -2458,9 +2495,6 @@ module Regex::Syntax::Hir
       when Alternation
         counts = [] of Int32
         node.children.each do |branch|
-          branch_lengths = lengths(branch)
-          next unless branch_lengths[:possible]
-
           branch_count = static_capture_count(branch)
           return nil unless branch_count
 
@@ -2485,61 +2519,65 @@ module Regex::Syntax::Hir
       end
     end
 
-    def self.lengths(node : Node) : NamedTuple(possible: Bool, min: Int32, max: Int32?)
+    def self.lengths(node : Node) : NamedTuple(possible: Bool, min: UInt64, max: UInt64?)
       case node
       when Empty, Look
-        {possible: true, min: 0, max: 0}
+        {possible: true, min: 0_u64, max: 0_u64}
       when Literal
-        size = node.bytes.size.to_i32
+        size = node.bytes.size.to_u64
         {possible: true, min: size, max: size}
       when DotNode
         case node.kind
         when Dot::AnyChar, Dot::AnyCharExceptLF, Dot::AnyCharExceptCRLF
-          {possible: true, min: 1, max: 4}
+          {possible: true, min: 1_u64, max: 4_u64}
         else
-          {possible: true, min: 1, max: 1}
+          {possible: true, min: 1_u64, max: 1_u64}
         end
       when CharClass
         intervals = node.negated? ? IntervalOps.invert(node.intervals) : node.intervals
-        intervals.empty? ? {possible: false, min: 0, max: nil} : {possible: true, min: 1, max: 1}
+        intervals.empty? ? {possible: false, min: 0_u64, max: nil} : {possible: true, min: 1_u64, max: 1_u64}
       when UnicodeClass
         intervals = node.negated? ? IntervalOps.invert(node.intervals) : node.intervals
-        return {possible: false, min: 0, max: nil} if intervals.empty?
+        return {possible: false, min: 0_u64, max: nil} if intervals.empty?
 
-        min_len = 4
-        max_len = 1
+        min_len = 4_u64
+        max_len = 1_u64
         intervals.each do |range|
-          min_len = Math.min(min_len, utf8_len(range.begin))
-          max_len = Math.max(max_len, utf8_len(range.end))
+          min_len = Math.min(min_len, utf8_len(range.begin).to_u64)
+          max_len = Math.max(max_len, utf8_len(range.end).to_u64)
         end
         {possible: true, min: min_len, max: max_len}
       when Capture
         lengths(node.sub)
       when Concat
-        min = 0
-        max = 0
+        min = 0_u64
+        max = 0_u64
         max_unbounded = false
         node.children.each do |part|
           part_lengths = lengths(part)
-          return {possible: false, min: 0, max: nil} unless part_lengths[:possible]
+          return {possible: false, min: 0_u64, max: nil} unless part_lengths[:possible]
 
           min = saturating_add(min, part_lengths[:min])
           part_max = part_lengths[:max]
           if max_unbounded || part_max.nil?
             max_unbounded = true
           else
-            max = saturating_add(max, part_max)
+            if sum = checked_add(max, part_max)
+              max = sum
+            else
+              max_unbounded = true
+            end
           end
         end
         {possible: true, min: min, max: max_unbounded ? nil : max}
       when Alternation
-        alt_min : Int32? = nil
-        alt_max : Int32? = nil
+        alt_min : UInt64? = nil
+        alt_max : UInt64? = nil
         possible = false
         unbounded = false
         node.children.each do |branch|
           branch_lengths = lengths(branch)
-          next unless branch_lengths[:possible]
+          return {possible: false, min: 0_u64, max: nil} unless branch_lengths[:possible]
 
           possible = true
           if current_min = alt_min
@@ -2558,27 +2596,27 @@ module Regex::Syntax::Hir
             end
           end
         end
-        return {possible: false, min: 0, max: nil} unless possible
+        return {possible: false, min: 0_u64, max: nil} unless possible
 
-        {possible: true, min: alt_min || 0, max: unbounded ? nil : alt_max}
+        {possible: true, min: alt_min || 0_u64, max: unbounded ? nil : alt_max}
       when Repetition
         child_lengths = lengths(node.sub)
         if !child_lengths[:possible]
-          return node.min == 0_u32 ? {possible: true, min: 0, max: 0} : {possible: false, min: 0, max: nil}
+          return {possible: false, min: 0_u64, max: nil}
         end
 
-        min = node.min == 0_u32 ? 0 : saturating_mul(child_lengths[:min], node.min)
+        min = node.min == 0_u32 ? 0_u64 : saturating_mul(child_lengths[:min], node.min)
         child_max = child_lengths[:max]
-        max = if child_max == 0
-                0
+        max = if child_max == 0_u64
+                0_u64
               elsif node.max.nil? || child_max.nil?
                 nil
               else
-                saturating_mul(child_max, node.max || 0_u32)
+                checked_mul(child_max, node.max || 0_u32)
               end
         {possible: true, min: min, max: max}
       else
-        {possible: false, min: 0, max: nil}
+        {possible: false, min: 0_u64, max: nil}
       end
     end
 
@@ -2608,14 +2646,24 @@ module Regex::Syntax::Hir
       end
     end
 
-    private def self.saturating_add(left : Int32, right : Int32) : Int32
-      sum = left.to_i64 + right.to_i64
-      sum > Int32::MAX ? Int32::MAX : sum.to_i32
+    # Match Rust's 64-bit usize arithmetic: minimum lengths saturate,
+    # while overflow makes a maximum length unknown.
+    private def self.saturating_add(left : UInt64, right : UInt64) : UInt64
+      Math.min(left.to_u128 + right.to_u128, UInt64::MAX.to_u128).to_u64
     end
 
-    private def self.saturating_mul(left : Int32, right : UInt32) : Int32
-      product = left.to_i64 * right.to_i64
-      product > Int32::MAX ? Int32::MAX : product.to_i32
+    private def self.saturating_mul(left : UInt64, right : UInt32) : UInt64
+      Math.min(left.to_u128 * right.to_u128, UInt64::MAX.to_u128).to_u64
+    end
+
+    private def self.checked_add(left : UInt64, right : UInt64) : UInt64?
+      sum = left.to_u128 + right.to_u128
+      sum <= UInt64::MAX ? sum.to_u64 : nil
+    end
+
+    private def self.checked_mul(left : UInt64, right : UInt32) : UInt64?
+      product = left.to_u128 * right.to_u128
+      product <= UInt64::MAX ? product.to_u64 : nil
     end
 
     private def self.utf8_len(codepoint : UInt32) : Int32
@@ -2681,23 +2729,6 @@ module Regex::Syntax::Hir
 
       byte = bytes[index]
       byte >= min && byte <= max
-    end
-
-    private def self.zero_width_assertion_only?(node : Node) : Bool
-      case node
-      when Look
-        true
-      when Capture
-        zero_width_assertion_only?(node.sub)
-      when Concat
-        node.children.all? { |child| zero_width_assertion_only?(child) }
-      when Alternation
-        node.children.all? { |child| zero_width_assertion_only?(child) }
-      when Repetition
-        zero_width_assertion_only?(node.sub)
-      else
-        false
-      end
     end
 
     private def self.single_literal_atom?(node : Node) : Bool

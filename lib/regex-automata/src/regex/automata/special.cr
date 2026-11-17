@@ -130,64 +130,76 @@ module Regex::Automata
 
     # Returns true if and only if the given state ID is a quit state.
     def is_quit_state?(id : StateID) : Bool
-      id == @quit_id
+      !is_dead_state?(id) && id == @quit_id
     end
 
     # Returns true if and only if the given state ID is a match state.
     def is_match_state?(id : StateID) : Bool
-      @min_match <= id && id <= @max_match
+      !is_dead_state?(id) && @min_match <= id && id <= @max_match
     end
 
     # Returns true if and only if the given state ID is an accelerated state.
     def is_accel_state?(id : StateID) : Bool
-      @min_accel <= id && id <= @max_accel
+      !is_dead_state?(id) && @min_accel <= id && id <= @max_accel
     end
 
     # Returns true if and only if the given state ID is a start state.
     def is_start_state?(id : StateID) : Bool
-      @min_start <= id && id <= @max_start
+      !is_dead_state?(id) && @min_start <= id && id <= @max_start
     end
 
     # Returns the total number of match states.
-    def match_len : Int32
-      if @max_match < @min_match
+    def match_len(stride : Int32 = 1) : Int32
+      if !matches?
         0
       else
-        (@max_match.to_i - @min_match.to_i) + 1
+        ((@max_match.to_i - @min_match.to_i) + stride) // stride
       end
     end
 
     # Returns the total number of accelerated states.
-    def accel_len : Int32
-      if @max_accel < @min_accel
+    def accel_len(stride : Int32 = 1) : Int32
+      if !accels?
         0
       else
-        (@max_accel.to_i - @min_accel.to_i) + 1
+        ((@max_accel.to_i - @min_accel.to_i) + stride) // stride
       end
     end
 
     # Returns the total number of start states.
-    def start_len : Int32
-      if @max_start < @min_start
+    def start_len(stride : Int32 = 1) : Int32
+      if !starts?
         0
       else
-        (@max_start.to_i - @min_start.to_i) + 1
+        ((@max_start.to_i - @min_start.to_i) + stride) // stride
       end
     end
 
     # Returns true if there are no match states.
     def no_match_states? : Bool
-      @max_match < @min_match
+      !matches?
     end
 
     # Returns true if there are no accelerated states.
     def no_accel_states? : Bool
-      @max_accel < @min_accel
+      !accels?
     end
 
     # Returns true if there are no start states.
     def no_start_states? : Bool
-      @max_start < @min_start
+      !starts?
+    end
+
+    def matches? : Bool
+      @min_match != DEAD_STATE_ID
+    end
+
+    def accels? : Bool
+      @min_accel != DEAD_STATE_ID
+    end
+
+    def starts? : Bool
+      @min_start != DEAD_STATE_ID
     end
 
     # Sets the quit state ID.
@@ -272,16 +284,18 @@ module Regex::Automata
 
     # Serializes the special states to bytes.
     def write_to(buf : Bytes) : Int32
-      # Simple serialization: write all IDs as 4-byte integers
+      raise SerializeError.buffer_too_small("special state ids") if buf.size < write_to_len
+
       offset = 0
       [@max, @quit_id, @min_match, @max_match, @min_accel, @max_accel, @min_start, @max_start].each do |id|
-        buf[offset] = (id.to_i >> 24).to_u8
-        buf[offset + 1] = (id.to_i >> 16).to_u8
-        buf[offset + 2] = (id.to_i >> 8).to_u8
-        buf[offset + 3] = id.to_i.to_u8
+        IO::ByteFormat::SystemEndian.encode(id.as_u32, buf[offset, 4])
         offset += 4
       end
       offset
+    end
+
+    def write_to_len : Int32
+      8 * sizeof(Int32)
     end
 
     # Deserializes special states from bytes.
@@ -291,12 +305,13 @@ module Regex::Automata
       ids = Array(StateID).new(8)
       offset = 0
       8.times do
-        id = (buf[offset].to_i32 << 24) | (buf[offset + 1].to_i32 << 16) | (buf[offset + 2].to_i32 << 8) | buf[offset + 3].to_i32
-        ids << StateID.new(id)
+        value = IO::ByteFormat::SystemEndian.decode(UInt32, buf[offset, 4])
+        return nil if value > StateID::MAX.as_u32
+        ids << StateID.new(value.to_i32)
         offset += 4
       end
 
-      Special.new(
+      special = Special.new(
         max: ids[0],
         quit_id: ids[1],
         min_match: ids[2],
@@ -306,6 +321,41 @@ module Regex::Automata
         min_start: ids[6],
         max_start: ids[7]
       )
+      return nil if special.validate
+
+      special
+    end
+
+    # Returns a decode error unless the special-state ranges preserve the
+    # ordering and sentinel invariants used by dense DFA search.
+    def validate : DeserializeError?
+      return DeserializeError.generic("min_match is DEAD, but max_match is not") if @min_match == DEAD_STATE_ID && @max_match != DEAD_STATE_ID
+      return DeserializeError.generic("max_match is DEAD, but min_match is not") if @min_match != DEAD_STATE_ID && @max_match == DEAD_STATE_ID
+      return DeserializeError.generic("min_accel is DEAD, but max_accel is not") if @min_accel == DEAD_STATE_ID && @max_accel != DEAD_STATE_ID
+      return DeserializeError.generic("max_accel is DEAD, but min_accel is not") if @min_accel != DEAD_STATE_ID && @max_accel == DEAD_STATE_ID
+      return DeserializeError.generic("min_start is DEAD, but max_start is not") if @min_start == DEAD_STATE_ID && @max_start != DEAD_STATE_ID
+      return DeserializeError.generic("max_start is DEAD, but min_start is not") if @min_start != DEAD_STATE_ID && @max_start == DEAD_STATE_ID
+      return DeserializeError.generic("min_match should not be greater than max_match") if @min_match > @max_match
+      return DeserializeError.generic("min_accel should not be greater than max_accel") if @min_accel > @max_accel
+      return DeserializeError.generic("min_start should not be greater than max_start") if @min_start > @max_start
+      return DeserializeError.generic("quit_id should not be greater than min_match") if matches? && @quit_id >= @min_match
+      return DeserializeError.generic("quit_id should not be greater than min_accel") if accels? && @quit_id >= @min_accel
+      return DeserializeError.generic("quit_id should not be greater than min_start") if starts? && @quit_id >= @min_start
+      return DeserializeError.generic("min_match should not be greater than min_accel") if matches? && accels? && @min_accel < @min_match
+      return DeserializeError.generic("min_match should not be greater than min_start") if matches? && starts? && @min_start < @min_match
+      return DeserializeError.generic("min_accel should not be greater than min_start") if accels? && starts? && @min_start < @min_accel
+      return DeserializeError.generic("quit_id should not be greater than max") if @max < @quit_id
+      return DeserializeError.generic("max_match should not be greater than max") if @max < @max_match
+      return DeserializeError.generic("max_accel should not be greater than max") if @max < @max_accel
+      return DeserializeError.generic("max_start should not be greater than max") if @max < @max_start
+
+      nil
+    end
+
+    def validate_state_len(state_len : Int32, stride2 : Int32) : DeserializeError?
+      return DeserializeError.generic("max should not be greater than or equal to state length") if (@max.to_i >> stride2) >= state_len
+
+      nil
     end
   end
 end

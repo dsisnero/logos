@@ -1,3 +1,5 @@
+require "./escape"
+
 module Regex::Automata
   # Base error type for regex-automata
   class Error < Exception
@@ -7,13 +9,42 @@ module Regex::Automata
   class BuildError < Error
     getter? size_limit_exceeded : Bool
     getter size_limit : Int64?
+    getter nfa_source : Exception?
 
-    def initialize(message : String? = nil, @size_limit_exceeded : Bool = false, @size_limit : Int64? = nil)
+    def initialize(message : String? = nil, @size_limit_exceeded : Bool = false, @size_limit : Int64? = nil, @nfa_source : Exception? = nil)
       super(message)
     end
 
     def is_size_limit_exceeded : Bool
       @size_limit_exceeded
+    end
+
+    def self.nfa(error : NFA::BuildError) : BuildError
+      new(error.message, nfa_source: error)
+    end
+
+    def self.unsupported_dfa_word_boundary_unicode : BuildError
+      new("cannot build DFAs for regexes with Unicode word boundaries; switch to ASCII word boundaries, or heuristically enable Unicode word boundaries or use a different regex engine")
+    end
+
+    def self.too_many_states : BuildError
+      new("DFA exceeded the maximum number of states", size_limit_exceeded: true)
+    end
+
+    def self.too_many_start_states : BuildError
+      new("DFA exceeded the maximum number of start states", size_limit_exceeded: true)
+    end
+
+    def self.too_many_match_pattern_ids : BuildError
+      new("DFA exceeded the maximum number of match pattern IDs", size_limit_exceeded: true)
+    end
+
+    def self.dfa_exceeded_size_limit(limit : Int64) : BuildError
+      new("DFA exceeded size limit of #{limit} bytes", size_limit_exceeded: true, size_limit: limit)
+    end
+
+    def self.determinize_exceeded_size_limit(limit : Int64) : BuildError
+      new("determinization exceeded size limit of #{limit} bytes", size_limit_exceeded: true, size_limit: limit)
     end
   end
 
@@ -48,7 +79,7 @@ module Regex::Automata
     def initialize(@kind : Kind, @byte : UInt8? = nil, @offset : Int32? = nil, @len : Int32? = nil, @mode : Anchored? = nil, @pattern : PatternID? = nil)
       message = case @kind
                 when Kind::Quit
-                  "quit search after observing byte #{@byte.not_nil!} at offset #{@offset.not_nil!}"
+                  "quit search after observing byte #{DebugByte.new(@byte.not_nil!).inspect} at offset #{@offset.not_nil!}"
                 when Kind::GaveUp
                   "gave up searching at offset #{@offset.not_nil!}"
                 when Kind::HaystackTooLong

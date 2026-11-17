@@ -1,150 +1,221 @@
 # source_test_id	status	crystal_refs	notes
-src/dfa/automaton.rs::test::object_safe	ported	spec/automaton_spec.cr	ported abstract-automaton search parity through the base `Automaton` API
-src/dfa/dense.rs::test::errors_with_unicode_word_boundary	ported	spec/dfa_dense_spec.cr	preserved ASCII-vs-Unicode word-boundary distinction and reject Unicode boundaries unless heuristic DFA support is enabled
-src/dfa/dense.rs::test::heuristic_unicode_reverse	ported	spec/dfa_dense_spec.cr	heuristic Unicode reverse searches now auto-quit on non-ASCII bytes while preserving reverse boundary semantics on ASCII spans
-src/dfa/dense.rs::test::regression_validation_order	ported	spec/dfa_dense_spec.cr	validates malformed serialized start-state IDs before universal-start inspection	manual
-src/dfa/dense.rs::test::roundtrip_always_match	ported	spec/dfa_dense_spec.cr	ported dense always-match serialization roundtrip parity spec
-src/dfa/dense.rs::test::roundtrip_never_match	ported	spec/dfa_dense_spec.cr	ported dense never-match serialization roundtrip parity spec
-src/dfa/onepass.rs::test::assertions	missing	-	baseline
-src/dfa/onepass.rs::test::fail_conflicting_transition	missing	-	baseline
-src/dfa/onepass.rs::test::fail_multiple_epsilon	missing	-	baseline
-src/dfa/onepass.rs::test::fail_multiple_match	missing	-	baseline
-src/dfa/onepass.rs::test::is_not_one_pass	missing	-	baseline
-src/dfa/onepass.rs::test::is_not_one_pass_bigger	missing	-	baseline
-src/dfa/onepass.rs::test::is_one_pass	missing	-	baseline
-src/dfa/onepass.rs::test::max_slots	missing	-	baseline
-src/dfa/sparse.rs::test::heuristic_unicode_forward	ported	spec/dfa_sparse_spec.cr	ported sparse forward heuristic Unicode quit-byte parity
-src/dfa/sparse.rs::test::heuristic_unicode_reverse	ported	spec/dfa_sparse_spec.cr	ported sparse reverse heuristic Unicode quit-byte parity
-src/hybrid/dfa.rs::test::heuristic_unicode_reverse	missing	-	baseline
-src/meta/regex.rs::test::regression_suffix_literal_count	missing	-	baseline
-src/nfa/thompson/backtrack.rs::test::max_haystack_len_overflow	missing	-	baseline
-src/nfa/thompson/builder.rs::test::state_has_small_size	partial	spec/nfa_thompson_representation_spec.cr	Rust memory-layout assertions have no stable Crystal equivalent; the representation feature is covered through direct graph and helper specs instead.
-src/nfa/thompson/compiler.rs::test::compile_alternation	partial	spec/nfa_thompson_representation_spec.cr	alternation semantics are covered, but Crystal does not port Rust's exact trie-factored alternation layout and state ordering
-src/nfa/thompson/compiler.rs::test::compile_captures_all	partial	spec/nfa_thompson_representation_spec.cr	`WhichCaptures::All` semantics are covered, but Crystal does not preserve Rust's exact capture-state insertion order
-src/nfa/thompson/compiler.rs::test::compile_captures_implicit	ported	spec/nfa_thompson_representation_spec.cr	ported exact implicit-capture Thompson state-shape parity
-src/nfa/thompson/compiler.rs::test::compile_captures_none	ported	spec/nfa_thompson_representation_spec.cr	ported exact capture-free Thompson state-shape parity
-src/nfa/thompson/compiler.rs::test::compile_class_ascii	ported	spec/nfa_thompson_representation_spec.cr	ported exact ASCII class state-shape parity, including ASCII-only Unicode HIR lowering
-src/nfa/thompson/compiler.rs::test::compile_class_unicode	partial	spec/nfa_thompson_representation_spec.cr	Unicode class matching is covered, but Crystal does not port Rust's exact range-trie suffix-sharing layout
-src/nfa/thompson/compiler.rs::test::compile_empty	ported	spec/nfa_thompson_representation_spec.cr	ported exact empty-pattern Thompson state-shape parity
-src/nfa/thompson/compiler.rs::test::compile_group	partial	spec/nfa_thompson_representation_spec.cr	grouped repetition semantics are covered, but Crystal allocates repetition states in a different order
-src/nfa/thompson/compiler.rs::test::compile_literal	ported	spec/nfa_thompson_representation_spec.cr	ported exact literal Thompson state-shape parity
-src/nfa/thompson/compiler.rs::test::compile_many_start_pattern	ported	spec/nfa_thompson_spec.cr	ported exact multi-pattern start-state parity for the public Thompson compiler surface
-src/nfa/thompson/compiler.rs::test::compile_no_reverse_unanchored_prefix_with_end_anchor	partial	spec/nfa_thompson_spec.cr	anchored-prefix behavior is covered, but Crystal's regex-syntax lowering maps `$` to text-anchor HIR kinds instead of Rust's exact line-anchor state shape
-src/nfa/thompson/compiler.rs::test::compile_no_unanchored_prefix_with_start_anchor	partial	spec/nfa_thompson_spec.cr	anchored-prefix behavior is covered, but Crystal's regex-syntax lowering maps `^` to text-anchor HIR kinds instead of Rust's exact line-anchor state shape
-src/nfa/thompson/compiler.rs::test::compile_non_binary_union	partial	spec/nfa_thompson_representation_spec.cr	reverse Unicode class behavior is covered, but Crystal does not port Rust's exact range-trie factored non-binary union layout
-src/nfa/thompson/compiler.rs::test::compile_repetition	partial	spec/nfa_thompson_representation_spec.cr	repetition semantics are covered, but Crystal does not preserve Rust's exact union-first state ordering for optional and plus construction
-src/nfa/thompson/compiler.rs::test::compile_unanchored_prefix	ported	spec/nfa_thompson_spec.cr	ported exact unanchored-prefix state-shape parity for the public Thompson compiler surface
-src/nfa/thompson/compiler.rs::test::compile_yes_reverse_unanchored_prefix_with_start_anchor	partial	spec/nfa_thompson_spec.cr	reverse anchored-prefix behavior is covered, but Crystal's regex-syntax lowering maps `^` to text-anchor HIR kinds instead of Rust's exact line-anchor state shape
-src/nfa/thompson/compiler.rs::test::compile_yes_unanchored_prefix_with_end_anchor	partial	spec/nfa_thompson_spec.cr	end-anchor unanchored-prefix behavior is covered, but Crystal's regex-syntax lowering maps `$` to text-anchor HIR kinds instead of Rust's exact line-anchor state shape
-src/nfa/thompson/compiler.rs::test::empty_class_bytes	ported	spec/nfa_thompson_representation_spec.cr	ported exact empty byte-class Thompson lowering parity
-src/nfa/thompson/compiler.rs::test::empty_class_unicode	ported	spec/nfa_thompson_representation_spec.cr	ported exact empty Unicode-class Thompson lowering parity
-src/nfa/thompson/literal_trie.rs::test::maker	partial	spec/nfa_thompson_representation_spec.cr	literal-trie driven graph behavior is only covered indirectly because Crystal does not expose Rust's internal literal-trie builder
-src/nfa/thompson/literal_trie.rs::test::zap	partial	spec/nfa_thompson_representation_spec.cr	literal-trie driven graph behavior is only covered indirectly because Crystal does not expose Rust's internal literal-trie builder
-src/nfa/thompson/nfa.rs::test::always_match	partial	spec/nfa_thompson_spec.cr	constructor state-shape parity is covered here; Rust's PikeVM search semantics are deferred to the PikeVM feature
-src/nfa/thompson/nfa.rs::test::never_match	partial	spec/nfa_thompson_spec.cr	constructor state-shape parity is covered here; Rust's PikeVM search semantics are deferred to the PikeVM feature
-src/nfa/thompson/nfa.rs::test::state_has_small_size	partial	spec/nfa_thompson_representation_spec.cr	Rust memory-layout assertions have no stable Crystal equivalent; the representation feature is covered through direct graph and helper specs instead
-src/nfa/thompson/range_trie.rs::test::no_splits	partial	spec/nfa_thompson_representation_spec.cr	range-trie driven graph behavior is only covered indirectly because Crystal does not expose Rust's internal range-trie builder
-src/nfa/thompson/range_trie.rs::test::splits	partial	spec/nfa_thompson_representation_spec.cr	range-trie driven graph behavior is only covered indirectly because Crystal does not expose Rust's internal range-trie builder
-src/util/alphabet.rs::test::byte_classes	ported	spec/byte_classes_spec.cr	ported upstream byte-class partitioning parity
-src/util/alphabet.rs::test::elements_empty	ported	spec/byte_classes_spec.cr	ported upstream empty byte-class element parity
-src/util/alphabet.rs::test::elements_singletons	ported	spec/byte_classes_spec.cr	ported upstream singleton byte-class element parity
-src/util/alphabet.rs::test::elements_typical	ported	spec/byte_classes_spec.cr	ported upstream typical byte-class element parity
-src/util/alphabet.rs::test::full_byte_classes	ported	spec/byte_classes_spec.cr	ported upstream full byte-class parity
-src/util/alphabet.rs::test::representatives	ported	spec/byte_classes_spec.cr	ported upstream representative-byte parity
-src/util/interpolate.rs::test::interpolate_string	ported	spec/interpolate_spec.cr	ported upstream interpolation matrix across string and byte replacements
-src/util/lazy.rs::test::oibits	partial	spec/lazy_spec.cr	Rust auto-trait assertions have no direct Crystal equivalent; lazy getter and one-time initialization behavior are covered directly
-src/util/lazy.rs::test::sync_not_send	partial	spec/lazy_spec.cr	Rust compile-fail `Send`/`Sync` boundary checks have no direct Crystal equivalent; lazy getter and one-time initialization behavior are covered directly
-src/util/look.rs::test::look_matches_end_line	ported	spec/look_spec.cr	ported upstream end-line look matcher parity
-src/util/look.rs::test::look_matches_end_text	ported	spec/look_spec.cr	ported upstream end-text look matcher parity
-src/util/look.rs::test::look_matches_start_line	ported	spec/look_spec.cr	ported upstream start-line look matcher parity
-src/util/look.rs::test::look_matches_start_text	ported	spec/look_spec.cr	ported upstream start-text look matcher parity
-src/util/look.rs::test::look_matches_word_ascii	ported	spec/look_spec.cr	ported upstream ASCII word-boundary parity
-src/util/look.rs::test::look_matches_word_ascii_negate	ported	spec/look_spec.cr	ported upstream ASCII non-word-boundary parity
-src/util/look.rs::test::look_matches_word_end_ascii	ported	spec/look_spec.cr	ported upstream ASCII word-end parity
-src/util/look.rs::test::look_matches_word_end_half_ascii	ported	spec/look_spec.cr	ported upstream ASCII word-end-half parity
-src/util/look.rs::test::look_matches_word_end_half_unicode	ported	spec/look_spec.cr	ported upstream Unicode word-end-half parity
-src/util/look.rs::test::look_matches_word_end_unicode	ported	spec/look_spec.cr	ported upstream Unicode word-end parity
-src/util/look.rs::test::look_matches_word_start_ascii	ported	spec/look_spec.cr	ported upstream ASCII word-start parity
-src/util/look.rs::test::look_matches_word_start_half_ascii	ported	spec/look_spec.cr	ported upstream ASCII word-start-half parity
-src/util/look.rs::test::look_matches_word_start_half_unicode	ported	spec/look_spec.cr	ported upstream Unicode word-start-half parity
-src/util/look.rs::test::look_matches_word_start_unicode	ported	spec/look_spec.cr	ported upstream Unicode word-start parity
-src/util/look.rs::test::look_matches_word_unicode	ported	spec/look_spec.cr	ported upstream Unicode word-boundary parity
-src/util/look.rs::test::look_matches_word_unicode_negate	ported	spec/look_spec.cr	ported upstream Unicode non-word-boundary parity
-src/util/look.rs::test::look_set	ported	spec/look_spec.cr	ported upstream look-set parity
-src/util/look.rs::test::look_set_debug	ported	spec/look_spec.cr	ported upstream look-set debug parity
-src/util/look.rs::test::look_set_iter	ported	spec/look_spec.cr	ported upstream look-set iterator parity
-src/util/pool.rs::test::oibits	partial	spec/pool_spec.cr	Rust auto-trait assertions have no direct Crystal equivalent; mutex-backed pool and guard behavior are covered directly
-src/util/pool.rs::test::thread_owner_distinct	ported	spec/pool_spec.cr	ported distinct-outstanding-guard parity so simultaneous gets mutate independent values
-src/util/pool.rs::test::thread_owner_optimization	partial	spec/pool_spec.cr	Rust's std-only owner-thread optimization is an implementation detail and is not present in the Crystal mutex-backed pool
-src/util/pool.rs::test::thread_owner_send_drop	partial	spec/pool_spec.cr	Rust cross-thread guard-drop behavior depends on owner-thread optimization and `Drop`, which have no direct Crystal equivalent
-src/util/pool.rs::test::thread_owner_sync	partial	spec/pool_spec.cr	distinct outstanding guard mutation is covered directly, but Rust's cross-thread guard sharing semantics have no direct Crystal equivalent
-src/util/search.rs::test::incorrect_asref_guard	partial	spec/search_input_spec.cr	Crystal `Input` accepts `String` or `Bytes` directly and does not expose Rust's generic `AsRef<[u8]>` misimplementation surface
-src/util/search.rs::test::match_error_kind_size	partial	spec/match_error_spec.cr	Rust memory-layout assertions have no stable Crystal equivalent; MatchError constructors and accessors are covered directly
-src/util/search.rs::test::match_error_size	partial	spec/match_error_spec.cr	Rust memory-layout assertions have no stable Crystal equivalent; MatchError constructors and accessors are covered directly
-src/util/start.rs::test::start_fwd	ported	spec/start_config_spec.cr	ported forward start-classification parity from input context
-src/util/start.rs::test::start_fwd_done_range	ported	spec/start_config_spec.cr	ported forward done-range start classification parity
-src/util/start.rs::test::start_rev	ported	spec/start_config_spec.cr	ported reverse start-classification parity from input context
-src/util/start.rs::test::start_rev_done_range	ported	spec/start_config_spec.cr	ported reverse done-range start classification parity
-src/util/wire.rs::test::bad_label_almost_too_long	ported	spec/wire_spec.cr	ported upstream max valid label case
-src/util/wire.rs::test::bad_label_interior_nul	ported	spec/wire_spec.cr	ported upstream interior-NUL label rejection
-src/util/wire.rs::test::bad_label_too_long	ported	spec/wire_spec.cr	ported upstream oversized label rejection
-src/util/wire.rs::test::labels	ported	spec/wire_spec.cr	ported upstream label round-trip and padding case
-src/util/wire.rs::test::padding	ported	spec/wire_spec.cr	ported upstream padding length table
-tests/dfa/api.rs::test::quit_fwd	ported	spec/dfa_api_regression_spec.cr	ported forward quit-byte parity for standard and overlapping DFA searches
-tests/dfa/api.rs::test::quit_panics	ported	spec/dfa_api_regression_spec.cr	ported builder panic parity for conflicting non-ASCII quit-byte configuration with Unicode word boundaries
-tests/dfa/api.rs::test::quit_rev	ported	spec/dfa_api_regression_spec.cr	ported reverse quit-byte parity
-tests/dfa/api.rs::test::unicode_word_implicitly_works	ported	spec/dfa_api_regression_spec.cr	ported implicit Unicode word-boundary enablement parity when all non-ASCII bytes are quit bytes
-tests/dfa/api.rs::test::universal_start_search	ported	spec/dfa_api_regression_spec.cr	ported manual universal-start traversal parity through the abstract DFA API
-tests/dfa/onepass/regression.rs::test::too_many_slots_normal_pattern	missing	-	baseline
-tests/dfa/onepass/regression.rs::test::zero_repetition_capture_group	missing	-	baseline
-tests/dfa/onepass/suite.rs::test::default	missing	-	baseline
-tests/dfa/onepass/suite.rs::test::no_byte_classes	missing	-	baseline
-tests/dfa/onepass/suite.rs::test::starts_for_each_pattern	missing	-	baseline
-tests/dfa/regression.rs::test::minimize_sets_correct_match_states	missing	-	baseline
-tests/dfa/suite.rs::test::minimized_default	missing	-	baseline
-tests/dfa/suite.rs::test::minimized_no_byte_class	missing	-	baseline
-tests/dfa/suite.rs::test::serialization_unminimized_default	missing	-	baseline
-tests/dfa/suite.rs::test::sparse_serialization_unminimized_default	missing	-	baseline
-tests/dfa/suite.rs::test::sparse_unminimized_default	missing	-	baseline
-tests/dfa/suite.rs::test::sparse_unminimized_prefilter	missing	-	baseline
-tests/dfa/suite.rs::test::unminimized_default	missing	-	baseline
-tests/dfa/suite.rs::test::unminimized_nfa_shrink	missing	-	baseline
-tests/dfa/suite.rs::test::unminimized_no_byte_class	missing	-	baseline
-tests/dfa/suite.rs::test::unminimized_prefilter	missing	-	baseline
-tests/dfa/suite.rs::test::unminimized_specialized_start_states	missing	-	baseline
-tests/fuzz/dense.rs::test::invalid_byte_classes	missing	-	baseline
-tests/fuzz/dense.rs::test::invalid_byte_classes_min	missing	-	baseline
-tests/fuzz/sparse.rs::test::eoi_transition_to_quit_state	missing	-	baseline
-tests/fuzz/sparse.rs::test::invalid_accelerators	missing	-	baseline
-tests/fuzz/sparse.rs::test::invalid_special_state	missing	-	baseline
-tests/fuzz/sparse.rs::test::match_state_inconsistency	missing	-	baseline
-tests/fuzz/sparse.rs::test::start_state_has_valid_transitions	missing	-	baseline
-tests/fuzz/sparse.rs::test::start_state_is_not_match_state	missing	-	baseline
-tests/fuzz/sparse.rs::test::transition_to_invalid_but_valid_state	missing	-	baseline
-tests/gen/dense/mod.rs::test::multi_pattern_v2	missing	-	baseline
-tests/gen/sparse/mod.rs::test::multi_pattern_v2	missing	-	baseline
-tests/hybrid/api.rs::test::quit_fwd	missing	-	baseline
-tests/hybrid/api.rs::test::quit_panics	missing	-	baseline
-tests/hybrid/api.rs::test::quit_rev	missing	-	baseline
-tests/hybrid/api.rs::test::too_many_cache_resets_cause_quit	missing	-	baseline
-tests/hybrid/api.rs::test::unicode_word_implicitly_works	missing	-	baseline
-tests/hybrid/suite.rs::test::default	missing	-	baseline
-tests/hybrid/suite.rs::test::min_cache_capacity	missing	-	baseline
-tests/hybrid/suite.rs::test::nfa_shrink	missing	-	baseline
-tests/hybrid/suite.rs::test::no_byte_classes	missing	-	baseline
-tests/hybrid/suite.rs::test::no_cache_clearing	missing	-	baseline
-tests/hybrid/suite.rs::test::prefilter	missing	-	baseline
-tests/hybrid/suite.rs::test::specialize_start_states	missing	-	baseline
-tests/hybrid/suite.rs::test::starts_for_each_pattern	missing	-	baseline
-tests/meta/suite.rs::test::default	missing	-	baseline
-tests/meta/suite.rs::test::no_dfa	missing	-	baseline
-tests/meta/suite.rs::test::no_dfa_hybrid	missing	-	baseline
-tests/meta/suite.rs::test::no_dfa_hybrid_onepass	missing	-	baseline
-tests/meta/suite.rs::test::no_dfa_hybrid_onepass_backtrack	missing	-	baseline
-tests/nfa/thompson/backtrack/regression.rs::test::too_many_slots_normal_pattern	missing	-	baseline
-tests/nfa/thompson/backtrack/suite.rs::test::default	missing	-	baseline
-tests/nfa/thompson/backtrack/suite.rs::test::min_visited_capacity	missing	-	baseline
-tests/nfa/thompson/backtrack/suite.rs::test::prefilter	missing	-	baseline
-tests/nfa/thompson/pikevm/regression.rs::test::too_many_slots_normal_pattern	ported	spec/pikevm_spec.cr	ported oversized PikeVM slot-buffer regression coverage with NonMaxUsize slots
-tests/nfa/thompson/pikevm/suite.rs::test::default	ported	spec/pikevm_spec.cr	ported focused PikeVM constructor, search, capture, iterator, UTF-8, and Unicode word-boundary coverage instead of the upstream regex-test harness
-tests/nfa/thompson/pikevm/suite.rs::test::prefilter	ported	spec/pikevm_spec.cr	ported PikeVM prefilter configuration and search coverage
+src/dfa/automaton.rs::test::object_safe	intentional_divergence	src/regex/automata/automaton.cr:Automaton	Rust trait-object safety has no Crystal counterpart; Automaton is an abstract class with direct dynamic dispatch.
+src/dfa/dense.rs::test::errors_with_unicode_word_boundary	ported	spec/dfa_dense_spec.cr	Covers rejection of Unicode word boundaries without heuristic support and the ASCII boundary alternative.
+src/dfa/dense.rs::test::heuristic_unicode_reverse	ported	spec/dfa_dense_spec.cr	Ports both upstream reverse ranges and their exact UTF-8 quit-byte offsets.
+src/dfa/dense.rs::test::regression_start_state_not_match	ported	spec/dfa_dense_spec.cr	Corrupts every serialized start-table entry to a match state and asserts typed rejection.
+src/dfa/dense.rs::test::regression_validation_order	ported	spec/dfa_native_wire_spec.cr	Ports an independently empty native match table and checks typed rejection before transition validation.
+src/dfa/dense.rs::test::roundtrip_always_match	ported	spec/dfa_dense_spec.cr	Ports native-endian round-trip and the empty half match at offset zero.
+src/dfa/dense.rs::test::roundtrip_never_match	ported	spec/dfa_dense_spec.cr	Ports native-endian round-trip and no-match search behavior.
+src/dfa/onepass.rs::test::assertions	ported	spec/dfa_onepass_spec.cr	Ports supported assertion-pattern admission.
+src/dfa/onepass.rs::test::fail_conflicting_transition	ported	spec/dfa_onepass_spec.cr	Ports conflicting-transition rejection.
+src/dfa/onepass.rs::test::fail_multiple_epsilon	ported	spec/dfa_onepass_spec.cr	Ports multiple-epsilon rejection.
+src/dfa/onepass.rs::test::fail_multiple_match	ported	spec/dfa_onepass_spec.cr	Ports multiple-match epsilon rejection.
+src/dfa/onepass.rs::test::is_not_one_pass	ported	spec/dfa_onepass_spec.cr;spec/onepass_contract_spec.cr;spec/support/onepass_oracle.rs	Ports all pinned rejection cases; Rust explicitly confirms binary-dot UTF-8 rejection is an NFA error, replacing the former hard-coded Crystal NotOnePass classification.
+src/dfa/onepass.rs::test::is_not_one_pass_bigger	ported	spec/dfa_onepass_spec.cr	Ports the Unicode \w*\s ambiguity rejection through the native compiled one-pass table.
+src/dfa/onepass.rs::test::is_one_pass	ported	spec/dfa_onepass_spec.cr	Ports the complete upstream acceptance matrix, including Unicode \w and binary dot-star construction.
+src/dfa/onepass.rs::test::max_slots	ported	spec/dfa_onepass_spec.cr	Ports capture-slot limit assertion.
+src/dfa/sparse.rs::test::heuristic_unicode_forward	ported	spec/dfa_sparse_spec.cr	Ports both pinned ranges and exact UTF-8 quit-byte offsets through actual packed sparse forward/reverse search.
+src/dfa/sparse.rs::test::heuristic_unicode_reverse	ported	spec/dfa_sparse_spec.cr	Ports both pinned ranges and exact UTF-8 quit-byte offsets through actual packed sparse forward/reverse search.
+src/dfa/sparse.rs::test::regression_start_state_not_match	ported	spec/dfa_sparse_native_spec.cr	Rewrites all native packed start IDs to a match offset and checks typed rejection, matching the pinned regression.
+src/hybrid/dfa.rs::test::heuristic_unicode_reverse	ported	spec/hybrid_spec.cr	Ports both reverse contextual ranges, exact UTF-8 quit bytes and offsets, and cache reuse.
+src/meta/regex.rs::test::regression_suffix_literal_count	ported	spec/meta_regex_spec.cr	Ports the exact [a-zA-Z]+ing/tingling iterator-count regression.
+src/meta/reverse_suffix.rs::test::capture	ported	spec/meta_reverse_inner_dispatch_spec.cr	Direct pinned selector or private HIR proof assertions use test-only admission/HIR probes.
+src/meta/reverse_suffix.rs::test::concat	ported	spec/meta_reverse_inner_dispatch_spec.cr	Direct pinned selector or private HIR proof assertions use test-only admission/HIR probes.
+src/meta/reverse_suffix.rs::test::literal	ported	spec/meta_reverse_inner_dispatch_spec.cr	Direct pinned selector or private HIR proof assertions use test-only admission/HIR probes.
+src/meta/reverse_suffix.rs::test::mismatch	ported	spec/meta_reverse_inner_dispatch_spec.cr	Direct pinned selector or private HIR proof assertions use test-only admission/HIR probes.
+src/meta/reverse_suffix.rs::test::repetition	ported	spec/meta_reverse_inner_dispatch_spec.cr	Direct pinned selector or private HIR proof assertions use test-only admission/HIR probes.
+src/meta/reverse_suffix.rs::test::repetition_must_be_required	ported	spec/meta_reverse_inner_dispatch_spec.cr	Direct pinned selector or private HIR proof assertions use test-only admission/HIR probes.
+src/meta/reverse_suffix.rs::test::reverse_suffix_accepts_fixed_length_prefix	ported	spec/meta_reverse_inner_dispatch_spec.cr	Direct pinned selector or private HIR proof assertions use test-only admission/HIR probes.
+src/meta/reverse_suffix.rs::test::reverse_suffix_accepts_prefix_without_internal_suffix	ported	spec/meta_reverse_inner_dispatch_spec.cr	Direct pinned selector or private HIR proof assertions use test-only admission/HIR probes.
+src/meta/reverse_suffix.rs::test::reverse_suffix_fixed_length_prefix_is_conservative	ported	spec/meta_reverse_inner_dispatch_spec.cr	Direct pinned selector or private HIR proof assertions use test-only admission/HIR probes.
+src/meta/reverse_suffix.rs::test::suffix_must_be_adjacent	ported	spec/meta_reverse_inner_dispatch_spec.cr	Pinned assert_strip(foo(xbar), foobar, None) is tested directly through the private HIR rewrite probe.
+src/meta/strategy.rs::test::core_selected_when_auto_prefilter_is_disabled	ported	spec/meta_regex_spec.cr	Ports the exact \\w+Holmes configuration with auto prefilters disabled and verifies core-only execution.
+src/meta/strategy.rs::test::core_selected_when_no_special_strategy_applies	ported	spec/meta_regex_spec.cr	Ports the [a-z]+ core-strategy fallback and its unaccelerated behavior.
+src/meta/strategy.rs::test::core_selected_when_reverse_engines_are_disabled	ported	spec/meta_regex_spec.cr	Ports the exact \\w+Holmes configuration with both reverse engines disabled and verifies core-only execution.
+src/meta/strategy.rs::test::pre_from_alternation_literals_accepts_large_alternation	ported	spec/meta_strategy_selection_spec.cr;spec/meta_pre_ownership_spec.cr	Exact pinned selector guards and large-alternation threshold verified via test-only literal-bypass probes; standalone private diagnostic names are unnecessary.
+src/meta/strategy.rs::test::pre_from_alternation_literals_rejects_captures	ported	spec/meta_strategy_selection_spec.cr;spec/meta_pre_ownership_spec.cr	Exact pinned selector guards and large-alternation threshold verified via test-only literal-bypass probes; standalone private diagnostic names are unnecessary.
+src/meta/strategy.rs::test::pre_from_alternation_literals_rejects_look_around	ported	spec/meta_strategy_selection_spec.cr;spec/meta_pre_ownership_spec.cr	Exact pinned selector guards and large-alternation threshold verified via test-only literal-bypass probes; standalone private diagnostic names are unnecessary.
+src/meta/strategy.rs::test::pre_from_alternation_literals_rejects_multiple_patterns	ported	spec/meta_strategy_selection_spec.cr;spec/meta_pre_ownership_spec.cr	Exact pinned selector guards and large-alternation threshold verified via test-only literal-bypass probes; standalone private diagnostic names are unnecessary.
+src/meta/strategy.rs::test::pre_from_alternation_literals_rejects_non_leftmost_first	ported	spec/meta_strategy_selection_spec.cr;spec/meta_pre_ownership_spec.cr	Exact pinned selector guards and large-alternation threshold verified via test-only literal-bypass probes; standalone private diagnostic names are unnecessary.
+src/meta/strategy.rs::test::pre_from_alternation_literals_rejects_small_alternation	ported	spec/meta_strategy_selection_spec.cr;spec/meta_pre_ownership_spec.cr	Exact pinned selector guards and large-alternation threshold verified via test-only literal-bypass probes; standalone private diagnostic names are unnecessary.
+src/meta/strategy.rs::test::pre_from_prefixes_accepts_exact_literal	ported	spec/meta_strategy_selection_spec.cr;spec/meta_pre_ownership_spec.cr	Exact pinned selector guards and large-alternation threshold verified via test-only literal-bypass probes; standalone private diagnostic names are unnecessary.
+src/meta/strategy.rs::test::pre_from_prefixes_rejects_captures	ported	spec/meta_strategy_selection_spec.cr;spec/meta_pre_ownership_spec.cr	Exact pinned selector guards and large-alternation threshold verified via test-only literal-bypass probes; standalone private diagnostic names are unnecessary.
+src/meta/strategy.rs::test::pre_from_prefixes_rejects_empty_literal	ported	spec/meta_strategy_selection_spec.cr;spec/meta_pre_ownership_spec.cr	Exact pinned selector guards and large-alternation threshold verified via test-only literal-bypass probes; standalone private diagnostic names are unnecessary.
+src/meta/strategy.rs::test::pre_from_prefixes_rejects_inexact_literal	ported	spec/meta_strategy_selection_spec.cr;spec/meta_pre_ownership_spec.cr	Exact pinned selector guards and large-alternation threshold verified via test-only literal-bypass probes; standalone private diagnostic names are unnecessary.
+src/meta/strategy.rs::test::pre_from_prefixes_rejects_look_around	ported	spec/meta_strategy_selection_spec.cr;spec/meta_pre_ownership_spec.cr	Exact pinned selector guards and large-alternation threshold verified via test-only literal-bypass probes; standalone private diagnostic names are unnecessary.
+src/meta/strategy.rs::test::pre_from_prefixes_rejects_multiple_patterns	ported	spec/meta_strategy_selection_spec.cr;spec/meta_pre_ownership_spec.cr	Exact pinned selector guards and large-alternation threshold verified via test-only literal-bypass probes; standalone private diagnostic names are unnecessary.
+src/meta/strategy.rs::test::pre_from_prefixes_rejects_non_leftmost_first	ported	spec/meta_strategy_selection_spec.cr;spec/meta_pre_ownership_spec.cr	Exact pinned selector guards and large-alternation threshold verified via test-only literal-bypass probes; standalone private diagnostic names are unnecessary.
+src/meta/strategy.rs::test::rebar_benchmarks	intentional_divergence	vendor/regex/regex-automata/src/meta/strategy.rs	Rust benchmark registration is not a correctness test and has no Crystal benchmark harness counterpart.
+src/meta/strategy.rs::test::reverse_anchored_accepts_end_anchored	ported	spec/meta_regex_spec.cr	Ports reverse-anchored admission for the upstream \\w+Holmes$ pattern.
+src/meta/strategy.rs::test::reverse_anchored_accepts_hybrid_without_full_dfa	ported	spec/meta_regex_spec.cr	Ports hybrid reverse-anchored fallback when dense DFA construction is disabled.
+src/meta/strategy.rs::test::reverse_anchored_accepts_multiple_end_anchored_patterns	ported	spec/meta_regex_spec.cr	Ports reverse-anchored admission for the upstream Holmes/Watson multi-pattern set.
+src/meta/strategy.rs::test::reverse_anchored_rejects_start_and_end_anchored	ported	spec/meta_regex_spec.cr	Ports rejection of reverse-anchored acceleration for ^\\w+Holmes$.
+src/meta/strategy.rs::test::reverse_anchored_rejects_without_reverse_engine	ported	spec/meta_regex_spec.cr	Ports rejection when both dense and hybrid reverse engines are disabled.
+src/meta/strategy.rs::test::reverse_inner_accepts_disjoint_class_separator	ported	spec/meta_reverse_inner_dispatch_spec.cr	Direct pinned selector or private HIR proof assertions use test-only admission/HIR probes.
+src/meta/strategy.rs::test::reverse_inner_accepts_disjoint_inner_literal	ported	spec/meta_reverse_inner_dispatch_spec.cr	Direct pinned selector or private HIR proof assertions use test-only admission/HIR probes.
+src/meta/strategy.rs::test::reverse_inner_accepts_fixed_length_prefix	ported	spec/meta_reverse_inner_dispatch_spec.cr	Direct pinned selector or private HIR proof assertions use test-only admission/HIR probes.
+src/meta/strategy.rs::test::reverse_inner_accepts_leading_disjoint_class_separator	ported	spec/meta_reverse_inner_dispatch_spec.cr	Direct pinned selector or private HIR proof assertions use test-only admission/HIR probes.
+src/meta/strategy.rs::test::reverse_inner_leading_class_separator_is_conservative	ported	spec/meta_reverse_inner_dispatch_spec.cr	Direct pinned selector or private HIR proof assertions use test-only admission/HIR probes.
+src/meta/strategy.rs::test::reverse_inner_rejects_anchored_start	ported	spec/meta_reverse_inner_dispatch_spec.cr	Direct pinned selector or private HIR proof assertions use test-only admission/HIR probes.
+src/meta/strategy.rs::test::reverse_inner_rejects_auto_prefilter_disabled	ported	spec/meta_reverse_inner_dispatch_spec.cr	Direct pinned selector or private HIR proof assertions use test-only admission/HIR probes.
+src/meta/strategy.rs::test::reverse_inner_rejects_existing_fast_prefilter	ported	spec/meta_reverse_inner_dispatch_spec.cr	Direct pinned selector or private HIR proof assertions use test-only admission/HIR probes.
+src/meta/strategy.rs::test::reverse_inner_rejects_internal_separator_alignment	ported	spec/meta_reverse_inner_dispatch_spec.cr	Direct pinned selector or private HIR proof assertions use test-only admission/HIR probes.
+src/meta/strategy.rs::test::reverse_inner_rejects_literal_crossing_prefix_boundary	ported	spec/meta_reverse_inner_dispatch_spec.cr	Direct pinned selector or private HIR proof assertions use test-only admission/HIR probes.
+src/meta/strategy.rs::test::reverse_inner_rejects_multiple_patterns	ported	spec/meta_reverse_inner_dispatch_spec.cr	Direct pinned selector or private HIR proof assertions use test-only admission/HIR probes.
+src/meta/strategy.rs::test::reverse_inner_rejects_no_top_level_concat	ported	spec/meta_reverse_inner_dispatch_spec.cr	Direct pinned selector or private HIR proof assertions use test-only admission/HIR probes.
+src/meta/strategy.rs::test::reverse_inner_rejects_non_leftmost_first	ported	spec/meta_reverse_inner_dispatch_spec.cr	Direct pinned selector or private HIR proof assertions use test-only admission/HIR probes.
+src/meta/strategy.rs::test::reverse_inner_rejects_unsafe_overlap	ported	spec/meta_reverse_inner_dispatch_spec.cr	Direct pinned selector or private HIR proof assertions use test-only admission/HIR probes.
+src/meta/strategy.rs::test::reverse_inner_rejects_without_reverse_engine	ported	spec/meta_reverse_inner_dispatch_spec.cr	Direct pinned selector or private HIR proof assertions use test-only admission/HIR probes.
+src/meta/strategy.rs::test::reverse_suffix_accepts_disjoint_class_separator	ported	spec/meta_reverse_suffix_dispatch_spec.cr	Pinned strategy selector covered by a test-only ReverseSuffix admission probe.
+src/meta/strategy.rs::test::reverse_suffix_accepts_fixed_length_prefix	ported	spec/meta_reverse_suffix_dispatch_spec.cr	Pinned strategy selector covered by a test-only ReverseSuffix admission probe.
+src/meta/strategy.rs::test::reverse_suffix_accepts_prefix_without_internal_suffix	ported	spec/meta_reverse_suffix_dispatch_spec.cr	Pinned strategy selector covered by a test-only ReverseSuffix admission probe.
+src/meta/strategy.rs::test::reverse_suffix_class_separator_is_conservative	ported	spec/meta_reverse_suffix_dispatch_spec.cr	Pinned strategy selector covered by a test-only ReverseSuffix admission probe.
+src/meta/strategy.rs::test::reverse_suffix_rejects_anchored_start	ported	spec/meta_reverse_suffix_dispatch_spec.cr	Pinned strategy selector covered by a test-only ReverseSuffix admission probe.
+src/meta/strategy.rs::test::reverse_suffix_rejects_auto_prefilter_disabled	ported	spec/meta_reverse_suffix_dispatch_spec.cr	Pinned strategy selector covered by a test-only ReverseSuffix admission probe.
+src/meta/strategy.rs::test::reverse_suffix_rejects_disjoint_trailing_component	ported	spec/meta_reverse_suffix_dispatch_spec.cr	Pinned strategy selector covered by a test-only ReverseSuffix admission probe.
+src/meta/strategy.rs::test::reverse_suffix_rejects_existing_fast_prefilter	ported	spec/meta_reverse_suffix_dispatch_spec.cr	Pinned strategy selector covered by a test-only ReverseSuffix admission probe.
+src/meta/strategy.rs::test::reverse_suffix_rejects_fully_absorbed_literal	ported	spec/meta_reverse_suffix_dispatch_spec.cr	Pinned strategy selector covered by a test-only ReverseSuffix admission probe.
+src/meta/strategy.rs::test::reverse_suffix_rejects_internal_candidate_before_absorber	ported	spec/meta_reverse_suffix_dispatch_spec.cr	Pinned strategy selector covered by a test-only ReverseSuffix admission probe.
+src/meta/strategy.rs::test::reverse_suffix_rejects_internal_suffix_with_word_boundary	ported	spec/meta_reverse_suffix_dispatch_spec.cr	Pinned strategy selector covered by a test-only ReverseSuffix admission probe.
+src/meta/strategy.rs::test::reverse_suffix_rejects_multiple_patterns_when_first_looks_safe	ported	spec/meta_reverse_suffix_dispatch_spec.cr	Pinned strategy selector covered by a test-only ReverseSuffix admission probe.
+src/meta/strategy.rs::test::reverse_suffix_rejects_multiple_patterns_with_common_suffix	ported	spec/meta_reverse_suffix_dispatch_spec.cr	Pinned strategy selector covered by a test-only ReverseSuffix admission probe.
+src/meta/strategy.rs::test::reverse_suffix_rejects_multiple_patterns_without_common_suffix	ported	spec/meta_reverse_suffix_dispatch_spec.cr	Pinned strategy selector covered by a test-only ReverseSuffix admission probe.
+src/meta/strategy.rs::test::reverse_suffix_rejects_no_literal_suffix	ported	spec/meta_reverse_suffix_dispatch_spec.cr	Pinned strategy selector covered by a test-only ReverseSuffix admission probe.
+src/meta/strategy.rs::test::reverse_suffix_rejects_non_leftmost_first	ported	spec/meta_reverse_suffix_dispatch_spec.cr	Pinned strategy selector covered by a test-only ReverseSuffix admission probe.
+src/meta/strategy.rs::test::reverse_suffix_rejects_safe_nfa_overlap	ported	spec/meta_reverse_suffix_dispatch_spec.cr	Pinned strategy selector covered by a test-only ReverseSuffix admission probe.
+src/meta/strategy.rs::test::reverse_suffix_rejects_unsafe_overlap	ported	spec/meta_reverse_suffix_dispatch_spec.cr	Pinned strategy selector covered by a test-only ReverseSuffix admission probe.
+src/meta/strategy.rs::test::reverse_suffix_rejects_variable_length_prefix	ported	spec/meta_reverse_suffix_dispatch_spec.cr	Pinned strategy selector covered by a test-only ReverseSuffix admission probe.
+src/meta/strategy.rs::test::reverse_suffix_rejects_without_reverse_engine	ported	spec/meta_reverse_suffix_dispatch_spec.cr	Pinned strategy selector covered by a test-only ReverseSuffix admission probe.
+src/nfa/thompson/backtrack.rs::test::max_haystack_len_overflow	ported	spec/backtrack_spec.cr	Ports the undersized visited-capacity regression with max haystack length zero.
+src/nfa/thompson/builder.rs::test::state_has_small_size	intentional_divergence	src/regex/automata/nfa.cr	Rust-only State struct size assertion; Crystal object layout is not a behavioral contract.
+src/nfa/thompson/compiler.rs::test::compile_alternation	ported	spec/nfa_thompson_spec.cr;spec/nfa_thompson_representation_spec.cr;spec/thompson_syntax_adoption_spec.cr;plans/inventory/rust_thompson_compiler_assertion_audit.tsv	Exact Rust state graphs are covered for a|b, ab|cd, |b and a|, including singleton class folding and literal-trie end placement. Dependency-adoption audit: all 19 native compiler tests execute unchanged; 31 original graphs and all 38 assertion locations are represented by exact state/order/edge/start/capture/group metadata snapshots, with 157 additional native characterizations.
+src/nfa/thompson/compiler.rs::test::compile_captures_all	ported	spec/nfa_thompson_spec.cr;spec/thompson_syntax_adoption_spec.cr;plans/inventory/rust_thompson_compiler_assertion_audit.tsv	Ports all-captures policy. Dependency-adoption audit: all 19 native compiler tests execute unchanged; 31 original graphs and all 38 assertion locations are represented by exact state/order/edge/start/capture/group metadata snapshots, with 157 additional native characterizations.
+src/nfa/thompson/compiler.rs::test::compile_captures_implicit	ported	spec/nfa_thompson_spec.cr;spec/nfa_thompson_representation_spec.cr;spec/thompson_syntax_adoption_spec.cr;plans/inventory/rust_thompson_compiler_assertion_audit.tsv	Ports implicit-captures policy. Dependency-adoption audit: all 19 native compiler tests execute unchanged; 31 original graphs and all 38 assertion locations are represented by exact state/order/edge/start/capture/group metadata snapshots, with 157 additional native characterizations.
+src/nfa/thompson/compiler.rs::test::compile_captures_none	ported	spec/nfa_thompson_spec.cr;spec/nfa_thompson_representation_spec.cr;spec/thompson_syntax_adoption_spec.cr;plans/inventory/rust_thompson_compiler_assertion_audit.tsv	Ports no-captures policy. Dependency-adoption audit: all 19 native compiler tests execute unchanged; 31 original graphs and all 38 assertion locations are represented by exact state/order/edge/start/capture/group metadata snapshots, with 157 additional native characterizations.
+src/nfa/thompson/compiler.rs::test::compile_class_ascii	ported	spec/nfa_thompson_representation_spec.cr;spec/thompson_syntax_adoption_spec.cr;plans/inventory/rust_thompson_compiler_assertion_audit.tsv	Ports ASCII class lowering. Dependency-adoption audit: all 19 native compiler tests execute unchanged; 31 original graphs and all 38 assertion locations are represented by exact state/order/edge/start/capture/group metadata snapshots, with 157 additional native characterizations.
+src/nfa/thompson/compiler.rs::test::compile_class_unicode	ported	spec/nfa_thompson_representation_spec.cr;spec/thompson_syntax_adoption_spec.cr;plans/inventory/rust_thompson_compiler_assertion_audit.tsv	Ports Unicode class lowering. Dependency-adoption audit: all 19 native compiler tests execute unchanged; 31 original graphs and all 38 assertion locations are represented by exact state/order/edge/start/capture/group metadata snapshots, with 157 additional native characterizations.
+src/nfa/thompson/compiler.rs::test::compile_empty	ported	spec/nfa_thompson_representation_spec.cr;spec/thompson_syntax_adoption_spec.cr;plans/inventory/rust_thompson_compiler_assertion_audit.tsv	Ports empty expression lowering. Dependency-adoption audit: all 19 native compiler tests execute unchanged; 31 original graphs and all 38 assertion locations are represented by exact state/order/edge/start/capture/group metadata snapshots, with 157 additional native characterizations.
+src/nfa/thompson/compiler.rs::test::compile_group	ported	spec/nfa_thompson_spec.cr;spec/thompson_syntax_adoption_spec.cr;plans/inventory/rust_thompson_compiler_assertion_audit.tsv	Ports group compilation. Dependency-adoption audit: all 19 native compiler tests execute unchanged; 31 original graphs and all 38 assertion locations are represented by exact state/order/edge/start/capture/group metadata snapshots, with 157 additional native characterizations.
+src/nfa/thompson/compiler.rs::test::compile_literal	ported	spec/nfa_thompson_representation_spec.cr;spec/thompson_syntax_adoption_spec.cr;plans/inventory/rust_thompson_compiler_assertion_audit.tsv	Ports literal lowering. Dependency-adoption audit: all 19 native compiler tests execute unchanged; 31 original graphs and all 38 assertion locations are represented by exact state/order/edge/start/capture/group metadata snapshots, with 157 additional native characterizations.
+src/nfa/thompson/compiler.rs::test::compile_many_start_pattern	ported	spec/nfa_thompson_spec.cr;spec/thompson_syntax_adoption_spec.cr;plans/inventory/rust_thompson_compiler_assertion_audit.tsv	Ports multi-pattern starts. Dependency-adoption audit: all 19 native compiler tests execute unchanged; 31 original graphs and all 38 assertion locations are represented by exact state/order/edge/start/capture/group metadata snapshots, with 157 additional native characterizations.
+src/nfa/thompson/compiler.rs::test::compile_no_reverse_unanchored_prefix_with_end_anchor	ported	spec/nfa_thompson_spec.cr;spec/thompson_syntax_adoption_spec.cr;plans/inventory/rust_thompson_compiler_assertion_audit.tsv	Ports reverse end-anchor prefix configuration. Dependency-adoption audit: all 19 native compiler tests execute unchanged; 31 original graphs and all 38 assertion locations are represented by exact state/order/edge/start/capture/group metadata snapshots, with 157 additional native characterizations.
+src/nfa/thompson/compiler.rs::test::compile_no_unanchored_prefix_with_start_anchor	ported	spec/nfa_thompson_spec.cr;spec/thompson_syntax_adoption_spec.cr;plans/inventory/rust_thompson_compiler_assertion_audit.tsv	Ports start-anchor prefix configuration. Dependency-adoption audit: all 19 native compiler tests execute unchanged; 31 original graphs and all 38 assertion locations are represented by exact state/order/edge/start/capture/group metadata snapshots, with 157 additional native characterizations.
+src/nfa/thompson/compiler.rs::test::compile_non_binary_union	ported	spec/nfa_thompson_spec.cr;spec/thompson_syntax_adoption_spec.cr;plans/inventory/rust_thompson_compiler_assertion_audit.tsv	Ports non-binary union compilation. Dependency-adoption audit: all 19 native compiler tests execute unchanged; 31 original graphs and all 38 assertion locations are represented by exact state/order/edge/start/capture/group metadata snapshots, with 157 additional native characterizations.
+src/nfa/thompson/compiler.rs::test::compile_repetition	ported	spec/nfa_thompson_spec.cr;spec/thompson_syntax_adoption_spec.cr;plans/inventory/rust_thompson_compiler_assertion_audit.tsv	Ports repetition compilation. Dependency-adoption audit: all 19 native compiler tests execute unchanged; 31 original graphs and all 38 assertion locations are represented by exact state/order/edge/start/capture/group metadata snapshots, with 157 additional native characterizations.
+src/nfa/thompson/compiler.rs::test::compile_unanchored_prefix	ported	spec/nfa_thompson_spec.cr;spec/thompson_syntax_adoption_spec.cr;plans/inventory/rust_thompson_compiler_assertion_audit.tsv	Ports unanchored prefix compilation. Dependency-adoption audit: all 19 native compiler tests execute unchanged; 31 original graphs and all 38 assertion locations are represented by exact state/order/edge/start/capture/group metadata snapshots, with 157 additional native characterizations.
+src/nfa/thompson/compiler.rs::test::compile_yes_reverse_unanchored_prefix_with_start_anchor	ported	spec/nfa_thompson_spec.cr;spec/thompson_syntax_adoption_spec.cr;plans/inventory/rust_thompson_compiler_assertion_audit.tsv	Ports reverse start-anchor prefix configuration. Dependency-adoption audit: all 19 native compiler tests execute unchanged; 31 original graphs and all 38 assertion locations are represented by exact state/order/edge/start/capture/group metadata snapshots, with 157 additional native characterizations.
+src/nfa/thompson/compiler.rs::test::compile_yes_unanchored_prefix_with_end_anchor	ported	spec/nfa_thompson_spec.cr;spec/thompson_syntax_adoption_spec.cr;plans/inventory/rust_thompson_compiler_assertion_audit.tsv	Ports end-anchor prefix configuration. Dependency-adoption audit: all 19 native compiler tests execute unchanged; 31 original graphs and all 38 assertion locations are represented by exact state/order/edge/start/capture/group metadata snapshots, with 157 additional native characterizations.
+src/nfa/thompson/compiler.rs::test::empty_class_bytes	ported	spec/nfa_thompson_representation_spec.cr;spec/thompson_syntax_adoption_spec.cr;plans/inventory/rust_thompson_compiler_assertion_audit.tsv	Ports empty byte class lowering. Dependency-adoption audit: all 19 native compiler tests execute unchanged; 31 original graphs and all 38 assertion locations are represented by exact state/order/edge/start/capture/group metadata snapshots, with 157 additional native characterizations.
+src/nfa/thompson/compiler.rs::test::empty_class_unicode	ported	spec/nfa_thompson_representation_spec.cr;spec/thompson_syntax_adoption_spec.cr;plans/inventory/rust_thompson_compiler_assertion_audit.tsv	Ports empty Unicode class lowering. Dependency-adoption audit: all 19 native compiler tests execute unchanged; 31 original graphs and all 38 assertion locations are represented by exact state/order/edge/start/capture/group metadata snapshots, with 157 additional native characterizations.
+src/nfa/thompson/literal_trie.rs::test::maker	ported	spec/nfa_literal_trie_vendor_spec.cr	Direct pinned make/maple/maker insertion order is checked through compiled NFA leftmost-first spans; Rust's compile_to_hir is test-only and is not needed at runtime.
+src/nfa/thompson/literal_trie.rs::test::zap	ported	spec/nfa_literal_trie_vendor_spec.cr	Direct pinned zapper/z/zap insertion order is checked through compiled NFA leftmost-first spans; Rust's compile_to_hir is test-only and is not needed at runtime.
+src/nfa/thompson/nfa.rs::test::always_match	ported	spec/nfa_thompson_spec.cr	Ports always-match NFA construction and searching.
+src/nfa/thompson/nfa.rs::test::never_match	ported	spec/nfa_thompson_spec.cr	Ports never-match NFA construction and searching.
+src/nfa/thompson/nfa.rs::test::state_has_small_size	intentional_divergence	src/regex/automata/nfa.cr	Rust-only State struct size assertion; Crystal object layout is not a behavioral contract.
+src/nfa/thompson/range_trie.rs::test::no_splits	ported	spec/nfa_range_trie_vendor_spec.cr	Both pinned disjoint range orders are asserted directly against the private split helper in a test-only module reopening.
+src/nfa/thompson/range_trie.rs::test::splits	ported	spec/nfa_range_trie_vendor_spec.cr	All 28 pinned overlap/containment partitions are asserted directly; an inserted-overlap iteration case checks trie ordering.
+src/util/alphabet.rs::test::byte_classes	ported	spec/byte_classes_spec.cr	Ports the upstream byte-class partitioning matrix.
+src/util/alphabet.rs::test::elements_empty	ported	spec/byte_classes_spec.cr	Ports empty-map byte and EOI element iteration.
+src/util/alphabet.rs::test::elements_singletons	ported	spec/byte_classes_spec.cr	Ports singleton-map byte and EOI element iteration.
+src/util/alphabet.rs::test::elements_typical	ported	spec/byte_classes_spec.cr	Ports typical partition element iteration.
+src/util/alphabet.rs::test::full_byte_classes	ported	spec/byte_classes_spec.cr	Ports the full singleton partition alphabet length.
+src/util/alphabet.rs::test::representatives	ported	spec/byte_classes_spec.cr	Ports representative iteration, including bounds and EOI.
+src/util/interpolate.rs::test::interpolate_string	ported	spec/interpolate_spec.cr	Ports named, numbered, malformed, escaped, and Unicode string interpolation.
+src/util/lazy.rs::test::oibits	intentional_divergence	src/regex/automata/lazy.cr	Rust-only Send/Sync/UnwindSafe compile-time trait assertion; Crystal has no equivalent trait system.
+src/util/lazy.rs::test::sync_not_send	skipped	vendor/regex/regex-automata/src/util/lazy.rs	This Rust compile-fail example is inside a block comment and does not run in the pinned vendor suite.
+src/util/look.rs::test::look_matches_end_line	ported	spec/look_spec.cr	Ports end-line assertions.
+src/util/look.rs::test::look_matches_end_text	ported	spec/look_spec.cr	Ports end-text assertions.
+src/util/look.rs::test::look_matches_start_line	ported	spec/look_spec.cr	Ports start-line assertions.
+src/util/look.rs::test::look_matches_start_text	ported	spec/look_spec.cr	Ports start-text assertions.
+src/util/look.rs::test::look_matches_word_ascii	ported	spec/look_spec.cr	Ports ASCII word assertions.
+src/util/look.rs::test::look_matches_word_ascii_negate	ported	spec/look_spec.cr	Ports negated ASCII word assertions.
+src/util/look.rs::test::look_matches_word_end_ascii	ported	spec/look_spec.cr	Ports ASCII word-end assertions.
+src/util/look.rs::test::look_matches_word_end_half_ascii	ported	spec/look_spec.cr	Ports ASCII half word-end assertions.
+src/util/look.rs::test::look_matches_word_end_half_unicode	ported	spec/look_spec.cr	Ports Unicode half word-end assertions.
+src/util/look.rs::test::look_matches_word_end_unicode	ported	spec/look_spec.cr	Ports Unicode word-end assertions.
+src/util/look.rs::test::look_matches_word_start_ascii	ported	spec/look_spec.cr	Ports ASCII word-start assertions.
+src/util/look.rs::test::look_matches_word_start_half_ascii	ported	spec/look_spec.cr	Ports ASCII half word-start assertions.
+src/util/look.rs::test::look_matches_word_start_half_unicode	ported	spec/look_spec.cr	Ports Unicode half word-start assertions.
+src/util/look.rs::test::look_matches_word_start_unicode	ported	spec/look_spec.cr	Ports Unicode word-start assertions.
+src/util/look.rs::test::look_matches_word_unicode	ported	spec/look_spec.cr	Ports Unicode word assertions.
+src/util/look.rs::test::look_matches_word_unicode_negate	ported	spec/look_spec.cr	Ports negated Unicode word assertions.
+src/util/look.rs::test::look_set	ported	spec/look_spec.cr	Ports look-set operations and matching.
+src/util/look.rs::test::look_set_debug	ported	spec/look_spec.cr	Ports look-set debug rendering.
+src/util/look.rs::test::look_set_iter	ported	spec/look_spec.cr	Ports look-set iteration order.
+src/util/pool.rs::test::oibits	intentional_divergence	src/regex/automata/pool.cr	Rust-only Send/Sync/UnwindSafe compile-time trait assertion; Crystal has no equivalent trait system.
+src/util/pool.rs::test::thread_owner_distinct	ported	spec/pool_spec.cr	Ports the observable distinct-guard invariant for simultaneous gets.
+src/util/pool.rs::test::thread_owner_optimization	ported	spec/pool_spec.cr	Pinned owner cache remains untouched by other threads; Meta search consumers reuse the owner cache.
+src/util/pool.rs::test::thread_owner_send_drop	ported	spec/pool_spec.cr	Guard moved to another OS thread and explicitly put there restores its original owner identity; Rust Drop maps to Crystal scope/close.
+src/util/pool.rs::test::thread_owner_sync	ported	spec/pool_spec.cr	Two guards mutate distinct values on separate OS threads and return the original owner value.
+src/util/search.rs::test::incorrect_asref_guard	intentional_divergence	src/regex/automata/search.cr	Rust-only AsRef misuse guard; Crystal APIs use concrete String/Bytes/Input overloads.
+src/util/search.rs::test::match_error_kind_size	intentional_divergence	src/regex/automata/search.cr	Rust-only enum memory-layout assertion; Crystal object layout is not a behavioral contract.
+src/util/search.rs::test::match_error_size	intentional_divergence	src/regex/automata/search.cr	Rust-only error representation size assertion; Crystal object layout is not a behavioral contract.
+src/util/start.rs::test::start_fwd	ported	spec/start_config_spec.cr	Ports forward look-behind start classification.
+src/util/start.rs::test::start_fwd_done_range	ported	spec/start_config_spec.cr	Ports the forward empty/done-range text-start case.
+src/util/start.rs::test::start_rev	ported	spec/start_config_spec.cr	Ports reverse look-ahead start classification.
+src/util/start.rs::test::start_rev_done_range	ported	spec/start_config_spec.cr	Ports the reverse empty/done-range text-start case.
+src/util/wire.rs::test::bad_label_almost_too_long	ported	spec/wire_spec.cr	Ports the 255-byte label acceptance boundary.
+src/util/wire.rs::test::bad_label_interior_nul	ported	spec/wire_spec.cr	Ports interior-NUL label rejection.
+src/util/wire.rs::test::bad_label_too_long	ported	spec/wire_spec.cr	Ports the 256-byte label rejection boundary.
+src/util/wire.rs::test::labels	ported	spec/wire_spec.cr	Ports padded label serialization and deserialization.
+src/util/wire.rs::test::padding	ported	spec/wire_spec.cr	Ports four-byte alignment padding values.
+tests/dfa/api.rs::test::quit_fwd	ported	spec/dfa_api_spec.cr	Uses the upstream word-class/end-anchor pattern and checks both forward and stateful overlapping quit errors at byte 3.
+tests/dfa/api.rs::test::quit_panics	ported	spec/dfa_api_spec.cr	Ports the Unicode-word-boundary/non-ASCII quit configuration rejection.
+tests/dfa/api.rs::test::quit_rev	ported	spec/dfa_api_spec.cr	Uses the upstream anchored word-class pattern and reverse quit error at byte 3.
+tests/dfa/api.rs::test::unicode_word_implicitly_works	ported	spec/dfa_api_spec.cr	Sets every non-ASCII byte to quit and asserts the exact word-boundary half match.
+tests/dfa/api.rs::test::universal_start_search	ported	spec/dfa_api_spec.cr	Ports the exact pinned universal-start matrix through both dense and sparse DFA traversal; focused API gate and generated nine-engine native comparison pass.
+tests/dfa/onepass/regression.rs::test::too_many_slots_normal_pattern	ported	spec/dfa_onepass_spec.cr	Ports extra-slot regression.
+tests/dfa/onepass/regression.rs::test::zero_repetition_capture_group	ported	spec/dfa_onepass_spec.cr	Ports zero-repetition capture regression.
+tests/dfa/onepass/suite.rs::test::default	ported	spec/onepass_vendor_suite_spec.cr;spec/fixtures/onepass_suite.tsv;scripts/check_onepass.sh	All 328 anchored/non-leftmost-longest case IDs per mode: 120 admitted with exact Rust states/alphabet/stride/payload memory and is_match/find/captures expectations; 208 independently required NotOnePass rejections. Overlapping cases use only is_match, as Rust; other admitted cases also compare PikeVM on identical Inputs. Oracle regenerates all three modes from pin.
+tests/dfa/onepass/suite.rs::test::no_byte_classes	ported	spec/onepass_vendor_suite_spec.cr;spec/fixtures/onepass_suite.tsv;scripts/check_onepass.sh	All 328 anchored/non-leftmost-longest case IDs per mode: 120 admitted with exact Rust states/alphabet/stride/payload memory and is_match/find/captures expectations; 208 independently required NotOnePass rejections. Overlapping cases use only is_match, as Rust; other admitted cases also compare PikeVM on identical Inputs. Oracle regenerates all three modes from pin.
+tests/dfa/onepass/suite.rs::test::starts_for_each_pattern	ported	spec/onepass_vendor_suite_spec.cr;spec/fixtures/onepass_suite.tsv;scripts/check_onepass.sh	All 328 anchored/non-leftmost-longest case IDs per mode: 120 admitted with exact Rust states/alphabet/stride/payload memory and is_match/find/captures expectations; 208 independently required NotOnePass rejections. Overlapping cases use only is_match, as Rust; other admitted cases also compare PikeVM on identical Inputs. Oracle regenerates all three modes from pin.
+tests/dfa/regression.rs::test::minimize_sets_correct_match_states	ported	spec/dfa_remaining_parity_spec.cr	Ports the upstream minimized grapheme-subset DFA and invalid UTF-8 anchored input regression.
+tests/dfa/regression.rs::test::prefilter_does_not_skip_pending_match	ported	spec/dfa_dense_spec.cr	Ports the pending leftmost-match regression for both dense and sparse DFA searches.
+tests/dfa/suite.rs::test::minimized_default	ported	spec/dfa_vendor_suite_spec.cr;spec/dfa_remaining_parity_spec.cr	Pinned full dense TOML mode: 1,150 selected cases, 46 Rust Unicode-word/non-ASCII skips, 5 compile-error checks, 1,099 is_match/find checks, and 77 overlapping which checks; full Crystal gate passed 16,280/16,280.
+tests/dfa/suite.rs::test::minimized_no_byte_class	ported	spec/dfa_vendor_suite_spec.cr;spec/dfa_remaining_parity_spec.cr	Pinned minimized singleton-byte-class TOML mode with the same 1,150 selected/1,104 eligible case matrix and Rust skip rules; full Crystal gate passed 16,280/16,280.
+tests/dfa/suite.rs::test::serialization_unminimized_default	ported	spec/dfa_vendor_suite_spec.cr	Full 24 non-expensive TOML groups in serialization mode, including supported is_match/find/which paths with the pinned engine exclusions; native forward/reverse bytes decoded before search.
+tests/dfa/suite.rs::test::sparse_serialization_unminimized_default	ported	spec/dfa_vendor_suite_spec.cr	Full 24 non-expensive groups in the corresponding sparse default/prefilter/serialization mode, preserving pinned search/match exclusions; 72 groups total.
+tests/dfa/suite.rs::test::sparse_unminimized_default	ported	spec/dfa_vendor_suite_spec.cr	Full 24 non-expensive groups in the corresponding sparse default/prefilter/serialization mode, preserving pinned search/match exclusions; 72 groups total.
+tests/dfa/suite.rs::test::sparse_unminimized_prefilter	ported	spec/dfa_vendor_suite_spec.cr	Full 24 non-expensive groups in the corresponding sparse default/prefilter/serialization mode, preserving pinned search/match exclusions; 72 groups total.
+tests/dfa/suite.rs::test::unminimized_default	ported	spec/dfa_vendor_suite_spec.cr;spec/dfa_remaining_parity_spec.cr	Pinned default dense TOML mode: 1,150 selected cases, 46 Rust Unicode-word/non-ASCII skips, 5 compile-error checks, 1,099 is_match/find checks, and 77 overlapping which checks; full Crystal gate passed 16,280/16,280.
+tests/dfa/suite.rs::test::unminimized_nfa_shrink	ported	spec/dfa_vendor_suite_spec.cr;spec/dfa_remaining_parity_spec.cr	Pinned Thompson-shrink dense TOML mode with the same 1,150 selected/1,104 eligible case matrix and Rust skip rules; full Crystal gate passed 16,280/16,280.
+tests/dfa/suite.rs::test::unminimized_no_byte_class	ported	spec/dfa_vendor_suite_spec.cr;spec/dfa_remaining_parity_spec.cr	Pinned singleton-byte-class dense TOML mode with the same 1,150 selected/1,104 eligible case matrix and Rust skip rules; full Crystal gate passed 16,280/16,280.
+tests/dfa/suite.rs::test::unminimized_prefilter	ported	spec/dfa_vendor_suite_spec.cr;spec/dfa_remaining_parity_spec.cr	Pinned HIR-prefix-prefilter dense TOML mode with the same 1,150 selected/1,104 eligible case matrix and Rust skip rules; full Crystal gate passed 16,280/16,280.
+tests/dfa/suite.rs::test::unminimized_specialized_start_states	ported	spec/dfa_vendor_suite_spec.cr;spec/dfa_remaining_parity_spec.cr	Pinned specialized-start dense TOML mode with the same 1,150 selected/1,104 eligible case matrix and Rust skip rules; full Crystal gate passed 16,280/16,280.
+tests/fuzz/dense.rs::test::invalid_byte_classes	ported	spec/dfa_native_wire_spec.cr;scripts/check_dense_wire.sh	Replays the actual pinned crash payload with Rust fuzz_run haystack split and native label/endian/version preamble; typed rejection, no panic. Offline Rust consumer independently confirms rejection.
+tests/fuzz/dense.rs::test::invalid_byte_classes_min	ported	spec/dfa_native_wire_spec.cr;scripts/check_dense_wire.sh	Replays the actual pinned minimized crash bytes using the exact Rust fuzz preamble; typed rejection, no panic. Offline Rust consumer independently confirms rejection.
+tests/fuzz/sparse.rs::test::eoi_transition_to_quit_state	ported	spec/dfa_sparse_native_spec.cr;scripts/check_sparse_wire.sh	Replays the actual pinned sparse crash payload with the exact Rust fuzz haystack split and label/endian/version preamble; typed rejection without panic. Offline Rust consumer independently confirms rejection.
+tests/fuzz/sparse.rs::test::invalid_accelerators	ported	spec/dfa_sparse_native_spec.cr;scripts/check_sparse_wire.sh	Replays the actual pinned sparse crash payload with the exact Rust fuzz haystack split and label/endian/version preamble; typed rejection without panic. Offline Rust consumer independently confirms rejection.
+tests/fuzz/sparse.rs::test::invalid_special_state	ported	spec/dfa_sparse_native_spec.cr;scripts/check_sparse_wire.sh	Replays the actual pinned sparse crash payload with the exact Rust fuzz haystack split and label/endian/version preamble; typed rejection without panic. Offline Rust consumer independently confirms rejection.
+tests/fuzz/sparse.rs::test::match_state_inconsistency	ported	spec/dfa_sparse_native_spec.cr;scripts/check_sparse_wire.sh	Replays the actual pinned sparse crash payload with the exact Rust fuzz haystack split and label/endian/version preamble; typed rejection without panic. Offline Rust consumer independently confirms rejection.
+tests/fuzz/sparse.rs::test::start_state_has_valid_transitions	ported	spec/dfa_sparse_native_spec.cr;scripts/check_sparse_wire.sh	Replays the actual pinned sparse crash payload with the exact Rust fuzz haystack split and label/endian/version preamble; typed rejection without panic. Offline Rust consumer independently confirms rejection.
+tests/fuzz/sparse.rs::test::start_state_is_not_match_state	ported	spec/dfa_sparse_native_spec.cr;scripts/check_sparse_wire.sh	Replays the actual pinned sparse crash payload with the exact Rust fuzz haystack split and label/endian/version preamble; typed rejection without panic. Offline Rust consumer independently confirms rejection.
+tests/fuzz/sparse.rs::test::transition_to_invalid_but_valid_state	ported	spec/dfa_sparse_native_spec.cr;scripts/check_sparse_wire.sh	Replays the actual pinned sparse crash payload with the exact Rust fuzz haystack split and label/endian/version preamble; typed rejection without panic. Offline Rust consumer independently confirms rejection.
+tests/gen/dense/mod.rs::test::multi_pattern_v2	ported	spec/dfa_native_wire_spec.cr;scripts/check_dense_wire.sh	Loads checked-in native forward/reverse DFA bytes; all nine exact match spans and Unicode quit assertion pass; LE/BE writes checked by pinned Rust.
+tests/gen/sparse/mod.rs::test::multi_pattern_v2	ported	spec/dfa_sparse_native_spec.cr;scripts/check_sparse_wire.sh	Loads actual pinned sparse forward/reverse bytes; all nine exact spans and Unicode quit assertion, plus LE/BE rewrites and memory match pinned Rust.
+tests/hybrid/api.rs::test::prefilter_does_not_skip_pending_match	ported	spec/hybrid_spec.cr	Ports pending leftmost match preservation across prefilter starts.
+tests/hybrid/api.rs::test::quit_fwd	ported	spec/hybrid_spec.cr	Ports forward quit behavior.
+tests/hybrid/api.rs::test::quit_panics	ported	spec/hybrid_spec.cr	Ports quit configuration error behavior.
+tests/hybrid/api.rs::test::quit_rev	ported	spec/hybrid_spec.cr	Ports reverse quit behavior.
+tests/hybrid/api.rs::test::too_many_cache_resets_cause_quit	ported	spec/hybrid_spec.cr	Ports lazy cache reset/give-up behavior.
+tests/hybrid/api.rs::test::unicode_word_implicitly_works	ported	spec/hybrid_spec.cr	Ports implicit Unicode word-boundary support.
+tests/hybrid/suite.rs::test::default	ported	spec/vendor_regex_suite_spec.cr;spec/hybrid_anchored_suite_spec.cr;spec/hybrid_overlapping_suite_spec.cr	All 25 TOML families (1,194 cases) are read by the shared byte/capture-preserving parser; Rust exclusions give 1,147 cases in this mode except shrink/minimum-capacity (1,148). Crystal checks is_match/find and overlapping which where applicable; Fowler compares group zero as Rust hybrid does.
+tests/hybrid/suite.rs::test::min_cache_capacity	ported	spec/vendor_regex_suite_spec.cr;spec/hybrid_anchored_suite_spec.cr;spec/hybrid_overlapping_suite_spec.cr	All 25 TOML families (1,194 cases) are read by the shared byte/capture-preserving parser; Rust exclusions give 1,147 cases in this mode except shrink/minimum-capacity (1,148). Crystal checks is_match/find and overlapping which where applicable; Fowler compares group zero as Rust hybrid does.
+tests/hybrid/suite.rs::test::nfa_shrink	ported	spec/vendor_regex_suite_spec.cr;spec/hybrid_anchored_suite_spec.cr;spec/hybrid_overlapping_suite_spec.cr	All 25 TOML families (1,194 cases) are read by the shared byte/capture-preserving parser; Rust exclusions give 1,147 cases in this mode except shrink/minimum-capacity (1,148). Crystal checks is_match/find and overlapping which where applicable; Fowler compares group zero as Rust hybrid does.
+tests/hybrid/suite.rs::test::no_byte_classes	ported	spec/vendor_regex_suite_spec.cr;spec/hybrid_anchored_suite_spec.cr;spec/hybrid_overlapping_suite_spec.cr	All 25 TOML families (1,194 cases) are read by the shared byte/capture-preserving parser; Rust exclusions give 1,147 cases in this mode except shrink/minimum-capacity (1,148). Crystal checks is_match/find and overlapping which where applicable; Fowler compares group zero as Rust hybrid does.
+tests/hybrid/suite.rs::test::no_cache_clearing	ported	spec/vendor_regex_suite_spec.cr;spec/hybrid_anchored_suite_spec.cr;spec/hybrid_overlapping_suite_spec.cr	All 25 TOML families (1,194 cases) are read by the shared byte/capture-preserving parser; Rust exclusions give 1,147 cases in this mode except shrink/minimum-capacity (1,148). Crystal checks is_match/find and overlapping which where applicable; Fowler compares group zero as Rust hybrid does.
+tests/hybrid/suite.rs::test::prefilter	ported	spec/vendor_regex_suite_spec.cr;spec/hybrid_anchored_suite_spec.cr;spec/hybrid_overlapping_suite_spec.cr	All 25 TOML families (1,194 cases) are read by the shared byte/capture-preserving parser; Rust exclusions give 1,147 cases in this mode except shrink/minimum-capacity (1,148). Crystal checks is_match/find and overlapping which where applicable; Fowler compares group zero as Rust hybrid does.
+tests/hybrid/suite.rs::test::specialize_start_states	ported	spec/vendor_regex_suite_spec.cr;spec/hybrid_anchored_suite_spec.cr;spec/hybrid_overlapping_suite_spec.cr	All 25 TOML families (1,194 cases) are read by the shared byte/capture-preserving parser; Rust exclusions give 1,147 cases in this mode except shrink/minimum-capacity (1,148). Crystal checks is_match/find and overlapping which where applicable; Fowler compares group zero as Rust hybrid does.
+tests/hybrid/suite.rs::test::starts_for_each_pattern	ported	spec/vendor_regex_suite_spec.cr;spec/hybrid_anchored_suite_spec.cr;spec/hybrid_overlapping_suite_spec.cr	All 25 TOML families (1,194 cases) are read by the shared byte/capture-preserving parser; Rust exclusions give 1,147 cases in this mode except shrink/minimum-capacity (1,148). Crystal checks is_match/find and overlapping which where applicable; Fowler compares group zero as Rust hybrid does.
+tests/meta/suite.rs::test::default	ported	spec/meta_vendor_suite_spec.cr	All 1186 admissible base cases in default (5930 across five modes): expanded-name earliest blacklist, unsupported leftmost-longest exclusion, compiles errors, existence/find/capture and overlapping-pattern APIs match pinned suite.rs.
+tests/meta/suite.rs::test::no_dfa	ported	spec/meta_vendor_suite_spec.cr	All 1186 admissible base cases in no_dfa (5930 across five modes): expanded-name earliest blacklist, unsupported leftmost-longest exclusion, compiles errors, existence/find/capture and overlapping-pattern APIs match pinned suite.rs.
+tests/meta/suite.rs::test::no_dfa_hybrid	ported	spec/meta_vendor_suite_spec.cr	All 1186 admissible base cases in no_dfa_hybrid (5930 across five modes): expanded-name earliest blacklist, unsupported leftmost-longest exclusion, compiles errors, existence/find/capture and overlapping-pattern APIs match pinned suite.rs.
+tests/meta/suite.rs::test::no_dfa_hybrid_onepass	ported	spec/meta_vendor_suite_spec.cr	All 1186 admissible base cases in no_dfa_hybrid_onepass (5930 across five modes): expanded-name earliest blacklist, unsupported leftmost-longest exclusion, compiles errors, existence/find/capture and overlapping-pattern APIs match pinned suite.rs.
+tests/meta/suite.rs::test::no_dfa_hybrid_onepass_backtrack	ported	spec/meta_vendor_suite_spec.cr	All 1186 admissible base cases in no_dfa_hybrid_onepass_backtrack (5930 across five modes): expanded-name earliest blacklist, unsupported leftmost-longest exclusion, compiles errors, existence/find/capture and overlapping-pattern APIs match pinned suite.rs.
+tests/nfa/thompson/backtrack/regression.rs::test::too_many_slots_normal_pattern	ported	spec/backtrack_spec.cr	Ports normal capture-slot search behavior.
+tests/nfa/thompson/backtrack/suite.rs::test::default	ported	spec/backtrack_vendor_suite_spec.cr	Pinned TOML matrix runs every leftmost/leftmost-first case except Rust's expensive-capacity blacklist, including expected compile errors; is_match/find/captures verified.
+tests/nfa/thompson/backtrack/suite.rs::test::min_visited_capacity	ported	spec/backtrack_vendor_suite_spec.cr	Pinned TOML matrix runs every leftmost/leftmost-first case, including the expensive-capacity case, with Rust's minimum visited capacity for the full haystack; is_match/find/captures verified.
+tests/nfa/thompson/backtrack/suite.rs::test::prefilter	ported	spec/backtrack_vendor_suite_spec.cr	Pinned TOML matrix runs every leftmost/leftmost-first case except Rust's expensive-capacity blacklist with HIR-prefix prefilter; is_match/find/captures verified.
+tests/nfa/thompson/pikevm/regression.rs::test::too_many_slots_normal_pattern	ported	spec/pikevm_spec.cr	Ports normal capture-slot search behavior.
+tests/nfa/thompson/pikevm/suite.rs::test::default	ported	spec/pikevm_vendor_suite_spec.cr	Runs the pinned 25-group TOML matrix through default PikeVM is_match, find, captures, earliest, and overlapping pattern-set paths.
+tests/nfa/thompson/pikevm/suite.rs::test::prefilter	ported	spec/pikevm_vendor_suite_spec.cr	Runs the same pinned matrix with Rust-style HIR prefix prefilter construction; overlapping captures and unsupported match kinds follow Rust skips.
