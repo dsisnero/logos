@@ -39,8 +39,6 @@ shards install
 require "logos"
 
 Logos.define Token do
-  error_type Nil
-
   token "fn", :KeywordFn
   token "let", :KeywordLet
 
@@ -51,18 +49,22 @@ Logos.define Token do
   token "-", :Minus
   token "=", :Assign
 
-  skip_regex "\\s+", :Whitespace
+  skip_regex "\\s+"
 end
 
 lexer = Token.lexer("fn hello = 42")
 
-loop do
-  result = lexer.next
-  break if result.is_a?(Iterator::Stop)
-  result = result.as(Logos::Result(Token, Nil))
-  puts "#{result.unwrap}: #{lexer.slice}"
+lexer.each do |result|
+  if result.error?
+    puts "Unexpected input at #{lexer.span}: #{lexer.slice}"
+  else
+    puts "#{result.unwrap}: #{lexer.slice}"
+  end
 end
 ```
+
+Pass a block to an anonymous skip to update lexer extras as it consumes input.
+Use `lexer.spanned.each` when you need results paired with byte spans.
 
 ## Context-Dependent Lexing
 

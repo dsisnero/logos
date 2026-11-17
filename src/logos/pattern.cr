@@ -292,7 +292,7 @@ module Logos
 
     # Check the winners at each accepting state, after higher priorities
     # have masked any lower-priority overlaps.
-    def self.validate_priorities(dfa : ::Regex::Automata::DFA::DFA, priorities : Array(Int32), explicit : Array(Bool), patterns : Array(String), variants : Array(String)) : Nil
+    def self.validate_priorities(dfa : ::Regex::Automata::DFA::DFA, priorities : Array(Int32), explicit : Array(Bool), patterns : Array(String), variants : Array(String) | Array(String?)) : Nil
       dfa.states.each do |state|
         matches = state.match
         next if matches.size < 2

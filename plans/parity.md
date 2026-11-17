@@ -2,29 +2,28 @@
 
 ## Where we are
 
-- **Current focus** — [Phase 7, Package and documentation qualification](#phase-7-package-and-documentation-qualification)
-  is complete. A frozen install in an isolated snapshot builds the generator,
-  serves a separate consumer, and runs the shipped strict contracts through
-  the built CLI. The README Quick Start and annotation examples execute.
+- **Current focus** — Phase 9 is complete. `Logos.define` supports anonymous
+  skips in runtime and strict prebuilt lexers, diagnoses unknown directive
+  options, and powers the shorter README Quick Start.
 - **Next up**
-  1. **Generated matcher performance baseline.** Refresh the same-machine
-     release comparison with pinned Rust Logos using the strict benchmark
-     manifest. Verify the token-and-span contract first and record the
-     measurements in [the performance ledger](performance_experiments.md)
-     before selecting an optimization feature.
-  2. **Lexer authoring ergonomics (Phases 9–11).** Start the authoring track
-     with anonymous skips, declaration diagnostics, and the simpler Quick Start.
-     Then add typed payload declarations and declaration-driven prebuilds.
-     See [the implementation steps and acceptance tests](lexer_ergonomics.md).
+  1. **Phase 10. Typed callback payload declarations.** Add opt-in callback
+     result types and variant-checked accessors. Start with the saved-result
+     red checks in [the lexer authoring roadmap](lexer_ergonomics.md).
+  2. **Phase 11. Declaration-driven prebuilds.** Export strict manifest
+     metadata from lexer definitions and exercise the installed generator.
+  3. **Phase 8. Generated matcher performance baseline.** This independent
+     measurement phase remains open. Compare strict release builds with
+     pinned Rust Logos and record the results in
+     [the performance ledger](performance_experiments.md).
 - **Status by area** — All 269 source and 249 test-tree items retain their
   dispositions. All shipped strict manifests and the package entry point
   have executable coverage. Documentation describes lazy runtime matcher
   construction, source prebuild, and diagnostic timing.
-- **Gates** — Format, lint, and 299 specs pass. `make test-prebuilt` passes
-  15 specs. `make test-package` passes three package specs, including four
+- **Gates** — Format, lint, and 301 specs pass. `make test-prebuilt` passes
+  16 specs. `make test-package` passes three package specs, including four
   shipped contracts executed through the built CLI. The cached frozen install
   keeps the lockfile unchanged. Markdown and all inventory drift checks pass.
-- **Last feature commit** — `test: qualify installed package and documented commands`.
+- **Last feature commit** — `feat: support anonymous lexer skips`.
 
 ## Scope and verification
 
@@ -202,7 +201,7 @@ the strict example and benchmark contracts with the pinned dependencies.
 
 ### Phase 8. Generated matcher performance baseline
 
-**Next.** Refresh the historical measurements after the parity fixes and
+**Planned, independent of lexer authoring.** Refresh the historical measurements after the parity fixes and
 strict binding qualification.
 
 - Verify the benchmark token and span contract in release builds.
@@ -216,9 +215,9 @@ performance target without leaving an unmeasured experiment active.
 
 ### Phases 9–11. Lexer authoring ergonomics
 
-**Planned.** [The lexer authoring roadmap](lexer_ergonomics.md) gives each
-phase its vendor reference, red–green sequence, compatibility checks, and
-completion criteria. Phase 9 is the next authoring feature.
+Phase 9 is complete. Phase 10 is the next authoring feature.
+[The lexer authoring roadmap](lexer_ergonomics.md) records the vendor
+references, red–green sequences, and completion criteria.
 
 ## Completed feature phases
 

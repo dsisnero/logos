@@ -118,11 +118,11 @@ A generic manifest infers priority from each rule. A rule may supply an integer
 explicitly declared in the macro. Use `"utf8": false` for a byte-oriented
 manifest.
 
-Include the `variant` string on every rule to check generic manifest conflicts
-before emitting source. Use the exact macro variant name, including the name
-of a skip rule. Mirror any explicit macro priorities in the manifest. A
-`priority` value marks a rule explicit by default. Set `priority_explicit` to
-record explicitness directly.
+Include `variant` on every rule to check generic manifest conflicts before
+emitting source. Use the exact macro variant name, including for named skips.
+Use `"variant": null` and `"skip": true` for anonymous skips. Mirror any explicit
+macro priorities in the manifest. A `priority` value marks a rule explicit by
+default. Set `priority_explicit` to record explicitness directly.
 
 When every rule supplies an integer `resolved_priority`, those values govern
 selection. Prebuild removes lower-priority candidates and reports conflicts

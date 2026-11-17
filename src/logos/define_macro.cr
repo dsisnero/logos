@@ -51,8 +51,21 @@ module Logos
         {% if node.block %}
           {% callback = node.block %}
         {% end %}
+        {% options = [] of String %}
+        {% if %w(token regex skip_token skip_regex).includes?(node.name.stringify) %}
+          {% options = %w(callback priority ignore_case ignore_ascii_case allow_greedy bytes) %}
+        {% elsif node.name == "subpattern" %}
+          {% options = %w(bytes) %}
+        {% elsif node.name == "error" %}
+          {% options = %w(callback priority) %}
+        {% elsif node.name == "error_type" %}
+          {% options = %w(callback) %}
+        {% end %}
         {% if node.named_args %}
           {% for named_arg in node.named_args %}
+            {% unless options.includes?(named_arg.name.stringify) %}
+              {% node.raise "Unknown option '#{named_arg.name}' for #{node.name}" %}
+            {% end %}
             {% if named_arg.name == "callback" && callback.nil? %}
               {% callback = named_arg.value %}
             {% elsif named_arg.name == "priority" %}
@@ -97,14 +110,14 @@ module Logos
             {% variant = variant.id %}
           {% end %}
           {% regex_defs << {variant: variant, pattern: node.args[0], skip: false, callback: callback, priority: priority, ignore_case: ignore_case, ignore_ascii_case: ignore_ascii_case, allow_greedy: allow_greedy, bytes: bytes} %}
-        {% elsif node.name == "skip_token" && node.args.size == 2 %}
-          {% variant = node.args[1] %}
+        {% elsif node.name == "skip_token" && (node.args.size == 1 || node.args.size == 2) %}
+          {% variant = node.args.size == 2 ? node.args[1] : nil %}
           {% if variant.is_a?(SymbolLiteral) %}
             {% variant = variant.id %}
           {% end %}
           {% token_defs << {variant: variant, pattern: node.args[0], skip: true, callback: callback, priority: priority, ignore_case: ignore_case, ignore_ascii_case: ignore_ascii_case, allow_greedy: allow_greedy, bytes: bytes} %}
-        {% elsif node.name == "skip_regex" && node.args.size == 2 %}
-          {% variant = node.args[1] %}
+        {% elsif node.name == "skip_regex" && (node.args.size == 1 || node.args.size == 2) %}
+          {% variant = node.args.size == 2 ? node.args[1] : nil %}
           {% if variant.is_a?(SymbolLiteral) %}
             {% variant = variant.id %}
           {% end %}
@@ -137,26 +150,30 @@ module Logos
     {% unique_variants = [] of Crystal::ASTNode %}
     {% for item in token_defs %}
       {% variant = item[:variant] %}
-      {% if variant.is_a?(Call) %}
-        {% variant_id = variant.name.id.stringify %}
-      {% else %}
-        {% variant_id = variant.id.stringify %}
-      {% end %}
-      {% unless unique_variant_ids.includes?(variant_id) %}
-        {% unique_variant_ids << variant_id %}
-        {% unique_variants << variant %}
+      {% unless variant.nil? %}
+        {% if variant.is_a?(Call) %}
+          {% variant_id = variant.name.id.stringify %}
+        {% else %}
+          {% variant_id = variant.id.stringify %}
+        {% end %}
+        {% unless unique_variant_ids.includes?(variant_id) %}
+          {% unique_variant_ids << variant_id %}
+          {% unique_variants << variant %}
+        {% end %}
       {% end %}
     {% end %}
     {% for item in regex_defs %}
       {% variant = item[:variant] %}
-      {% if variant.is_a?(Call) %}
-        {% variant_id = variant.name.id.stringify %}
-      {% else %}
-        {% variant_id = variant.id.stringify %}
-      {% end %}
-      {% unless unique_variant_ids.includes?(variant_id) %}
-        {% unique_variant_ids << variant_id %}
-        {% unique_variants << variant %}
+      {% unless variant.nil? %}
+        {% if variant.is_a?(Call) %}
+          {% variant_id = variant.name.id.stringify %}
+        {% else %}
+          {% variant_id = variant.id.stringify %}
+        {% end %}
+        {% unless unique_variant_ids.includes?(variant_id) %}
+          {% unique_variant_ids << variant_id %}
+          {% unique_variants << variant %}
+        {% end %}
       {% end %}
     {% end %}
     {% if error_def %}
@@ -270,7 +287,7 @@ module Logos
         dfa: ::Regex::Automata::DFA::DFA,
         pattern_dfas: Array(::Regex::Automata::NFA::PikeVM),
         pattern_prefix_dfas: Array(::Regex::Automata::DFA::DFA),
-        pattern_to_variant: Array(self),
+        pattern_to_variant: Array(self?),
         pattern_is_skip: Array(Bool),
         pattern_priority: Array(Int32),
         pattern_priority_explicit: Array(Bool),
@@ -285,7 +302,7 @@ module Logos
         dfa: ::Regex::Automata::DFA::DFA,
         pattern_dfas: Array(::Regex::Automata::NFA::PikeVM),
         pattern_prefix_dfas: Array(::Regex::Automata::DFA::DFA),
-        pattern_to_variant: Array(self),
+        pattern_to_variant: Array(self?),
         pattern_is_skip: Array(Bool),
         pattern_priority: Array(Int32),
         pattern_priority_explicit: Array(Bool),
@@ -295,14 +312,14 @@ module Logos
           puts "DEBUG: compile_dfa called"
         end
         hirs = [] of ::Regex::Syntax::Hir::Hir
-        pattern_to_variant = [] of self
+        pattern_to_variant = [] of self?
         pattern_is_skip = [] of Bool
         pattern_priority = [] of Int32
         pattern_priority_explicit = [] of Bool
         pattern_dfas = [] of ::Regex::Automata::NFA::PikeVM
         pattern_prefix_dfas = [] of ::Regex::Automata::DFA::DFA
         pattern_text = [] of ::String
-        pattern_variant_name = [] of ::String
+        pattern_variant_name = [] of ::String?
 
         {% if subpatterns.size > 0 %}
           expanded_subpatterns = ::Logos::Pattern.expand_subpatterns(self.subpatterns, {{ utf8_flag }})
@@ -323,7 +340,7 @@ module Logos
           pattern_to_variant << {{ item[:variant] }}
           pattern_is_skip << {{ item[:skip] }}
           pattern_text << {{ pattern_node }}.inspect
-          pattern_variant_name << {{ item[:variant] }}.to_s
+          pattern_variant_name << {{ item[:variant] }}.try(&.to_s)
           # Use explicit priority if set, otherwise Hir complexity
           {% if item[:priority] %}
             pattern_priority << {{ item[:priority] }}
@@ -349,7 +366,7 @@ module Logos
           pattern_to_variant << {{ item[:variant] }}
           pattern_is_skip << {{ item[:skip] }}
           pattern_text << {{ pattern_node }}.inspect
-          pattern_variant_name << {{ item[:variant] }}.to_s
+          pattern_variant_name << {{ item[:variant] }}.try(&.to_s)
           # Use explicit priority if set, otherwise Hir complexity
           {% if item[:priority] %}
             pattern_priority << {{ item[:priority] }}
@@ -406,7 +423,7 @@ module Logos
         dfa: ::Regex::Automata::DFA::DFA,
         pattern_dfas: Array(::Regex::Automata::NFA::PikeVM),
         pattern_prefix_dfas: Array(::Regex::Automata::DFA::DFA),
-        pattern_to_variant: Array(self),
+        pattern_to_variant: Array(self?),
         pattern_is_skip: Array(Bool),
         pattern_priority: Array(Int32),
         pattern_priority_explicit: Array(Bool),
@@ -472,7 +489,7 @@ module Logos
               "ignore_ascii_case" => {{ item[:ignore_ascii_case].stringify }},
               "allow_greedy" => {{ item[:allow_greedy].stringify }},
               "skip" => {{ item[:skip].stringify }},
-              "variant" => {{ item[:variant].stringify }},
+              "variant" => {{ item[:variant].nil? ? "" : item[:variant].stringify }},
             },
           {% end %}
         ] of ::Hash(::String, ::String)
@@ -559,7 +576,7 @@ module Logos
                 {% for item in all_defs %}
                   {{ item[:variant] }},
                 {% end %}
-              ]
+              ] of self?
               pattern_is_skip = [
                 {% for item in all_defs %}
                   {{ item[:skip] }},
@@ -747,7 +764,7 @@ module Logos
 
           # Return token unless it's a skip variant
           unless is_skip
-            return ::Logos::Result(self, {{ error_type }}).ok(emitted_variant, __payload)
+            return ::Logos::Result(self, {{ error_type }}).ok(emitted_variant.not_nil!, __payload)
           else
             # Skip variant - return nil to continue lexing
             return nil

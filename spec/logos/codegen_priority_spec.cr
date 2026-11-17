@@ -121,6 +121,34 @@ require "../spec_helper"
       end
     end
 
+    it "binds anonymous skips without variants in a strict generated matcher" do
+      root = File.expand_path("../..", __DIR__)
+      directory = File.join(root, "temp")
+      FileUtils.mkdir_p(directory)
+      file = File.tempfile("anonymous-skip-matcher", ".cr", dir: directory)
+      begin
+        patterns = JSON.parse(<<-'JSON').as_a
+          [
+            {"kind":"regex","pattern":"[ ]+","skip":true,"variant":null},
+            {"kind":"regex","pattern":"\n","skip":true,"variant":null},
+            {"kind":"regex","pattern":"[a-z]","skip":false,"variant":"Word"}
+          ]
+          JSON
+        file.puts %q(require "../src/logos")
+        file.puts Logos::Codegen.emit_matcher(patterns, {} of String => String, true, "AnonymousSkipToken", validate_binding: true)
+        file.puts %q(require "../spec/logos/anonymous_skips_spec")
+        file.close
+        output = IO::Memory.new
+        status = Process.run("crystal",
+          ["spec", "-Danonymous_skip_prebuilt", file.path, "-e", "runs skip callbacks"],
+          chdir: root, output: output, error: output)
+        raise output.to_s unless status.success?
+        output.to_s.should contain("1 examples, 0 failures, 0 errors")
+      ensure
+        file.delete
+      end
+    end
+
     it "rejects greedy dot and empty subpattern rules unless allowed by the runtime contract" do
       subpatterns = {"optional" => "a?"}
       greedy = JSON.parse(%([{"kind":"regex","pattern":".+"}])).as_a

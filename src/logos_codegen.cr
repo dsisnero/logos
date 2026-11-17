@@ -133,9 +133,9 @@ module Logos::Codegen
                  end
     explicit = patterns.map { |entry| priority_explicit?(entry) }
     variants = patterns.map { |entry| entry["variant"]?.try(&.as_s?) }
-    if !resolved && variants.all? { |variant| !variant.nil? }
+    if !resolved && patterns.all?(&.as_h.has_key?("variant"))
       labels = patterns.map(&.["pattern"].inspect)
-      Logos::Pattern.validate_priorities(dfa, priorities, explicit, labels, variants.compact)
+      Logos::Pattern.validate_priorities(dfa, priorities, explicit, labels, variants)
     end
 
     {priorities, explicit, variants, resolved}
@@ -153,7 +153,14 @@ module Logos::Codegen
         "allow_greedy"      => (entry["allow_greedy"]?.try(&.as_bool) == true).to_s,
       }
       rule["skip"] = entry["skip"].as_bool.to_s if entry.as_h.has_key?("skip")
-      rule["variant"] = entry["variant"].as_s if entry.as_h.has_key?("variant")
+      if variant = entry["variant"]?
+        if variant.raw.nil?
+          raise "A null variant requires skip: true" unless rule["skip"]? == "true"
+          rule["variant"] = ""
+        else
+          rule["variant"] = variant.as_s
+        end
+      end
       rule
     end
     definitions = subpattern_definitions(subpatterns, utf8)

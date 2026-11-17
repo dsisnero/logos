@@ -1,11 +1,17 @@
 # Lexer authoring roadmap
 
-All three phases are planned. Start with Phase 9 for lexer authoring work.
+Phase 9 is complete. Start with Phase 10 for lexer authoring work.
 Phase 8 in [the parity roadmap](parity.md) is the independent performance
 baseline. The API examples below are proposed contracts. Each numbered phase
 ends in one reviewable commit.
 
 ## Phase 9. First lexer, anonymous skips, and declaration diagnostics
+
+**Complete.** The anonymous rule failed macro expansion before the fix, and
+the typo fixture had compiled successfully. The runtime and strict generated
+fixtures now agree on token kinds, spans, the extras increment, and EOF.
+Use JSON `"variant": null` with `"skip": true` to bind an anonymous action
+explicitly. The installed package runs the shorter Quick Start.
 
 1. Compare the Rust calculator's enum-level skip with the newline callback in
    [Rust extras](../logos_rust/examples/extras.rs). Trace how
