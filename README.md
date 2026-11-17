@@ -207,19 +207,20 @@ those rules with `result.payload_for!(Token::Integer, Int64)`.
 
 ## Prebuilt matchers
 
-In a Logos checkout, build the generator and emit a shipped strict manifest:
+In a Logos checkout, export the manifest from the extras lexer declaration and build the application:
 
 ```bash
 shards install --frozen
 shards build logos-codegen
 mkdir -p temp
-bin/logos-codegen --manifest examples/extras.logos.json --out temp/generated_token.cr
+crystal eval 'require "./examples/lexers/extras"; Token.write_prebuild_manifest(STDOUT)' > temp/extras.json
+bin/logos-codegen --manifest temp/extras.json --out temp/generated_token.cr
 CRYSTAL_PATH="$PWD/temp:$(crystal env CRYSTAL_PATH)" \
   crystal build -Dprecompiled examples/extras.cr -o temp/extras
 ```
 
-Run `temp/extras` with a file path to report word positions. Shipped manifests
-validate their rule bindings against the matching macro definitions. See the
+Run `temp/extras` with a file path to report word positions. Exported manifests
+validate their rule bindings against the same declaration at runtime. See the
 [development guide](docs/development.md#prebuilding-lexer-matchers) for manifest
 options and the generated/runtime verification gates.
 

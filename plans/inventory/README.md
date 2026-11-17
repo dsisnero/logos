@@ -99,6 +99,8 @@ The [package specs](../../spec/logos/package_spec.cr) copy a working-tree
 snapshot, perform a frozen install from cached Git repositories, check the
 lockfile, and build the generator. A separate consumer executes README
 examples through the installed library. The shipped contracts also run
-through the package's compiled CLI with installed dependencies. This
+through the package's compiled CLI with installed dependencies. Phase 11 exports the four manifests from
+their declarations. An isolated consumer also checks stale matcher rejection
+and regenerates after editing a rule. This
 qualification uses cached locked sources and records the current toolchain
 in the parity plan.

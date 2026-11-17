@@ -29,6 +29,15 @@ module Logos::Codegen
     winners
   end
 
+  def self.emit_manifest(manifest : JSON::Any) : String
+    patterns = manifest["patterns"].as_a
+    utf8 = manifest["utf8"]?.try(&.as_bool) != false
+    subpatterns = manifest["subpatterns"]?.try(&.as_h) || {} of String => JSON::Any
+    emit_matcher(patterns, subpatterns, utf8, manifest["name"].as_s,
+      validate_binding: manifest["validate_binding"]?.try(&.as_bool) == true,
+      resolve_priorities: manifest["resolve_priorities"]?.try(&.as_bool) == true)
+  end
+
   private def self.optional_integer(entry : JSON::Any, key : String) : Int32?
     value = entry[key]?
     value.as_i if value && !value.raw.nil?
@@ -123,10 +132,11 @@ module Logos::Codegen
     end
   end
 
-  private def self.compile_priorities(dfa : ::Regex::Automata::DFA::DFA, patterns : Array(JSON::Any), inferred : Array(Int32))
+  private def self.compile_priorities(dfa : ::Regex::Automata::DFA::DFA, patterns : Array(JSON::Any), inferred : Array(Int32), resolve_priorities : Bool)
     resolved_values = patterns.map { |entry| optional_integer(entry, "resolved_priority") }
-    resolved = resolved_values.all? { |value| !value.nil? }
-    priorities = if resolved
+    manifest_resolved = resolved_values.all? { |value| !value.nil? }
+    resolved = manifest_resolved || resolve_priorities
+    priorities = if manifest_resolved
                    resolved_values.compact
                  else
                    patterns.map_with_index { |entry, index| optional_integer(entry, "priority") || inferred[index] }
@@ -152,6 +162,9 @@ module Logos::Codegen
         "ignore_ascii_case" => (entry["ignore_ascii_case"]?.try(&.as_bool) == true).to_s,
         "allow_greedy"      => (entry["allow_greedy"]?.try(&.as_bool) == true).to_s,
       }
+      if declared_priority = entry["declared_priority"]?
+        rule["declared_priority"] = declared_priority.raw.nil? ? "" : declared_priority.as_i.to_s
+      end
       rule["skip"] = entry["skip"].as_bool.to_s if entry.as_h.has_key?("skip")
       if variant = entry["variant"]?
         if variant.raw.nil?
@@ -170,10 +183,10 @@ module Logos::Codegen
   # Emit a source-level matcher using compact table lookups. The DFA is built
   # and byte-class reduced by this program; the consuming application merely
   # indexes generated constants.
-  def self.emit_matcher(patterns : Array(JSON::Any), subpatterns : ManifestSubpatterns, utf8 : Bool, name : String, *, validate_binding : Bool = false) : String
+  def self.emit_matcher(patterns : Array(JSON::Any), subpatterns : ManifestSubpatterns, utf8 : Bool, name : String, *, validate_binding : Bool = false, resolve_priorities : Bool = false) : String
     compiled_patterns = compile_patterns(patterns, subpatterns, utf8)
     dfa = build_dfa(compiled_patterns.map(&.[0]), utf8)
-    priorities, explicit, variants, resolved = compile_priorities(dfa, patterns, compiled_patterns.map(&.[1]))
+    priorities, explicit, variants, resolved = compile_priorities(dfa, patterns, compiled_patterns.map(&.[1]), resolve_priorities)
 
     module_name = "Generated_#{name.gsub(/[^A-Za-z0-9_]/, "_")}"
     transition_table = dfa.tt || raise "DFA has no transition table"
@@ -240,11 +253,7 @@ end
   if ARGV[0]? == "--manifest"
     manifest_path = ARGV[1]? || raise "usage: logos-codegen --manifest MANIFEST [--out OUTPUT]"
     manifest = JSON.parse(File.read(manifest_path))
-    patterns = manifest["patterns"].as_a
-    utf8 = manifest["utf8"]?.try(&.as_bool) != false
-    subpatterns = manifest["subpatterns"]?.try(&.as_h) || {} of String => JSON::Any
-    name = manifest["name"].as_s
-    output = Logos::Codegen.emit_matcher(patterns, subpatterns, utf8, name, validate_binding: manifest["validate_binding"]?.try(&.as_bool) == true)
+    output = Logos::Codegen.emit_manifest(manifest)
     if ARGV[2]? == "--out"
       output_path = ARGV[3]? || raise("--out requires a path")
       File.write(output_path, output)

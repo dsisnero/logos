@@ -1,6 +1,7 @@
 # Lexer authoring roadmap
 
-Phases 9 and 10 are complete. Start with Phase 11 for lexer authoring work.
+Phases 9–11 are complete. The parity roadmap now returns to the performance
+baseline.
 Phase 8 in [the parity roadmap](parity.md) is the independent performance
 baseline. The API examples below are proposed contracts. Each numbered phase
 ends in one reviewable commit.
@@ -71,9 +72,15 @@ typed integer rule and accessor.
 
 ## Phase 11. Generate strict prebuild manifests from declarations
 
-1. Follow [the extras declaration](../examples/extras.cr) through its
-   [handwritten manifest](../examples/extras.logos.json), the
-   [generator](../src/logos_codegen.cr), and the existing binding validator.
+**Complete.** The red consumer fixture failed on the undefined export
+method. `Logos.define` now emits deterministic strict manifests from
+evaluated rule metadata. The installed consumer detects a stale matcher,
+regenerates after a pattern edit, and compares results and spans in both
+modes. The four shipped prebuilds use declaration exports. The benchmark
+requests resolved priorities and checks the resulting winner table.
+
+1. Follow [the extras declaration](../examples/lexers/extras.cr) through
+   the [generator](../src/logos_codegen.cr) and the binding validator.
    Use Rust derive as the model for declaring each rule once. Crystal's
    deliverable is an export that the existing CLI can consume.
 2. **Red.** Add a consumer fixture containing only a token declaration.

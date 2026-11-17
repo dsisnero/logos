@@ -7,25 +7,31 @@ require "../spec_helper"
   module Logos::Spec::PrebuiltExamples
     ROOT = File.expand_path("../..", __DIR__)
 
-    def self.generate(manifest_path : String, output : String) : JSON::Any
+    def self.generate(declaration : String, token : String, output : String, *, resolve_priorities = false) : JSON::Any
+      manifest_path = output + ".json"
+      export = "require #{declaration.inspect}; #{token}.write_prebuild_manifest(STDOUT, resolve_priorities: #{resolve_priorities})"
+      error = IO::Memory.new
+      File.open(manifest_path, "w") do |manifest_file|
+        status = Process.run("crystal", ["eval", export], chdir: ROOT, output: manifest_file, error: error)
+        raise "manifest export failed: #{error}" unless status.success?
+      end
+
       manifest = JSON.parse(File.read(manifest_path))
       if binary = ENV["LOGOS_CODEGEN_BIN"]?
-        error = IO::Memory.new
+        error.clear
         status = Process.run(binary, ["--manifest", manifest_path, "--out", output],
           chdir: ROOT, error: error)
         raise "built generator failed: #{error}" unless status.success?
       else
-        source = Logos::Codegen.emit_matcher(manifest["patterns"].as_a, manifest["subpatterns"].as_h,
-          manifest["utf8"].as_bool, manifest["name"].as_s, validate_binding: true)
-        File.write(output, source)
+        File.write(output, Logos::Codegen.emit_manifest(manifest))
       end
       manifest
     end
 
-    def self.check(example : String, matcher_name : String, args : Array(String), expected : String, contract : String) : Nil
+    def self.check(example : String, token : String, matcher_name : String, args : Array(String), expected : String, contract : String) : Nil
       directory = File.join(ROOT, "temp", "prebuilt-#{example}")
       FileUtils.mkdir_p(directory)
-      manifest = generate(File.join(ROOT, "examples/#{example}.logos.json"), File.join(directory, "#{matcher_name}.cr"))
+      manifest = generate("./examples/lexers/#{example}", token, File.join(directory, "#{matcher_name}.cr"))
       driver = File.join(directory, "driver.cr")
 
       path = IO::Memory.new
@@ -62,10 +68,12 @@ require "../spec_helper"
       root = Logos::Spec::PrebuiltExamples::ROOT
       FileUtils.mkdir_p(File.join(root, "temp"))
       generated = File.join(root, "temp/strict_benchmark_token.cr")
-      manifest = Logos::Spec::PrebuiltExamples.generate(File.join(root, "benchmarks/benchmark_token.logos.json"), generated)
+      manifest = Logos::Spec::PrebuiltExamples.generate("./benchmarks/benchmark_token", "BenchmarkToken", generated, resolve_priorities: true)
+      File.read(generated).should contain("WINNERS =")
       driver = File.join(root, "temp/strict_benchmark_contract.cr")
       contract = File.read(File.join(root, "benchmarks/prebuild_contract.cr"))
         .sub(%q(require "../temp/generated_benchmark_token"), %q(require "./strict_benchmark_token"))
+        .sub(%q(require "./benchmark_token"), %q(require "../benchmarks/benchmark_token"))
       File.write(driver, contract)
       output = IO::Memory.new
       error = IO::Memory.new
@@ -76,7 +84,7 @@ require "../spec_helper"
     end
 
     it "preserves custom errors, typed payloads, and byte spans" do
-      Logos::Spec::PrebuiltExamples.check("custom_error", "generated_token_with_error",
+      Logos::Spec::PrebuiltExamples.check("custom_error", "Token", "generated_token_with_error",
         ["Hello 255 256 Jéàrome"],
         "Word: Hello\nInteger: 255\nError: InvalidInteger(overflow error) (slice=256)\nWord: J\nError: NonAsciiCharacter(é) (slice=é)\nError: NonAsciiCharacter(à) (slice=à)\nWord: rome\n",
         <<-'CRYSTAL'
@@ -93,7 +101,7 @@ require "../spec_helper"
       path = File.join(Logos::Spec::PrebuiltExamples::ROOT, "temp", "prebuilt-extras-input.txt")
       FileUtils.mkdir_p(File.dirname(path))
       File.write(path, "one two\né three\n")
-      Logos::Spec::PrebuiltExamples.check("extras", "generated_token", [path],
+      Logos::Spec::PrebuiltExamples.check("extras", "Token", "generated_token", [path],
         "Word 'one' found at (1, 0)\nWord 'two' found at (1, 4)\nWord 'é' found at (2, 0)\nWord 'three' found at (2, 3)\n",
         <<-'CRYSTAL'
         lexer = Token.lexer("one\né\n")
@@ -110,7 +118,7 @@ require "../spec_helper"
       path = File.join(Logos::Spec::PrebuiltExamples::ROOT, "temp", "prebuilt-brainfuck-input.bf")
       FileUtils.mkdir_p(File.dirname(path))
       File.write(path, "comment\n++++++++[>++++++++<-]>+.")
-      Logos::Spec::PrebuiltExamples.check("brainfuck", "generated_op", [path], "A",
+      Logos::Spec::PrebuiltExamples.check("brainfuck", "Op", "generated_op", [path], "A",
         <<-'CRYSTAL'
         stream = Op.lexer("x+\nλ>-").spanned.to_a
         raise "wrong operator spans" unless stream.map(&.[1]) == [1...2, 5...6, 6...7]

@@ -478,6 +478,39 @@ module Logos
         {% end %}
       end
 
+      private def self.prebuild_rules : Array(::Hash(::String, ::String))
+        [
+          {% for item, index in all_defs %}
+            {
+              "kind" => {{ index < token_defs.size ? "token" : "regex" }},
+              "pattern" => {{ item[:pattern] }},
+              "unicode" => {{ (item[:bytes].nil? ? utf8_flag : !item[:bytes]).stringify }},
+              "ignore_case" => ({{ item[:ignore_case] }}).to_s,
+              "ignore_ascii_case" => ({{ item[:ignore_ascii_case] }}).to_s,
+              "allow_greedy" => ({{ item[:allow_greedy] }}).to_s,
+              "skip" => {{ item[:skip].stringify }},
+              "variant" => {{ item[:variant].nil? ? "" : item[:variant].stringify }},
+              "declared_priority" => ({{ item[:priority] }}).to_s,
+            },
+          {% end %}
+        ] of ::Hash(::String, ::String)
+      end
+
+      private def self.prebuild_subpatterns : Array({::String, ::String, ::Bool})
+        {% if subpatterns.empty? %}
+          [] of {::String, ::String, ::Bool}
+        {% else %}
+          subpatterns
+        {% end %}
+      end
+
+      # Export a strict manifest for logos-codegen without compiling a matcher
+      # or running callbacks. Use the same declaration in the application.
+      def self.write_prebuild_manifest(io : ::IO, *, resolve_priorities : ::Bool = false) : Nil
+        ::Logos::PrebuildManifest.write(io, "{{ name }}", {{ utf8_flag }},
+          prebuild_rules, prebuild_subpatterns, resolve_priorities)
+      end
+
       @@validated_generated_binding = nil.as(::Logos::GeneratedBinding?)
 
       private def self.validate_generated_binding : Nil
@@ -485,26 +518,7 @@ module Logos
         return unless binding
         return if binding.same?(@@validated_generated_binding)
 
-        rules = [
-          {% for item in all_defs %}
-            {
-              "kind" => {{ token_defs.includes?(item) ? "token" : "regex" }},
-              "pattern" => {{ item[:pattern] }},
-              "unicode" => {{ (item[:bytes].nil? ? utf8_flag : !item[:bytes]).stringify }},
-              "ignore_case" => {{ item[:ignore_case].stringify }},
-              "ignore_ascii_case" => {{ item[:ignore_ascii_case].stringify }},
-              "allow_greedy" => {{ item[:allow_greedy].stringify }},
-              "skip" => {{ item[:skip].stringify }},
-              "variant" => {{ item[:variant].nil? ? "" : item[:variant].stringify }},
-            },
-          {% end %}
-        ] of ::Hash(::String, ::String)
-        definitions = [
-          {% for sub in subpatterns %}
-            { {{ sub[:name] }}, {{ sub[:pattern] }}, {{ sub[:bytes].nil? ? utf8_flag : !sub[:bytes] }} },
-          {% end %}
-        ] of {::String, ::String, ::Bool}
-        binding.validate("{{ name }}", {{ utf8_flag }}, rules, definitions)
+        binding.validate("{{ name }}", {{ utf8_flag }}, prebuild_rules, prebuild_subpatterns)
         @@validated_generated_binding = binding
       end
 

@@ -2,27 +2,24 @@
 
 ## Where we are
 
-- **Current focus** — Phase 10 is complete. Typed callback declarations
-  keep the payload type by the rule and generate variant-checked accessors
-  on the token enum. Runtime and strict prebuilds preserve saved results.
+- **Current focus** — Phase 11 is complete. DSL declarations export strict
+  manifests for the three shipped examples and benchmark. An installed
+  consumer verifies regeneration and stale matcher rejection after a rule edit.
 - **Next up**
-  1. **Phase 11. Declaration-driven prebuilds.** Export strict manifest
-     metadata from lexer definitions and exercise the installed generator.
-     Start with the edit-and-regenerate red check in
-     [the lexer authoring roadmap](lexer_ergonomics.md).
-  2. **Phase 8. Generated matcher performance baseline.** This independent
-     measurement phase remains open. Compare strict release builds with
-     pinned Rust Logos and record the results in
-     [the performance ledger](performance_experiments.md).
+  1. **Phase 8. Generated matcher performance baseline.** Verify the strict
+     release token and span contract first. Compare the same workload and
+     rules with pinned Rust Logos, then record repeated measurements in
+     [the performance ledger](performance_experiments.md) before selecting
+     an optimization.
 - **Status by area** — All 269 source and 249 test-tree items retain their
   dispositions. All shipped strict manifests and the package entry point
   have executable coverage. Documentation describes lazy runtime matcher
   construction, source prebuild, and diagnostic timing.
-- **Gates** — Format, lint, and 304 specs pass. `make test-prebuilt` passes
-  17 specs. `make test-package` passes three package specs, including four
+- **Gates** — Format, lint, and 305 specs pass. `make test-prebuilt` passes
+  17 specs. `make test-package` passes four package specs, including four
   shipped contracts executed through the built CLI. The cached frozen install
   keeps the lockfile unchanged. Markdown and all inventory drift checks pass.
-- **Last feature commit** — `feat: declare typed lexer callback payloads`.
+- **Last feature commit** — `feat: export strict prebuild manifests from lexer declarations`.
 
 ## Scope and verification
 
@@ -166,7 +163,8 @@ their behavior.
 
 ### Phase 6. Shipped prebuild manifest qualification
 
-**Complete.** All four shipped manifests enable strict binding. Their
+**Complete.** All four shipped manifests enabled strict binding here. Phase 11
+later replaced the committed JSON files with declaration exports. Their
 patterns match the evaluated macro strings, every rule declares its variant
 and skip action, and brainfuck's fallback carries its explicit zero priority.
 The generated benchmark retains its resolved priority policy.
@@ -200,8 +198,8 @@ the strict example and benchmark contracts with the pinned dependencies.
 
 ### Phase 8. Generated matcher performance baseline
 
-**Planned, independent of lexer authoring.** Refresh the historical measurements after the parity fixes and
-strict binding qualification.
+**Next.** Refresh the historical measurements using the exported strict
+manifest and record the measured baseline before selecting an optimization.
 
 - Verify the benchmark token and span contract in release builds.
 - Compare the same source and rules on Crystal and pinned Rust Logos using
@@ -214,7 +212,7 @@ performance target without leaving an unmeasured experiment active.
 
 ### Phases 9–11. Lexer authoring ergonomics
 
-Phases 9 and 10 are complete. Phase 11 is the next authoring feature.
+Phases 9–11 are complete.
 [The lexer authoring roadmap](lexer_ergonomics.md) records the vendor
 references, red–green sequences, and completion criteria.
 

@@ -28,7 +28,7 @@ test-package:
 
 # Generate an ordinary Crystal matcher from a JSON manifest before compiling
 # an application. Example:
-#   make prebuild MANIFEST=examples/extras.logos.json OUT=temp/generated_token.cr
+#   make prebuild MANIFEST=temp/extras.json OUT=temp/generated_token.cr
 prebuild:
 	@test -n "$(MANIFEST)" || (echo "MANIFEST is required"; exit 1)
 	@test -n "$(OUT)" || (echo "OUT is required"; exit 1)

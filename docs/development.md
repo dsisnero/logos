@@ -62,9 +62,9 @@ Generated matchers scan the original source bytes at the lexer's current byte
 offset. They do not create a new `String` for the remaining source on every
 token, which is important for large inputs with many short tokens.
 
-Create a JSON manifest next to the program. `name` must be the enum name, and
-the patterns must be in the same order Logos uses: all `token`/`skip` literals
-first, followed by all `regex`/`skip_regex` patterns.
+A hand-authored manifest uses the enum name as `name` and follows the
+matcher rule order. List `token` and `skip_token` literals first, followed by
+`regex` and `skip_regex` patterns.
 
 ```json
 {
@@ -78,25 +78,33 @@ first, followed by all `regex`/`skip_regex` patterns.
 }
 ```
 
-Generate the file into `temp/`, which is intentionally disposable:
+Export a strict manifest from a declaration-only Crystal source file. Keep
+argument parsing and application work in a separate entry point. This
+workflow supports `Logos.define`. The annotation API builds runtime matchers.
 
 ```bash
-make prebuild MANIFEST=examples/extras.logos.json OUT=temp/generated_token.cr
+mkdir -p temp
+crystal eval '
+  require "./examples/lexers/extras"
+  Token.write_prebuild_manifest(STDOUT)
+' > temp/extras.json
+make prebuild MANIFEST=temp/extras.json OUT=temp/generated_token.cr
 ```
 
-Require the generated file before the matching `Logos.define` call, guarded by
-a compile-time flag so normal development builds retain the runtime fallback:
+The exporter evaluates the declaration's metadata and leaves callbacks in
+the consumer. It includes the optional variant, skip action, encoding and
+declared priority for each rule. Invalid UTF-8 bytes are emitted as arrays.
+The generator also accepts hand-authored manifests.
+
+Require the same declaration and guard the generated file with a compile-time
+flag so normal development builds retain the runtime fallback:
 
 ```crystal
-require "../src/logos"
+require "./lexers/extras"
 
 {% if flag?(:precompiled) %}
   require "generated_token"
 {% end %}
-
-Logos.define Token do
-  # Definitions mirrored by the manifest.
-end
 ```
 
 Build the application with `-Dprecompiled` and include `temp/` on Crystal's
@@ -145,7 +153,8 @@ Strict validation compares decoded pattern text exactly. A regex spelled
 as the macro's evaluated string. Validation is opt-in so existing manifests
 and manually registered matchers retain their current behavior. The
 `emit_matcher` API exposes the same option as `validate_binding: true`.
-A binding replacement is checked on the next lexing operation.
+A binding replacement is checked on the next lexing operation. Exported
+manifests also detect changes to declared priorities.
 
 Run `make test-prebuilt` to compile the shipped manifests with strict binding
 and compare generated and runtime behavior. The gate checks the three example
@@ -154,10 +163,11 @@ payloads and spans, word positions and newline extras, interpreter output,
 and skipped non-operator characters. Scratch drivers and executables are
 written under `temp/`.
 
-All four shipped manifests enable strict binding and declare the variant and
-skip action for every rule. Their pattern strings use the evaluated Crystal
-text, including control characters represented through JSON escapes. The
-benchmark retains its resolved priorities.
+The four shipped prebuilds export their strict manifests from the examples
+and benchmark declarations. The benchmark passes `resolve_priorities: true`
+to the exporter so code generation selects winners from the DSL's explicit
+and inferred priorities. Existing manifests can still supply per-rule
+`resolved_priority` values.
 
 Run the focused generator specs with
 `crystal spec -Dcodegen_library spec/logos/codegen_priority_spec.cr`. The flag
@@ -174,9 +184,10 @@ sources.
 
 A separate consumer installs Logos by path and executes the Quick Start
 and annotation examples extracted from the README. The package's built
-CLI then generates all four strict manifests for the shipped-program
-contracts. This gate requires the locked repositories to be present in the
-local Shards cache. Its generated files and compiler cache stay under `temp/`.
+CLI then builds matchers from all four exported manifests. A separate
+contract edits a consumer rule, checks the stale matcher error, and
+regenerates. This gate requires the locked repositories in the local Shards
+cache. Its generated files and compiler cache stay under `temp/`.
 
 ### Porting from Rust
 

@@ -6,26 +6,11 @@
 # Example:
 #   crystal run examples/brainfuck.cr -- examples/hello_world.bf
 
-require "../src/logos"
+require "./lexers/brainfuck"
 
 {% if flag?(:precompiled) %}
   require "generated_op"
 {% end %}
-
-# Each Op variant is a single character.
-Logos.define Op do
-  # Skip all non-op characters (lowest priority).
-  skip_regex ".|\n", :Skip, priority: 0
-
-  token ">", :IncPointer
-  token "<", :DecPointer
-  token "+", :IncData
-  token "-", :DecData
-  token ".", :OutData
-  token ",", :InpData
-  token "[", :CondJumpForward
-  token "]", :CondJumpBackward
-end
 
 private def print_byte(byte : UInt8)
   print byte.chr

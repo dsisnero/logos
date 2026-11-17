@@ -138,7 +138,9 @@ installed shard even when a sibling checkout is present.
 
 ```sh
 mkdir -p temp/shard-v021
-crystal run src/logos_codegen.cr -- --manifest examples/extras.logos.json \
+crystal eval 'require "./examples/lexers/extras"; Token.write_prebuild_manifest(STDOUT)' \
+  > temp/shard-v021/extras.json
+crystal run src/logos_codegen.cr -- --manifest temp/shard-v021/extras.json \
   --out temp/shard-v021/generated_token.cr
 printf 'one two\né λ three 🎉\n' > temp/shard-v021/extras-input.txt
 crystal run examples/extras.cr -- temp/shard-v021/extras-input.txt \

@@ -75,6 +75,58 @@ require "../spec_helper"
       Logos::Spec::Package.command("crystal", ["run", "annotations.cr"], consumer).should be_empty
     end
 
+    it "regenerates strict matchers from a consumer declaration after a rule edit" do
+      package = Logos::Spec::Package
+      directory = package.directory
+      consumer = File.join(directory, "consumer")
+      declaration = File.join(consumer, "export_token.cr")
+      source = File.read(File.join(directory, "spec/fixtures/prebuild_export_token.cr"))
+      File.write(declaration, "require \"logos\"\n" + source)
+      File.write(File.join(consumer, "stream.cr"), <<-'CRYSTAL')
+        require "./export_token"
+        raise "wrong matcher mode" unless ExportToken.precompiled_dfa? == ARGV.includes?("--generated")
+        lexer = ExportToken.lexer("let 42 ! 7")
+        lexer.spanned.each do |result, span|
+          label = if result.matches?(ExportToken::Integer)
+                    ExportToken.integer_value!(result)
+                  elsif result.ok?
+                    result.unwrap
+                  else
+                    "error"
+                  end
+          puts "#{label}@#{span}"
+        end
+        raise "expected EOF" unless lexer.next.is_a?(Iterator::Stop)
+        CRYSTAL
+      File.write(File.join(consumer, "precompiled_stream.cr"), <<-'CRYSTAL')
+        require "./export_token"
+        require "./generated"
+        require "./stream"
+        CRYSTAL
+      export = ["eval", %q(require "./export_token"; ExportToken.write_prebuild_manifest(STDOUT))]
+      generate = ["--manifest", "export.json", "--out", "generated.cr"]
+      runtime = ["run", "stream.cr"]
+      precompiled = ["run", "precompiled_stream.cr", "--", "--generated"]
+      binary = File.join(directory, "bin/logos-codegen")
+      expected = "Let@0...3\n42@4...6\nerror@7...8\n7@9...10\n"
+
+      File.write(File.join(consumer, "export.json"), package.command("crystal", export, consumer))
+      package.command(binary, generate, consumer)
+      package.command("crystal", runtime, consumer).should eq(expected)
+      package.command("crystal", precompiled, consumer).should eq(expected)
+
+      File.write(declaration, File.read(declaration).sub("(?&digit)+", "(?&digit){2}"))
+      expect_raises(Exception, "differs at rule 2 pattern") do
+        package.command("crystal", precompiled, consumer)
+      end
+
+      File.write(File.join(consumer, "export.json"), package.command("crystal", export, consumer))
+      package.command(binary, generate, consumer)
+      edited = "Let@0...3\n42@4...6\nerror@7...8\nerror@9...10\n"
+      package.command("crystal", runtime, consumer).should eq(edited)
+      package.command("crystal", precompiled, consumer).should eq(edited)
+    end
+
     it "qualifies shipped contracts through the built CLI and isolated dependencies" do
       directory = Logos::Spec::Package.directory
       binary = File.join(directory, "bin/logos-codegen")

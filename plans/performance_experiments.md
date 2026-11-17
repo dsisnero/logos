@@ -16,7 +16,13 @@ into `main` before the next experiment starts.
 
 - Build with `crystal build --release -Dprecompiled benchmarks/lexer_compare.cr`.
 - Generate the matcher with `make prebuild` from
-  `benchmarks/benchmark_token.logos.json`.
+  an exported strict manifest with resolved priorities:
+
+  ```sh
+  mkdir -p temp
+  crystal eval 'require "./benchmarks/benchmark_token"; BenchmarkToken.write_prebuild_manifest(STDOUT, resolve_priorities: true)' > temp/benchmark_token.json
+  make prebuild MANIFEST=temp/benchmark_token.json OUT=temp/generated_benchmark_token.cr
+  ```
 - Time with `hyperfine`, using `LOGOS_BENCH_ROUNDS=500` to amortize process
   startup and reduce scheduler noise.
 - Run generated-matcher and affected priority/Unicode specs before measuring.

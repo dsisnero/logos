@@ -1,23 +1,7 @@
-require "../src/logos"
+require "./benchmark_token"
 require "../temp/generated_benchmark_token"
 
-Logos.define BenchmarkToken do
-  skip_regex "[ \t\r\n]+", :Whitespace
-  token "let", :Let
-  token "=", :Equals
-  token ";", :Semicolon
-  regex "[A-Za-z_][A-Za-z0-9_]*", :Identifier
-  regex "[0-9]+", :Integer
-end
-
-Logos.define OracleToken do
-  skip_regex "[ \t\r\n]+", :Whitespace
-  token "let", :Let
-  token "=", :Equals
-  token ";", :Semicolon
-  regex "[A-Za-z_][A-Za-z0-9_]*", :Identifier
-  regex "[0-9]+", :Integer
-end
+define_benchmark_token(OracleToken)
 
 raise "strict benchmark binding missing" unless Logos.generated_matcher_binding?("BenchmarkToken")
 
