@@ -253,7 +253,7 @@ module Logos::Spec::Callbacks
       regex "a{2,5}", :TwoToFiveA
       regex "a{2}", :TwoA
       regex "a{2,}", :TwoOrMoreA
-      regex "a{0,3}", :UpToThreeA
+      regex "ba{0,3}", :UpToThreeA
     end
   end
 
@@ -646,14 +646,14 @@ module Logos::Spec::Callbacks
       lexer.slice.should eq("aaaaaa")
     end
 
-    it "matches a{0,3} with 1 a" do
-      lexer = Logos::Lexer(RepetitionPatterns::Token, String, Logos::NoExtras, Nil).new("a")
-      result = lexer.next
-      result.should_not be_nil
-      result = result.as(Logos::Result(RepetitionPatterns::Token, Nil))
-      result.ok?.should be_true
-      result.unwrap.should eq(RepetitionPatterns::Token::UpToThreeA)
-      lexer.slice.should eq("a")
+    it "matches zero through three a's after the required prefix" do
+      type = RepetitionPatterns::Token
+      ["b", "ba", "baa", "baaa"].each do |source|
+        lexer = type.lexer(source)
+        lexer.spanned.next.should eq({Logos::Result(RepetitionPatterns::Token, Nil).ok(RepetitionPatterns::Token::UpToThreeA), 0...source.bytesize})
+        lexer.slice.should eq(source)
+        lexer.next.should eq(Iterator::Stop::INSTANCE)
+      end
     end
   end
 end

@@ -43,9 +43,11 @@ require "../spec_helper"
       dfa.find_longest_match_at_start(String.new(Bytes[0xFF, 0x41])).should eq({2, [Regex::Automata::PatternID.new(2)]})
     end
 
-    it "preserves failed prefixes in emitted text and byte matchers" do
+    it "preserves failed prefixes and input boundaries in emitted matchers" do
       text = JSON.parse(%([{"kind":"token","pattern":"!"},{"kind":"token","pattern":"aéx"},{"kind":"token","pattern":"abc"}])).as_a
       bytes = JSON.parse(%([{"kind":"token","pattern":"!","resolved_priority":2},{"kind":"token","pattern":"abc","resolved_priority":6}])).as_a
+      text_end = JSON.parse(%([{"kind":"token","pattern":"b"},{"kind":"regex","pattern":"a$"}])).as_a
+      line_end = JSON.parse(%([{"kind":"token","pattern":"\\n","resolved_priority":2},{"kind":"regex","pattern":"(?m)a$","resolved_priority":2}])).as_a
       root = File.expand_path("../..", __DIR__)
       directory = File.join(root, "temp")
       FileUtils.mkdir_p(directory)
@@ -55,6 +57,8 @@ require "../spec_helper"
           io.puts %q(require "../src/logos")
           io.puts Logos::Codegen.emit_matcher(text, {} of String => String, true, "TextPrefixToken")
           io.puts Logos::Codegen.emit_matcher(bytes, {} of String => String, false, "BytePrefixToken")
+          io.puts Logos::Codegen.emit_matcher(text_end, {} of String => String, true, "GeneratedTextEndToken")
+          io.puts Logos::Codegen.emit_matcher(line_end, {} of String => String, true, "GeneratedLineEndToken")
           io << File.read(File.join(root, "spec/fixtures/generated_error_prefix.cr"))
         end
         error = IO::Memory.new
@@ -74,6 +78,16 @@ require "../spec_helper"
       expect_raises(Exception, /unbounded greedy dot/) { Logos::Codegen.emit_matcher(greedy, subpatterns, true, "Greedy") }
       expect_raises(Exception, /can match the empty string/) { Logos::Codegen.emit_matcher(empty, subpatterns, true, "Empty") }
       Logos::Codegen.emit_matcher(allowed, subpatterns, true, "Allowed").should contain("Generated_Allowed")
+    end
+
+    it "rejects zero-width rules and context-dependent starts in manifests" do
+      subpatterns = {} of String => String
+      [{"regex", "a?"}, {"token", ""}].each do |kind, pattern|
+        patterns = JSON.parse([{kind: kind, pattern: pattern}].to_json).as_a
+        expect_raises(Exception, /can match the empty string/) { Logos::Codegen.compile_dfa(patterns, subpatterns, true) }
+      end
+      patterns = JSON.parse(%([{"kind":"regex","pattern":"^a"}])).as_a
+      expect_raises(Exception, /missing a universal start state/) { Logos::Codegen.compile_dfa(patterns, subpatterns, true) }
     end
 
     it "preserves first-match ties and rejects explicit ambiguity" do

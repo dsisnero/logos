@@ -68,3 +68,20 @@ are in [diagnostics](../../spec/logos/diagnostics_spec.cr),
 [matcher priority](../../spec/logos/matcher_priority_spec.cr) specs.
 The prebuild check compared the same skip stream with the runtime matcher
 and verified that a byte manifest matches `0xff` at `0...1`.
+
+The compiler and graph audit compared the pinned `logos-codegen` parser,
+leaf, graph, and generator sources with the Crystal macro and prebuild
+implementations. Crystal receives parsed macro AST nodes, builds a shard
+DFA from HIR, and emits byte-class rows and acceptance tables. The Rust
+`Graph` builds a separate representation with back edges, early acceptance,
+state rewrites, and named generated control flow. Its Rust token-stream
+handling and DOT and Mermaid exports have intentional difference rows.
+
+[Graph diagnostics](../../spec/logos/diagnostics_spec.cr) and the
+[generated matcher fixture](../../spec/fixtures/generated_error_prefix.cr)
+check EOF and newline context, rejection of nullable rules, and the
+universal-start constraint. The same boundary cases ran against the pinned
+Rust crate. The other supporting fixture rows point to their parent Crystal
+behavior specs, including the alternate compile-only rules from issues 185
+and 259. The remaining distinction for resolved prebuild priority metadata
+is tracked in [the parity plan](../parity.md).

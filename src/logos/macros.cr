@@ -198,8 +198,7 @@ macro logos_derive(type)
     private def self.prefix_matches_exactly?(vm : ::Regex::Automata::NFA::PikeVM, input : ::String, end_pos : Int32) : Bool
       return false if end_pos <= 0 || end_pos > input.bytesize
 
-      prefix = input.byte_slice(0, end_pos)
-      search = ::Regex::Automata::Input.new(prefix)
+      search = ::Regex::Automata::Input.new(input).span(0...end_pos)
         .anchored(::Regex::Automata::Anchored::Yes)
       cache = vm.create_cache
       vm.find(cache, search).try { |match| match.start == 0 && match.end == end_pos } || false
@@ -208,8 +207,7 @@ macro logos_derive(type)
     private def self.prefix_matches_exactly?(vm : ::Regex::Automata::NFA::PikeVM, slice : ::Bytes, end_pos : Int32) : Bool
       return false if end_pos <= 0 || end_pos > slice.size
 
-      prefix = slice[0, end_pos]
-      input = ::Regex::Automata::Input.new(prefix)
+      input = ::Regex::Automata::Input.new(slice).span(0...end_pos)
         .anchored(::Regex::Automata::Anchored::Yes)
       cache = vm.create_cache
       vm.find(cache, input).try { |match| match.start == 0 && match.end == end_pos } || false
@@ -319,7 +317,7 @@ macro logos_derive(type)
         {% if utf8_flag %}
           ::Logos::Pattern.validate_utf8(hir, pattern_source)
         {% end %}
-        ::Logos::Pattern.validate_rule(hir, pattern_source, allow_greedy: {{ item[:allow_greedy] }}, subpattern: false)
+        ::Logos::Pattern.validate_rule(hir, pattern_source, allow_greedy: {{ item[:allow_greedy] }})
         hirs << hir
         pattern_to_variant << {{ item[:variant] }}
         pattern_is_skip << {{ item[:skip] }}
@@ -340,11 +338,10 @@ macro logos_derive(type)
         {% fold_case = item[:ignore_case] || item[:ignore_ascii_case] %}
         pattern_source = {{ pattern_node }}
         hir = ::Logos::Pattern.regex_hir(pattern_source, unicode: {{ unicode }}, ignore_case: {{ fold_case }}{% if subpatterns.size > 0 %}, subpatterns: expanded_subpatterns{% end %})
-        pattern_uses_subpattern = pattern_source.includes?("(?&")
         {% if utf8_flag %}
           ::Logos::Pattern.validate_utf8(hir, pattern_source)
         {% end %}
-        ::Logos::Pattern.validate_rule(hir, pattern_source, allow_greedy: {{ item[:allow_greedy] }}, subpattern: pattern_uses_subpattern)
+        ::Logos::Pattern.validate_rule(hir, pattern_source, allow_greedy: {{ item[:allow_greedy] }})
         hirs << hir
         pattern_to_variant << {% if item[:variant] %} {{ item[:variant] }} {% else %} skip_value {% end %}
         pattern_is_skip << {{ item[:skip] }}
@@ -376,6 +373,7 @@ macro logos_derive(type)
         .starts_for_each_pattern(false)
         .specialize_start_states(false)
       dfa = ::Regex::Automata::DFA::Builder.from_nfa(nfa, dfa_config).build
+      ::Logos::Pattern.universal_start(dfa)
       ::Logos::Pattern.validate_priorities(dfa, pattern_priority, pattern_priority_explicit, pattern_text, pattern_variant_name)
         hirs.each do |hir|
           pattern_nfa = ::Regex::Automata::HirCompiler

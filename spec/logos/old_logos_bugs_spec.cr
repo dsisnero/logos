@@ -196,6 +196,17 @@ module Logos::Spec::OldLogosBugs
   # issue_185: https://github.com/maciejhirsz/logos/issues/185
   # block comment regex
   module Issue185
+    Logos.define AlternateToken do
+      regex %q(/\*([^\*]*\*+[^\*/])*([^\*]*\*+|[^\*])*\*/), :BlockComment
+    end
+
+    it "initializes the alternate block-comment rule from issue 185" do
+      lexer = AlternateToken.lexer("/**/")
+      lexer.spanned.next.should eq({Logos::Result(AlternateToken, Nil).ok(AlternateToken::BlockComment), 0...4})
+      lexer.slice.should eq("/**/")
+      lexer.next.should eq(Iterator::Stop::INSTANCE)
+    end
+
     Logos.define Token do
       regex "/\\*([^*]|\\**[^*/])*\\*+/", :BlockComment
     end
@@ -446,6 +457,17 @@ module Logos::Spec::OldLogosBugs
   # issue_259: https://github.com/maciejhirsz/logos/issues/259
   # string regex
   module Issue259
+    Logos.define VaridToken do
+      regex "(A+.)*A+", :Varid
+    end
+
+    it "initializes the repeated wildcard rule from issue 259" do
+      lexer = VaridToken.lexer("AA.A")
+      lexer.spanned.next.should eq({Logos::Result(VaridToken, Nil).ok(VaridToken::Varid), 0...4})
+      lexer.slice.should eq("AA.A")
+      lexer.next.should eq(Iterator::Stop::INSTANCE)
+    end
+
     Logos.define Token do
       regex "\"(?:[^\"\\\\]*(?:\\\\\")?)*\"", :String
     end

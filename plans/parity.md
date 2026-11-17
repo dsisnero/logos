@@ -2,29 +2,23 @@
 
 ## Where we are
 
-- **Current focus** — [Phase 2, Logos parity inventory and coverage](#phase-2-logos-parity-inventory-and-coverage).
-  The executable upstream fixtures have dispositions. Compiler and graph
-  inventory signoff is next.
+- **Current focus** — [Phase 2, Logos parity inventory and coverage](#phase-2-logos-parity-inventory-and-coverage)
+  is signed off for the pinned release and recorded Crystal differences.
 - **Next up**
-  1. **Compiler and graph inventory signoff.** Review the remaining parser,
-     graph, and generator contracts against the Crystal backend. Map
-     compiled-table equivalents, document structural differences, and
-     resolve public behavior gaps with targeted failing specs. Close the
-     supporting fixture dispositions and rerun the inventory and full
-     Logos gates before marking Phase 2 complete.
-- **Status by area** — The test ledger covers all 122 upstream test functions.
-  It records 117 ports, four intentional differences, and one exclusion.
-  The last fixture review covers Unicode string payloads, cloned cursors,
-  CSS tokenization, crate qualification, and the derive UI case map.
-  [The Logos inventory](inventory/README.md) tracks outstanding source and
-  supporting fixture reviews.
-- **Gates** — Format, lint, and 293 specs pass with the tracked
-  `regex-automata` 0.2.1 snapshot. Flagged codegen specs, the compile check,
-  Markdown check, and all three inventory drift checks pass. The six
-  vendored lexer tests and a malformed-escape characterization pass. All
-  seven vendored UI files were checked individually against the pinned
-  crate, with the successful build and expected diagnostic messages verified.
-- **Last feature commit** — `test: finish lexer and derive fixture parity`.
+  1. **Prebuild rule identity and priority parity.** Carry enough identity and
+     explicit priority metadata to make prebuild and runtime diagnose the same
+     declared rule conflicts. Cover generic and resolved manifests, same-variant
+     ties, shadowed ties, and backward compatibility with existing manifests.
+- **Status by area** — All 269 source items and 249 test-tree items have
+  dispositions in the [Logos inventory](inventory/README.md). Runtime and
+  prebuild reject zero-width rules and context-dependent starts. End-of-text
+  and end-of-line assertions use the actual next byte or EOF.
+- **Gates** — Format, lint, and 299 specs pass with the tracked
+  `regex-automata` 0.2.1 snapshot. All eight flagged codegen specs, the compile
+  check, Markdown check, and three inventory drift checks pass. Vendored
+  Rust confirms the assertion spans, zero-width and universal-start
+  diagnostics, and two compile-only legacy rule characterizations.
+- **Last feature commit** — `fix: match Logos compiler graph contracts`.
 
 ## Scope and verification
 
@@ -74,7 +68,7 @@ recorded shard revision.
 
 ### Phase 2. Logos parity inventory and coverage
 
-**In progress.** The ledgers cover 269 discovered source items, 122 Rust
+**Complete.** The ledgers cover 269 discovered source items, 122 Rust
 test functions, and 127 supporting or UI fixture items from the test tree.
 Checked source ranges, the non-UTF-8 stream, callback dispatch, lexer
 navigation, and the seven derive UI fixtures have evidence-backed
@@ -91,8 +85,9 @@ custom-error streams verify callback payloads and cumulative extras. The final
 lexer fixtures verify exact decoded Unicode payloads, five clone cursors,
 CSS tokens, and nested Logos annotation qualification. The
 [derive UI case map](../docs/development.md#rust-derive-ui-fixture-coverage)
-links each Rust case to its Crystal disposition. See the ordered work in
-**Where we are** and the
+links each Rust case to its Crystal disposition. The final compiler audit
+records Crystal's dense-table implementation, validates graph diagnostics,
+and verifies delayed acceptance on the real next transition. See the
 [inventory verification instructions](inventory/README.md).
 
 - Use the generated source and test IDs for pinned Logos runtime, derive and
@@ -134,6 +129,20 @@ local shard override. The generated matcher checks pass on a verified
 toolchain, with any remaining compiler limitation documented against its
 reproduction.
 
+### Phase 4. Prebuild rule identity and priority parity
+
+**Next.** Generic manifests infer priorities and let the lexer resolve ties.
+Resolved manifests can select a winner during generation, where the manifest
+may lack the token variant identity known to the runtime macro.
+
+- Verify diagnostics and winners for explicit ties, duplicate variants,
+  tied skip rules, and shadowed candidates in both manifest forms.
+- Preserve compatibility with existing manifest fields and generated matcher
+  registrations while carrying enough metadata to reproduce runtime checks.
+
+**Exit criteria.** Runtime and emitted matchers agree for the specified rule
+metadata, with legacy manifest behavior covered by executable specs.
+
 ## Completed feature phases
 
 - **Core lexer semantics and regression coverage.** Ported the legacy Logos
@@ -169,7 +178,14 @@ reproduction.
   derive. Crystal reports ambiguous explicit rules and duplicate winners
   for the same variant when initializing a runtime matcher. Its legacy
   first-match fallback remains for different variants when fewer than two
-  winners declare their priorities.
+  winners declare their priorities. Resolved prebuild manifests can choose a
+  winner without the variant identity available to the runtime macro.
+- **Source types:** Generated Crystal constructors select `String` or `Bytes`.
+  Rust exposes a generic associated `Source` and borrowed slices.
+- **Graph code generation:** Rust emits per-state functions or state-machine
+  arms and offers DOT and Mermaid exports. Crystal prebuild emits dense
+  byte-class tables and one scanner. Crystal initialization or prebuild
+  reports matcher errors as exceptions.
 - **Pattern encoding:** Rust uses each literal's type. Crystal defaults each
   pattern and subpattern to the lexer's `utf8` mode for compatibility. Set
   `bytes: true` for byte regex syntax or `bytes: false` for Unicode syntax in

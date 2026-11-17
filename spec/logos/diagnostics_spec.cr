@@ -148,3 +148,58 @@ describe "logos diagnostics" do
     end
   end
 end
+
+module Logos::Spec::Diagnostics::GraphContracts
+  Logos.define Optional do
+    regex "a?", :Maybe
+  end
+
+  @[Logos::Token(:Empty, "")]
+  enum EmptyLiteral
+    Empty
+  end
+  logos_derive(EmptyLiteral)
+
+  Logos.define StartsAtText do
+    regex "^a", :A
+  end
+
+  Logos.define TextEnd do
+    regex "a$", :Final
+    token "b", :B
+  end
+
+  @[Logos::Regex(:Final, "(?m)a$")]
+  @[Logos::Token(:Newline, "\n")]
+  enum LineEnd
+    Final
+    Newline
+  end
+  logos_derive(LineEnd)
+
+  describe "compiler graph contracts" do
+    it "rejects optional rules and empty literals in both macro APIs" do
+      expect_raises(Exception, /can match the empty string/) { Optional.lexer("a").next }
+      expect_raises(Exception, /can match the empty string/) { EmptyLiteral.lexer("a").next }
+    end
+
+    it "rejects a rule requiring start-of-text context" do
+      expect_raises(Exception, /missing a universal start state/) { StartsAtText.lexer("a").next }
+    end
+
+    it "matches a text-end rule only at EOF" do
+      result_type = Logos::Result(TextEnd, Nil)
+      TextEnd.lexer("ab").spanned.to_a.should eq([{result_type.error(nil), 0...1}, {result_type.ok(TextEnd::B), 1...2}])
+      TextEnd.lexer("ba").spanned.to_a.should eq([{result_type.ok(TextEnd::B), 0...1}, {result_type.ok(TextEnd::Final), 1...2}])
+    end
+
+    it "uses a newline as line-end context without consuming it" do
+      result_type = Logos::Result(LineEnd, Nil)
+      LineEnd.lexer("a\na").spanned.to_a.should eq([
+        {result_type.ok(LineEnd::Final), 0...1},
+        {result_type.ok(LineEnd::Newline), 1...2},
+        {result_type.ok(LineEnd::Final), 2...3},
+      ])
+    end
+  end
+end

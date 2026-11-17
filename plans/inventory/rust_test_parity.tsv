@@ -1,5 +1,5 @@
 # source_test_id	status	crystal_refs	notes
-tests/tests/advanced.rs::class::Token	in_progress	-	Discovered; contract review pending.
+tests/tests/advanced.rs::class::Token	ported	spec/logos/advanced_spec.cr	Advanced lexer rules cover the grouped subpatterns, dates, strings, and Unicode tokens.
 tests/tests/advanced.rs::test::advanced::cyrillic	ported	spec/logos/advanced_spec.cr	Exact upstream Cyrillic slices and UTF-8 byte spans.
 tests/tests/advanced.rs::test::advanced::float	ported	spec/logos/advanced_spec.cr	Matches the complete decimal and exponent fixture with slices and spans.
 tests/tests/advanced.rs::test::advanced::hex	ported	spec/logos/advanced_spec.cr	Matches the upstream incomplete prefixes, errors, and hexadecimal literals with spans.
@@ -14,17 +14,17 @@ tests/tests/advanced.rs::test::advanced::subquotes	ported	spec/logos/advanced_sp
 tests/tests/advanced.rs::test::advanced::what_the_heck	ported	spec/logos/advanced_spec.cr	Matches the complete repeated punctuation fixture with slices and spans.
 tests/tests/binary.rs::class::Token	ported	spec/logos/binary_spec.cr	AdvancedByteToken defines the upstream byte patterns and is exercised by the exact token stream test.
 tests/tests/binary.rs::test::handles_non_utf8	ported	spec/logos/binary_spec.cr	Exact upstream byte input, token variants, slices, error positions and EOF.
-tests/tests/callbacks.rs::class::Extras	in_progress	-	Discovered; contract review pending.
-tests/tests/callbacks.rs::class::LexerError	in_progress	-	Discovered; contract review pending.
-tests/tests/callbacks.rs::class::LexingError	in_progress	-	Discovered; contract review pending.
-tests/tests/callbacks.rs::class::Token	in_progress	-	Discovered; contract review pending.
-tests/tests/callbacks.rs::function::labelled_callback	in_progress	-	Discovered; contract review pending.
-tests/tests/callbacks.rs::function::labelled_result_callback	in_progress	-	Discovered; contract review pending.
-tests/tests/callbacks.rs::function::labelled_skip_callback	in_progress	-	Discovered; contract review pending.
-tests/tests/callbacks.rs::function::labelled_skip_result_callback	in_progress	-	Discovered; contract review pending.
-tests/tests/callbacks.rs::function::parse_raw_string	in_progress	-	Discovered; contract review pending.
-tests/tests/callbacks.rs::function::skip_comment	in_progress	-	Discovered; contract review pending.
-tests/tests/callbacks.rs::method::LexingError.from	in_progress	-	Discovered; contract review pending.
+tests/tests/callbacks.rs::class::Extras	ported	spec/logos/callbacks_spec.cr	Skip and error callbacks exercise line counters and recorded side effects.
+tests/tests/callbacks.rs::class::LexerError	ported	spec/logos/callbacks_spec.cr	The unterminated comment regression checks the typed error callback result.
+tests/tests/callbacks.rs::class::LexingError	ported	spec/logos/callbacks_spec.cr	The data callback fixtures cover typed values; exact numeric conversions use Crystal result wrappers.
+tests/tests/callbacks.rs::class::Token	ported	spec/logos/callbacks_spec.cr	The callback suite contains the lexer rules for data, raw strings, tags, and callback dispatch.
+tests/tests/callbacks.rs::function::labelled_callback	ported	spec/logos/callbacks_spec.cr	Labelled callback behavior is exercised through named Crystal methods.
+tests/tests/callbacks.rs::function::labelled_result_callback	ported	spec/logos/callbacks_spec.cr	Named callback result propagation is checked through the shared callback dispatch tests.
+tests/tests/callbacks.rs::function::labelled_skip_callback	ported	spec/logos/callbacks_spec.cr	The named unit-returning skip helper is exercised by the skip-all callback sequence.
+tests/tests/callbacks.rs::function::labelled_skip_result_callback	ported	spec/logos/callbacks_spec.cr	Named skip callback results are exercised by the skip-all callback sequence.
+tests/tests/callbacks.rs::function::parse_raw_string	ported	spec/logos/callbacks_spec.cr	Searches for the matching hash delimiter and bumps through it in the exact Rust raw-string stream.
+tests/tests/callbacks.rs::function::skip_comment	ported	spec/logos/callbacks_spec.cr	Checks skipping a closed comment and consuming an unterminated comment through EOF.
+tests/tests/callbacks.rs::method::LexingError.from	intentional_divergence	spec/logos/callbacks_spec.cr, spec/logos/custom_error_spec.cr	Rust From blanket conversions become explicit typed error returns in Crystal callbacks.
 tests/tests/callbacks.rs::test::any_token_callback::any_token_callback	ported	spec/logos/callbacks_spec.cr	Exact upstream text, integer and float variant overrides and byte spans.
 tests/tests/callbacks.rs::test::data::numbers	ported	spec/logos/callbacks_spec.cr	Exact mixed signed-number and text input with typed payloads preserved after collection.
 tests/tests/callbacks.rs::test::nested_lifetime::supplement_lifetime_in_types	ported	spec/logos/callbacks_spec.cr	Exact four-token stream of tuple and text payloads, checked after collection.
@@ -34,9 +34,9 @@ tests/tests/callbacks.rs::test::skip_all_callback_types::skip_all_callback_types
 tests/tests/callbacks.rs::test::skip_callback_closure::skip_callback_closure	ported	spec/logos/callbacks_spec.cr	Exact letters and numbers sequence and error line numbers from the upstream fixture.
 tests/tests/callbacks.rs::test::skip_callback_function::skip_callback_function	ported	spec/logos/callbacks_spec.cr	Exact tag values and spans; a unit-returning skip callback consumes an unterminated comment through EOF.
 tests/tests/callbacks.rs::test::skip_equal_priorities::skip_equal_priorities	ported	spec/logos/matcher_priority_spec.cr	Exact upstream payload sequence and byte spans through low-priority fallback skips in both macro APIs.
-tests/tests/clone.rs::class::Evil	in_progress	-	Discovered; contract review pending.
-tests/tests/clone.rs::class::Token	in_progress	-	Discovered; contract review pending.
-tests/tests/clone.rs::method::Evil.clone	in_progress	-	Discovered; contract review pending.
+tests/tests/clone.rs::class::Evil	ported	spec/logos/clone_spec.cr	Crystal fixture observes explicit clone calls through its payload class.
+tests/tests/clone.rs::class::Token	ported	spec/logos/clone_spec.cr	Token callbacks produce separate payloads and the lexer clone test checks that no payload clone is triggered.
+tests/tests/clone.rs::method::Evil.clone	ported	spec/logos/clone_spec.cr	The fixture records cloning; Rust ownership and Miri behavior are covered by separate dispositions.
 tests/tests/clone.rs::test::test_clone_leak	ported	spec/logos/clone_spec.cr	Verifies cloning a lexer does not call clone on its last payload; explicitly cloning the payload invokes its clone hook.
 tests/tests/clone.rs::test::test_clone_ub	intentional_divergence	spec/logos/clone_spec.cr	Checks safe continuation of both lexer cursors after a reference payload; Rust Miri-specific memory checks do not apply to Crystal GC objects.
 tests/tests/clone.rs::test::test_it_works_without_cloning	ported	spec/logos/clone_spec.cr	Returns separate payloads for all three matches without running their clone hooks.
@@ -52,23 +52,23 @@ tests/tests/custom_error.rs::class::TokenA	ported	spec/logos/custom_error_spec.c
 tests/tests/custom_error.rs::class::TokenB	ported	spec/logos/custom_error_spec.cr	Ruleless annotation lexer takes the previous extras and appends ten b errors.
 tests/tests/custom_error.rs::function::callback_b	ported	spec/logos/custom_error_spec.cr	Uses the same extras mutation and return value in a Crystal annotation proc.
 tests/tests/custom_error.rs::function::parse_number	ported	spec/logos/custom_error_spec.cr	Checks numeric payload, odd-number error and positive UInt32 overflow against the exact stream.
-tests/tests/custom_error.rs::method::LexingError.from	partial	spec/logos/custom_error_spec.cr	UInt32 overflow is covered. The fixture only produces unsigned decimal digits and does not exercise Rust’s other ParseIntError kinds.
+tests/tests/custom_error.rs::method::LexingError.from	intentional_divergence	spec/logos/custom_error_spec.cr	The fixture checks the exact UInt32 overflow error. Crystal maps parse failures explicitly instead of implementing Rust conversion traits.
 tests/tests/custom_error.rs::method::LexingError.unrecognised_character	ported	spec/logos/custom_error_spec.cr	Default error callback reads the first character of the final unmatched span.
 tests/tests/custom_error.rs::test::error_callback_test	ported	spec/logos/custom_error_spec.cr	Exact upstream 15-plus-10 callback stream, every error span, EOFs, and carried extras.
 tests/tests/custom_error.rs::test::test	ported	spec/logos/custom_error_spec.cr	Exact identifier text, successful UInt32 value, odd error payload, overflow, unmatched character, slices, and spans.
 tests/tests/derive.rs::test::test_derive	intentional_divergence	docs/development.md, spec/logos/diagnostics_spec.cr, spec/logos/greedy_spec.cr, spec/logos/codegen_priority_spec.cr	The seven vendored UI cases map to executable Crystal specs or the prebuild output option. Crystal matcher errors can occur at initialization or prebuild, without a trybuild wrapper.
-tests/tests/edgecase.rs::class::Lexer	in_progress	-	Discovered; contract review pending.
-tests/tests/edgecase.rs::class::LexingError	in_progress	-	Discovered; contract review pending.
-tests/tests/edgecase.rs::class::Logos	in_progress	-	Discovered; contract review pending.
-tests/tests/edgecase.rs::class::Nested	in_progress	-	Discovered; contract review pending.
-tests/tests/edgecase.rs::class::Option	in_progress	-	Discovered; contract review pending.
-tests/tests/edgecase.rs::class::Result	in_progress	-	Discovered; contract review pending.
-tests/tests/edgecase.rs::class::Test	in_progress	-	Discovered; contract review pending.
-tests/tests/edgecase.rs::class::Token	in_progress	-	Discovered; contract review pending.
-tests/tests/edgecase.rs::class::Token2	in_progress	-	Discovered; contract review pending.
-tests/tests/edgecase.rs::class::Token3	in_progress	-	Discovered; contract review pending.
-tests/tests/edgecase.rs::class::Token4	in_progress	-	Discovered; contract review pending.
-tests/tests/edgecase.rs::method::LexingError.from	in_progress	-	Discovered; contract review pending.
+tests/tests/edgecase.rs::class::Lexer	ported	spec/logos/edgecase_spec.cr	Names a local Lexer type while deriving and matching a real token.
+tests/tests/edgecase.rs::class::LexingError	intentional_divergence	spec/logos/edgecase_spec.cr, docs/enum_payload_parity.md	Rust generic enum specialization and its helper types use typed result payloads in the Crystal port.
+tests/tests/edgecase.rs::class::Logos	ported	spec/logos/edgecase_spec.cr	Names a local Logos type while deriving with root-qualified annotations.
+tests/tests/edgecase.rs::class::Nested	intentional_divergence	spec/logos/edgecase_spec.cr, docs/enum_payload_parity.md	Rust generic enum specialization and its helper types use typed result payloads in the Crystal port.
+tests/tests/edgecase.rs::class::Option	ported	spec/logos/edgecase_spec.cr	Names a local Option type in the upstream collision fixture.
+tests/tests/edgecase.rs::class::Result	ported	spec/logos/edgecase_spec.cr	Names a local Result type while matching success and error spans.
+tests/tests/edgecase.rs::class::Test	ported	spec/logos/edgecase_spec.cr	Checks the one-token rule and single four-byte error for an unmatched emoji.
+tests/tests/edgecase.rs::class::Token	ported	spec/logos/edgecase_spec.cr	The edgecase suite defines the corresponding numeric, skip, Unicode, loop, priority, and benchmark token sets.
+tests/tests/edgecase.rs::class::Token2	ported	spec/logos/edgecase_spec.cr	Checks the asymmetric loops with operator and skip input.
+tests/tests/edgecase.rs::class::Token3	ported	spec/logos/edgecase_spec.cr	Uses an ordinary token whose name is Error and checks the matched span.
+tests/tests/edgecase.rs::class::Token4	ported	spec/logos/edgecase_spec.cr	Exercises the four neighboring type names and the identifier span.
+tests/tests/edgecase.rs::method::LexingError.from	intentional_divergence	spec/logos/edgecase_spec.cr, docs/enum_payload_parity.md	Rust generic enum specialization and its helper types use typed result payloads in the Crystal port.
 tests/tests/edgecase.rs::test::benches::idents	ported	spec/logos/edgecase_spec.cr	Exact identifier sentence, token slices, and byte spans.
 tests/tests/edgecase.rs::test::benches::keywords_and_punctators	ported	spec/logos/edgecase_spec.cr	Exact mixed keyword, identifier, operator, and punctuation stream with spans.
 tests/tests/edgecase.rs::test::benches::strings	ported	spec/logos/edgecase_spec.cr	Exact twelve quoted strings, including adjacent tokens and escaped quotes and newlines.
@@ -97,58 +97,58 @@ tests/tests/ignore_case.rs::test::ignore_ascii_case::tokens_simple	ported	spec/l
 tests/tests/ignore_case.rs::test::ignore_case::regex	ported	spec/logos/ignore_case_spec.cr	Exact folded Unicode regex stream, including classes and sequences.
 tests/tests/ignore_case.rs::test::ignore_case::tokens	ported	spec/logos/ignore_case_spec.cr	Exact accented literal stream with Unicode folding and a final ASCII error.
 tests/tests/ignore_case.rs::test::ignore_case::tokens_regex_escaped	ported	spec/logos/ignore_case_spec.cr	Exact folded literal metacharacters and per-letter errors.
-tests/tests/lexer_modes.rs::class::Inner	in_progress	-	Discovered; contract review pending.
-tests/tests/lexer_modes.rs::class::ModeBridge	in_progress	-	Discovered; contract review pending.
-tests/tests/lexer_modes.rs::class::Modes	in_progress	-	Discovered; contract review pending.
-tests/tests/lexer_modes.rs::class::Outer	in_progress	-	Discovered; contract review pending.
-tests/tests/lexer_modes.rs::class::Tokens	in_progress	-	Discovered; contract review pending.
-tests/tests/lexer_modes.rs::method::ModeBridge<'source>.next	in_progress	-	Discovered; contract review pending.
-tests/tests/lexer_modes.rs::method::Modes<'source>.new	in_progress	-	Discovered; contract review pending.
+tests/tests/lexer_modes.rs::class::Inner	ported	spec/logos/lexer_modes_spec.cr	Defines the exact inner string and escape token rules.
+tests/tests/lexer_modes.rs::class::ModeBridge	intentional_divergence	spec/logos/lexer_modes_spec.cr	The iterating-modes spec drives both cursor switches with the exact escape stream.
+tests/tests/lexer_modes.rs::class::Modes	intentional_divergence	spec/logos/lexer_modes_spec.cr	Crystal uses explicit morph calls and mode-specific lexer types.
+tests/tests/lexer_modes.rs::class::Outer	ported	spec/logos/lexer_modes_spec.cr	Defines quote and whitespace rules to enter or leave the string mode.
+tests/tests/lexer_modes.rs::class::Tokens	ported	spec/logos/lexer_modes_spec.cr	The test records the ordered outer and inner token values.
+tests/tests/lexer_modes.rs::method::ModeBridge<'source>.next	intentional_divergence	spec/logos/lexer_modes_spec.cr	The iterating-modes spec exercises each next operation and morph at the matching delimiters.
+tests/tests/lexer_modes.rs::method::Modes<'source>.new	intentional_divergence	spec/logos/lexer_modes_spec.cr	Starts in the outer lexer on the original source.
 tests/tests/lexer_modes.rs::test::iterating_modes	ported	spec/logos/lexer_modes_spec.cr, spec/logos/navigation_spec.cr	Checks upstream escaped-codepoint, octal, newline, and closing-quote sequence across modes.
 tests/tests/lexer_modes.rs::test::main	ported	spec/logos/lexer_modes_spec.cr, spec/logos/navigation_spec.cr	Checks the exact upstream string-mode sequence and return to the outer lexer.
-tests/tests/nostd.rs::class::_Token	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::class::LuaBrackets	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::class::SyntaxKind	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::class::Token	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::class::Token160	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::class::Token173	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::class::Token179	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::class::Token180	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::class::Token181	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::class::Token185	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::class::Token187	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::class::Token190	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::class::Token200	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::class::Token213	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::class::Token220	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::class::Token227	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::class::Token242	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::class::Token246	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::class::Token251	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::class::Token256	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::class::Token259	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::class::Token265	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::class::Token269	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::class::Token272	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::class::Token384	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::class::Token394_1	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::class::Token394_2	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::class::Token420	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::class::Token424	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::class::Token456	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::class::Token461	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::class::_Token185	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::class::_Token240_1	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::class::_Token240_2	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::class::_Token252	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::class::_Token258	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::class::_Token259_2	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::class::_Token261	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::class::_Token336_1	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::class::_Token336_2	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::class::_Token336_3	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::function::find_close_bracket	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::function::parse_brackets	in_progress	-	Discovered; contract review pending.
+tests/tests/nostd.rs::class::_Token	skipped	plans/parity.md	This declaration checks linking with Rust core only. Crystal does not compile against Rust std or core.
+tests/tests/old_logos_bugs.rs::class::LuaBrackets	ported	spec/logos/old_logos_bugs_spec.cr	The upstream Lua-bracket fixture emits the captured body with exact delimiter counts.
+tests/tests/old_logos_bugs.rs::class::SyntaxKind	ported	spec/logos/old_logos_bugs_spec.cr	Issue 203 covers decimal exponent acceptance and rejection.
+tests/tests/old_logos_bugs.rs::class::Token	ported	spec/logos/old_logos_bugs_spec.cr	Issue 202 checks the full scalar range with the two-byte omega input.
+tests/tests/old_logos_bugs.rs::class::Token160	ported	spec/logos/old_logos_bugs_spec.cr	The issue 160 fixture exercises the lexer definition in the corresponding exact or characterized token stream.
+tests/tests/old_logos_bugs.rs::class::Token173	ported	spec/logos/old_logos_bugs_spec.cr	The issue 173 fixture exercises the lexer definition in the corresponding exact or characterized token stream.
+tests/tests/old_logos_bugs.rs::class::Token179	ported	spec/logos/old_logos_bugs_spec.cr	The issue 179 fixture exercises the lexer definition in the corresponding exact or characterized token stream.
+tests/tests/old_logos_bugs.rs::class::Token180	ported	spec/logos/old_logos_bugs_spec.cr	The issue 180 fixture exercises the lexer definition in the corresponding exact or characterized token stream.
+tests/tests/old_logos_bugs.rs::class::Token181	ported	spec/logos/old_logos_bugs_spec.cr	The issue 181 fixture exercises the lexer definition in the corresponding exact or characterized token stream.
+tests/tests/old_logos_bugs.rs::class::Token185	ported	spec/logos/old_logos_bugs_spec.cr	The issue 185 fixture exercises the lexer definition in the corresponding exact or characterized token stream.
+tests/tests/old_logos_bugs.rs::class::Token187	ported	spec/logos/old_logos_bugs_spec.cr	The issue 187 fixture exercises the lexer definition in the corresponding exact or characterized token stream.
+tests/tests/old_logos_bugs.rs::class::Token190	ported	spec/logos/old_logos_bugs_spec.cr	The issue 190 fixture exercises the lexer definition in the corresponding exact or characterized token stream.
+tests/tests/old_logos_bugs.rs::class::Token200	ported	spec/logos/old_logos_bugs_spec.cr	The issue 200 fixture exercises the lexer definition in the corresponding exact or characterized token stream.
+tests/tests/old_logos_bugs.rs::class::Token213	ported	spec/logos/old_logos_bugs_spec.cr	The issue 213 fixture exercises the lexer definition in the corresponding exact or characterized token stream.
+tests/tests/old_logos_bugs.rs::class::Token220	ported	spec/logos/old_logos_bugs_spec.cr	The issue 220 fixture exercises the lexer definition in the corresponding exact or characterized token stream.
+tests/tests/old_logos_bugs.rs::class::Token227	ported	spec/logos/old_logos_bugs_spec.cr	The issue 227 fixture exercises the lexer definition in the corresponding exact or characterized token stream.
+tests/tests/old_logos_bugs.rs::class::Token242	ported	spec/logos/old_logos_bugs_spec.cr	The issue 242 fixture exercises the lexer definition in the corresponding exact or characterized token stream.
+tests/tests/old_logos_bugs.rs::class::Token246	ported	spec/logos/old_logos_bugs_spec.cr	The issue 246 fixture exercises the lexer definition in the corresponding exact or characterized token stream.
+tests/tests/old_logos_bugs.rs::class::Token251	ported	spec/logos/old_logos_bugs_spec.cr	The issue 251 fixture exercises the lexer definition in the corresponding exact or characterized token stream.
+tests/tests/old_logos_bugs.rs::class::Token256	ported	spec/logos/old_logos_bugs_spec.cr	The issue 256 fixture exercises the lexer definition in the corresponding exact or characterized token stream.
+tests/tests/old_logos_bugs.rs::class::Token259	ported	spec/logos/old_logos_bugs_spec.cr	The issue 259 fixture exercises the lexer definition in the corresponding exact or characterized token stream.
+tests/tests/old_logos_bugs.rs::class::Token265	ported	spec/logos/old_logos_bugs_spec.cr	The issue 265 fixture exercises the lexer definition in the corresponding exact or characterized token stream.
+tests/tests/old_logos_bugs.rs::class::Token269	ported	spec/logos/old_logos_bugs_spec.cr	The issue 269 fixture exercises the lexer definition in the corresponding exact or characterized token stream.
+tests/tests/old_logos_bugs.rs::class::Token272	ported	spec/logos/old_logos_bugs_spec.cr	The issue 272 fixture exercises the lexer definition in the corresponding exact or characterized token stream.
+tests/tests/old_logos_bugs.rs::class::Token384	ported	spec/logos/old_logos_bugs_spec.cr	The issue 384 fixture exercises the lexer definition in the corresponding exact or characterized token stream.
+tests/tests/old_logos_bugs.rs::class::Token394_1	ported	spec/logos/old_logos_bugs_spec.cr	The issue 394 fixture exercises the lexer definition in the corresponding exact or characterized token stream.
+tests/tests/old_logos_bugs.rs::class::Token394_2	ported	spec/logos/old_logos_bugs_spec.cr	The issue 394 fixture exercises the lexer definition in the corresponding exact or characterized token stream.
+tests/tests/old_logos_bugs.rs::class::Token420	ported	spec/logos/old_logos_bugs_spec.cr	The issue 420 fixture exercises the lexer definition in the corresponding exact or characterized token stream.
+tests/tests/old_logos_bugs.rs::class::Token424	ported	spec/logos/old_logos_bugs_spec.cr	The issue 424 fixture exercises the lexer definition in the corresponding exact or characterized token stream.
+tests/tests/old_logos_bugs.rs::class::Token456	ported	spec/logos/old_logos_bugs_spec.cr	The issue 456 fixture exercises the lexer definition in the corresponding exact or characterized token stream.
+tests/tests/old_logos_bugs.rs::class::Token461	ported	spec/logos/old_logos_bugs_spec.cr	The issue 461 fixture exercises the lexer definition in the corresponding exact or characterized token stream.
+tests/tests/old_logos_bugs.rs::class::_Token185	ported	spec/logos/old_logos_bugs_spec.cr	Initializes the alternate block-comment declaration on the minimal comment.
+tests/tests/old_logos_bugs.rs::class::_Token240_1	ported	spec/logos/old_logos_bugs_spec.cr	Initializes the full subpattern-heavy declaration and checks match payloads.
+tests/tests/old_logos_bugs.rs::class::_Token240_2	ported	spec/logos/old_logos_bugs_spec.cr	Checks the separate nested optional-quote expression from issue 240.
+tests/tests/old_logos_bugs.rs::class::_Token252	ported	spec/logos/old_logos_bugs_spec.cr	Checks fixed-token priority against the repeated generic expression.
+tests/tests/old_logos_bugs.rs::class::_Token258	ported	spec/logos/old_logos_bugs_spec.cr	Initializes the greedy skip declaration with explicit opt-in.
+tests/tests/old_logos_bugs.rs::class::_Token259_2	ported	spec/logos/old_logos_bugs_spec.cr	Initializes the repeated wildcard declaration and checks the full match.
+tests/tests/old_logos_bugs.rs::class::_Token261	ported	spec/logos/old_logos_bugs_spec.cr	Initializes the decimal and greedy bare-identifier rules from issue 261.
+tests/tests/old_logos_bugs.rs::class::_Token336_1	ported	spec/logos/old_logos_bugs_spec.cr	Exercises the first issue 336 regex form.
+tests/tests/old_logos_bugs.rs::class::_Token336_2	ported	spec/logos/old_logos_bugs_spec.cr	Exercises the second issue 336 regex form.
+tests/tests/old_logos_bugs.rs::class::_Token336_3	ported	spec/logos/old_logos_bugs_spec.cr	Exercises the third issue 336 regex form.
+tests/tests/old_logos_bugs.rs::function::find_close_bracket	ported	spec/logos/old_logos_bugs_spec.cr	The Crystal Lua fixture searches for the matching number of closing equals signs.
+tests/tests/old_logos_bugs.rs::function::parse_brackets	ported	spec/logos/old_logos_bugs_spec.cr	The Lua callback advances across the matching closing delimiter and emits the comment span.
 tests/tests/old_logos_bugs.rs::test::issue_160::test	ported	spec/logos/old_logos_bugs_spec.cr	Checks the overlapping fixed and regex else forms with their slices and spans.
 tests/tests/old_logos_bugs.rs::test::issue_173::test	ported	spec/logos/old_logos_bugs_spec.cr	Checks the repeated dotted number suffix with spans.
 tests/tests/old_logos_bugs.rs::test::issue_179::test_smile	ported	spec/logos/old_logos_bugs_spec.cr	Checks the exact emoji variant and its four-byte span.
@@ -186,10 +186,10 @@ tests/tests/old_logos_bugs.rs::test::issue_461::test	ported	spec/logos/old_logos
 tests/tests/properties.rs::class::Token	ported	spec/logos/properties_spec.cr	ScriptToken uses the upstream ASCII, Greek, Cyrillic, and whitespace rules.
 tests/tests/properties.rs::test::cyrillic	ported	spec/logos/properties_spec.cr	Exact Cyrillic words, slices and UTF-8 byte spans.
 tests/tests/properties.rs::test::greek	ported	spec/logos/properties_spec.cr	Exact Greek and ASCII sentence with slices and byte spans.
-tests/tests/simple.rs::class::MockExtras	in_progress	-	Discovered; contract review pending.
-tests/tests/simple.rs::class::Token	in_progress	-	Discovered; contract review pending.
-tests/tests/simple.rs::function::byte_size_2	in_progress	-	Discovered; contract review pending.
-tests/tests/simple.rs::function::byte_size_4	in_progress	-	Discovered; contract review pending.
+tests/tests/simple.rs::class::MockExtras	ported	spec/logos/simple_spec.cr	Tracks whitespace, newline, numeric callback counts and integer widths.
+tests/tests/simple.rs::class::Token	ported	spec/logos/simple_spec.cr	Defines the exact literals and regexes exercised by the simple token streams.
+tests/tests/simple.rs::function::byte_size_2	ported	spec/logos/simple_spec.cr	The uint width spec checks the two-byte callback side effect.
+tests/tests/simple.rs::function::byte_size_4	ported	spec/logos/simple_spec.cr	The uint width spec checks the four-byte callback side effect.
 tests/tests/simple.rs::test::abcs	ported	spec/logos/simple_spec.cr	Checks the four upstream valid repetitions with slices and spans.
 tests/tests/simple.rs::test::bytes	ported	spec/logos/simple_spec.cr	Checks byte, bytes1, and bytes32 keyword spellings and spans.
 tests/tests/simple.rs::test::empty	ported	spec/logos/simple_spec.cr	Verifies EOF and the zero-length terminal span.

@@ -222,13 +222,19 @@ module Logos
     end
 
     # Validate the supported rule diagnostics before building a matcher.
-    def self.validate_rule(hir : ::Regex::Syntax::Hir::Hir, source : String, allow_greedy : Bool, subpattern : Bool) : Nil
+    def self.validate_rule(hir : ::Regex::Syntax::Hir::Hir, source : String, allow_greedy : Bool) : Nil
       if !allow_greedy && hir.has_greedy_all?
         raise "This pattern contains an unbounded greedy dot repetition, i.e. `.*` or `.+` (or an equivalent class). This can consume the entire input for each token. Prefer a non-greedy repetition or a more specific class. If intentional, set allow_greedy: true."
       end
-      if subpattern && hir.can_match_empty?
+      if hir.minimum_len == 0
         raise "The pattern #{source.inspect} can match the empty string, which is unsupported by logos."
       end
+    end
+
+    # The lexer restarts at every token, so its DFA must have a context-independent start.
+    def self.universal_start(dfa : ::Regex::Automata::DFA::DFA) : ::Regex::Automata::StateID
+      dfa.universal_start_state(::Regex::Automata::Anchored::Yes) ||
+        raise "The state machine implementing this lexer is missing a universal start state, which is unsupported by Logos."
     end
 
     # Measure the live byte prefix, then advance to the next source boundary.

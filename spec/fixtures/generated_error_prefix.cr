@@ -55,3 +55,29 @@ logos_derive(AnnotatedPrefixToken)
   errors = {{ type }}.lexer("!aê?ab").spanned.to_a.select { |result, _| result.error? }
   raise "wrong runtime error spans #{errors.inspect}" unless errors.map(&.[1]) == [1...4, 4...5, 5...7]
 {% end %}
+
+Logos.define GeneratedTextEndToken do
+  token "b", :B
+  regex "a$", :Final
+end
+
+Logos.define GeneratedLineEndToken do
+  token "\n", :Newline
+  regex "(?m)a$", :Final
+end
+
+raise "text-end matcher did not register" unless GeneratedTextEndToken.precompiled_dfa?
+raise "line-end matcher did not register" unless GeneratedLineEndToken.precompiled_dfa?
+
+text = GeneratedTextEndToken.lexer("ab").spanned.to_a
+raise "incorrect generated text-end tokens #{text.inspect}" unless text.map { |result, span| {result.value?, span} } == [
+                                                                     {nil, 0...1}, {GeneratedTextEndToken::B, 1...2},
+                                                                   ]
+text = GeneratedTextEndToken.lexer("ba").spanned.to_a
+raise "incorrect generated EOF tokens #{text.inspect}" unless text.map { |result, span| {result.value?, span} } == [
+                                                                {GeneratedTextEndToken::B, 0...1}, {GeneratedTextEndToken::Final, 1...2},
+                                                              ]
+line = GeneratedLineEndToken.lexer("a\na").spanned.to_a
+raise "incorrect generated line-end tokens #{line.inspect}" unless line.map { |result, span| {result.value?, span} } == [
+                                                                     {GeneratedLineEndToken::Final, 0...1}, {GeneratedLineEndToken::Newline, 1...2}, {GeneratedLineEndToken::Final, 2...3},
+                                                                   ]
