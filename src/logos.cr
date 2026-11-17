@@ -8,6 +8,7 @@ require "./logos/pattern"
 require "./logos/annotations"
 require "./logos/regex_automata_compat"
 require "./logos/generated_matcher"
+require "./logos/payload_macro"
 require "./logos/define_macro"
 require "./logos/macros"
 

@@ -16,8 +16,8 @@ Logos.define Token do
   token "(", :LParen
   token ")", :RParen
 
-  regex "[0-9]+", :Integer do |lex|
-    Logos::Filter::Emit.new(lex.slice.to_i64)
+  regex "[0-9]+", :Integer, payload: Int64 do |lex|
+    lex.slice.to_i64
   end
 end
 
@@ -150,7 +150,7 @@ class Parser
     result = advance
     raise "expected integer" unless result && result.matches?(Token::Integer)
 
-    IntExpr.new(result.payload_for!(Token::Integer, Int64))
+    IntExpr.new(Token.integer_value!(result))
   end
 
   private def match?(token : Token) : Bool

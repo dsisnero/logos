@@ -43,6 +43,7 @@ module Logos
       {% if node.is_a?(Call) %}
         # Extract callback from block or named arguments
         {% callback = nil %}
+        {% payload = nil %}
         {% priority = nil %}
         {% ignore_case = false %}
         {% ignore_ascii_case = false %}
@@ -61,6 +62,9 @@ module Logos
         {% elsif node.name == "error_type" %}
           {% options = %w(callback) %}
         {% end %}
+        {% if node.name == "token" || node.name == "regex" %}
+          {% options << "payload" %}
+        {% end %}
         {% if node.named_args %}
           {% for named_arg in node.named_args %}
             {% unless options.includes?(named_arg.name.stringify) %}
@@ -68,6 +72,8 @@ module Logos
             {% end %}
             {% if named_arg.name == "callback" && callback.nil? %}
               {% callback = named_arg.value %}
+            {% elsif named_arg.name == "payload" %}
+              {% payload = named_arg.value %}
             {% elsif named_arg.name == "priority" %}
               {% priority = named_arg.value %}
             {% elsif named_arg.name == "ignore_case" %}
@@ -103,25 +109,25 @@ module Logos
           {% if variant.is_a?(SymbolLiteral) %}
             {% variant = variant.id %}
           {% end %}
-          {% token_defs << {variant: variant, pattern: node.args[0], skip: false, callback: callback, priority: priority, ignore_case: ignore_case, ignore_ascii_case: ignore_ascii_case, allow_greedy: allow_greedy, bytes: bytes} %}
+          {% token_defs << {variant: variant, pattern: node.args[0], skip: false, payload: payload, callback: callback, priority: priority, ignore_case: ignore_case, ignore_ascii_case: ignore_ascii_case, allow_greedy: allow_greedy, bytes: bytes} %}
         {% elsif node.name == "regex" && node.args.size == 2 %}
           {% variant = node.args[1] %}
           {% if variant.is_a?(SymbolLiteral) %}
             {% variant = variant.id %}
           {% end %}
-          {% regex_defs << {variant: variant, pattern: node.args[0], skip: false, callback: callback, priority: priority, ignore_case: ignore_case, ignore_ascii_case: ignore_ascii_case, allow_greedy: allow_greedy, bytes: bytes} %}
+          {% regex_defs << {variant: variant, pattern: node.args[0], skip: false, payload: payload, callback: callback, priority: priority, ignore_case: ignore_case, ignore_ascii_case: ignore_ascii_case, allow_greedy: allow_greedy, bytes: bytes} %}
         {% elsif node.name == "skip_token" && (node.args.size == 1 || node.args.size == 2) %}
           {% variant = node.args.size == 2 ? node.args[1] : nil %}
           {% if variant.is_a?(SymbolLiteral) %}
             {% variant = variant.id %}
           {% end %}
-          {% token_defs << {variant: variant, pattern: node.args[0], skip: true, callback: callback, priority: priority, ignore_case: ignore_case, ignore_ascii_case: ignore_ascii_case, allow_greedy: allow_greedy, bytes: bytes} %}
+          {% token_defs << {variant: variant, pattern: node.args[0], skip: true, payload: nil, callback: callback, priority: priority, ignore_case: ignore_case, ignore_ascii_case: ignore_ascii_case, allow_greedy: allow_greedy, bytes: bytes} %}
         {% elsif node.name == "skip_regex" && (node.args.size == 1 || node.args.size == 2) %}
           {% variant = node.args.size == 2 ? node.args[1] : nil %}
           {% if variant.is_a?(SymbolLiteral) %}
             {% variant = variant.id %}
           {% end %}
-          {% regex_defs << {variant: variant, pattern: node.args[0], skip: true, callback: callback, priority: priority, ignore_case: ignore_case, ignore_ascii_case: ignore_ascii_case, allow_greedy: allow_greedy, bytes: bytes} %}
+          {% regex_defs << {variant: variant, pattern: node.args[0], skip: true, payload: nil, callback: callback, priority: priority, ignore_case: ignore_case, ignore_ascii_case: ignore_ascii_case, allow_greedy: allow_greedy, bytes: bytes} %}
         {% elsif node.name == "error" && node.args.size == 1 %}
           {% variant = node.args[0] %}
           {% if variant.is_a?(SymbolLiteral) %}
@@ -661,6 +667,9 @@ module Logos
               __callback_result = begin
                 {{ cb.body }}
               end
+              {% if payload = item[:payload] %}
+                __lexer.callback_value = __payload = ::Logos::CallbackValue({{ payload }}).new(__callback_result)
+              {% else %}
               if @@debug_enabled
                 puts "DEBUG: Callback result: #{__callback_result.inspect}, type: #{__callback_result.class}"
               end
@@ -758,6 +767,7 @@ module Logos
                     end
                   end
               {% end %}
+              {% end %}
             {% end %}
             end
           {% end %}
@@ -804,6 +814,20 @@ module Logos
          end
        end
      end
+
+    {% if all_defs.any? { |item| item[:payload] } %}
+      ::Logos.define_payload_accessors({{ name }}, [
+        {% for item in all_defs %}
+          {% if payload = item[:payload] %}
+            {% if item[:skip] || !item[:callback] %}
+              {% payload.raise "A typed payload requires a callback on an emitted rule" %}
+            {% end %}
+            { {{ item[:variant].stringify }}, {{ payload }} },
+          {% end %}
+        {% end %}
+      ], {{ error_type }})
+    {% end %}
+
      {% end %}
   end
 end

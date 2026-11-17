@@ -178,6 +178,33 @@ Logos.define Token do
 end
 ```
 
+## Typed callback payloads
+
+Declare `payload:` on an emitting rule to return the captured value directly.
+The lexer compiler checks the callback's return type, and the generated
+accessor reads the value from the saved result even after the lexer advances.
+
+```crystal
+Logos.define Token do
+  skip_regex "[ ]+"
+  regex "[0-9]+", :Integer, payload: Int64 do |lex|
+    lex.slice.to_i64
+  end
+end
+
+first, second = Token.lex_all("42 7")
+Token.integer_value!(first)  # => 42
+Token.integer_value!(second) # => 7
+```
+
+Use `payload:` with `Logos::Token` and `Logos::Regex` annotations as well.
+Use the same payload type spelling when several rules emit the same variant.
+An accessor raises if given an error or a result for a different variant.
+For callbacks that can skip or return a lexing error, use an untyped rule
+and return `Logos::FilterResult::Emit.new(value)`, `Logos::FilterResult::Skip.new`,
+or `Logos::FilterResult::Error.new(error)` as appropriate. Read a value from
+those rules with `result.payload_for!(Token::Integer, Int64)`.
+
 ## Prebuilt matchers
 
 In a Logos checkout, build the generator and emit a shipped strict manifest:

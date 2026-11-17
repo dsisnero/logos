@@ -149,6 +149,37 @@ require "../spec_helper"
       end
     end
 
+    it "attaches typed payloads in a strict generated matcher" do
+      root = File.expand_path("../..", __DIR__)
+      directory = File.join(root, "temp")
+      FileUtils.mkdir_p(directory)
+      file = File.tempfile("typed-payload-matcher", ".cr", dir: directory)
+      begin
+        patterns = JSON.parse(<<-'JSON').as_a
+          [
+            {"kind":"token","pattern":" ","skip":true,"variant":null},
+            {"kind":"token","pattern":"let","skip":false,"variant":"Let"},
+            {"kind":"token","pattern":"f","skip":false,"variant":"Flag"},
+            {"kind":"token","pattern":"n","skip":false,"variant":"Nothing"},
+            {"kind":"regex","pattern":"[0-9]+","skip":false,"variant":"Integer"},
+            {"kind":"regex","pattern":"0x[0-9a-f]+","skip":false,"variant":"Integer"}
+          ]
+          JSON
+        file.puts %q(require "../src/logos")
+        file.puts Logos::Codegen.emit_matcher(patterns, {} of String => String, true, "Token", validate_binding: true)
+        file.puts %q(require "../spec/logos/typed_payload_spec")
+        file.close
+        output = IO::Memory.new
+        status = Process.run("crystal",
+          ["spec", "-Dtyped_payload_prebuilt", file.path, "-e", "reads saved DSL results"],
+          chdir: root, output: output, error: output)
+        raise output.to_s unless status.success?
+        output.to_s.should contain("1 examples, 0 failures, 0 errors")
+      ensure
+        file.delete
+      end
+    end
+
     it "rejects greedy dot and empty subpattern rules unless allowed by the runtime contract" do
       subpatterns = {"optional" => "a?"}
       greedy = JSON.parse(%([{"kind":"regex","pattern":".+"}])).as_a

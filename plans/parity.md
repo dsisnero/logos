@@ -2,16 +2,15 @@
 
 ## Where we are
 
-- **Current focus** — Phase 9 is complete. `Logos.define` supports anonymous
-  skips in runtime and strict prebuilt lexers, diagnoses unknown directive
-  options, and powers the shorter README Quick Start.
+- **Current focus** — Phase 10 is complete. Typed callback declarations
+  keep the payload type by the rule and generate variant-checked accessors
+  on the token enum. Runtime and strict prebuilds preserve saved results.
 - **Next up**
-  1. **Phase 10. Typed callback payload declarations.** Add opt-in callback
-     result types and variant-checked accessors. Start with the saved-result
-     red checks in [the lexer authoring roadmap](lexer_ergonomics.md).
-  2. **Phase 11. Declaration-driven prebuilds.** Export strict manifest
+  1. **Phase 11. Declaration-driven prebuilds.** Export strict manifest
      metadata from lexer definitions and exercise the installed generator.
-  3. **Phase 8. Generated matcher performance baseline.** This independent
+     Start with the edit-and-regenerate red check in
+     [the lexer authoring roadmap](lexer_ergonomics.md).
+  2. **Phase 8. Generated matcher performance baseline.** This independent
      measurement phase remains open. Compare strict release builds with
      pinned Rust Logos and record the results in
      [the performance ledger](performance_experiments.md).
@@ -19,11 +18,11 @@
   dispositions. All shipped strict manifests and the package entry point
   have executable coverage. Documentation describes lazy runtime matcher
   construction, source prebuild, and diagnostic timing.
-- **Gates** — Format, lint, and 301 specs pass. `make test-prebuilt` passes
-  16 specs. `make test-package` passes three package specs, including four
+- **Gates** — Format, lint, and 304 specs pass. `make test-prebuilt` passes
+  17 specs. `make test-package` passes three package specs, including four
   shipped contracts executed through the built CLI. The cached frozen install
   keeps the lockfile unchanged. Markdown and all inventory drift checks pass.
-- **Last feature commit** — `feat: support anonymous lexer skips`.
+- **Last feature commit** — `feat: declare typed lexer callback payloads`.
 
 ## Scope and verification
 
@@ -215,7 +214,7 @@ performance target without leaving an unmeasured experiment active.
 
 ### Phases 9–11. Lexer authoring ergonomics
 
-Phase 9 is complete. Phase 10 is the next authoring feature.
+Phases 9 and 10 are complete. Phase 11 is the next authoring feature.
 [The lexer authoring roadmap](lexer_ergonomics.md) records the vendor
 references, red–green sequences, and completion criteria.
 

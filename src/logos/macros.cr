@@ -32,10 +32,10 @@ macro logos_derive(type)
       {% skip_value = value %}
       {% if skip_value.is_a?(ArrayLiteral) %}
         {% for entry in skip_value %}
-          {% regex_defs << {variant: nil, pattern: entry, skip: true, callback: nil, priority: nil, ignore_case: false, ignore_ascii_case: false, allow_greedy: false, bytes: nil} %}
+          {% regex_defs << {variant: nil, pattern: entry, skip: true, payload: nil, callback: nil, priority: nil, ignore_case: false, ignore_ascii_case: false, allow_greedy: false, bytes: nil} %}
         {% end %}
       {% else %}
-        {% regex_defs << {variant: nil, pattern: skip_value, skip: true, callback: nil, priority: nil, ignore_case: false, ignore_ascii_case: false, allow_greedy: false, bytes: nil} %}
+        {% regex_defs << {variant: nil, pattern: skip_value, skip: true, payload: nil, callback: nil, priority: nil, ignore_case: false, ignore_ascii_case: false, allow_greedy: false, bytes: nil} %}
       {% end %}
     {% end %}
   {% end %}
@@ -91,6 +91,7 @@ macro logos_derive(type)
     {% variant = ann.named_args["variant"] %}
     {% pattern = ann.named_args["pattern"] %}
     {% callback = ann.named_args["callback"] %}
+    {% payload = ann.named_args["payload"] %}
     {% if variant.nil? && pattern.nil? && ann.args.size >= 2 && ann.args[0].is_a?(SymbolLiteral) %}
       {% variant = ann.args[0] %}
       {% pattern = ann.args[1] %}
@@ -131,13 +132,14 @@ macro logos_derive(type)
     {% if variant.is_a?(SymbolLiteral) %}
       {% variant = variant.id %}
     {% end %}
-    {% token_defs << {variant: variant, pattern: pattern, skip: skip, callback: callback, priority: priority, ignore_case: ignore_case, ignore_ascii_case: ignore_ascii_case, allow_greedy: allow_greedy, bytes: bytes} %}
+    {% token_defs << {variant: variant, pattern: pattern, skip: skip, payload: payload, callback: callback, priority: priority, ignore_case: ignore_case, ignore_ascii_case: ignore_ascii_case, allow_greedy: allow_greedy, bytes: bytes} %}
   {% end %}
 
   {% for ann in type_node.annotations(::Logos::Regex) %}
     {% variant = ann.named_args["variant"] %}
     {% pattern = ann.named_args["pattern"] %}
     {% callback = ann.named_args["callback"] %}
+    {% payload = ann.named_args["payload"] %}
     {% if variant.nil? && pattern.nil? && ann.args.size >= 2 && ann.args[0].is_a?(SymbolLiteral) %}
       {% variant = ann.args[0] %}
       {% pattern = ann.args[1] %}
@@ -178,7 +180,7 @@ macro logos_derive(type)
     {% if variant.is_a?(SymbolLiteral) %}
       {% variant = variant.id %}
     {% end %}
-    {% regex_defs << {variant: variant, pattern: pattern, skip: skip, callback: callback, priority: priority, ignore_case: ignore_case, ignore_ascii_case: ignore_ascii_case, allow_greedy: allow_greedy, bytes: bytes} %}
+    {% regex_defs << {variant: variant, pattern: pattern, skip: skip, payload: payload, callback: callback, priority: priority, ignore_case: ignore_case, ignore_ascii_case: ignore_ascii_case, allow_greedy: allow_greedy, bytes: bytes} %}
   {% end %}
 
   {% all_defs = token_defs + regex_defs %}
@@ -471,6 +473,9 @@ macro logos_derive(type)
                 {{ cb.body }}
               end
 
+              {% if payload = item[:payload] %}
+                lexer.callback_value = __payload = ::Logos::CallbackValue({{ payload }}).new(__callback_result)
+              {% else %}
               if __callback_result.is_a?(::Logos::FilterResult::Error)
                 error_value = __callback_result.error
                 return ::Logos::Result(self, {{ error_type }}).error(error_value)
@@ -538,6 +543,7 @@ macro logos_derive(type)
                   lexer.callback_value = __payload = ::Logos::CallbackValue.new(emitted_value)
                 end
               end
+              {% end %}
             {% end %}
           {% end %}
           end
@@ -570,4 +576,16 @@ macro logos_derive(type)
       end
     end
   end
+  {% if all_defs.any? { |item| item[:payload] } %}
+    ::Logos.define_payload_accessors({{ type }}, [
+      {% for item in all_defs %}
+        {% if payload = item[:payload] %}
+          {% if item[:skip] || !item[:callback] %}
+            {% payload.raise "A typed payload requires a callback on an emitted rule" %}
+          {% end %}
+          { {{ item[:variant].stringify }}, {{ payload }} },
+        {% end %}
+      {% end %}
+    ], {{ error_type }}, {{ type_node.class.methods.map(&.name.stringify) }})
+  {% end %}
 end

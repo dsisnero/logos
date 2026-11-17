@@ -1,6 +1,6 @@
 # Lexer authoring roadmap
 
-Phase 9 is complete. Start with Phase 10 for lexer authoring work.
+Phases 9 and 10 are complete. Start with Phase 11 for lexer authoring work.
 Phase 8 in [the parity roadmap](parity.md) is the independent performance
 baseline. The API examples below are proposed contracts. Each numbered phase
 ends in one reviewable commit.
@@ -40,6 +40,12 @@ explicitly. The installed package runs the shorter Quick Start.
    fails compilation, and existing named skips and annotated skips still pass.
 
 ## Phase 10. Typed callback payload declarations
+
+**Complete.** The first focused spec failed on the unsupported `payload:`
+option. The DSL and annotations now accept typed raw returns and generate
+variant-checked accessors. The saved-result tests cover runtime, strict
+prebuild, Bool and Nil values, and compile errors. The calculator uses the
+typed integer rule and accessor.
 
 1. Compare [the Rust calculator](../logos_rust/examples/calculator.rs) and
    [the Crystal calculator](../examples/calculator.cr). Trace payload storage
