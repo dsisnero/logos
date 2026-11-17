@@ -1,6 +1,9 @@
 module Logos
   alias GeneratedPatternIDs = ::Regex::Automata::PatternID | StaticArray(::Regex::Automata::PatternID, 2) | Array(::Regex::Automata::PatternID)
-  alias GeneratedMatch = Tuple(Int32, GeneratedPatternIDs)?
+  # A failed match with a live byte prefix before the dead state or EOF.
+  record GeneratedMiss, prefix_length : Int32
+
+  alias GeneratedMatch = Tuple(Int32, GeneratedPatternIDs) | GeneratedMiss | Nil
   alias GeneratedMatcher = Proc(::Bytes, Int32, GeneratedMatch)
 
   @@generated_matchers = {} of String => {GeneratedMatcher, Array(Int32)?}

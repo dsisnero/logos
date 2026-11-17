@@ -221,6 +221,44 @@ module Logos
       end
     end
 
+    # Validate the supported rule diagnostics before building a matcher.
+    def self.validate_rule(hir : ::Regex::Syntax::Hir::Hir, source : String, allow_greedy : Bool, subpattern : Bool) : Nil
+      if !allow_greedy && hir.has_greedy_all?
+        raise "This pattern contains an unbounded greedy dot repetition, i.e. `.*` or `.+` (or an equivalent class). This can consume the entire input for each token. Prefer a non-greedy repetition or a more specific class. If intentional, set allow_greedy: true."
+      end
+      if subpattern && hir.can_match_empty?
+        raise "The pattern #{source.inspect} can match the empty string, which is unsupported by logos."
+      end
+    end
+
+    # Measure the live byte prefix, then advance to the next source boundary.
+    def self.invalid_span_length(pattern_dfas : Array(::Regex::Automata::DFA::DFA), input : String) : Int32
+      input.find_boundary(invalid_span_length(pattern_dfas, input.to_slice))
+    end
+
+    def self.invalid_span_length(pattern_dfas : Array(::Regex::Automata::DFA::DFA), input : Bytes) : Int32
+      return 1 if pattern_dfas.empty?
+
+      states = pattern_dfas.map(&.start_anchored)
+      input.each_with_index do |byte, index|
+        alive = false
+        pattern_dfas.each_with_index do |dfa, pattern_index|
+          state = states[pattern_index]
+          next if dfa.is_dead_state?(state)
+
+          next_state = dfa.next_state(state, byte)
+          if dfa.is_dead_state?(next_state) || dfa.is_start_state?(next_state)
+            states[pattern_index] = ::Regex::Automata::DFA::DEAD_STATE_ID
+          else
+            states[pattern_index] = next_state
+            alive = true
+          end
+        end
+        return Math.max(index, 1) unless alive
+      end
+      input.size
+    end
+
     # Calculate priority/complexity for disambiguation
     def priority : Int32
       return @source.bytesize * 2 if literal?

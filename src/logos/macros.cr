@@ -195,10 +195,6 @@ macro logos_derive(type)
       end
     {% end %}
 
-    private def self.greedy_pattern_message : ::String
-      "This pattern contains an unbounded greedy dot repetition, i.e. `.*` or `.+` (or an equivalent class). This can consume the entire input for each token. Prefer a non-greedy repetition or a more specific class. If intentional, set allow_greedy: true."
-    end
-
     private def self.prefix_matches_exactly?(vm : ::Regex::Automata::NFA::PikeVM, input : ::String, end_pos : Int32) : Bool
       return false if end_pos <= 0 || end_pos > input.bytesize
 
@@ -273,79 +269,6 @@ macro logos_derive(type)
       end
     end
 
-    private def self.invalid_span_length(pattern_prefix_dfas : Array(::Regex::Automata::DFA::DFA), input : ::String) : Int32
-      return input.find_boundary(1) if pattern_prefix_dfas.empty?
-
-      bytes = input.to_slice
-      start_states = pattern_prefix_dfas.map(&.start_anchored)
-      alive_states = start_states.dup
-      last_alive_boundary = 0
-      offset = 0
-      first_char_size = 0
-
-      input.each_char do |char|
-        char_bytes = char.bytesize
-        first_char_size = char_bytes if first_char_size == 0
-
-        char_bytes.times do |index|
-          byte = bytes[offset + index]
-          any_alive = false
-
-          pattern_prefix_dfas.each_with_index do |pattern_dfa, pattern_index|
-            state_id = alive_states[pattern_index]
-            next if pattern_dfa.is_dead_state?(state_id)
-
-            next_state = pattern_dfa.next_state(state_id, byte)
-            if pattern_dfa.is_dead_state?(next_state) || pattern_dfa.is_start_state?(next_state)
-              alive_states[pattern_index] = ::Regex::Automata::DFA::DEAD_STATE_ID
-              next
-            end
-
-            alive_states[pattern_index] = next_state
-            any_alive = true
-          end
-
-          return last_alive_boundary > 0 ? last_alive_boundary : first_char_size unless any_alive
-        end
-
-        offset += char_bytes
-        last_alive_boundary = offset
-      end
-
-      last_alive_boundary
-    end
-
-    private def self.invalid_span_length(pattern_prefix_dfas : Array(::Regex::Automata::DFA::DFA), input : ::Bytes) : Int32
-      return 1 if pattern_prefix_dfas.empty?
-
-      start_states = pattern_prefix_dfas.map(&.start_anchored)
-      alive_states = start_states.dup
-      last_alive_offset = 0
-
-      input.each_with_index do |byte, index|
-        any_alive = false
-
-        pattern_prefix_dfas.each_with_index do |pattern_dfa, pattern_index|
-          state_id = alive_states[pattern_index]
-          next if pattern_dfa.is_dead_state?(state_id)
-
-          next_state = pattern_dfa.next_state(state_id, byte)
-          if pattern_dfa.is_dead_state?(next_state) || pattern_dfa.is_start_state?(next_state)
-            alive_states[pattern_index] = ::Regex::Automata::DFA::DEAD_STATE_ID
-            next
-          end
-
-          alive_states[pattern_index] = next_state
-          any_alive = true
-        end
-
-        return last_alive_offset > 0 ? last_alive_offset : 1 unless any_alive
-        last_alive_offset = index + 1
-      end
-
-      last_alive_offset
-    end
-
       @@compiled = nil.as(NamedTuple(
         dfa: ::Regex::Automata::DFA::DFA,
         pattern_dfas: Array(::Regex::Automata::NFA::PikeVM),
@@ -396,11 +319,7 @@ macro logos_derive(type)
         {% if utf8_flag %}
           ::Logos::Pattern.validate_utf8(hir, pattern_source)
         {% end %}
-        {% unless item[:allow_greedy] %}
-          if hir.has_greedy_all?
-            raise self.greedy_pattern_message
-          end
-        {% end %}
+        ::Logos::Pattern.validate_rule(hir, pattern_source, allow_greedy: {{ item[:allow_greedy] }}, subpattern: false)
         hirs << hir
         pattern_to_variant << {{ item[:variant] }}
         pattern_is_skip << {{ item[:skip] }}
@@ -425,14 +344,7 @@ macro logos_derive(type)
         {% if utf8_flag %}
           ::Logos::Pattern.validate_utf8(hir, pattern_source)
         {% end %}
-        {% unless item[:allow_greedy] %}
-          if hir.has_greedy_all?
-            raise self.greedy_pattern_message
-          end
-        {% end %}
-        if pattern_uses_subpattern && hir.can_match_empty?
-          raise "The pattern #{ {{ pattern_node }}.inspect } for variant #{ {% if item[:variant] %} {{ item[:variant] }} {% else %} skip_value {% end %} } can match the empty string, which is unsupported by logos."
-        end
+        ::Logos::Pattern.validate_rule(hir, pattern_source, allow_greedy: {{ item[:allow_greedy] }}, subpattern: pattern_uses_subpattern)
         hirs << hir
         pattern_to_variant << {% if item[:variant] %} {{ item[:variant] }} {% else %} skip_value {% end %}
         pattern_is_skip << {{ item[:skip] }}
@@ -450,9 +362,7 @@ macro logos_derive(type)
       error_variant = {% if error_def %} {{ error_def[:variant] }} {% else %} nil {% end %}
 
       if hirs.empty?
-        dead_state = ::Regex::Automata::DFA::State.new(::Regex::Automata::StateID.new(0), 256)
-        256.times { |i| dead_state.set_transition(i, ::Regex::Automata::StateID.new(-1)) }
-        dfa = ::Regex::Automata::DFA::DFA.new([dead_state], nil, ::Regex::Automata::StateID.new(0), 256)
+        dfa = ::Regex::Automata::DFA::DFA.never_match
         return {dfa: dfa, pattern_dfas: pattern_dfas, pattern_prefix_dfas: pattern_prefix_dfas, pattern_to_variant: pattern_to_variant, pattern_is_skip: pattern_is_skip, pattern_priority: pattern_priority, pattern_priority_explicit: pattern_priority_explicit, error_variant: error_variant}
       end
 
@@ -654,21 +564,11 @@ macro logos_derive(type)
           end
         {% end %}
       else
-        {% if utf8_flag %}
-          if lexer.remainder.length > 0
-            lexer.bump(self.invalid_span_length(pattern_prefix_dfas, lexer.remainder))
-            return ::Logos::Result(self, {{ error_type }}).error(default_lex_error(lexer))
-          else
-            return nil
-          end
-        {% else %}
-          if lexer.remainder.length > 0
-            lexer.bump(self.invalid_span_length(pattern_prefix_dfas, lexer.remainder))
-            return ::Logos::Result(self, {{ error_type }}).error(default_lex_error(lexer))
-          else
-            return nil
-          end
-        {% end %}
+        remainder = lexer.remainder
+        return nil if remainder.length == 0
+
+        lexer.bump(::Logos::Pattern.invalid_span_length(pattern_prefix_dfas, remainder))
+        return ::Logos::Result(self, {{ error_type }}).error(default_lex_error(lexer))
       end
     end
   end

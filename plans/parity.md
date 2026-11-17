@@ -3,25 +3,30 @@
 ## Where we are
 
 - **Current focus** — [Phase 2, Logos parity inventory and coverage](#phase-2-logos-parity-inventory-and-coverage).
-  Unicode and binary matcher options are verified for both macro APIs and
-  prebuilt matchers. Backend and inventory signoff is next.
+  The matcher backend and custom-error streams are verified. The remaining
+  executable fixtures and source inventory review are next.
 - **Next up**
-  1. **Backend and inventory signoff.** Align generated and runtime error
-     spans after partial prefixes and reconcile matcher diagnostics. Finish
-     outstanding fixture and source dispositions, including the custom-error
-     streams. Run the inventory and full Logos gates.
+  1. **Remaining lexer and derive fixtures.** Port the exact Unicode string
+     payload and clone streams and the crate-path token stream. Verify the
+     existing CSS cases against the vendor fixtures. Map the Rust derive
+     runner to Crystal coverage and record the qualification and compile
+     diagnostic differences.
+  2. **Compiler and graph inventory signoff.** Review the remaining parser,
+     graph, and generator contracts against the Crystal backend. Record
+     where the compiled-table implementation differs, resolve any public
+     behavior gaps with failing specs, and run the final inventory gates.
 - **Status by area** — Payload examples, dependency qualification, source
-  boundaries, callbacks, lexer navigation, derive UI, the tokenization
-  fixtures, and Unicode and binary options have verified cases. The
-  [Logos inventory](inventory/README.md) records pending reviews and
-  intentional differences.
-- **Gates** — Format, lint, and 291 specs pass with the installed
-  `regex-automata` 0.2.1 snapshot. Five flagged codegen specs, the mixed-mode
-  prebuild execution, the compile check, and all three inventory drift checks
-  pass. The vendored binary, case-folding, script-property, and Unicode dot
-  suites pass, as do three added Rust characterizations and the invalid
-  subpattern compile check.
-- **Last feature commit** — `fix: align Unicode and byte matcher options`.
+  boundaries, callback dispatch, lexer navigation, derive UI cases,
+  tokenization, Unicode and binary options, and the matcher backend have
+  verified cases. The [Logos inventory](inventory/README.md) records the
+  remaining reviews and intentional differences.
+- **Gates** — Format, lint, and 293 specs pass with the tracked
+  `regex-automata` 0.2.1 snapshot. All 29 flagged backend specs, the compile
+  check, Markdown check, and all three inventory drift checks pass.
+  Both vendored custom-error tests and three prefix characterizations pass
+  against pinned Rust. The greedy and empty-subpattern UI cases produce their
+  expected errors, and the greedy opt-in case compiles.
+- **Last feature commit** — `fix: preserve failed prefixes in generated matchers`.
 
 ## Scope and verification
 
@@ -82,7 +87,10 @@ subpattern expansion and name collisions, plus exact byte-span fixtures for
 escaped strings, Unicode trivia, Cyrillic, and long quoted input. Unicode
 and binary coverage adds exact upstream case-folding, script-property and
 mixed-dot streams. Pattern options and subpatterns are shared across runtime
-and codegen. See the ordered work in **Where we are** and the
+and codegen. Generated matchers also report failed prefixes, both runtime
+APIs round incomplete UTF-8 prefixes to the next boundary, and the exact
+custom-error streams verify callback payloads and cumulative extras. See the
+ordered work in **Where we are** and the
 [inventory verification instructions](inventory/README.md).
 
 - Use the generated source and test IDs for pinned Logos runtime, derive and
@@ -167,6 +175,9 @@ reproduction.
 - **Manifest encoding:** Each pattern can specify `bytes`, `ignore_case`, or
   `ignore_ascii_case`. An array of octets in `pattern` defaults to byte mode.
   Subpatterns can use a string value or an object with `pattern` and `bytes`.
-  Definitions may refer to earlier entries in declaration order.
+  Definitions may refer to earlier entries in declaration order. Set
+  `allow_greedy: true` to opt in to unbounded greedy dot rules, as with the
+  runtime macros. Regenerated matchers report failed prefixes. Legacy
+  registered matchers returning `nil` use the single-character or byte fallback.
 - **`export_dir`:** the Rust-only `export_dir` derive option is not implemented;
   the Crystal equivalent is `make prebuild MANIFEST=... OUT=...`.

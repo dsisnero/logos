@@ -1,6 +1,7 @@
 require "../spec_helper"
 {% if flag?(:codegen_library) %}
   require "../../src/logos_codegen"
+  require "file_utils"
 
   describe Logos::Codegen do
     it "resolves the highest priority independently of pattern order" do
@@ -40,6 +41,39 @@ require "../spec_helper"
       dfa.find_longest_match_at_start("kÉ").should eq({3, [Regex::Automata::PatternID.new(1)]})
       dfa.find_longest_match_at_start("Ké").should be_nil
       dfa.find_longest_match_at_start(String.new(Bytes[0xFF, 0x41])).should eq({2, [Regex::Automata::PatternID.new(2)]})
+    end
+
+    it "preserves failed prefixes in emitted text and byte matchers" do
+      text = JSON.parse(%([{"kind":"token","pattern":"!"},{"kind":"token","pattern":"aéx"},{"kind":"token","pattern":"abc"}])).as_a
+      bytes = JSON.parse(%([{"kind":"token","pattern":"!","resolved_priority":2},{"kind":"token","pattern":"abc","resolved_priority":6}])).as_a
+      root = File.expand_path("../..", __DIR__)
+      directory = File.join(root, "temp")
+      FileUtils.mkdir_p(directory)
+      file = File.tempfile("matcher-prefix", ".cr", dir: directory)
+      begin
+        File.open(file.path, "w") do |io|
+          io.puts %q(require "../src/logos")
+          io.puts Logos::Codegen.emit_matcher(text, {} of String => String, true, "TextPrefixToken")
+          io.puts Logos::Codegen.emit_matcher(bytes, {} of String => String, false, "BytePrefixToken")
+          io << File.read(File.join(root, "spec/fixtures/generated_error_prefix.cr"))
+        end
+        error = IO::Memory.new
+        status = Process.run("crystal", ["run", file.path], chdir: root, error: error)
+        raise error.to_s unless status.success?
+      ensure
+        file.delete
+      end
+    end
+
+    it "rejects greedy dot and empty subpattern rules unless allowed by the runtime contract" do
+      subpatterns = {"optional" => "a?"}
+      greedy = JSON.parse(%([{"kind":"regex","pattern":".+"}])).as_a
+      allowed = JSON.parse(%([{"kind":"regex","pattern":".+","allow_greedy":true}])).as_a
+      empty = JSON.parse(%([{"kind":"regex","pattern":"(?&optional)"}])).as_a
+
+      expect_raises(Exception, /unbounded greedy dot/) { Logos::Codegen.emit_matcher(greedy, subpatterns, true, "Greedy") }
+      expect_raises(Exception, /can match the empty string/) { Logos::Codegen.emit_matcher(empty, subpatterns, true, "Empty") }
+      Logos::Codegen.emit_matcher(allowed, subpatterns, true, "Allowed").should contain("Generated_Allowed")
     end
 
     it "preserves first-match ties and rejects explicit ambiguity" do

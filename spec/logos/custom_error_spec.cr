@@ -165,3 +165,104 @@ module Logos::Spec::CustomError
     end
   end
 end
+
+module Logos::Spec::CustomError::Upstream
+  alias LexingError = NumberTooLong | NumberNotEven | UnrecognisedCharacter
+
+  struct NumberTooLong
+  end
+
+  record NumberNotEven, number : UInt32
+  record UnrecognisedCharacter, character : Char
+
+  Logos.define StreamToken do
+    error_type LexingError do |lex|
+      UnrecognisedCharacter.new(lex.slice[0])
+    end
+    regex "[0-9]+", :Number do |lex|
+      if number = lex.slice.to_u32?
+        if number.even?
+          Logos::FilterResult::Emit.new(number)
+        else
+          Logos::FilterResult::Error.new(NumberNotEven.new(number))
+        end
+      else
+        Logos::FilterResult::Error.new(NumberTooLong.new)
+      end
+    end
+    regex "[a-zA-Z_]+", :Identifier do |lex|
+      Logos::FilterResult::Emit.new(lex.slice)
+    end
+  end
+
+  @[Logos::Options(extras: Array(String), error_type: String, error_callback: ->(lex : Logos::Lexer(EmptyAToken, String, Array(String), String)) {
+    lex.extras << "a"
+    "a"
+  })]
+  enum EmptyAToken
+    Unused
+  end
+
+  logos_derive(EmptyAToken)
+
+  @[Logos::Options(extras: Array(String), error_type: String, error_callback: ->(lex : Logos::Lexer(EmptyBToken, String, Array(String), String)) {
+    lex.extras << "b"
+    "b"
+  })]
+  enum EmptyBToken
+    Unused
+  end
+
+  logos_derive(EmptyBToken)
+
+  describe "vendored custom error streams" do
+    it "preserves typed payloads, overflow and the default error callback with exact spans" do
+      long_number = "1111111111111111111111111111111111111111111111111111111"
+      lexer = StreamToken.lexer("123abc1234xyz#{long_number},")
+      stream = lexer.spanned
+      expected = [
+        {nil, NumberNotEven.new(123_u32), nil, "123", 0...3},
+        {StreamToken::Identifier, nil, "abc", "abc", 3...6},
+        {StreamToken::Number, nil, 1234_u32, "1234", 6...10},
+        {StreamToken::Identifier, nil, "xyz", "xyz", 10...13},
+        {nil, NumberTooLong.new, nil, long_number, 13...68},
+        {nil, UnrecognisedCharacter.new(','), nil, ",", 68...69},
+      ]
+      expected.each do |variant, error, payload, slice, span|
+        actual, actual_span = stream.next.as({Logos::Result(StreamToken, LexingError), Logos::Span})
+        if variant
+          actual.unwrap.should eq(variant)
+          if payload.is_a?(String)
+            actual.payload_for(variant, String).should eq(payload)
+          else
+            actual.payload_for(variant, UInt32).should eq(payload)
+          end
+        else
+          actual.unwrap_error.should eq(error)
+        end
+        actual_span.should eq(span)
+        lexer.slice.should eq(slice)
+      end
+      stream.next.should eq(Iterator::Stop::INSTANCE)
+    end
+
+    it "carries extras from fifteen error callbacks into a second ten-error lexer" do
+      lexer_a = EmptyAToken.lexer("a" * 15)
+      stream_a = lexer_a.spanned
+      15.times do |index|
+        stream_a.next.should eq({Logos::Result(EmptyAToken, String).error("a"), index...index + 1})
+        lexer_a.slice.should eq("a")
+      end
+      stream_a.next.should eq(Iterator::Stop::INSTANCE)
+
+      lexer_b = EmptyBToken.lexer_with_extras("b" * 10, lexer_a.extras)
+      stream_b = lexer_b.spanned
+      10.times do |index|
+        stream_b.next.should eq({Logos::Result(EmptyBToken, String).error("b"), index...index + 1})
+        lexer_b.slice.should eq("b")
+      end
+      stream_b.next.should eq(Iterator::Stop::INSTANCE)
+      lexer_b.extras.should eq(Array.new(15, "a") + Array.new(10, "b"))
+    end
+  end
+end

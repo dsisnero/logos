@@ -204,11 +204,9 @@ module Logos::Spec::IgnoreCase::Scoped
           {nil, "é", 5...7},
           { {{ type }}::Literal, "[À]+", 8...13},
           { {{ type }}::Ascii, "Ré", 14...17},
-          {nil, "R", 18...19},
-          {nil, "É", 19...21},
+          {nil, "RÉ", 18...21},
           { {{ type }}::AsciiRegex, "Qé", 22...25},
-          {nil, "Q", 26...27},
-          {nil, "É", 27...29},
+          {nil, "QÉ", 26...29},
         ]
         expected.each do |variant, slice, span|
           result = variant ? Logos::Result({{ type }}, Nil).ok(variant) : Logos::Result({{ type }}, Nil).error(nil)

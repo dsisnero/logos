@@ -46,16 +46,16 @@ tests/tests/css.rs::class::Token	in_progress	-	Discovered; contract review pendi
 tests/tests/css.rs::test::css::test_letter_spacing	in_progress	-	Discovered; contract review pending.
 tests/tests/css.rs::test::css::test_line_height	in_progress	-	Discovered; contract review pending.
 tests/tests/css.rs::test::css::test_word_spacing	in_progress	-	Discovered; contract review pending.
-tests/tests/custom_error.rs::class::LexingError	in_progress	-	Discovered; contract review pending.
-tests/tests/custom_error.rs::class::Token	in_progress	-	Discovered; contract review pending.
-tests/tests/custom_error.rs::class::TokenA	in_progress	-	Discovered; contract review pending.
-tests/tests/custom_error.rs::class::TokenB	in_progress	-	Discovered; contract review pending.
-tests/tests/custom_error.rs::function::callback_b	in_progress	-	Discovered; contract review pending.
-tests/tests/custom_error.rs::function::parse_number	in_progress	-	Discovered; contract review pending.
-tests/tests/custom_error.rs::method::LexingError.from	in_progress	-	Discovered; contract review pending.
-tests/tests/custom_error.rs::method::LexingError.unrecognised_character	in_progress	-	Discovered; contract review pending.
-tests/tests/custom_error.rs::test::error_callback_test	partial	spec/logos/custom_error_spec.cr	Checks token-specific error callbacks and extras; audit the full cross-lexer extras stream with navigation.
-tests/tests/custom_error.rs::test::test	partial	spec/logos/custom_error_spec.cr, spec/logos/callback_dispatch_spec.cr	Typed numeric errors and default error callbacks are covered; the full upstream overflow and identifier stream remains to audit.
+tests/tests/custom_error.rs::class::LexingError	ported	spec/logos/custom_error_spec.cr	Typed Crystal error cases preserve odd-number data, overflow, and the offending character.
+tests/tests/custom_error.rs::class::Token	ported	spec/logos/custom_error_spec.cr	StreamToken mirrors the two upstream regex rules and carries typed result payloads.
+tests/tests/custom_error.rs::class::TokenA	ported	spec/logos/custom_error_spec.cr	Ruleless annotation lexer records fifteen a errors and spans using an unused Crystal enum member.
+tests/tests/custom_error.rs::class::TokenB	ported	spec/logos/custom_error_spec.cr	Ruleless annotation lexer takes the previous extras and appends ten b errors.
+tests/tests/custom_error.rs::function::callback_b	ported	spec/logos/custom_error_spec.cr	Uses the same extras mutation and return value in a Crystal annotation proc.
+tests/tests/custom_error.rs::function::parse_number	ported	spec/logos/custom_error_spec.cr	Checks numeric payload, odd-number error and positive UInt32 overflow against the exact stream.
+tests/tests/custom_error.rs::method::LexingError.from	partial	spec/logos/custom_error_spec.cr	UInt32 overflow is covered. The fixture only produces unsigned decimal digits and does not exercise Rust’s other ParseIntError kinds.
+tests/tests/custom_error.rs::method::LexingError.unrecognised_character	ported	spec/logos/custom_error_spec.cr	Default error callback reads the first character of the final unmatched span.
+tests/tests/custom_error.rs::test::error_callback_test	ported	spec/logos/custom_error_spec.cr	Exact upstream 15-plus-10 callback stream, every error span, EOFs, and carried extras.
+tests/tests/custom_error.rs::test::test	ported	spec/logos/custom_error_spec.cr	Exact identifier text, successful UInt32 value, odd error payload, overflow, unmatched character, slices, and spans.
 tests/tests/derive.rs::test::test_derive	in_progress	-	Discovered; contract review pending.
 tests/tests/edgecase.rs::class::Lexer	in_progress	-	Discovered; contract review pending.
 tests/tests/edgecase.rs::class::LexingError	in_progress	-	Discovered; contract review pending.

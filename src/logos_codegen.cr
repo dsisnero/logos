@@ -55,6 +55,9 @@ module Logos::Codegen
         raise "unknown Logos pattern kind: #{kind}"
       end
       Logos::Pattern.validate_utf8(hir, pattern) if utf8
+      allow_greedy = entry["allow_greedy"]?.try(&.as_bool) == true
+      subpattern = kind == "regex" && pattern.includes?("(?&")
+      Logos::Pattern.validate_rule(hir, pattern, allow_greedy, subpattern)
       {hir, priority}
     end
   end
@@ -144,7 +147,7 @@ module Logos::Codegen
       else
         io << "      if match_start < match_finish\n        end_pos = index - start_index + 1\n        if match_finish == match_start + 1\n          pattern_id = ::Regex::Automata::PatternID.new(MATCH_IDS[match_start])\n        elsif match_finish == match_start + 2\n          pattern_id = nil\n          pattern_ids = StaticArray[::Regex::Automata::PatternID.new(MATCH_IDS[match_start]), ::Regex::Automata::PatternID.new(MATCH_IDS[match_start + 1])]\n        else\n          pattern_id = nil\n          ids = pattern_ids.is_a?(Array) ? pattern_ids : [] of ::Regex::Automata::PatternID\n          ids.clear\n          while match_start < match_finish\n            ids << ::Regex::Automata::PatternID.new(MATCH_IDS[match_start])\n            match_start += 1\n          end\n          pattern_ids = ids\n        end\n      end\n      index += 1\n    end\n"
       end
-      io << "    end_pos < 0 ? nil : {end_pos, pattern_id || pattern_ids.not_nil!}\n  end\nend\n"
+      io << "    if end_pos >= 0\n      {end_pos, pattern_id || pattern_ids.not_nil!}\n    elsif index > start_index\n      ::Logos::GeneratedMiss.new(index - start_index)\n    end\n  end\nend\n"
       io << "Logos.register_generated_matcher(#{name.inspect}, ->(input : ::Bytes, start_index : Int32) { Logos::GeneratedMatchers::#{module_name}.match(input, start_index) }"
       io << ", #{compiled_patterns.map(&.[1]).inspect} of Int32" unless resolved
       io << ")"
