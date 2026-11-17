@@ -44,19 +44,7 @@ module Logos::Codegen
   end
 
   private def self.compile_patterns(patterns : Array(JSON::Any), subpatterns : ManifestSubpatterns, utf8 : Bool) : Array({::Regex::Syntax::Hir::Hir, Int32})
-    definitions = subpatterns.map do |name, value|
-      case value
-      when String
-        {name, value, utf8}
-      else
-        if source = value.as_s?
-          {name, source, utf8}
-        else
-          source, unicode = pattern_options(value, utf8)
-          {name, source, unicode}
-        end
-      end
-    end
+    definitions = subpattern_definitions(subpatterns, utf8)
     expanded = Logos::Pattern.expand_subpatterns(definitions, utf8)
     patterns.map do |entry|
       kind = entry["kind"].as_s
@@ -78,6 +66,22 @@ module Logos::Codegen
       allow_greedy = entry["allow_greedy"]?.try(&.as_bool) == true
       Logos::Pattern.validate_rule(hir, pattern, allow_greedy)
       {hir, priority}
+    end
+  end
+
+  private def self.subpattern_definitions(subpatterns : ManifestSubpatterns, utf8 : Bool) : Array({String, String, Bool})
+    subpatterns.map do |name, value|
+      case value
+      when String
+        {name, value, utf8}
+      else
+        if source = value.as_s?
+          {name, source, utf8}
+        else
+          source, unicode = pattern_options(value, utf8)
+          {name, source, unicode}
+        end
+      end
     end
   end
 
@@ -137,10 +141,29 @@ module Logos::Codegen
     {priorities, explicit, variants, resolved}
   end
 
+  private def self.binding_source(patterns : Array(JSON::Any), subpatterns : ManifestSubpatterns, utf8 : Bool) : String
+    rules = patterns.map do |entry|
+      source, unicode = pattern_options(entry, utf8)
+      rule = {
+        "kind"              => entry["kind"].as_s,
+        "pattern"           => source,
+        "unicode"           => unicode.to_s,
+        "ignore_case"       => (entry["ignore_case"]?.try(&.as_bool) == true).to_s,
+        "ignore_ascii_case" => (entry["ignore_ascii_case"]?.try(&.as_bool) == true).to_s,
+        "allow_greedy"      => (entry["allow_greedy"]?.try(&.as_bool) == true).to_s,
+      }
+      rule["skip"] = entry["skip"].as_bool.to_s if entry.as_h.has_key?("skip")
+      rule["variant"] = entry["variant"].as_s if entry.as_h.has_key?("variant")
+      rule
+    end
+    definitions = subpattern_definitions(subpatterns, utf8)
+    "::Logos::GeneratedBinding.new(#{utf8}, #{rules.inspect} of Hash(String, String), #{definitions.inspect} of {String, String, Bool})"
+  end
+
   # Emit a source-level matcher using compact table lookups. The DFA is built
   # and byte-class reduced by this program; the consuming application merely
   # indexes generated constants.
-  def self.emit_matcher(patterns : Array(JSON::Any), subpatterns : ManifestSubpatterns, utf8 : Bool, name : String) : String
+  def self.emit_matcher(patterns : Array(JSON::Any), subpatterns : ManifestSubpatterns, utf8 : Bool, name : String, *, validate_binding : Bool = false) : String
     compiled_patterns = compile_patterns(patterns, subpatterns, utf8)
     dfa = build_dfa(compiled_patterns.map(&.[0]), utf8)
     priorities, explicit, variants, resolved = compile_priorities(dfa, patterns, compiled_patterns.map(&.[1]))
@@ -200,6 +223,7 @@ module Logos::Codegen
         io << ", explicit_priorities: #{explicit.inspect} of Bool" if explicit.any?
         io << ", resolved_priorities: true" if resolved
       end
+      io << ", binding: " << binding_source(patterns, subpatterns, utf8) if validate_binding
       io << ")"
     end
   end
@@ -213,7 +237,7 @@ end
     utf8 = manifest["utf8"]?.try(&.as_bool) != false
     subpatterns = manifest["subpatterns"]?.try(&.as_h) || {} of String => JSON::Any
     name = manifest["name"].as_s
-    output = Logos::Codegen.emit_matcher(patterns, subpatterns, utf8, name)
+    output = Logos::Codegen.emit_matcher(patterns, subpatterns, utf8, name, validate_binding: manifest["validate_binding"]?.try(&.as_bool) == true)
     if ARGV[2]? == "--out"
       output_path = ARGV[3]? || raise("--out requires a path")
       File.write(output_path, output)

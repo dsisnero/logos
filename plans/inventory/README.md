@@ -85,5 +85,7 @@ Rust crate. The other supporting fixture rows point to their parent Crystal
 behavior specs, including the alternate compile-only rules from issues 185
 and 259. The [prebuild priority specs](../../spec/logos/codegen_priority_spec.cr)
 check duplicate and explicit ties, shadowed rules, and legacy declarations
-against emitted matchers. The next manifest binding review is tracked in
-[the parity plan](../parity.md).
+against emitted matchers. The [binding fixture](../../spec/fixtures/generated_binding.cr)
+checks strict manifest metadata before actions run and compares generic and
+resolved callback payload streams with the runtime lexer. Shipped manifest
+qualification is next in [the parity plan](../parity.md).

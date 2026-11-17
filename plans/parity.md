@@ -2,24 +2,26 @@
 
 ## Where we are
 
-- **Current focus** — [Phase 4, Prebuild rule identity and priority parity](#phase-4-prebuild-rule-identity-and-priority-parity)
-  is complete. Generic manifests can carry explicit priority and variant
-  metadata. Resolved matchers retain tied highest-priority candidates for
-  variant checks against the consuming macro.
+- **Current focus** — [Phase 5, Prebuild manifest binding validation](#phase-5-prebuild-manifest-binding-validation)
+  is complete. Strict manifests carry rule binding metadata, checked before
+  matching and after registration replacement. Existing manifests keep
+  their opt-in behavior.
 - **Next up**
-  1. **Prebuild manifest binding validation.** Verify that generated pattern
-     IDs attach to the intended macro rules. Cover declaration order, token
-     versus regex rules, skip actions, and source encoding. Keep older
-     manifests and manual matcher registrations usable.
-- **Status by area** — All 269 source items and 249 test-tree items have
-  dispositions. Generic and resolved generation check declared conflicts,
-  with the legacy declaration-order fallback for distinct tied variants.
+  1. **Shipped prebuild manifest qualification.** Enable strict binding on
+     the shipped example and benchmark manifests. Align their evaluated
+     pattern text and action metadata with the macros, then verify callback
+     payloads, extras, skips, errors, and spans through generated builds.
+- **Status by area** — All 269 source items and 249 test-tree items retain
+  dispositions. Binding coverage includes rule order, kind, source and
+  rule encoding, options, declared skip and variant actions, subpatterns,
+  and registration replacement. Generic and resolved fixtures preserve
+  the same callback payload and span streams as runtime matching.
 - **Gates** — Format, lint, and 299 specs pass with `regex-automata` 0.2.1.
-  All 31 flagged backend specs, the compile and Markdown checks, three
-  inventory drift checks, and the regenerated benchmark token-and-span
-  contract pass. Vendored Rust rejects the duplicate and skip ties and
-  accepts the higher rule that shadows a tied pair.
-- **Last feature commit** — `fix: preserve rule identity in prebuild priority ties`.
+  All 32 flagged backend specs, the compile and Markdown checks, three
+  inventory drift checks, the strict CLI matcher, and the regenerated
+  legacy benchmark contract pass. The binding design follows pinned Rust
+  leaf-ID to callback/action generation.
+- **Last feature commit** — `feat: validate prebuild rule bindings`.
 
 ## Scope and verification
 
@@ -147,16 +149,31 @@ metadata, with legacy manifest behavior covered by executable specs.
 
 ### Phase 5. Prebuild manifest binding validation
 
-**Next.** The manifest order still determines emitted pattern IDs, while
-macro declarations determine the action attached to each ID.
+**Complete.** Strict prebuilds emit source and rule metadata that the macro
+checks before running the matcher. Binding validation is opt-in to preserve
+existing manifests whose equivalent regexes use different textual spellings.
+The metadata checks optional variant and skip fields when supplied.
 
 - Detect mismatches in declared rule order, pattern kind, source encoding,
   and skipped actions using validation metadata from the generated matcher.
 - Verify the same token, callback payload, and span streams in generated and
   runtime mode, including legacy manifests and manual registration.
 
-**Exit criteria.** A mismatched manifest yields a diagnostic that identifies
-its rule or option. Existing valid manifests and registrations still work.
+**Exit criteria.** A strict mismatched manifest yields a diagnostic that
+identifies its rule or option. Existing manifests and registrations retain
+their behavior.
+
+### Phase 6. Shipped prebuild manifest qualification
+
+**Next.** The example and benchmark manifests use the legacy binding mode.
+
+- Adopt strict binding with exact pattern strings, skip flags, and variant
+  identities in the shipped manifests.
+- Compile and execute the corresponding generated examples and compare
+  payloads, extras, error behavior, and spans with their runtime builds.
+
+**Exit criteria.** Every shipped manifest passes strict binding and its
+executable generated/runtime contract on the recorded dependencies.
 
 ## Completed feature phases
 

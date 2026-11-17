@@ -455,10 +455,41 @@ module Logos
         {% end %}
       end
 
+      @@validated_generated_binding = nil.as(::Logos::GeneratedBinding?)
+
+      private def self.validate_generated_binding : Nil
+        binding = ::Logos.generated_matcher_binding?("{{ name }}")
+        return unless binding
+        return if binding.same?(@@validated_generated_binding)
+
+        rules = [
+          {% for item in all_defs %}
+            {
+              "kind" => {{ token_defs.includes?(item) ? "token" : "regex" }},
+              "pattern" => {{ item[:pattern] }},
+              "unicode" => {{ (item[:bytes].nil? ? utf8_flag : !item[:bytes]).stringify }},
+              "ignore_case" => {{ item[:ignore_case].stringify }},
+              "ignore_ascii_case" => {{ item[:ignore_ascii_case].stringify }},
+              "allow_greedy" => {{ item[:allow_greedy].stringify }},
+              "skip" => {{ item[:skip].stringify }},
+              "variant" => {{ item[:variant].stringify }},
+            },
+          {% end %}
+        ] of ::Hash(::String, ::String)
+        definitions = [
+          {% for sub in subpatterns %}
+            { {{ sub[:name] }}, {{ sub[:pattern] }}, {{ sub[:bytes].nil? ? utf8_flag : !sub[:bytes] }} },
+          {% end %}
+        ] of {::String, ::String, ::Bool}
+        binding.validate("{{ name }}", {{ utf8_flag }}, rules, definitions)
+        @@validated_generated_binding = binding
+      end
+
       def self.lex(__lexer : ::Logos::Lexer(self, {{ source_type }}, {{ extras_type }}, {{ error_type }})) : ::Logos::Result(self, {{ error_type }})?
         generated_matcher = ::Logos.generated_matcher?("{{ name }}")
         generated_prefix = nil
         if generated_matcher
+          validate_generated_binding
           pattern_prefix_dfas = @@empty_pattern_prefix_dfas
           generated_result = generated_matcher.call(
             {% if utf8_flag %}

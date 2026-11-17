@@ -79,6 +79,48 @@ require "../spec_helper"
       end
     end
 
+    it "validates generated rule bindings and preserves matched callback payloads" do
+      root = File.expand_path("../..", __DIR__)
+      directory = File.join(root, "temp")
+      FileUtils.mkdir_p(directory)
+      file = File.tempfile("matcher-binding", ".cr", dir: directory)
+      begin
+        File.open(file.path, "w") do |io|
+          io.puts %q(require "../src/logos")
+          {
+            "ByteArrayBoundToken"      => %([{"kind":"token","pattern":[255],"variant":"Mark"},{"kind":"regex","pattern":"~(?&digit)","variant":"Digit"}]),
+            "ReorderedBindingToken"    => %([{"kind":"token","pattern":"a"},{"kind":"token","pattern":"b"}]),
+            "KindBindingToken"         => %([{"kind":"regex","pattern":"a"}]),
+            "SkipBindingToken"         => %([{"kind":"token","pattern":"a","skip":true}]),
+            "EncodingBindingToken"     => %([{"kind":"token","pattern":"a"}]),
+            "RuleEncodingBindingToken" => %([{"kind":"regex","pattern":".","bytes":true}]),
+            "BoundResolvedToken"       => %([{"kind":"token","pattern":" ","skip":true,"resolved_priority":2},{"kind":"token","pattern":"+","variant":"Plus","resolved_priority":2},{"kind":"regex","pattern":"[0-9]+","variant":"Number","resolved_priority":2}]),
+            "OptionsBindingToken"      => %([{"kind":"token","pattern":"a"}]),
+            "VariantBindingToken"      => %([{"kind":"token","pattern":"a","variant":"A"}]),
+            "SubpatternBindingToken"   => %([{"kind":"regex","pattern":"(?&digit)"}]),
+            "BoundToken"               => %([{"kind":"token","pattern":" ","skip":true},{"kind":"token","pattern":"+","variant":"Plus"},{"kind":"regex","pattern":"[0-9]+","variant":"Number"}]),
+          }.each do |name, json|
+            subpatterns = case name
+                          when "SubpatternBindingToken"
+                            {"digit" => "[0-9]"}
+                          when "ByteArrayBoundToken"
+                            JSON.parse(%({"digit":{"pattern":"\\\\d","bytes":false}})).as_h
+                          else
+                            {} of String => String
+                          end
+            utf8 = !{"RuleEncodingBindingToken", "ByteArrayBoundToken"}.includes?(name)
+            io.puts Logos::Codegen.emit_matcher(JSON.parse(json).as_a, subpatterns, utf8, name, validate_binding: true)
+          end
+          io << File.read(File.join(root, "spec/fixtures/generated_binding.cr"))
+        end
+        error = IO::Memory.new
+        status = Process.run("crystal", ["run", file.path], chdir: root, error: error)
+        raise error.to_s unless status.success?
+      ensure
+        file.delete
+      end
+    end
+
     it "rejects greedy dot and empty subpattern rules unless allowed by the runtime contract" do
       subpatterns = {"optional" => "a?"}
       greedy = JSON.parse(%([{"kind":"regex","pattern":".+"}])).as_a

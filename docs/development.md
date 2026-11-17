@@ -132,6 +132,21 @@ variants. This preserves the declaration-order fallback for distinct legacy
 rules. Macro declarations still supply the actions, callbacks, and error
 handling. Regenerate existing matcher files to include deferred tie data.
 
+Set `"validate_binding": true` at the manifest root to enable strict rule
+binding checks. The consuming lexer verifies the source mode, rule count,
+pattern order, token-versus-regex kind, pattern text, case flags, greedy
+option, and each subpattern definition before the matcher runs. Add `skip`
+and `variant` to a rule to check its action as well. Rule IDs follow the
+macro's token rules first, followed by regex rules. Relative order within
+each group follows the macro declarations.
+
+Strict validation compares decoded pattern text exactly. A regex spelled
+`\n` and a literal newline have different binding text. Use the same spelling
+as the macro's evaluated string. Validation is opt-in so existing manifests
+and manually registered matchers retain their current behavior. The
+`emit_matcher` API exposes the same option as `validate_binding: true`.
+A binding replacement is checked on the next lexing operation.
+
 Verify the benchmark's generated/runtime token and span contract with
 `crystal run benchmarks/prebuild_contract.cr` after generating its matcher.
 Run generator priority specs with
