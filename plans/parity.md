@@ -3,25 +3,31 @@
 ## Where we are
 
 - **Current focus** — [Phase 2, Logos parity inventory and coverage](#phase-2-logos-parity-inventory-and-coverage).
-  The derive UI fixtures and generated/runtime priority checks have
-  evidence. The remaining tokenization and legacy regression audit is next.
+  The tokenization and legacy regression slice is complete. Both runtime macro
+  APIs and prebuilt matchers preserve escaped, grouped subpatterns and literal
+  token text.
 - **Next up**
-  1. **Tokenization and legacy regression coverage.** Compare the
-     `advanced.rs`, `simple.rs`, `edgecase.rs`, and `old_logos_bugs.rs`
-     fixtures with Crystal token, payload, skip, error, and byte-span
-     assertions. Port missing behavior in groups around the matcher or lexer
-     contract it exercises.
-  2. **Remaining source and fixture review.** Finish outstanding option,
-     Unicode and binary matching, and backend dispositions, then run the
-     inventory drift and full Logos gates for phase signoff.
+  1. **Unicode and binary matcher options.** Compare case folding, byte
+     literals, and per-subpattern Unicode scope with the vendored Rust parser.
+     Cover both macro APIs and generated matchers with token, error, and
+     byte-span checks. Record the disposition of unsupported byte or Unicode
+     option combinations.
+  2. **Backend and inventory signoff.** Reconcile runtime and generated
+     diagnostics and matching behavior. Finish pending fixture and source
+     dispositions, including the remaining custom-error stream. Run the
+     inventory and full Logos gates.
 - **Status by area** — Payload examples, dependency qualification, source
-  boundaries, callbacks, lexer navigation, and the derive UI and matching
-  slice are verified. The [Logos inventory](inventory/README.md) records
-  pending reviews and intentional differences.
-- **Gates** — Format, lint, and 273 specs pass with installed
-  `regex-automata` 0.2.1. The flagged codegen specs, all three inventory
-  drift checks, and the vendored and prebuilt matcher checks pass.
-- **Last feature commit** — `fix: align derive diagnostics and matcher priorities`.
+  boundaries, callbacks, lexer navigation, derive UI, and the tokenization
+  fixtures are verified for the recorded cases. The
+  [Logos inventory](inventory/README.md) records pending reviews and
+  intentional differences.
+- **Gates** — Format, lint, and 282 specs pass with installed
+  `regex-automata` 0.2.1 snapshot. The four flagged codegen specs, prebuilt
+  subpattern matcher, compile check, and all three inventory drift checks
+  pass. The
+  four vendored fixture files pass all 83 tests on Rust, with two additional
+  characterizations for subpattern scope and asymmetric loops.
+- **Last feature commit** — `fix: preserve subpattern scope and literal tokens`.
 
 ## Scope and verification
 
@@ -75,8 +81,12 @@ recorded shard revision.
 test functions, and 127 supporting or UI fixture items from the test tree.
 Checked source ranges, the non-UTF-8 stream, callback dispatch, lexer
 navigation, and the seven derive UI fixtures have evidence-backed
-dispositions. Tokenization and legacy regression coverage are next. See
-the ordered work in **Where we are** and the
+dispositions. The tokenization and legacy review mapped 83 test functions
+across `advanced.rs`, `simple.rs`, `edgecase.rs`, and
+`old_logos_bugs.rs`. It added generated matcher and macro coverage for
+subpattern expansion and name collisions, plus exact byte-span fixtures for
+escaped strings, Unicode trivia, Cyrillic, and long quoted input. See the
+ordered work in **Where we are** and the
 [inventory verification instructions](inventory/README.md).
 
 - Use the generated source and test IDs for pinned Logos runtime, derive and
@@ -136,7 +146,9 @@ reproduction.
 - **Enum payloads:** Rust `logos` attaches data to enum variants. Crystal
   keeps the enum tag and a boxed callback value in `Logos::Result`.
   Typed access uses the variant and expected type. Result equality and hashing
-  retain the existing variant/error semantics.
+  retain the existing variant/error semantics. The Rust derive fixture
+  specializes generic enum variants. Crystal uses typed result payloads with a
+  non-generic enum.
 - **Example output:** The extras example reports one-based lines and
   zero-based byte columns. Rust reports both from zero. The borrowed JSON
   example uses read-only byte slices for source views, with string conversion

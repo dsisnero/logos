@@ -106,7 +106,7 @@ logos-codegen/src/leaf.rs::method::VariantKind.fmt	in_progress	-	Discovered; con
 logos-codegen/src/lib.rs::const::ERROR_ATTR	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/lib.rs::const::LOGOS_ATTR	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/lib.rs::const::REGEX_ATTR	in_progress	-	Discovered; contract review pending.
-logos-codegen/src/lib.rs::const::TOKEN_ATTR	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/lib.rs::const::TOKEN_ATTR	ported	src/logos/macros.cr, src/logos/define_macro.cr, spec/logos/advanced_spec.cr	Both macro APIs expose literal tokens; text resembling a subpattern reference remains literal.
 logos-codegen/src/lib.rs::function::generate	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/lib.rs::function::generate_graphs	intentional_divergence	src/logos_codegen.cr, docs/development.md	Crystal generates a matcher with the separate manifest command; Rust graph export is not part of the macros.
 logos-codegen/src/lib.rs::function::greedy_dotall_check	in_progress	-	Discovered; contract review pending.
@@ -156,11 +156,11 @@ logos-codegen/src/parser/nested.rs::method::AttributeParser.parse_literal	in_pro
 logos-codegen/src/parser/nested.rs::method::AttributeParser.parse_unnamed	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/parser/nested.rs::method::AttributeParser.parsed	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/parser/nested.rs::method::TokenStream.from	in_progress	-	Discovered; contract review pending.
-logos-codegen/src/parser/subpattern.rs::class::Subpattern	in_progress	-	Discovered; contract review pending.
-logos-codegen/src/parser/subpattern.rs::class::Subpatterns	in_progress	-	Discovered; contract review pending.
-logos-codegen/src/parser/subpattern.rs::method::Subpattern.new	in_progress	-	Discovered; contract review pending.
-logos-codegen/src/parser/subpattern.rs::method::Subpatterns.new	in_progress	-	Discovered; contract review pending.
-logos-codegen/src/parser/subpattern.rs::method::Subpatterns.subst_subpatterns	in_progress	-	Discovered; contract review pending.
+logos-codegen/src/parser/subpattern.rs::class::Subpattern	partial	src/logos/pattern.cr, spec/logos/advanced_spec.cr, spec/logos/codegen_priority_spec.cr	Stores named definitions in both macro APIs and expands them in generated matcher manifests; per-definition encoding remains to review.
+logos-codegen/src/parser/subpattern.rs::class::Subpatterns	ported	src/logos/pattern.cr, spec/logos/advanced_spec.cr, spec/logos/codegen_priority_spec.cr	Keeps a per-lexer table and resolves dependencies in declaration order.
+logos-codegen/src/parser/subpattern.rs::method::Subpattern.new	partial	src/logos/pattern.cr, spec/logos/advanced_spec.cr, spec/logos/codegen_priority_spec.cr	Preserves escapes and adds noncapturing groups; Rust also scopes each definition to its literal encoding.
+logos-codegen/src/parser/subpattern.rs::method::Subpatterns.new	partial	src/logos/pattern.cr, spec/logos/advanced_spec.cr, spec/logos/codegen_priority_spec.cr	Builds definitions in order and rejects duplicate names and forward references; Rust also parses every definition before use.
+logos-codegen/src/parser/subpattern.rs::method::Subpatterns.subst_subpatterns	ported	src/logos/pattern.cr, spec/logos/advanced_spec.cr, spec/logos/codegen_priority_spec.cr	Expands complete named references, preserves their grouping, and leaves ordinary token patterns literal.
 logos-codegen/src/parser/type_params.rs::class::TypeParams	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/parser/type_params.rs::function::replace_lifetime	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/parser/type_params.rs::function::replace_lifetimes	in_progress	-	Discovered; contract review pending.
@@ -191,7 +191,7 @@ logos-codegen/src/util.rs::method::MaybeVoid.take	in_progress	-	Discovered; cont
 logos-codegen/src/util.rs::method::MaybeVoid.to_token_stream	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/util.rs::method::MaybeVoid.to_tokens	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/util.rs::method::str.to_ident	in_progress	-	Discovered; contract review pending.
-logos-derive/src/lib.rs::function::logos	in_progress	-	Discovered; contract review pending.
+logos-derive/src/lib.rs::function::logos	partial	src/logos/macros.cr, spec/logos/edgecase_spec.cr	Annotation derive survives the upstream naming collisions. Review remaining options and backend diagnostics.
 src/internal.rs::class::CallbackResult	intentional_divergence	src/logos/define_macro.cr, src/logos/macros.cr, spec/logos/callback_dispatch_spec.cr	Generated Crystal code emits a Result, skips via nil, or builds the default error at the matched span.
 src/internal.rs::class::SkipResult	intentional_divergence	src/logos/define_macro.cr, src/logos/macros.cr, spec/logos/callback_dispatch_spec.cr	Generated Crystal code handles a successful skip and typed error directly.
 src/internal.rs::interface::CallbackRetVal	intentional_divergence	src/logos/define_macro.cr, src/logos/macros.cr, spec/logos/callback_dispatch_spec.cr	Crystal macros dispatch from explicit payload and control return types without Rust trait coherence.

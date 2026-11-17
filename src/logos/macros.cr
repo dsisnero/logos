@@ -9,12 +9,12 @@ macro logos_derive(type)
   {% subpatterns = [] of NamedTuple %}
   {% error_def = nil %}
   {% skip_variant = nil %}
-  {% extras_type = ::Logos::NoExtras %}
+  {% extras_type = "::Logos::NoExtras".id %}
   {% error_type = Nil %}
   {% error_callback = nil %}
   {% utf8_flag = true %}
 
-  {% for ann in type_node.annotations(Logos::Options) %}
+  {% for ann in type_node.annotations(::Logos::Options) %}
     {% if value = ann.named_args["extras"] %}
       {% extras_type = value %}
     {% end %}
@@ -41,7 +41,7 @@ macro logos_derive(type)
     {% end %}
   {% end %}
 
-  {% for ann in type_node.annotations(Logos::Subpattern) %}
+  {% for ann in type_node.annotations(::Logos::Subpattern) %}
     {% if ann.args.size < 2 %}
       {% ann.raise "Subpattern annotation requires name and pattern" %}
     {% end %}
@@ -59,11 +59,10 @@ macro logos_derive(type)
     {% end %}
     {% name_value = name_value.split("\"").join("") %}
     {% name_value = name_value.split("\\").join("") %}
-    {% pattern_value = pattern_node.stringify[1..-2] %}
-    {% subpatterns << {name: name_value, pattern: pattern_value} %}
+    {% subpatterns << {name: name_value, pattern: pattern_node} %}
   {% end %}
 
-  {% for ann in type_node.annotations(Logos::ErrorToken) %}
+  {% for ann in type_node.annotations(::Logos::ErrorToken) %}
     {% variant = ann.named_args["variant"] %}
     {% variant = ann.args[0] if variant.nil? && ann.args.size > 0 %}
     {% if variant %}
@@ -76,7 +75,7 @@ macro logos_derive(type)
     {% end %}
   {% end %}
 
-  {% for ann in type_node.annotations(Logos::SkipToken) %}
+  {% for ann in type_node.annotations(::Logos::SkipToken) %}
     {% variant = ann.named_args["variant"] %}
     {% variant = ann.args[0] if variant.nil? && ann.args.size > 0 %}
     {% if variant %}
@@ -89,7 +88,7 @@ macro logos_derive(type)
     {% end %}
   {% end %}
 
-  {% for ann in type_node.annotations(Logos::Token) %}
+  {% for ann in type_node.annotations(::Logos::Token) %}
     {% variant = ann.named_args["variant"] %}
     {% pattern = ann.named_args["pattern"] %}
     {% callback = ann.named_args["callback"] %}
@@ -139,7 +138,7 @@ macro logos_derive(type)
     {% token_defs << {variant: variant, pattern: pattern, skip: skip, callback: callback, priority: priority, ignore_case: ignore_case || ignore_ascii_case, allow_greedy: allow_greedy, bytes: bytes} %}
   {% end %}
 
-  {% for ann in type_node.annotations(Logos::Regex) %}
+  {% for ann in type_node.annotations(::Logos::Regex) %}
     {% variant = ann.named_args["variant"] %}
     {% pattern = ann.named_args["pattern"] %}
     {% callback = ann.named_args["callback"] %}
@@ -200,30 +199,6 @@ macro logos_derive(type)
             { {{ sub[:name] }}, {{ sub[:pattern] }} },
           {% end %}
         ]
-      end
-
-      private def self.substitute_subpatterns(pattern : String) : String
-        expanded = [] of Tuple(String, String)
-        subpatterns.each do |entry|
-          name = entry[0]
-          pat = entry[1]
-          expanded_pat = pat
-          expanded.each do |prev|
-            expanded_pat = expanded_pat.gsub("(?&#{prev[0]})", "(?:#{prev[1]})")
-          end
-          expanded << {name, expanded_pat}
-        end
-
-        result = pattern
-        expanded.each do |entry|
-          result = result.gsub("(?&#{entry[0]})", "(?:#{entry[1]})")
-        end
-
-        if result.includes?("(?&")
-          raise "unknown subpattern reference in pattern: #{result}"
-        end
-
-        result
       end
     {% end %}
 
@@ -441,6 +416,10 @@ macro logos_derive(type)
       pattern_text = [] of ::String
       pattern_variant_name = [] of ::String
 
+      {% if subpatterns.size > 0 %}
+        expanded_subpatterns = ::Logos::Pattern.expand_subpatterns(self.subpatterns)
+      {% end %}
+
       skip_value = {% if skip_variant %}
                      self::{{ skip_variant }}
                    {% else %}
@@ -449,15 +428,8 @@ macro logos_derive(type)
 
       {% for item, index in token_defs %}
         {% pattern_node = item[:pattern] %}
-        {% if subpatterns.size > 0 %}
-          pattern_source = self.substitute_subpatterns({{ pattern_node }})
-          pattern_uses_subpattern = {{ pattern_node }}.includes?("(?&")
-          hir = ::Regex::Syntax::Hir::Hir.literal(pattern_source.to_slice)
-        {% else %}
-          pattern_source = {{ pattern_node }}
-          pattern_uses_subpattern = false
-          hir = ::Regex::Syntax::Hir::Hir.literal(pattern_source.to_slice)
-        {% end %}
+        pattern_source = {{ pattern_node }}
+        hir = ::Regex::Syntax::Hir::Hir.literal(pattern_source.to_slice)
         {% if item[:ignore_case] %}
           {% if utf8_flag %}
             hir = ::Regex::Syntax::Hir.case_fold_unicode(hir)
@@ -481,9 +453,6 @@ macro logos_derive(type)
             raise self.greedy_pattern_message
           end
         {% end %}
-        if pattern_uses_subpattern && hir.can_match_empty?
-          raise "The pattern #{ {{ pattern_node }}.inspect } for variant #{ {{ item[:variant] }} } can match the empty string, which is unsupported by logos."
-        end
         hirs << hir
         pattern_to_variant << {{ item[:variant] }}
         pattern_is_skip << {{ item[:skip] }}
@@ -501,7 +470,7 @@ macro logos_derive(type)
       {% for item, index in regex_defs %}
         {% pattern_node = item[:pattern] %}
         {% if subpatterns.size > 0 %}
-          pattern_source = self.substitute_subpatterns({{ pattern_node }})
+          pattern_source = ::Logos::Pattern.substitute_subpatterns({{ pattern_node }}, expanded_subpatterns)
           pattern_uses_subpattern = {{ pattern_node }}.includes?("(?&")
           hir = ::Regex::Syntax.parse(pattern_source, unicode: {{ utf8_flag }}, utf8: {{ utf8_flag }})
         {% else %}
@@ -624,7 +593,7 @@ macro logos_derive(type)
       {% end %}
     end
 
-    def self.lex(lexer : Lexer(self, {{ source_type }}, {{ extras_type }}, {{ error_type }})) : Result(self, {{ error_type }})?
+    def self.lex(lexer : ::Logos::Lexer(self, {{ source_type }}, {{ extras_type }}, {{ error_type }})) : ::Logos::Result(self, {{ error_type }})?
       compiled = self.compiled
       dfa = compiled[:dfa]
       pattern_dfas = compiled[:pattern_dfas]

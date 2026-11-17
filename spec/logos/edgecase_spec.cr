@@ -160,17 +160,29 @@ end
 
 describe "benches strings" do
   it "matches strings with escapes" do
-    source = "\"hello\\\\tworld\\\\n\""
-    lexer = Logos::Lexer(Logos::Spec::Edgecase::BenchesTest::Token, String, Logos::NoExtras, Nil).new(source)
-
-    result = lexer.next
-    result.should_not be_nil
-    result = result.as(Logos::Result(Logos::Spec::Edgecase::BenchesTest::Token, Nil))
-    result.unwrap.should eq(Logos::Spec::Edgecase::BenchesTest::Token::String)
-    lexer.slice.should eq(source)
-    lexer.span.should eq(0...source.bytesize)
-
-    lexer.next.should eq(Iterator::Stop::INSTANCE)
+    source = %q|"tree" "to" "a" "graph" "that can" "more adequately represent" "loops and arbitrary state jumps" "with\"\"\"out" "the\n\n\n\n\n" "expl\"\"\"osive" "nature\"""of trying to build up all possible permutations in a tree."|
+    lexer = Logos::Spec::Edgecase::BenchesTest::Token.lexer(source)
+    stream = lexer.spanned
+    expected = [
+      { %q("tree"), 0...6 },
+      { %q("to"), 7...11 },
+      { %q("a"), 12...15 },
+      { %q("graph"), 16...23 },
+      { %q("that can"), 24...34 },
+      { %q("more adequately represent"), 35...62 },
+      { %q("loops and arbitrary state jumps"), 63...96 },
+      { %q|"with\"\"\"out"|, 97...112 },
+      { %q|"the\n\n\n\n\n"|, 113...128 },
+      { %q|"expl\"\"\"osive"|, 129...146 },
+      { %q|"nature\""|, 147...157 },
+      { %q("of trying to build up all possible permutations in a tree."), 157...217 },
+    ]
+    string_token = Logos::Spec::Edgecase::BenchesTest::Token::String
+    expected.each do |slice, span|
+      stream.next.should eq({Logos::Result(typeof(string_token), Nil).ok(string_token), span})
+      lexer.slice.should eq(slice)
+    end
+    stream.next.should eq(Iterator::Stop::INSTANCE)
   end
 end
 
@@ -286,6 +298,20 @@ describe "unicode_whitespace" do
     end
 
     lexer.next.should eq(Iterator::Stop::INSTANCE)
+  end
+
+  it "skips paragraph separators and reports the following error span" do
+    lexer = Logos::Spec::Edgecase::UnicodeWhitespaceTest::Token.lexer("   12345\u202967890\t  x ")
+    stream = lexer.spanned
+    number = Logos::Spec::Edgecase::UnicodeWhitespaceTest::Token::Number
+    expected_number = Logos::Result(typeof(number), Nil).ok(number)
+    stream.next.should eq({expected_number, 3...8})
+    lexer.slice.should eq("12345")
+    stream.next.should eq({expected_number, 11...16})
+    lexer.slice.should eq("67890")
+    stream.next.should eq({Logos::Result(typeof(number), Nil).error(nil), 19...20})
+    lexer.slice.should eq("x")
+    stream.next.should eq(Iterator::Stop::INSTANCE)
   end
 end
 
@@ -404,7 +430,7 @@ module Logos::Spec::Edgecase::BenchesTest
   Logos.define Token do
     skip_regex "[ \\t\\n\\f]+", :Whitespace
     regex("[a-zA-Z_$][a-zA-Z0-9_$]*", :Identifier)
-    regex(%q("([^"\\]|\\\\t|\\\\u|\\\\n|\\\\")*"), :String)
+    regex(%q("([^"\\]|\\t|\\u|\\n|\\")*"), :String)
     token "private", :Private
     token "primitive", :Primitive
     token "protected", :Protected
@@ -484,5 +510,73 @@ end
 module Logos::Spec::Edgecase::UnicodeErrorSplitTest
   Logos.define Token do
     token "a", :A
+  end
+end
+
+module Logos::Spec::Edgecase::NamingCollisionTest
+  struct Option
+  end
+
+  struct Result
+  end
+
+  struct Lexer
+  end
+
+  struct Logos
+  end
+
+  @[::Logos::Regex(:Identifier, "[a-zA-Z_][a-zA-Z0-9_]*")]
+  @[::Logos::Token(:Error, "error")]
+  enum Token
+    Identifier
+    Error
+  end
+
+  logos_derive(Token)
+
+  describe "generated code with neighboring type names" do
+    it "uses the library lexer and result types and emits identifier spans" do
+      lexer = Token.lexer("name?")
+      first, span = lexer.spanned.next.as({::Logos::Result(Token, Nil), ::Logos::Span})
+      first.unwrap.should eq(Token::Identifier)
+      span.should eq(0...4)
+      lexer.slice.should eq("name")
+
+      error, span = lexer.spanned.next.as({::Logos::Result(Token, Nil), ::Logos::Span})
+      error.error?.should be_true
+      span.should eq(4...5)
+      lexer.slice.should eq("?")
+      lexer.next.should eq(Iterator::Stop::INSTANCE)
+    end
+
+    it "emits a normal token named Error" do
+      lexer = Token.lexer("error")
+      stream = lexer.spanned
+      stream.next.should eq({::Logos::Result(Token, Nil).ok(Token::Error), 0...5})
+      lexer.slice.should eq("error")
+      stream.next.should eq(Iterator::Stop::INSTANCE)
+    end
+  end
+end
+
+module Logos::Spec::Edgecase::AsymmetricLoopsTest
+  Logos.define Token do
+    regex %q([!#$%&*+-./<=>?@\\^|~:]+), :Operator
+    skip_regex "/([^*]*[*]+[^*/])*([^*]*[*]+|[^*])*", :Ignored, priority: 3
+  end
+
+  describe "merging asymmetric loops" do
+    it "matches an operator and skips the competing loop pattern" do
+      lexer = Token.lexer("+++")
+      stream = lexer.spanned
+      stream.next.should eq({Logos::Result(Token, Nil).ok(Token::Operator), 0...3})
+      lexer.slice.should eq("+++")
+      stream.next.should eq(Iterator::Stop::INSTANCE)
+
+      skipped = Token.lexer("/abc")
+      skipped.next.should eq(Iterator::Stop::INSTANCE)
+      skipped.span.should eq(4...4)
+    end
   end
 end

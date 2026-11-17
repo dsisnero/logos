@@ -111,6 +111,8 @@ module Logos::Spec::OldLogosBugs
         result.should_not be_nil
         result = result.as(Logos::Result(Token, Nil))
         result.error?.should be_true
+        lexer.slice.should eq("x")
+        lexer.span.should eq(0...1)
 
         lexer.next.should eq(Iterator::Stop::INSTANCE)
       end
@@ -774,11 +776,13 @@ module Logos::Spec::OldLogosBugs
 
     describe "issue_190: long quoted strings" do
       it "matches long quoted input" do
-        source = "\"" + ("1234567890ABCDEF" * 512) + "\""
+        source = "\"" + ("1234567890ABCDEF" * (256 * 64)) + "\""
         lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new(source)
         result = lexer.next.as(Logos::Result(Token, Nil))
         result.unwrap.should eq(Token::Quote)
-        lexer.slice.size.should eq(source.size)
+        lexer.slice.should eq(source)
+        lexer.span.should eq(0...source.bytesize)
+        lexer.next.should eq(Iterator::Stop::INSTANCE)
       end
     end
   end

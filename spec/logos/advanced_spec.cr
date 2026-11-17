@@ -209,13 +209,14 @@ module Logos::Spec::Advanced
     end
 
     it "matches single and triple quotes" do
-      source = "' ''' '"
+      source = "' ''' ''"
       lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new(source)
 
       expected = [
         {Logos::Result(Token, Nil).ok(Token::SingleQuote), "'", 0...1},
         {Logos::Result(Token, Nil).ok(Token::TripleQuote), "'''", 2...5},
         {Logos::Result(Token, Nil).ok(Token::SingleQuote), "'", 6...7},
+        {Logos::Result(Token, Nil).ok(Token::SingleQuote), "'", 7...8},
       ]
 
       expected.each do |expected_result, expected_slice, expected_range|
@@ -251,8 +252,8 @@ module Logos::Spec::Advanced
       lexer.next.should eq(Iterator::Stop::INSTANCE)
     end
 
-    it "matches Polish and Cyrillic" do
-      source = "ą ę ó ąąąą łóżź привет"
+    it "matches Polish" do
+      source = "ą ę ó ąąąą łóżź"
       lexer = Logos::Lexer(Token, String, Logos::NoExtras, Nil).new(source)
 
       expected = [
@@ -261,7 +262,6 @@ module Logos::Spec::Advanced
         {Logos::Result(Token, Nil).ok(Token::Polish), "ó", 6...8},
         {Logos::Result(Token, Nil).ok(Token::Polish), "ąąąą", 9...17},
         {Logos::Result(Token, Nil).ok(Token::Polish), "łóżź", 18...26},
-        {Logos::Result(Token, Nil).ok(Token::Cyrillic), "привет", 27...39},
       ]
 
       expected.each do |expected_result, expected_slice, expected_range|
@@ -273,6 +273,36 @@ module Logos::Spec::Advanced
       end
 
       lexer.next.should eq(Iterator::Stop::INSTANCE)
+    end
+
+    it "reports byte spans for Cyrillic words" do
+      lexer = Token.lexer("До свидания")
+      stream = lexer.spanned
+      [{0...4, "До"}, {5...21, "свидания"}].each do |span, slice|
+        stream.next.should eq({Logos::Result(Token, Nil).ok(Token::Cyrillic), span})
+        lexer.slice.should eq(slice)
+      end
+      stream.next.should eq(Iterator::Stop::INSTANCE)
+    end
+
+    it "distinguishes relative dates, Urbit addresses, and null" do
+      lexer = Token.lexer("~ ~m23 ~s42 ~s42..cafe.babe ~h23 ~sod ~myd ~songname")
+      stream = lexer.spanned
+      expected = [
+        {Token::LiteralNull, "~", 0...1},
+        {Token::LiteralRelDate, "~m23", 2...6},
+        {Token::LiteralRelDate, "~s42", 7...11},
+        {Token::LiteralRelDate, "~s42..cafe.babe", 12...27},
+        {Token::LiteralRelDate, "~h23", 28...32},
+        {Token::LiteralUrbitAddress, "~sod", 33...37},
+        {Token::LiteralUrbitAddress, "~myd", 38...42},
+        {Token::LiteralUrbitAddress, "~songname", 43...52},
+      ]
+      expected.each do |token, slice, span|
+        stream.next.should eq({Logos::Result(Token, Nil).ok(token), span})
+        lexer.slice.should eq(slice)
+      end
+      stream.next.should eq(Iterator::Stop::INSTANCE)
     end
 
     it "matches the what the heck pattern" do
@@ -314,6 +344,50 @@ module Logos::Spec::Advanced
         lexer.span.should eq(expected_range)
       end
 
+      lexer.next.should eq(Iterator::Stop::INSTANCE)
+    end
+  end
+end
+
+module Logos::Spec::Advanced::EscapedSubpatterns
+  Logos.define DefineToken do
+    subpattern :digit, %q(\d)
+    subpattern :part, "(?&digit)|x"
+    regex "~(?&part)+", :Sequence
+    token "(?&part)", :Literal
+  end
+
+  @[Logos::Subpattern(:digit, %q(\d))]
+  @[Logos::Subpattern(:part, "(?&digit)|x")]
+  @[Logos::Regex(:Sequence, "~(?&part)+")]
+  @[Logos::Token(:Literal, "(?&part)")]
+  enum AnnotatedToken
+    Sequence
+    Literal
+  end
+
+  logos_derive(AnnotatedToken)
+
+  describe "escaped nested subpatterns" do
+    it "preserves escapes and groups alternatives in Logos.define" do
+      lexer = DefineToken.lexer("~9x8")
+      result, span = lexer.spanned.next.as({Logos::Result(DefineToken, Nil), Logos::Span})
+      result.unwrap.should eq(DefineToken::Sequence)
+      span.should eq(0...4)
+      lexer.next.should eq(Iterator::Stop::INSTANCE)
+    end
+
+    it "keeps subpattern-shaped text literal in tokens" do
+      literal = "(?&part)"
+      DefineToken.lexer(literal).spanned.next.should eq({Logos::Result(DefineToken, Nil).ok(DefineToken::Literal), 0...8})
+      AnnotatedToken.lexer(literal).spanned.next.should eq({Logos::Result(AnnotatedToken, Nil).ok(AnnotatedToken::Literal), 0...8})
+    end
+
+    it "preserves escapes and groups alternatives in annotations" do
+      lexer = AnnotatedToken.lexer("~9x8")
+      result, span = lexer.spanned.next.as({Logos::Result(AnnotatedToken, Nil), Logos::Span})
+      result.unwrap.should eq(AnnotatedToken::Sequence)
+      span.should eq(0...4)
       lexer.next.should eq(Iterator::Stop::INSTANCE)
     end
   end

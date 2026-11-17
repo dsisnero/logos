@@ -160,6 +160,26 @@ module Logos
       Pattern.new(false, source, hir)
     end
 
+    # Expand declared subpatterns in order. Each can refer to earlier entries.
+    def self.expand_subpatterns(definitions : Enumerable({String, String})) : Hash(String, String)
+      expanded = {} of String => String
+      definitions.each do |name, pattern|
+        raise "Subpattern #{name.inspect} already exists" if expanded.has_key?(name)
+        expanded[name] = substitute_subpatterns(pattern, expanded)
+      end
+      expanded
+    end
+
+    # Keep an expanded subpattern in its own group so that quantifiers and
+    # alternations keep the same scope as the reference.
+    def self.substitute_subpatterns(pattern : String, expanded : Hash(String, String)) : String
+      pattern.gsub(/\(\?&([a-zA-Z0-9_]+)\)/) do |_, match|
+        name = match[1]
+        replacement = expanded[name]? || raise "unknown subpattern reference: #{name}"
+        "(?:#{replacement})"
+      end
+    end
+
     # Calculate priority/complexity for disambiguation
     def priority : Int32
       return @source.bytesize * 2 if literal?

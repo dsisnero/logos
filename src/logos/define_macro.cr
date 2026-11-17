@@ -81,8 +81,7 @@ module Logos
           {% unless pattern_node.is_a?(StringLiteral) %}
             {% node.raise "subpattern pattern must be a string literal" %}
           {% end %}
-          {% pattern_value = pattern_node.stringify[1..-2] %}
-          {% subpatterns << {name: subpattern_name, pattern: pattern_value} %}
+          {% subpatterns << {name: subpattern_name, pattern: pattern_node} %}
         {% elsif node.name == "token" && node.args.size == 2 %}
           {% variant = node.args[1] %}
           {% if variant.is_a?(SymbolLiteral) %}
@@ -186,30 +185,6 @@ module Logos
               { {{ sub[:name] }}, {{ sub[:pattern] }} },
             {% end %}
           ]
-        end
-
-        private def self.substitute_subpatterns(pattern : String) : String
-          expanded = [] of Tuple(String, String)
-          subpatterns.each do |entry|
-            name = entry[0]
-            pat = entry[1]
-            expanded_pat = pat
-            expanded.each do |prev|
-              expanded_pat = expanded_pat.gsub("(?&#{prev[0]})", "(?:#{prev[1]})")
-            end
-            expanded << {name, expanded_pat}
-          end
-
-          result = pattern
-          expanded.each do |entry|
-            result = result.gsub("(?&#{entry[0]})", "(?:#{entry[1]})")
-          end
-
-          if result.includes?("(?&")
-            raise "unknown subpattern reference in pattern: #{result}"
-          end
-
-          result
         end
       {% end %}
 
@@ -437,19 +412,16 @@ module Logos
         pattern_text = [] of ::String
         pattern_variant_name = [] of ::String
 
+        {% if subpatterns.size > 0 %}
+          expanded_subpatterns = ::Logos::Pattern.expand_subpatterns(self.subpatterns)
+        {% end %}
+
         # Token patterns (literals)
         {% for item, index in token_defs %}
           {% pattern_node = item[:pattern] %}
-          {% if subpatterns.size > 0 %}
-            pattern_source = self.substitute_subpatterns({{ pattern_node }})
-            pattern_uses_subpattern = {{ pattern_node }}.includes?("(?&")
-            hir = ::Regex::Syntax::Hir::Hir.literal(pattern_source.to_slice)
-          {% else %}
-            pattern_source = {{ pattern_node }}
-            pattern_uses_subpattern = false
-            hir = ::Regex::Syntax::Hir::Hir.literal(pattern_source.to_slice)
-          {% end %}
-        {% if item[:ignore_case] %}
+          pattern_source = {{ pattern_node }}
+          hir = ::Regex::Syntax::Hir::Hir.literal(pattern_source.to_slice)
+          {% if item[:ignore_case] %}
             {% if utf8_flag %}
               hir = ::Regex::Syntax::Hir.case_fold_unicode(hir)
             {% else %}
@@ -472,9 +444,6 @@ module Logos
               raise self.greedy_pattern_message
             end
           {% end %}
-          if pattern_uses_subpattern && hir.can_match_empty?
-            raise "The pattern #{ {{ pattern_node }}.inspect } for variant #{ {{ item[:variant] }} } can match the empty string, which is unsupported by logos."
-          end
           hirs << hir
           pattern_to_variant << {{ item[:variant] }}
           pattern_is_skip << {{ item[:skip] }}
@@ -494,7 +463,7 @@ module Logos
         {% for item, index in regex_defs %}
           {% pattern_node = item[:pattern] %}
           {% if subpatterns.size > 0 %}
-            pattern_source = self.substitute_subpatterns({{ pattern_node }})
+            pattern_source = ::Logos::Pattern.substitute_subpatterns({{ pattern_node }}, expanded_subpatterns)
             pattern_uses_subpattern = {{ pattern_node }}.includes?("(?&")
             hir = ::Regex::Syntax.parse(pattern_source, unicode: {{ utf8_flag }}, utf8: {{ utf8_flag }})
           {% else %}

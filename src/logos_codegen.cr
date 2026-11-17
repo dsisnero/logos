@@ -22,15 +22,16 @@ module Logos::Codegen
   end
 
   private def self.compile_patterns(patterns : Array(JSON::Any), subpatterns : Hash(String, String), utf8 : Bool) : Array({::Regex::Syntax::Hir::Hir, Int32})
+    expanded = Logos::Pattern.expand_subpatterns(subpatterns)
     patterns.map do |entry|
       kind = entry["kind"].as_s
       pattern = entry["pattern"].as_s
-      subpatterns.each { |name, value| pattern = pattern.gsub("(?&#{name})", value) }
       case kind
       when "token"
         {::Regex::Syntax::Hir::Hir.literal(pattern.to_slice), pattern.bytesize * 2}
       when "regex"
-        hir = ::Regex::Syntax.parse(pattern, unicode: utf8, utf8: utf8)
+        source = Logos::Pattern.substitute_subpatterns(pattern, expanded)
+        hir = ::Regex::Syntax.parse(source, unicode: utf8, utf8: utf8)
         {hir, Logos::Pattern.regex_priority(hir.node)}
       else
         raise "unknown Logos pattern kind: #{kind}"

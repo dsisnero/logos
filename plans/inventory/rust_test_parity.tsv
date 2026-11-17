@@ -1,17 +1,17 @@
 # source_test_id	status	crystal_refs	notes
 tests/tests/advanced.rs::class::Token	in_progress	-	Discovered; contract review pending.
-tests/tests/advanced.rs::test::advanced::cyrillic	in_progress	-	Discovered; contract review pending.
-tests/tests/advanced.rs::test::advanced::float	in_progress	-	Discovered; contract review pending.
-tests/tests/advanced.rs::test::advanced::hex	in_progress	-	Discovered; contract review pending.
-tests/tests/advanced.rs::test::advanced::integer	in_progress	-	Discovered; contract review pending.
-tests/tests/advanced.rs::test::advanced::keywords	in_progress	-	Discovered; contract review pending.
-tests/tests/advanced.rs::test::advanced::polish	in_progress	-	Discovered; contract review pending.
-tests/tests/advanced.rs::test::advanced::rustaceans	in_progress	-	Discovered; contract review pending.
-tests/tests/advanced.rs::test::advanced::sigs	in_progress	-	Discovered; contract review pending.
-tests/tests/advanced.rs::test::advanced::string	in_progress	-	Discovered; contract review pending.
-tests/tests/advanced.rs::test::advanced::subpatterns	in_progress	-	Discovered; contract review pending.
-tests/tests/advanced.rs::test::advanced::subquotes	in_progress	-	Discovered; contract review pending.
-tests/tests/advanced.rs::test::advanced::what_the_heck	in_progress	-	Discovered; contract review pending.
+tests/tests/advanced.rs::test::advanced::cyrillic	ported	spec/logos/advanced_spec.cr	Exact upstream Cyrillic slices and UTF-8 byte spans.
+tests/tests/advanced.rs::test::advanced::float	ported	spec/logos/advanced_spec.cr	Matches the complete decimal and exponent fixture with slices and spans.
+tests/tests/advanced.rs::test::advanced::hex	ported	spec/logos/advanced_spec.cr	Matches the upstream incomplete prefixes, errors, and hexadecimal literals with spans.
+tests/tests/advanced.rs::test::advanced::integer	ported	spec/logos/advanced_spec.cr	Matches the upstream signed and unsigned lexemes with slices and spans.
+tests/tests/advanced.rs::test::advanced::keywords	ported	spec/logos/advanced_spec.cr	Matches all three overlapping keyword alternatives with spans.
+tests/tests/advanced.rs::test::advanced::polish	ported	spec/logos/advanced_spec.cr	Matches the five Polish slices with exact byte offsets.
+tests/tests/advanced.rs::test::advanced::rustaceans	ported	spec/logos/advanced_spec.cr	Matches one through four emoji with UTF-8 byte spans.
+tests/tests/advanced.rs::test::advanced::sigs	ported	spec/logos/advanced_spec.cr	Exact upstream null, relative dates, and Urbit addresses with spans.
+tests/tests/advanced.rs::test::advanced::string	ported	spec/logos/advanced_spec.cr	Matches the escaped string stream, including errors for the invalid escape and their spans.
+tests/tests/advanced.rs::test::advanced::subpatterns	ported	spec/logos/advanced_spec.cr	Exact upstream nested ABBA stream; also checks escaped alternatives and literal tokens in both macro APIs.
+tests/tests/advanced.rs::test::advanced::subquotes	ported	spec/logos/advanced_spec.cr	Matches the triple quote and adjacent single quotes with exact spans.
+tests/tests/advanced.rs::test::advanced::what_the_heck	ported	spec/logos/advanced_spec.cr	Matches the complete repeated punctuation fixture with slices and spans.
 tests/tests/binary.rs::class::Token	ported	spec/logos/binary_spec.cr	AdvancedByteToken defines the upstream byte patterns and is exercised by the exact token stream test.
 tests/tests/binary.rs::test::handles_non_utf8	ported	spec/logos/binary_spec.cr	Exact upstream byte input, token variants, slices, error positions and EOF.
 tests/tests/callbacks.rs::class::Extras	in_progress	-	Discovered; contract review pending.
@@ -69,24 +69,24 @@ tests/tests/edgecase.rs::class::Token2	in_progress	-	Discovered; contract review
 tests/tests/edgecase.rs::class::Token3	in_progress	-	Discovered; contract review pending.
 tests/tests/edgecase.rs::class::Token4	in_progress	-	Discovered; contract review pending.
 tests/tests/edgecase.rs::method::LexingError.from	in_progress	-	Discovered; contract review pending.
-tests/tests/edgecase.rs::test::benches::idents	in_progress	-	Discovered; contract review pending.
-tests/tests/edgecase.rs::test::benches::keywords_and_punctators	in_progress	-	Discovered; contract review pending.
-tests/tests/edgecase.rs::test::benches::strings	in_progress	-	Discovered; contract review pending.
-tests/tests/edgecase.rs::test::colors::match_colors	in_progress	-	Discovered; contract review pending.
-tests/tests/edgecase.rs::test::crunch::crunch	in_progress	-	Discovered; contract review pending.
-tests/tests/edgecase.rs::test::error_variant::must_compile	in_progress	-	Discovered; contract review pending.
-tests/tests/edgecase.rs::test::loop_in_loop::test_a_loop_in_a_loop	in_progress	-	Discovered; contract review pending.
-tests/tests/edgecase.rs::test::maybe::maybe_at_the_end	in_progress	-	Discovered; contract review pending.
-tests/tests/edgecase.rs::test::maybe_in_loop::test_maybe_in_a_loop	in_progress	-	Discovered; contract review pending.
-tests/tests/edgecase.rs::test::merging_asymmetric_loops::must_compile	in_progress	-	Discovered; contract review pending.
-tests/tests/edgecase.rs::test::naming_collision::must_compile	in_progress	-	Discovered; contract review pending.
-tests/tests/edgecase.rs::test::numbers::numbers	in_progress	-	Discovered; contract review pending.
-tests/tests/edgecase.rs::test::priority_disambiguate_1::priority_abc	in_progress	-	Discovered; contract review pending.
-tests/tests/edgecase.rs::test::priority_disambiguate_2::priority_cbd	in_progress	-	Discovered; contract review pending.
-tests/tests/edgecase.rs::test::trivia::abcdef_trivia	in_progress	-	Discovered; contract review pending.
-tests/tests/edgecase.rs::test::type_params::substitute_type_params	in_progress	-	Discovered; contract review pending.
-tests/tests/edgecase.rs::test::unicode_error_split::test	in_progress	-	Discovered; contract review pending.
-tests/tests/edgecase.rs::test::unicode_whitespace::abcdef_trivia	in_progress	-	Discovered; contract review pending.
+tests/tests/edgecase.rs::test::benches::idents	ported	spec/logos/edgecase_spec.cr	Exact identifier sentence, token slices, and byte spans.
+tests/tests/edgecase.rs::test::benches::keywords_and_punctators	ported	spec/logos/edgecase_spec.cr	Exact mixed keyword, identifier, operator, and punctuation stream with spans.
+tests/tests/edgecase.rs::test::benches::strings	ported	spec/logos/edgecase_spec.cr	Exact twelve quoted strings, including adjacent tokens and escaped quotes and newlines.
+tests/tests/edgecase.rs::test::colors::match_colors	ported	spec/logos/edgecase_spec.cr	Checks the color and fallback token stream with slices and spans.
+tests/tests/edgecase.rs::test::crunch::crunch	ported	spec/logos/edgecase_spec.cr	Exercises the exposed_function keyword prefix and full identifier span.
+tests/tests/edgecase.rs::test::error_variant::must_compile	ported	spec/logos/edgecase_spec.cr	Derives a normal Error token, then checks its result and span.
+tests/tests/edgecase.rs::test::loop_in_loop::test_a_loop_in_a_loop	ported	spec/logos/edgecase_spec.cr	Checks nested-loop acceptance and error spans using a configured Crystal error variant.
+tests/tests/edgecase.rs::test::maybe::maybe_at_the_end	ported	spec/logos/edgecase_spec.cr	Checks F0 with its byte span and also the optional-tail case F0a.
+tests/tests/edgecase.rs::test::maybe_in_loop::test_maybe_in_a_loop	ported	spec/logos/edgecase_spec.cr	Checks optional-in-loop acceptance and error spans using a configured Crystal error variant.
+tests/tests/edgecase.rs::test::merging_asymmetric_loops::must_compile	ported	spec/logos/edgecase_spec.cr	Compiles the two upstream patterns and checks operator and skip behavior against Rust.
+tests/tests/edgecase.rs::test::naming_collision::must_compile	ported	spec/logos/edgecase_spec.cr	Declares all four upstream shadowing types and checks token and error results and spans.
+tests/tests/edgecase.rs::test::numbers::numbers	ported	spec/logos/edgecase_spec.cr	Checks the six upstream number formats with slices and spans.
+tests/tests/edgecase.rs::test::priority_disambiguate_1::priority_abc	ported	spec/logos/edgecase_spec.cr	Checks the exact upstream token order with explicit priority for Abc.
+tests/tests/edgecase.rs::test::priority_disambiguate_2::priority_cbd	ported	spec/logos/edgecase_spec.cr	Checks the exact upstream token order with explicit priority for Cde.
+tests/tests/edgecase.rs::test::trivia::abcdef_trivia	ported	spec/logos/edgecase_spec.cr	Checks skipped alphabetic trivia, numbers, and errors with spans.
+tests/tests/edgecase.rs::test::type_params::substitute_type_params	intentional_divergence	spec/logos/callbacks_spec.cr, docs/enum_payload_parity.md	Rust derives over type parameters on enum variants. Crystal uses a non-generic enum and typed result payloads.
+tests/tests/edgecase.rs::test::unicode_error_split::test	ported	spec/logos/edgecase_spec.cr	Checks that an unmatched emoji produces one four-byte error.
+tests/tests/edgecase.rs::test::unicode_whitespace::abcdef_trivia	ported	spec/logos/edgecase_spec.cr	Exact upstream numbers separated by Unicode whitespace, trailing error, and EOF.
 tests/tests/ignore_case.rs::class::Letters	in_progress	-	Discovered; contract review pending.
 tests/tests/ignore_case.rs::class::Sink	in_progress	-	Discovered; contract review pending.
 tests/tests/ignore_case.rs::class::Words	in_progress	-	Discovered; contract review pending.
@@ -149,40 +149,40 @@ tests/tests/old_logos_bugs.rs::class::_Token336_2	in_progress	-	Discovered; cont
 tests/tests/old_logos_bugs.rs::class::_Token336_3	in_progress	-	Discovered; contract review pending.
 tests/tests/old_logos_bugs.rs::function::find_close_bracket	in_progress	-	Discovered; contract review pending.
 tests/tests/old_logos_bugs.rs::function::parse_brackets	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::test::issue_160::test	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::test::issue_173::test	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::test::issue_179::test_smile	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::test::issue_179::test_x	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::test::issue_180::test	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::test::issue_181::test	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::test::issue_185::test	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::test::issue_187::test	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::test::issue_190::test	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::test::issue_200::test_200	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::test::issue_201::test	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::test::issue_202::test	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::test::issue_203::test	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::test::issue_213::test	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::test::issue_220::test	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::test::issue_227::test	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::test::issue_242::test	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::test::issue_246::test	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::test::issue_251::test	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::test::issue_256::it_works	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::test::issue_259::test	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::test::issue_265::test_1	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::test::issue_265::test_2	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::test::issue_265::test_3	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::test::issue_265::test_4	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::test::issue_269::test	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::test::issue_272::test	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::test::issue_384::test	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::test::issue_394::test_1	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::test::issue_394::test_2	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::test::issue_420::test	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::test::issue_424::test	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::test::issue_456::test	in_progress	-	Discovered; contract review pending.
-tests/tests/old_logos_bugs.rs::test::issue_461::test	in_progress	-	Discovered; contract review pending.
+tests/tests/old_logos_bugs.rs::test::issue_160::test	ported	spec/logos/old_logos_bugs_spec.cr	Checks the overlapping fixed and regex else forms with their slices and spans.
+tests/tests/old_logos_bugs.rs::test::issue_173::test	ported	spec/logos/old_logos_bugs_spec.cr	Checks the repeated dotted number suffix with spans.
+tests/tests/old_logos_bugs.rs::test::issue_179::test_smile	ported	spec/logos/old_logos_bugs_spec.cr	Checks the exact emoji variant and its four-byte span.
+tests/tests/old_logos_bugs.rs::test::issue_179::test_x	ported	spec/logos/old_logos_bugs_spec.cr	Checks the exact one-byte error slice and span followed by EOF.
+tests/tests/old_logos_bugs.rs::test::issue_180::test	ported	spec/logos/old_logos_bugs_spec.cr	Checks block comment recognition within the upstream sentence.
+tests/tests/old_logos_bugs.rs::test::issue_181::test	ported	spec/logos/old_logos_bugs_spec.cr	Checks the fallback to a single-character token and an error on the suffix.
+tests/tests/old_logos_bugs.rs::test::issue_185::test	ported	spec/logos/old_logos_bugs_spec.cr	Checks that the shortest block comment is a single token.
+tests/tests/old_logos_bugs.rs::test::issue_187::test	ported	spec/logos/old_logos_bugs_spec.cr	Checks the three-letter currency token and span.
+tests/tests/old_logos_bugs.rs::test::issue_190::test	ported	spec/logos/old_logos_bugs_spec.cr	Exact upstream quoted input with 16384 repeats, full slice and span, and EOF.
+tests/tests/old_logos_bugs.rs::test::issue_200::test_200	ported	spec/logos/old_logos_bugs_spec.cr	Checks repeated not tokens in the presence of a longer regex.
+tests/tests/old_logos_bugs.rs::test::issue_201::test	ported	spec/logos/old_logos_bugs_spec.cr	Checks all upstream Lua block comments with delimiter counts and spans.
+tests/tests/old_logos_bugs.rs::test::issue_202::test	ported	spec/logos/old_logos_bugs_spec.cr	Checks the full Unicode range pattern on the two-byte omega input.
+tests/tests/old_logos_bugs.rs::test::issue_203::test	ported	spec/logos/old_logos_bugs_spec.cr	Checks exponent matching and the fallback error after an incomplete exponent.
+tests/tests/old_logos_bugs.rs::test::issue_213::test	ported	spec/logos/old_logos_bugs_spec.cr	Checks decimal and binary numbers containing separators.
+tests/tests/old_logos_bugs.rs::test::issue_220::test	ported	spec/logos/old_logos_bugs_spec.cr	Checks the Pascal comment against the upstream slice and span.
+tests/tests/old_logos_bugs.rs::test::issue_227::test	ported	spec/logos/old_logos_bugs_spec.cr	Checks repeated a with a required final b.
+tests/tests/old_logos_bugs.rs::test::issue_242::test	ported	spec/logos/old_logos_bugs_spec.cr	Checks a single a against competing length patterns.
+tests/tests/old_logos_bugs.rs::test::issue_246::test	ported	spec/logos/old_logos_bugs_spec.cr	Checks the repeated short match under alternation.
+tests/tests/old_logos_bugs.rs::test::issue_251::test	ported	spec/logos/old_logos_bugs_spec.cr	Checks a triple-quoted string as one token.
+tests/tests/old_logos_bugs.rs::test::issue_256::it_works	ported	spec/logos/old_logos_bugs_spec.cr	Checks the signed integer and separator stream with parsed payloads.
+tests/tests/old_logos_bugs.rs::test::issue_259::test	ported	spec/logos/old_logos_bugs_spec.cr	Checks a lone quote without entering a loop.
+tests/tests/old_logos_bugs.rs::test::issue_265::test_1	ported	spec/logos/old_logos_bugs_spec.cr	Checks the bare not token against the longer not in rule.
+tests/tests/old_logos_bugs.rs::test::issue_265::test_2	ported	spec/logos/old_logos_bugs_spec.cr	Checks word, trivia, and the final not token with spans.
+tests/tests/old_logos_bugs.rs::test::issue_265::test_3	ported	spec/logos/old_logos_bugs_spec.cr	Checks not, trivia, and the final word with spans.
+tests/tests/old_logos_bugs.rs::test::issue_265::test_4	ported	spec/logos/old_logos_bugs_spec.cr	Checks not in and following trivia with spans.
+tests/tests/old_logos_bugs.rs::test::issue_269::test	ported	spec/logos/old_logos_bugs_spec.cr	Exercises incomplete quoted input through EOF.
+tests/tests/old_logos_bugs.rs::test::issue_272::test	ported	spec/logos/old_logos_bugs_spec.cr	Checks the upstream number slice and span with the optional possessive quantifier.
+tests/tests/old_logos_bugs.rs::test::issue_384::test	ported	spec/logos/old_logos_bugs_spec.cr	Checks the exact million-character quoted fixture as one token.
+tests/tests/old_logos_bugs.rs::test::issue_394::test_1	ported	spec/logos/old_logos_bugs_spec.cr	Checks the upstream dotted token against overlapping regex paths.
+tests/tests/old_logos_bugs.rs::test::issue_394::test_2	ported	spec/logos/old_logos_bugs_spec.cr	Checks the short ab alternative at end of input.
+tests/tests/old_logos_bugs.rs::test::issue_420::test	ported	spec/logos/old_logos_bugs_spec.cr	Checks competing skip and equal-priority word and number rules with spans.
+tests/tests/old_logos_bugs.rs::test::issue_424::test	ported	spec/logos/old_logos_bugs_spec.cr	Checks that the exact upstream input terminates with a one-byte error.
+tests/tests/old_logos_bugs.rs::test::issue_456::test	ported	spec/logos/old_logos_bugs_spec.cr	Checks two consecutive single-character matches in alternation.
+tests/tests/old_logos_bugs.rs::test::issue_461::test	ported	spec/logos/old_logos_bugs_spec.cr	Checks the binary-mode short integer and suffix error with byte slices and spans.
 tests/tests/properties.rs::class::Token	in_progress	-	Discovered; contract review pending.
 tests/tests/properties.rs::test::cyrillic	in_progress	-	Discovered; contract review pending.
 tests/tests/properties.rs::test::greek	in_progress	-	Discovered; contract review pending.
@@ -190,25 +190,25 @@ tests/tests/simple.rs::class::MockExtras	in_progress	-	Discovered; contract revi
 tests/tests/simple.rs::class::Token	in_progress	-	Discovered; contract review pending.
 tests/tests/simple.rs::function::byte_size_2	in_progress	-	Discovered; contract review pending.
 tests/tests/simple.rs::function::byte_size_4	in_progress	-	Discovered; contract review pending.
-tests/tests/simple.rs::test::abcs	in_progress	-	Discovered; contract review pending.
-tests/tests/simple.rs::test::bytes	in_progress	-	Discovered; contract review pending.
-tests/tests/simple.rs::test::empty	in_progress	-	Discovered; contract review pending.
-tests/tests/simple.rs::test::extras_and_callbacks	in_progress	-	Discovered; contract review pending.
-tests/tests/simple.rs::test::hex_and_binary	in_progress	-	Discovered; contract review pending.
-tests/tests/simple.rs::test::identifiers	in_progress	-	Discovered; contract review pending.
-tests/tests/simple.rs::test::ints	in_progress	-	Discovered; contract review pending.
-tests/tests/simple.rs::test::invalid_abcs	in_progress	-	Discovered; contract review pending.
-tests/tests/simple.rs::test::invalid_hex_and_binary	in_progress	-	Discovered; contract review pending.
-tests/tests/simple.rs::test::invalid_tokens	in_progress	-	Discovered; contract review pending.
+tests/tests/simple.rs::test::abcs	ported	spec/logos/simple_spec.cr	Checks the four upstream valid repetitions with slices and spans.
+tests/tests/simple.rs::test::bytes	ported	spec/logos/simple_spec.cr	Checks byte, bytes1, and bytes32 keyword spellings and spans.
+tests/tests/simple.rs::test::empty	ported	spec/logos/simple_spec.cr	Verifies EOF and the zero-length terminal span.
+tests/tests/simple.rs::test::extras_and_callbacks	ported	spec/logos/simple_spec.cr	Verifies upstream whitespace, newline, and number callback counts after consuming the input.
+tests/tests/simple.rs::test::hex_and_binary	ported	spec/logos/simple_spec.cr	Checks binary and hexadecimal lexemes and spans.
+tests/tests/simple.rs::test::identifiers	ported	spec/logos/simple_spec.cr	Checks the identifier sentence and the byte span of each word.
+tests/tests/simple.rs::test::ints	ported	spec/logos/simple_spec.cr	Checks the supported bit widths and their slices and spans.
+tests/tests/simple.rs::test::invalid_abcs	ported	spec/logos/simple_spec.cr	Checks near-miss ABC patterns fall back to identifiers with spans.
+tests/tests/simple.rs::test::invalid_hex_and_binary	ported	spec/logos/simple_spec.cr	Checks incomplete binary and hexadecimal prefixes split into a number and identifier.
+tests/tests/simple.rs::test::invalid_tokens	ported	spec/logos/simple_spec.cr	Checks error tokens and byte spans for invalid input.
 tests/tests/simple.rs::test::iterator	ported	spec/logos/simple_spec.cr	Exact upstream keyword and identifier iteration sequence.
-tests/tests/simple.rs::test::keywords	in_progress	-	Discovered; contract review pending.
-tests/tests/simple.rs::test::keywords_mix_identifiers	in_progress	-	Discovered; contract review pending.
-tests/tests/simple.rs::test::numbers	in_progress	-	Discovered; contract review pending.
-tests/tests/simple.rs::test::operators	in_progress	-	Discovered; contract review pending.
-tests/tests/simple.rs::test::punctuation	in_progress	-	Discovered; contract review pending.
+tests/tests/simple.rs::test::keywords	ported	spec/logos/simple_spec.cr	Checks overlapping keywords and their spans.
+tests/tests/simple.rs::test::keywords_mix_identifiers	ported	spec/logos/simple_spec.cr	Checks the interleaved keyword and identifier stream with spans.
+tests/tests/simple.rs::test::numbers	ported	spec/logos/simple_spec.cr	Checks numeric slices and spans alongside the extras count.
+tests/tests/simple.rs::test::operators	ported	spec/logos/simple_spec.cr	Checks the six upstream operators and their spans.
+tests/tests/simple.rs::test::punctuation	ported	spec/logos/simple_spec.cr	Checks upstream punctuation tokens and their spans.
 tests/tests/simple.rs::test::spanned_iterator	ported	spec/logos/simple_spec.cr, spec/logos/navigation_spec.cr	Exact upstream token and byte-span sequence; navigation adds Unicode, errors and skipped trivia.
-tests/tests/simple.rs::test::uints	in_progress	-	Discovered; contract review pending.
-tests/tests/simple.rs::test::whitespace	in_progress	-	Discovered; contract review pending.
+tests/tests/simple.rs::test::uints	ported	spec/logos/simple_spec.cr	Checks the three upstream uint sizes, token spans, and per-token callback extras.
+tests/tests/simple.rs::test::whitespace	ported	spec/logos/simple_spec.cr	Checks that spaces are skipped and the EOF span is at the end of the input.
 tests/tests/source.rs::class::RefSource	skipped	spec/logos/source_spec.cr	The pinned custom-source fixture is disabled by unconditional cfg(any()); built-in Source behavior has separate Crystal specs.
 tests/tests/source.rs::class::Token	skipped	spec/logos/source_spec.cr	The pinned custom-source fixture is disabled by unconditional cfg(any()); built-in Source behavior has separate Crystal specs.
 tests/tests/source.rs::method::RefSource<'s, S>.is_boundary	skipped	spec/logos/source_spec.cr	The pinned custom-source fixture is disabled by unconditional cfg(any()); built-in Source behavior has separate Crystal specs.
