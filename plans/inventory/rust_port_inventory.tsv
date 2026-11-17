@@ -191,7 +191,7 @@ logos-codegen/src/util.rs::method::MaybeVoid.take	method	in_progress	-	Discovere
 logos-codegen/src/util.rs::method::MaybeVoid.to_token_stream	method	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/util.rs::method::MaybeVoid.to_tokens	method	in_progress	-	Discovered; contract review pending.
 logos-codegen/src/util.rs::method::str.to_ident	method	in_progress	-	Discovered; contract review pending.
-logos-derive/src/lib.rs::function::logos	function	partial	src/logos/macros.cr, spec/logos/edgecase_spec.cr	Annotation derive survives the upstream naming collisions. Review remaining options and backend diagnostics.
+logos-derive/src/lib.rs::function::logos	function	partial	src/logos/macros.cr, spec/logos/crate__spec.cr, spec/logos/edgecase_spec.cr, docs/development.md	Annotation derive survives upstream naming collisions and a nested Logos alias. The derive UI map records behavioral coverage and timing differences. Review outstanding compiler options in the source signoff.
 src/internal.rs::class::CallbackResult	class	intentional_divergence	src/logos/define_macro.cr, src/logos/macros.cr, spec/logos/callback_dispatch_spec.cr	Generated Crystal code emits a Result, skips via nil, or builds the default error at the matched span.
 src/internal.rs::class::SkipResult	class	intentional_divergence	src/logos/define_macro.cr, src/logos/macros.cr, spec/logos/callback_dispatch_spec.cr	Generated Crystal code handles a successful skip and typed error directly.
 src/internal.rs::interface::CallbackRetVal	interface	intentional_divergence	src/logos/define_macro.cr, src/logos/macros.cr, spec/logos/callback_dispatch_spec.cr	Crystal macros dispatch from explicit payload and control return types without Rust trait coherence.

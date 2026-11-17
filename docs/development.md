@@ -201,7 +201,7 @@ Reference mapping from Rust handbook topics to Crystal docs/spec coverage:
 - Getting started: [README](../README.md) (Quick Start) and
   `spec/logos/simple_spec.cr`
 - Attributes / derive: [README](../README.md) (Annotation-based API) and
-  `spec/logos/derive_spec.cr`
+  `spec/logos/annotations_spec.cr` and `spec/logos/crate__spec.cr`
 - Callbacks: `spec/logos/callbacks_spec.cr`
 - Extras: `examples/extras.cr` and `spec/logos/custom_error_spec.cr`
 - Common regex patterns: `spec/logos/advanced_spec.cr`,
@@ -214,16 +214,26 @@ Reference mapping from Rust handbook topics to Crystal docs/spec coverage:
   `spec/logos/ignore_case_spec.cr`
 - Source and spans: `spec/logos/source_spec.cr`, `spec/logos/lexer_spec.cr`
 
-### Rust UI error parity (`tests/ui/err`)
+### Rust derive UI fixture coverage
 
-| Rust case | Crystal status | Crystal coverage |
-| --- | --- | --- |
-| `greedy-without-config.rs` | Supported | `spec/logos/greedy_spec.cr`, `spec/logos/diagnostics_spec.cr` |
-| `priority-conflict.rs` | Supported | `spec/logos/diagnostics_spec.cr` |
-| `subpattern-match-empty.rs` | Supported | `spec/logos/diagnostics_spec.cr` |
-| `regex-non-utf8.rs` | Supported | `spec/logos/diagnostics_spec.cr` (use `bytes: true` to mark byte-oriented patterns) |
-| `token-non-utf8.rs` | Supported | `spec/logos/diagnostics_spec.cr` |
-| `multiple-export-dirs.rs` | Not applicable | Rust-only `export_dir` derive option is not implemented in Crystal annotations |
+Rust's `derive.rs` runs the seven fixtures under `tests/ui` through `trybuild`.
+Crystal checks the matching behavior with executable specs. Matcher diagnostics
+surface when the Crystal runtime initializes the matcher or prebuild compiles
+the manifest.
+
+| Rust case | Crystal coverage |
+| --- | --- |
+| `ok/greedy.rs` | [Greedy opt-in](../spec/logos/greedy_spec.cr) checks the token and byte span. |
+| `err/greedy-without-config.rs` | [Greedy](../spec/logos/greedy_spec.cr), [diagnostics](../spec/logos/diagnostics_spec.cr), and [codegen](../spec/logos/codegen_priority_spec.cr) check rejected patterns. |
+| `err/priority-conflict.rs` | [Diagnostics](../spec/logos/diagnostics_spec.cr) check the same-variant priority conflict. |
+| `err/subpattern-match-empty.rs` | [Diagnostics](../spec/logos/diagnostics_spec.cr) and [codegen](../spec/logos/codegen_priority_spec.cr) reject empty-matching subpatterns. |
+| `err/regex-non-utf8.rs` | [Diagnostics](../spec/logos/diagnostics_spec.cr) check non-UTF-8 regex rules. Use `bytes: true` to select byte syntax. |
+| `err/token-non-utf8.rs` | [Diagnostics](../spec/logos/diagnostics_spec.cr) reject an invalid UTF-8 token. |
+| `err/multiple-export-dirs.rs` | Crystal prebuild takes one output file through `--out`. Rust's `export_dir` belongs to its derive API. |
+
+The [crate-path fixture](../spec/logos/crate__spec.cr) uses a nested alias for
+Crystal's Logos annotations and checks the complete Rust token stream. Rust
+selects a crate path through a derive attribute.
 
 ### Completed port milestones
 

@@ -3,30 +3,28 @@
 ## Where we are
 
 - **Current focus** — [Phase 2, Logos parity inventory and coverage](#phase-2-logos-parity-inventory-and-coverage).
-  The matcher backend and custom-error streams are verified. The remaining
-  executable fixtures and source inventory review are next.
+  The executable upstream fixtures have dispositions. Compiler and graph
+  inventory signoff is next.
 - **Next up**
-  1. **Remaining lexer and derive fixtures.** Port the exact Unicode string
-     payload and clone streams and the crate-path token stream. Verify the
-     existing CSS cases against the vendor fixtures. Map the Rust derive
-     runner to Crystal coverage and record the qualification and compile
-     diagnostic differences.
-  2. **Compiler and graph inventory signoff.** Review the remaining parser,
-     graph, and generator contracts against the Crystal backend. Record
-     where the compiled-table implementation differs, resolve any public
-     behavior gaps with failing specs, and run the final inventory gates.
-- **Status by area** — Payload examples, dependency qualification, source
-  boundaries, callback dispatch, lexer navigation, derive UI cases,
-  tokenization, Unicode and binary options, and the matcher backend have
-  verified cases. The [Logos inventory](inventory/README.md) records the
-  remaining reviews and intentional differences.
+  1. **Compiler and graph inventory signoff.** Review the remaining parser,
+     graph, and generator contracts against the Crystal backend. Map
+     compiled-table equivalents, document structural differences, and
+     resolve public behavior gaps with targeted failing specs. Close the
+     supporting fixture dispositions and rerun the inventory and full
+     Logos gates before marking Phase 2 complete.
+- **Status by area** — The test ledger covers all 122 upstream test functions.
+  It records 117 ports, four intentional differences, and one exclusion.
+  The last fixture review covers Unicode string payloads, cloned cursors,
+  CSS tokenization, crate qualification, and the derive UI case map.
+  [The Logos inventory](inventory/README.md) tracks outstanding source and
+  supporting fixture reviews.
 - **Gates** — Format, lint, and 293 specs pass with the tracked
-  `regex-automata` 0.2.1 snapshot. All 29 flagged backend specs, the compile
-  check, Markdown check, and all three inventory drift checks pass.
-  Both vendored custom-error tests and three prefix characterizations pass
-  against pinned Rust. The greedy and empty-subpattern UI cases produce their
-  expected errors, and the greedy opt-in case compiles.
-- **Last feature commit** — `fix: preserve failed prefixes in generated matchers`.
+  `regex-automata` 0.2.1 snapshot. Flagged codegen specs, the compile check,
+  Markdown check, and all three inventory drift checks pass. The six
+  vendored lexer tests and a malformed-escape characterization pass. All
+  seven vendored UI files were checked individually against the pinned
+  crate, with the successful build and expected diagnostic messages verified.
+- **Last feature commit** — `test: finish lexer and derive fixture parity`.
 
 ## Scope and verification
 
@@ -89,8 +87,12 @@ and binary coverage adds exact upstream case-folding, script-property and
 mixed-dot streams. Pattern options and subpatterns are shared across runtime
 and codegen. Generated matchers also report failed prefixes, both runtime
 APIs round incomplete UTF-8 prefixes to the next boundary, and the exact
-custom-error streams verify callback payloads and cumulative extras. See the
-ordered work in **Where we are** and the
+custom-error streams verify callback payloads and cumulative extras. The final
+lexer fixtures verify exact decoded Unicode payloads, five clone cursors,
+CSS tokens, and nested Logos annotation qualification. The
+[derive UI case map](../docs/development.md#rust-derive-ui-fixture-coverage)
+links each Rust case to its Crystal disposition. See the ordered work in
+**Where we are** and the
 [inventory verification instructions](inventory/README.md).
 
 - Use the generated source and test IDs for pinned Logos runtime, derive and
@@ -160,6 +162,9 @@ reproduction.
 - **Annotation placement:** Crystal cannot introspect per-variant annotations,
   so `Logos::Token` / `Logos::Regex` mappings are declared at the enum type
   level instead of on individual variants.
+- **Crate qualification:** Rust derive selects an alternate crate path through
+  `#[logos(crate = ...)]`. Crystal qualifies the annotations directly, including
+  through a nested alias of the Logos module.
 - **Priority diagnostics:** Rust rejects all highest-priority ties during
   derive. Crystal reports ambiguous explicit rules and duplicate winners
   for the same variant when initializing a runtime matcher. Its legacy

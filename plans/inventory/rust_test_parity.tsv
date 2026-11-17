@@ -40,12 +40,12 @@ tests/tests/clone.rs::method::Evil.clone	in_progress	-	Discovered; contract revi
 tests/tests/clone.rs::test::test_clone_leak	ported	spec/logos/clone_spec.cr	Verifies cloning a lexer does not call clone on its last payload; explicitly cloning the payload invokes its clone hook.
 tests/tests/clone.rs::test::test_clone_ub	intentional_divergence	spec/logos/clone_spec.cr	Checks safe continuation of both lexer cursors after a reference payload; Rust Miri-specific memory checks do not apply to Crystal GC objects.
 tests/tests/clone.rs::test::test_it_works_without_cloning	ported	spec/logos/clone_spec.cr	Returns separate payloads for all three matches without running their clone hooks.
-tests/tests/crate_.rs::class::Token	in_progress	-	Discovered; contract review pending.
-tests/tests/crate_.rs::test::simple	in_progress	-	Discovered; contract review pending.
-tests/tests/css.rs::class::Token	in_progress	-	Discovered; contract review pending.
-tests/tests/css.rs::test::css::test_letter_spacing	in_progress	-	Discovered; contract review pending.
-tests/tests/css.rs::test::css::test_line_height	in_progress	-	Discovered; contract review pending.
-tests/tests/css.rs::test::css::test_word_spacing	in_progress	-	Discovered; contract review pending.
+tests/tests/crate_.rs::class::Token	ported	spec/logos/crate__spec.cr	The annotation enum uses the same quote and integer rules through a nested alias of the Logos module.
+tests/tests/crate_.rs::test::simple	intentional_divergence	spec/logos/crate__spec.cr	Exact upstream token stream, slices, spans and EOF. Crystal qualifies annotations through a nested module alias instead of a Rust crate attribute.
+tests/tests/css.rs::class::Token	ported	spec/logos/css_spec.cr	Defines the upstream identifiers, numbers, length units and punctuation.
+tests/tests/css.rs::test::css::test_letter_spacing	ported	spec/logos/css_spec.cr	Exact token stream, slices, byte spans and EOF for the relative length.
+tests/tests/css.rs::test::css::test_line_height	ported	spec/logos/css_spec.cr	Exact token stream, slices, byte spans and EOF for the absolute length in cm.
+tests/tests/css.rs::test::css::test_word_spacing	ported	spec/logos/css_spec.cr	Exact token stream, slices, byte spans and EOF for the absolute length in mm.
 tests/tests/custom_error.rs::class::LexingError	ported	spec/logos/custom_error_spec.cr	Typed Crystal error cases preserve odd-number data, overflow, and the offending character.
 tests/tests/custom_error.rs::class::Token	ported	spec/logos/custom_error_spec.cr	StreamToken mirrors the two upstream regex rules and carries typed result payloads.
 tests/tests/custom_error.rs::class::TokenA	ported	spec/logos/custom_error_spec.cr	Ruleless annotation lexer records fifteen a errors and spans using an unused Crystal enum member.
@@ -56,7 +56,7 @@ tests/tests/custom_error.rs::method::LexingError.from	partial	spec/logos/custom_
 tests/tests/custom_error.rs::method::LexingError.unrecognised_character	ported	spec/logos/custom_error_spec.cr	Default error callback reads the first character of the final unmatched span.
 tests/tests/custom_error.rs::test::error_callback_test	ported	spec/logos/custom_error_spec.cr	Exact upstream 15-plus-10 callback stream, every error span, EOFs, and carried extras.
 tests/tests/custom_error.rs::test::test	ported	spec/logos/custom_error_spec.cr	Exact identifier text, successful UInt32 value, odd error payload, overflow, unmatched character, slices, and spans.
-tests/tests/derive.rs::test::test_derive	in_progress	-	Discovered; contract review pending.
+tests/tests/derive.rs::test::test_derive	intentional_divergence	docs/development.md, spec/logos/diagnostics_spec.cr, spec/logos/greedy_spec.cr, spec/logos/codegen_priority_spec.cr	The seven vendored UI cases map to executable Crystal specs or the prebuild output option. Crystal matcher errors can occur at initialization or prebuild, without a trybuild wrapper.
 tests/tests/edgecase.rs::class::Lexer	in_progress	-	Discovered; contract review pending.
 tests/tests/edgecase.rs::class::LexingError	in_progress	-	Discovered; contract review pending.
 tests/tests/edgecase.rs::class::Logos	in_progress	-	Discovered; contract review pending.
@@ -219,10 +219,10 @@ tests/tests/source.rs::method::RefSource<'s, S>.read_byte_unchecked	skipped	spec
 tests/tests/source.rs::method::RefSource<'s, S>.slice	skipped	spec/logos/source_spec.cr	The pinned custom-source fixture is disabled by unconditional cfg(any()); built-in Source behavior has separate Crystal specs.
 tests/tests/source.rs::method::RefSource<'s, S>.slice_unchecked	skipped	spec/logos/source_spec.cr	The pinned custom-source fixture is disabled by unconditional cfg(any()); built-in Source behavior has separate Crystal specs.
 tests/tests/source.rs::test::custom_source	skipped	spec/logos/source_spec.cr	The pinned custom-source fixture is disabled by unconditional cfg(any()); built-in Source behavior has separate Crystal specs.
-tests/tests/string.rs::class::Token	in_progress	-	Discovered; contract review pending.
-tests/tests/string.rs::function::lex_single_line_string	in_progress	-	Discovered; contract review pending.
-tests/tests/string.rs::test::test_it_works_with_cloning	in_progress	-	Discovered; contract review pending.
-tests/tests/string.rs::test::test_it_works_without_cloning	in_progress	-	Discovered; contract review pending.
+tests/tests/string.rs::class::Token	ported	spec/logos/string_spec.cr	Uses the upstream quoted string regex and returns the decoded string as a typed result payload.
+tests/tests/string.rs::function::lex_single_line_string	ported	spec/logos/string_spec.cr	Decodes scalar values, short escapes and hexadecimal escapes. A vendored characterization covers malformed escapes, error spans and recovery.
+tests/tests/string.rs::test::test_it_works_with_cloning	ported	spec/logos/string_spec.cr	Checks the same five cursor branches, decoded payloads, byte spans and EOF on all iterators.
+tests/tests/string.rs::test::test_it_works_without_cloning	ported	spec/logos/string_spec.cr	Checks both exact upstream payloads, source slices, byte spans and EOF, including the saved first result after reading the second.
 tests/tests/ui/err/greedy-without-config.rs::class::GreedySkip	intentional_divergence	spec/logos/greedy_spec.cr, spec/logos/diagnostics_spec.cr	Rejects the grouped greedy pattern and greedy skip at Crystal lexer initialization.
 tests/tests/ui/err/greedy-without-config.rs::class::GreedyToken	intentional_divergence	spec/logos/greedy_spec.cr, spec/logos/diagnostics_spec.cr	Rejects the grouped greedy pattern and greedy skip at Crystal lexer initialization.
 tests/tests/ui/err/greedy-without-config.rs::function::main	skipped	-	Empty executable entry point; the fixture's derive declarations carry the UI contract.
